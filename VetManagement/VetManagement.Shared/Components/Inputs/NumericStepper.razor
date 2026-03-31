@@ -1,0 +1,108 @@
+﻿<style>
+    /* Hide native arrows */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+</style>
+
+<div class="input-group">
+    <button class="btn btn-outline-secondary"
+            type="button"
+            @onmousedown="StartDecrement"
+            @onmouseup="Stop"
+            @onmouseleave="Stop"
+            @ontouchstart="StartDecrement"
+            @ontouchend="Stop">
+        -
+    </button>
+    <input type="number"
+           min="@Min"
+           max="@Max"
+           class="form-control text-center"
+           style="max-width:60px;"
+           @bind="CurrentValue"
+           @bind:event="oninput" />
+    <button class="btn btn-outline-secondary"
+            type="button"
+            @onmousedown="StartIncrement"
+            @onmouseup="Stop"
+            @onmouseleave="Stop"
+            @ontouchstart="StartIncrement"
+            @ontouchend="Stop">
+        +
+    </button>
+</div>
+
+@code {
+    [Parameter] public int Value { get; set; }
+    [Parameter] public EventCallback<int> ValueChanged { get; set; }
+    [Parameter] public int Min { get; set; } = 1;
+    [Parameter] public int Max { get; set; } = int.MaxValue;
+    [Parameter] public int Step { get; set; } = 1;
+
+    private System.Threading.Timer? _timer;
+    private bool _disposed;
+
+    private int CurrentValue
+    {
+        get => Value;
+        set
+        {
+            if (value != Value)
+            {
+                ValueChanged.InvokeAsync(value);
+            }
+        }
+    }
+
+    private void StartIncrement()
+    {
+        Increment();
+        _timer = new System.Threading.Timer(_ =>
+        {
+            InvokeAsync(Increment);
+        }, null, 400, 60); // Delay of 400ms, repeat every 60ms
+    }
+
+    private void Increment()
+    {
+        if (Value + Step <= Max)
+            ValueChanged.InvokeAsync(Value + Step);
+    }
+
+    private void StartDecrement()
+    {
+        Decrement();
+        _timer = new System.Threading.Timer(_ =>
+        {
+            InvokeAsync(Decrement);
+        }, null, 400, 60); // Delay of 400ms, repeat every 60ms
+    }
+
+    private void Decrement()
+    {
+        if (Value - Step >= Min)
+            ValueChanged.InvokeAsync(Value - Step);
+    }
+
+    private void Stop()
+    {
+        _timer?.Dispose();
+        _timer = null;
+    }
+
+    public void Dispose()
+    {
+        if (!_disposed)
+        {
+            _timer?.Dispose();
+            _disposed = true;
+        }
+    }
+}

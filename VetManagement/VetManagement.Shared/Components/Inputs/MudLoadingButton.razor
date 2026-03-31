@@ -1,0 +1,43 @@
+﻿@using MudBlazor
+
+<MudButton Disabled="@(Loading || Disabled)"
+           OnClick="HandleClick"
+           Variant="@Variant"
+           Color="@Color"
+           FullWidth="@FullWidth"
+           StartIcon="@StartIcon"
+           EndIcon="@EndIcon"
+           Class="@Class"
+           aria-busy="@Loading"
+           @attributes="AdditionalAttributes">
+    @if (Loading)
+    {
+        <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="me-2" />
+        <span>@LoadingText</span>
+    }
+    else
+    {
+        @ChildContent
+    }
+</MudButton>
+
+@code {
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public string LoadingText { get; set; } = "Procesando...";
+    [Parameter] public EventCallback OnClick { get; set; }
+    [Parameter] public Variant Variant { get; set; } = Variant.Filled;
+    [Parameter] public Color Color { get; set; } = Color.Primary;
+    [Parameter] public bool FullWidth { get; set; } = false;
+    [Parameter] public string? StartIcon { get; set; }
+    [Parameter] public string? EndIcon { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private async Task HandleClick()
+    {
+        if (OnClick.HasDelegate)
+            await OnClick.InvokeAsync();
+    }
+}

@@ -1,0 +1,22 @@
+﻿@using MudBlazor
+@inherits ComponentBase
+
+<div class="nav-dropdown">
+    <MudButton Color="Color.Inherit" Variant="Variant.Text" StartIcon="@Icon" Class="nav-dropdown-btn">
+        @Title
+    </MudButton>
+    <MudPaper Class="nav-dropdown-menu">
+        <MudList T="string" Dense="true">
+            @foreach (var it in Items)
+            {
+                <MudListItem T="string" Href="@it.Href" Class="nav-dropdown-item">@it.Title</MudListItem>
+            }
+        </MudList>
+    </MudPaper>
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string? Icon { get; set; }
+    [Parameter] public IEnumerable<(string Title, string? Href)> Items { get; set; } = Array.Empty<(string, string?)>();
+}

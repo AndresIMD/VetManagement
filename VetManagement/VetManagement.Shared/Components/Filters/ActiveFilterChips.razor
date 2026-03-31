@@ -1,0 +1,17 @@
+﻿@if (Chips.Any())
+{
+    <MudStack Row="true" Spacing="1" Class="mt-2">
+        @foreach (var chip in Chips)
+        {
+            <MudChip T="string"
+                     Color="@chip.Color"
+                     OnClose="@((MudChip<string> _) => chip.OnClear?.Invoke())">
+                @chip.Label
+            </MudChip>
+        }
+    </MudStack>
+}
+
+@code {
+    [Parameter] public IEnumerable<FilterChipModel> Chips { get; set; } = Enumerable.Empty<FilterChipModel>();
+}

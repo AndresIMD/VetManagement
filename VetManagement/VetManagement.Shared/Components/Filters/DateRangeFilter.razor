@@ -1,0 +1,18 @@
+@inherits ComponentBase
+
+<MudDateRangePicker DateRange="@DateRange" DateRangeChanged="@OnDateRangeChangedAsync" Label="@Label" Clearable="true"
+    Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.DateRange"
+    Class="@Class" />
+
+@code {
+    [Parameter] public DateRange? DateRange { get; set; }
+    [Parameter] public EventCallback<DateRange?> DateRangeChanged { get; set; }
+    [Parameter] public string Label { get; set; } = "Date Range";
+    [Parameter] public string? Class { get; set; }
+
+    private async Task OnDateRangeChangedAsync(DateRange? range)
+    {
+        DateRange = range;
+        await DateRangeChanged.InvokeAsync(range);
+    }
+}

@@ -1,0 +1,95 @@
+﻿@* @using SPLabHybrid.Shared.Models
+
+<MudPaper Class="pa-4 elevation-1 rounded-lg">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-4">
+        <MudDatePicker @bind-Date="SelectedMonth"
+                       DateFormat="MM/yyyy"
+                       PickerVariant="PickerVariant.Static"
+                       Label="Month"
+                       OpenTo="OpenTo.Month"
+                       Views="PickerViews.Year | PickerViews.Month" />
+    </MudStack>
+    @if (MonthlySummary.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info">No movements for this month.</MudAlert>
+    }
+    else
+    {
+        <MudTable T="ItemMonthlySummary" Items="MonthlySummary">
+            <HeaderContent>
+                <MudTh>Item</MudTh>
+                @for (int d = 1; d <= DateTime.DaysInMonth(SelectedMonth.Year, SelectedMonth.Month); d++)
+                {
+                    <MudTh>@d</MudTh>
+                }
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Item">@context.Name</MudTd>
+                @for (int d = 1; d <= DateTime.DaysInMonth(SelectedMonth.Year, SelectedMonth.Month); d++)
+                {
+                    <MudTd DataLabel="@d">
+                        @(context.DayMovements.TryGetValue(d, out var qty) ? qty : 0)
+                    </MudTd>
+                }
+            </RowTemplate>
+        </MudTable>
+    }
+</MudPaper>
+
+@code {
+    [Parameter] public List<Item> Items { get; set; } = new();
+    [Parameter] public List<InventoryMovement> Movements { get; set; } = new();
+    [Parameter] public DateTime? InitialMonth { get; set; }
+
+    private DateTime _selectedMonth;
+    private DateTime SelectedMonth
+    {
+        get => _selectedMonth;
+        set
+        {
+            if (_selectedMonth != value)
+            {
+                _selectedMonth = new DateTime(value.Year, value.Month, 1);
+                BuildSummary();
+            }
+        }
+    }
+
+    private List<ItemMonthlySummary> MonthlySummary = new();
+
+    protected override void OnInitialized()
+    {
+        _selectedMonth = InitialMonth ?? new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+        BuildSummary();
+    }
+
+    private void BuildSummary()
+    {
+        var from = new DateTime(SelectedMonth.Year, SelectedMonth.Month, 1);
+        var to = from.AddMonths(1).AddDays(-1);
+
+        var movementsInMonth = Movements
+            .Where(m => m.Date >= from && m.Date <= to)
+            .ToList();
+
+        MonthlySummary = Items.Select(item =>
+        {
+            var dayMovements = movementsInMonth
+                .Where(m => m.ItemId == item.Id)
+                .GroupBy(m => m.Date.Day)
+                .ToDictionary(g => g.Key, g => g.Sum(m => m.Quantity));
+
+            return new ItemMonthlySummary
+            {
+                Name = item.Name,
+                DayMovements = dayMovements
+            };
+        }).ToList();
+    }
+
+    public class ItemMonthlySummary
+    {
+        public string Name { get; set; } = "";
+        public Dictionary<int, int> DayMovements { get; set; } = new();
+    }
+} *@

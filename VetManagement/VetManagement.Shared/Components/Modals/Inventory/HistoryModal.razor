@@ -1,0 +1,61 @@
+﻿@inherits ModalBase<object>
+@inject InventoryMovementApiService InventoryService
+
+<ModalShell Title="@Title"
+            TitleIcon="@TitleIcon"
+            TitleColor="@TitleColor"
+            IsLoading="false"
+            IsValid="true"
+            FooterContent="@Footer">
+    <MudStack Spacing="2">
+        @if (IsLoading)
+        {
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+            <MudText>Loading history...</MudText>
+        }
+        else
+        {
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="1" Class="mb-2">
+                <MudText Typo="Typo.h6">@Item?.Name</MudText>
+            </MudStack>
+            <MudTable Items="Movements" Dense="true" Hover="true" Class="mt-2">
+                <HeaderContent>
+                    <MudTh>Date</MudTh>
+                    <MudTh>Type</MudTh>
+                    <MudTh>Quantity</MudTh>
+                    <MudTh>Reason</MudTh>
+                    <MudTh>Responsible</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Date">@context.Date.ToString("dd/MM/yyyy")</MudTd>
+                    <MudTd DataLabel="Type">@context.Type</MudTd>
+                    <MudTd DataLabel="Quantity">@context.Quantity</MudTd>
+                    <MudTd DataLabel="Reason">@context.Reason</MudTd>
+                    <MudTd DataLabel="Responsible">@context.Responsible</MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudTd Class="text-center">No movements recorded.</MudTd>
+                </NoRecordsContent>
+            </MudTable>
+        }
+    </MudStack>
+</ModalShell>
+
+@code {
+    [Parameter] public InventoryItemDTO? Item { get; set; }
+
+    private List<InventoryMovement> Movements { get; set; } = new();
+    private bool IsLoading { get; set; } = true;
+
+    private RenderFragment Footer => __builder =>
+    {
+        <MudButton Color="Color.Secondary" Variant="Variant.Outlined" OnClick="OnCancel">Close</MudButton>;
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Item != null)
+            Movements = await InventoryService.GetMovementsByItemIdAsync(Item.Id);
+        IsLoading = false;
+    }
+}

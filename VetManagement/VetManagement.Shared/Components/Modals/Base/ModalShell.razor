@@ -1,0 +1,73 @@
+﻿@using MudBlazor
+
+<MudDialog>
+    <TitleContent>
+        @if (!string.IsNullOrWhiteSpace(Title) || !string.IsNullOrWhiteSpace(TitleIcon))
+        {
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="1">
+                @if (!string.IsNullOrWhiteSpace(TitleIcon))
+                {
+                    <MudIcon Icon="@TitleIcon" Color="@TitleColor" Size="Size.Medium" />
+                }
+                @if (!string.IsNullOrWhiteSpace(Title))
+                {
+                    <MudText Typo="Typo.h6" Color="@TitleColor">@Title</MudText>
+                }
+            </MudStack>
+        }
+    </TitleContent>
+    <DialogContent>
+        @ChildContent
+    </DialogContent>
+    <DialogActions>
+        <div class="@ActionsClass">
+            @if (FooterContent is not null)
+            {
+                @FooterContent
+            }
+            else
+            {
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                    <MudLoadingButton Loading="@IsLoading"
+                                      Disabled="@(PrimaryDisabled || !IsValid)"
+                                      OnClick="OnPrimaryClick"
+                                      Color="@PrimaryColor"
+                                      Variant="Variant.Filled"
+                                      LoadingText="@PrimaryLoadingText">
+                        @PrimaryText
+                    </MudLoadingButton>
+                    <MudButton Color="@CancelColor" Variant="Variant.Outlined" OnClick="OnCancelClick">@CancelText</MudButton>
+                </MudStack>
+            }
+        </div>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    // Header
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string? TitleIcon { get; set; }
+    [Parameter] public Color TitleColor { get; set; } = Color.Primary;
+
+    // Content
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    // Footer
+    [Parameter] public RenderFragment? FooterContent { get; set; }
+
+    // Default footer behavior
+    [Parameter] public bool IsLoading { get; set; }
+    [Parameter] public bool IsValid { get; set; } = true;
+    [Parameter] public bool PrimaryDisabled { get; set; } = false;
+    [Parameter] public string PrimaryText { get; set; } = "Save";
+    [Parameter] public string PrimaryLoadingText { get; set; } = "Saving...";
+    [Parameter] public Color PrimaryColor { get; set; } = Color.Primary;
+    [Parameter] public EventCallback OnPrimaryClick { get; set; }
+
+    [Parameter] public string CancelText { get; set; } = "Cancel";
+    [Parameter] public Color CancelColor { get; set; } = Color.Secondary;
+    [Parameter] public EventCallback OnCancelClick { get; set; }
+
+    // Styles
+    [Parameter] public string ActionsClass { get; set; } = "pa-3";
+}

@@ -1,0 +1,26 @@
+body {
+    background: var(--app-background);
+}
+
+body.bg-soft {
+    background: linear-gradient(180deg,
+            var(--app-background) 0%,
+            color-mix(in srgb, var(--app-background) 94%, black) 100%);
+}
+
+body.bg-grid {
+    background: var(--app-background);
+    background-size: 24px 24px;
+    background-image:
+        linear-gradient(to right, color-mix(in srgb, var(--app-background) 94%, black) 1px, transparent 1px),
+        linear-gradient(to bottom, color-mix(in srgb, var(--app-background) 94%, black) 1px, transparent 1px);
+}
+
+body.bg-image {
+    background: var(--app-bg-image) center/cover fixed no-repeat;
+}
+
+body.bg-image .mud-main-content {
+    background: var(--app-bg-image) center/cover fixed no-repeat;
+    background-color: transparent;
+}

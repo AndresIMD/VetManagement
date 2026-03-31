@@ -1,0 +1,143 @@
+# ═══════════════════════════════════════════════════════════
+# PRIVATE & LEARNING MATERIALS
+# ═══════════════════════════════════════════════════════════
+.github/
+.ToDo/
+.docs/
+.private/
+
+REFACTORING-ROADMAP.md
+SETUP-COMPLETE.md
+CONSISTENCY-AUDIT.md
+FOLDER-REORGANIZATION.md
+TODO.md
+NOTES.md
+*-PERSONAL.md
+*.draft.md
+*.wip.md
+SPANISH-TRANSLATION-TRACKING.md
+SERVICE-REORG-LOG.md
+ARCHITECTURE_DECISIONS.md
+CODING_PRACTICES.md
+SESSION_HISTORY.md
+DEVELOPMENT_NOTES.md
+QUICKSTART_COPILOT.md
+DOC_INDEX.md
+
+# ═══════════════════════════════════════════════════════════
+# USER SECRETS & SENSITIVE DATA
+# ═══════════════════════════════════════════════════════════
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.json
+!appsettings.json
+!appsettings.Production.json
+!appsettings.Template.json
+secrets.json
+config.json
+**/config.json
+migration_debug.log
+
+# ═══════════════════════════════════════════════════════════
+# BUILD RESULTS
+# ═══════════════════════════════════════════════════════════
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+[Oo]ut/
+
+# ═══════════════════════════════════════════════════════════
+# VISUAL STUDIO & EDITORS
+# ═══════════════════════════════════════════════════════════
+.vs/
+.vscode/
+.idea/
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+*.sln.iml
+
+# ═══════════════════════════════════════════════════════════
+# .NET / NUGET
+# ═══════════════════════════════════════════════════════════
+project.lock.json
+project.fragment.lock.json
+artifacts/
+*.nuget.props
+*.nuget.targets
+*.nupkg
+*.snupkg
+
+# ═══════════════════════════════════════════════════════════
+# TEST RESULTS
+# ═══════════════════════════════════════════════════════════
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.VisualState.xml
+TestResult.xml
+nunit-*.xml
+coverage*.xml
+coverage*.json
+*.coveragexml
+
+# ═══════════════════════════════════════════════════════════
+# MISC
+# ═══════════════════════════════════════════════════════════
+*.pidb
+*.svclog
+*.scc
+*.cache
+*.ilk
+*.meta
+*.obj
+*.iobj
+*.pch
+*.pdb
+*.ipdb
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.tmp_proj
+*_wpftmp.csproj
+*.vspscc
+*.vssscc
+*.dbmdl
+*.dbproj.schemaview
+*.jfm
+*.publishsettings
+*.DotSettings.user
+
+# Local database files
+*.mdf
+*.ldf
+*.ndf
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride

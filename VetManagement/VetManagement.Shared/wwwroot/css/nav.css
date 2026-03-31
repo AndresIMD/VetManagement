@@ -1,0 +1,16 @@
+.nav-dropdown { position: relative; display: inline-block; }
+.nav-dropdown-btn { padding: 6px 10px; }
+.nav-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1000;
+  display: none;
+  min-width: 220px;
+  background: var(--mud-palette-surface);
+  color: var(--mud-palette-text-primary);
+  box-shadow: var(--mud-elevation-6);
+  border-radius: var(--mud-default-borderradius);
+}
+.nav-dropdown:hover .nav-dropdown-menu { display: block; }
+.nav-dropdown-item { white-space: nowrap; }

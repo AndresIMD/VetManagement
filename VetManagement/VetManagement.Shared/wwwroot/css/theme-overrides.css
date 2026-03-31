@@ -1,0 +1,9 @@
+/* Theme variables injected dynamically by ThemeService.cs */
+.app-hero {
+  background: linear-gradient(135deg, var(--app-primary) 0%, var(--app-secondary) 100%);
+  color: var(--app-appbar-text);
+}
+
+.app-surface {
+  background-color: var(--app-surface);
+}

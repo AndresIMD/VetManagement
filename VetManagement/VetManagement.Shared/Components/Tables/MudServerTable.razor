@@ -1,0 +1,83 @@
+@typeparam TItem
+
+<MudTable T="TItem" ServerData="@LoadServerData" Dense="@Dense" Hover="@Hover" Bordered="@Bordered" Striped="@Striped"
+    Elevation="@Elevation" FixedHeader="@FixedHeader" Loading="@_isLoading" @ref="_table">
+    <ToolBarContent>
+        @if (ToolBarContent != null)
+        {
+            @ToolBarContent
+        }
+        else if (ActionButtons != null)
+        {
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Style="width:100%;">
+                <MudSpacer />
+                <MudStack Row="true" Justify="Justify.FlexEnd" AlignItems="AlignItems.Center" Spacing="1">
+                    @ActionButtons
+                </MudStack>
+            </MudStack>
+        }
+    </ToolBarContent>
+    <HeaderContent>
+        @HeaderContent
+    </HeaderContent>
+    <RowTemplate>
+        @RowTemplate(context)
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="pa-6">
+            <MudIcon Icon="@Icons.Material.Outlined.Inbox" Color="Color.Info" Size="Size.Large" />
+            <MudText Typo="Typo.subtitle2" Color="Color.Info">No results</MudText>
+        </MudStack>
+    </NoRecordsContent>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+
+@code {
+    [Parameter] public Func<TableState, CancellationToken, Task<TableData<TItem>>>? ServerData { get; set; }
+    [Parameter] public RenderFragment? ToolBarContent { get; set; }
+    [Parameter] public RenderFragment? HeaderContent { get; set; }
+    [Parameter] public RenderFragment<TItem> RowTemplate { get; set; } = null!;
+    [Parameter] public RenderFragment? ActionButtons { get; set; }
+
+    [Parameter] public bool Striped { get; set; } = true;
+    [Parameter] public bool Hover { get; set; } = true;
+    [Parameter] public bool Bordered { get; set; } = true;
+    [Parameter] public bool Dense { get; set; }
+    [Parameter] public bool FixedHeader { get; set; } = true;
+    [Parameter] public int RowsPerPage { get; set; } = 25;
+    [Parameter] public int Elevation { get; set; } = 4;
+
+    private MudTable<TItem>? _table;
+    private bool _isLoading;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender && _table != null)
+        {
+            _table.SetRowsPerPage(RowsPerPage);
+        }
+    }
+
+    public Task ReloadServerData() => _table?.ReloadServerData() ?? Task.CompletedTask;
+
+    private async Task<TableData<TItem>> LoadServerData(TableState state, CancellationToken ct)
+    {
+        if (ServerData == null)
+            return new TableData<TItem> { Items = [], TotalItems = 0 };
+
+        _isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            return await ServerData(state, ct);
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+}

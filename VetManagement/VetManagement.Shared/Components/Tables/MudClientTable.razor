@@ -1,0 +1,33 @@
+@typeparam TItem
+
+<MudTable T="TItem" Items="@Items" Loading="@Loading" Dense="@Dense" Hover="@Hover" Bordered="@Bordered"
+    Striped="@Striped" Elevation="@Elevation" FixedHeader="@FixedHeader" RowsPerPage="@RowsPerPage">
+    <ToolBarContent>
+        @ToolBarContent
+    </ToolBarContent>
+    <HeaderContent>
+        @HeaderContent
+    </HeaderContent>
+    <RowTemplate>
+        @RowTemplate(context)
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+
+@code {
+    [Parameter] public IEnumerable<TItem>? Items { get; set; }
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public RenderFragment? ToolBarContent { get; set; }
+    [Parameter] public RenderFragment? HeaderContent { get; set; }
+    [Parameter] public RenderFragment<TItem> RowTemplate { get; set; } = null!;
+
+    [Parameter] public bool Striped { get; set; } = true;
+    [Parameter] public bool Hover { get; set; } = true;
+    [Parameter] public bool Bordered { get; set; } = true;
+    [Parameter] public bool Dense { get; set; }
+    [Parameter] public bool FixedHeader { get; set; } = true;
+    [Parameter] public int RowsPerPage { get; set; } = 25;
+    [Parameter] public int Elevation { get; set; } = 1;
+}

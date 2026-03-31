@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VetManagement.WASM</title>
+    <base href="/" />
+    <!-- Relax CSP for local development to allow VS Browser Link/Hot Reload and localhost API/WebSocket connections -->
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; connect-src 'self' https: http://localhost:* https://localhost:* ws: wss:; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval'; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="no-referrer">
+    <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=()">
+    <link rel="stylesheet" href="_content/VetManagement.Shared/bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="_content/VetManagement.Shared/app.css" />
+    <link rel="stylesheet" href="_content/VetManagement.Shared/css/background.css" />
+    <link rel="stylesheet" href="_content/VetManagement.Shared/css/theme-overrides.css" />
+    <link rel="stylesheet" href="_content/VetManagement.Shared/css/nav.css" />
+    <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
+    <link rel="icon" type="image/png" href="_content/VetManagement.Shared/favicon.png" />
+    <link href="VetManagement.WASM.styles.css" rel="stylesheet" />
+    <script src="_content/VetManagement.Shared/js/theme.js"></script>
+    <script src="_content/VetManagement.Shared/js/background.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <svg class="loading-progress">
+            <circle r="40%" cx="50%" cy="50%" />
+            <circle r="40%" cx="50%" cy="50%" />
+        </svg>
+        <div class="loading-progress-text"></div>
+    </div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="." class="reload">Reload</a>
+        <span class="dismiss">🗙</span>
+    </div>
+    <script src="_framework/blazor.webassembly.js"></script>
+    <script src="_content/VetManagement.Shared/js/debug.js"></script>
+    <script src="_content/VetManagement.Shared/bootstrap/bootstrap.bundle.min.js"></script>
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+</body>
+
+</html>

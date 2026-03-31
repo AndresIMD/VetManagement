@@ -1,0 +1,26 @@
+﻿@inherits ModalBase<object>
+
+<ModalShell Title="@Title"
+            TitleIcon="@TitleIcon"
+            TitleColor="@TitleColor"
+            IsLoading="false"
+            IsValid="true"
+            PrimaryText="@ButtonConfirmText"
+            PrimaryLoadingText="Processing..."
+            PrimaryColor="@TitleColor"
+            CancelText="@ButtonCancelText"
+            ActionsClass="w-100 d-flex justify-center pa-3"
+            OnPrimaryClick="Confirm"
+            OnCancelClick="OnCancel">
+    <MudStack Spacing="2">
+        <MudText Typo="Typo.subtitle1" Align="Align.Center" Class="mb-2">@Message</MudText>
+    </MudStack>
+</ModalShell>
+
+@code {
+    [Parameter] public string Message { get; set; } = "Are you sure you want to continue?";
+    [Parameter] public string ButtonConfirmText { get; set; } = "Accept";
+    [Parameter] public string ButtonCancelText { get; set; } = "Cancel";
+
+    private void Confirm() => MudDialog.Close(DialogResult.Ok(true));
+}

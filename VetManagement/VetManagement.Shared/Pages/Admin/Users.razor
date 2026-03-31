@@ -1,0 +1,154 @@
+﻿@page "/admin/users"
+@using VetManagement.Shared.Models.DTOs
+@using VetManagement.Shared.Services.Api
+@inject UserManagementApiService UserManagementService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@attribute [Authorize(Policy = "Users.Read")]
+
+<PageTitle>User Administration</PageTitle>
+
+<AuthorizeView>
+    <Authorized>
+        <MudPaper Class="pa-4 mb-4">
+            <MudStack Row="true" Justify="Justify.FlexEnd" Class="mb-2">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd"
+                    OnClick="ShowCreateUserModal" Disabled="@(!CanCreate)">
+                    New user
+                </MudButton>
+            </MudStack>
+            <MudText Typo="Typo.h5" Class="mb-4">User Administration</MudText>
+            <MudTable TItem="UserDto" Items="@users" Loading="@_isLoading" Striped="true" Hover="true" Bordered="true"
+                FixedHeader="true">
+                <ToolBarContent></ToolBarContent>
+                <HeaderContent>
+                    <MudTh>User</MudTh>
+                    <MudTh>Email</MudTh>
+                    <MudTh>Roles</MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate Context="user">
+                    <MudTd DataLabel="User">@user.UserName</MudTd>
+                    <MudTd DataLabel="Email">@user.Email</MudTd>
+                    <MudTd DataLabel="Roles">
+                        @foreach (var role in allRoles)
+                        {
+                            <MudChip T="string" Color="@(user.Roles.Contains(role) ? Color.Primary : Color.Default)"
+                                Class="mr-1" Style="cursor:pointer;" Disabled="@(!CanManageRoles)"
+                                OnClick="@(() => ToggleRole(user, role))">
+                                @role
+                            </MudChip>
+                        }
+                    </MudTd>
+                    <MudTd DataLabel="Actions">
+                        <MudTooltip Text="Edit user">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary"
+                                Disabled="@(!CanManageRoles)" OnClick="@(() => EditUser(user))" />
+                        </MudTooltip>
+                        <MudTooltip Text="Delete user">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                Disabled="@(!CanManageRoles)" OnClick="@(() => DeleteUser(user))" />
+                        </MudTooltip>
+                        <MudTooltip Text="Reset password">
+                            <MudIconButton Icon="@Icons.Material.Filled.LockReset" Color="Color.Secondary"
+                                Disabled="@(!CanManageRoles)" OnClick="@(() => ResetPassword(user))" />
+                        </MudTooltip>
+                    </MudTd>
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager />
+                </PagerContent>
+            </MudTable>
+        </MudPaper>
+    </Authorized>
+    <NotAuthorized>
+        <MudAlert Severity="Severity.Warning">You are not authorized to view this page.</MudAlert>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private List<UserDto> users = new();
+    private List<string> allRoles = new();
+    private bool _isLoading;
+    private bool CanRead;
+    private bool CanCreate;
+    private bool CanManageRoles;
+
+    [CascadingParameter] private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPermissions();
+        await LoadData();
+    }
+
+    private async Task LoadPermissions()
+    {
+        var state = await AuthStateTask;
+        var user = state.User;
+        CanRead = user.HasClaim("perm", "users.read");
+        CanCreate = user.HasClaim("perm", "users.create");
+        CanManageRoles = user.HasClaim("perm", "users.roles.manage");
+    }
+
+    private async Task LoadData()
+    {
+        if (!CanRead) return;
+        _isLoading = true;
+        StateHasChanged();
+        try
+        {
+            users = await UserManagementService.GetUsersAsync();
+            allRoles = await UserManagementService.GetRolesAsync();
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ToggleRole(UserDto user, string role)
+    {
+        if (!CanManageRoles) return;
+        if (user.Roles.Contains(role))
+        {
+            var ok = await UserManagementService.RemoveRoleAsync(user.Id, role);
+            if (ok) { Snackbar.Add($"Role '{role}' removed.", Severity.Success); user.Roles.Remove(role); }
+            else { Snackbar.Add($"Could not remove role.", Severity.Error); }
+        }
+        else
+        {
+            var ok = await UserManagementService.AssignRoleAsync(user.Id, role);
+            if (ok) { Snackbar.Add($"Role '{role}' assigned.", Severity.Success); user.Roles.Add(role); }
+            else { Snackbar.Add($"Could not assign role.", Severity.Error); }
+        }
+        StateHasChanged();
+    }
+
+    private void EditUser(UserDto user)
+    {
+        Snackbar.Add($"Edit user: {user.UserName}", Severity.Info);
+    }
+
+    private void DeleteUser(UserDto user)
+    {
+        Snackbar.Add($"Delete user: {user.UserName}", Severity.Warning);
+    }
+
+    private void ResetPassword(UserDto user)
+    {
+        Snackbar.Add($"Reset password for: {user.UserName}", Severity.Info);
+    }
+
+    private async Task ShowCreateUserModal()
+    {
+        if (!CanCreate) return;
+
+        var parameters = new DialogParameters { ["Roles"] = allRoles };
+        var dialog = await DialogService.ShowAsync<CreateUserModal>("Create new user", parameters);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled) await LoadData();
+    }
+}

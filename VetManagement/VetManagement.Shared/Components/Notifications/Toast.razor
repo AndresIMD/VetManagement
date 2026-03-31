@@ -1,0 +1,17 @@
+﻿
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 2000;">
+    @if (Visible)
+    {
+        <div class="toast show @ToastCss" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-body">
+                @Message
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Message { get; set; } = "";
+    [Parameter] public string ToastCss { get; set; } = "bg-success text-white";
+    [Parameter] public bool Visible { get; set; }
+}

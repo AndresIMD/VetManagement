@@ -1,0 +1,146 @@
+﻿@using Microsoft.AspNetCore.Components.Rendering
+@typeparam TItem where TItem : notnull
+@implements IDisposable
+
+<style>
+    .optimized-list {
+        height: 100%;
+        overflow-y: auto;
+    }
+
+    .loading-container,
+    .empty-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem;
+        gap: 1rem;
+    }
+
+    .list-item {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+        .list-item:hover {
+            background-color: var(--mud-palette-action-default-hover);
+        }
+
+    .list-item-placeholder {
+        padding: 0.5rem;
+    }
+</style>
+
+<div class="optimized-list @Class">
+    @if (_isLoading)
+    {
+        @if (LoadingContent is not null)
+        {
+            @LoadingContent
+        }
+        else
+        {
+            <div class="loading-container">
+                <MudProgressCircular Indeterminate="true" />
+                <MudText Typo="Typo.body2" Class="mt-2">Loading...</MudText>
+            </div>
+        }
+    }
+    else if (_items is null || _items.Count == 0)
+    {
+        @if (EmptyContent is not null)
+        {
+            @EmptyContent
+        }
+        else
+        {
+            <div class="empty-container">
+                <MudIcon Icon="@Icons.Material.Outlined.Inbox" Size="Size.Large" />
+                <MudText Typo="Typo.body2">No items found</MudText>
+            </div>
+        }
+    }
+    else
+    {
+        <Virtualize Items="_items" ItemSize="@ItemSize" OverscanCount="@OverscanCount">
+            <ItemContent Context="item">
+                <div class="list-item" @onclick="@(() => HandleItemClick(item))">
+                    @ItemTemplate(item)
+                </div>
+            </ItemContent>
+            <Placeholder>
+                <div class="list-item-placeholder">
+                    <MudSkeleton Animation="Animation.Wave" Height="@($"{ItemSize}px")" />
+                </div>
+            </Placeholder>
+        </Virtualize>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public required Func<CancellationToken, Task<ICollection<TItem>>> ItemsProvider { get; set; }
+    [Parameter, EditorRequired] public required RenderFragment<TItem> ItemTemplate { get; set; }
+    [Parameter] public RenderFragment? EmptyContent { get; set; }
+    [Parameter] public RenderFragment? LoadingContent { get; set; }
+    [Parameter] public int ItemSize { get; set; } = 50;
+    [Parameter] public int OverscanCount { get; set; } = 3;
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public EventCallback<TItem> OnItemClick { get; set; }
+
+    private ICollection<TItem>? _items;
+    private bool _isLoading = true;
+    private CancellationTokenSource? _cts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadItemsAsync();
+    }
+
+    private async Task LoadItemsAsync()
+    {
+        _cts?.Cancel();
+        _cts?.Dispose();
+        _cts = new CancellationTokenSource();
+
+        _isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            _items = await ItemsProvider(_cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Placeholder for cancellation handling
+        }
+        finally
+        {
+            if (!_cts.Token.IsCancellationRequested)
+            {
+                _isLoading = false;
+                StateHasChanged();
+            }
+        }
+    }
+
+    public async Task RefreshAsync()
+    {
+        await LoadItemsAsync();
+    }
+
+    private async Task HandleItemClick(TItem item)
+    {
+        if (OnItemClick.HasDelegate)
+        {
+            await OnItemClick.InvokeAsync(item);
+        }
+    }
+
+    public void Dispose()
+    {
+        _cts?.Cancel();
+        _cts?.Dispose();
+    }
+}
+

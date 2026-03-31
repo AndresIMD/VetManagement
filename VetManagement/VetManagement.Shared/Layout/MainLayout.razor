@@ -1,0 +1,57 @@
+﻿@inherits LayoutComponentBase
+@using MudBlazor
+@using VetManagement.Shared.Theme
+
+<MudThemeProvider IsDarkMode="@ThemeService.IsDarkMode" Theme="@_theme" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+@if (_bootstrapError is not null && (!string.IsNullOrWhiteSpace(_bootstrapError.Title) ||
+!string.IsNullOrWhiteSpace(_bootstrapError.Message)))
+{
+    <MudAlert Severity="Severity.Error" Dense="true" Class="ma-2">
+        <MudText Typo="Typo.subtitle2">@_bootstrapError.Title</MudText>
+        <MudText Typo="Typo.body2">@_bootstrapError.Message</MudText>
+    </MudAlert>
+}
+@if (Status.HasError)
+{
+    <MudAlert Severity="Severity.Warning" Dense="true" Class="ma-2">
+        <MudText Typo="Typo.subtitle2">@Status.ErrorTitle</MudText>
+        <MudText Typo="Typo.body2">@Status.ErrorMessage</MudText>
+    </MudAlert>
+}
+
+<MudLayout>
+    <NavMenu OnToggleDarkMode="ToggleDarkMode" />
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+@code
+{
+    [Inject] public BackgroundService Bg { get; set; } = default!;
+    [Inject] public ThemeService ThemeService { get; set; } = default!;
+    [Inject] public AppStatusService Status { get; set; } = default!;
+    [Inject] public VetManagement.Shared.Models.Configuration.AppBootstrapError? _bootstrapError { get; set; }
+
+    private MudTheme _theme = AppTheme.Theme;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await ThemeService.InitializeAsync();
+            await Bg.InitializeAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task ToggleDarkMode()
+    {
+        await ThemeService.ToggleAsync();
+        StateHasChanged();
+    }
+}

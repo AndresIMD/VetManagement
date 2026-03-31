@@ -1,0 +1,205 @@
+﻿@using System.Text.Json
+@using VetManagement.Shared.Enums
+@using VetManagement.Shared.Models.Exams
+@using VetManagement.Shared.Models.Medical
+@using VetManagement.Shared.Services.Api
+@inherits ModalBase<MedicalVisit>
+@inject MedicalVisitApiService VisitsService
+@inject ExamApiService ExamService
+@inject IDialogService DialogService
+
+<ModalShell Title="@Title"
+            TitleIcon="@TitleIcon"
+            TitleColor="@TitleColor"
+            IsLoading="@isLoading"
+            IsValid="true"
+            PrimaryText="Save"
+            PrimaryLoadingText="Saving..."
+            OnPrimaryClick="SaveAsync"
+            OnCancelClick="OnCancelRequested">
+    @if (_dataLoading)
+    {
+        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="pa-4">
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+            <MudText Color="Color.Secondary" Class="mt-2">Loading data...</MudText>
+        </MudStack>
+    }
+    else
+    {
+        <MudStack Spacing="2">
+            <MudGrid Class="mb-2">
+                <MudItem xs="12" sm="6"><MudDatePicker @bind-Date="CurrentDate" Label="Date" /></MudItem>
+                <MudItem xs="12" sm="6"><MudNumericField T="int" Label="Pet ID" @bind-Value="Model.PatientId" Immediate="true" Required="true" /></MudItem>
+                <MudItem xs="12" sm="6"><MudTextField Label="Patient Name" @bind-Value="Model.PatientName" Required="true" /></MudItem>
+                <MudItem xs="12" sm="6"><MudTextField Label="Record Number" @bind-Value="Model.RecordNumber" /></MudItem>
+                <MudItem xs="12" sm="6"><MudTextField Label="Location" @bind-Value="Model.Location" /></MudItem>
+                <MudItem xs="12" sm="6"><MudTextField Label="Budget Number" @bind-Value="Model.BudgetNumber" /></MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="PaymentStatus" @bind-Value="Model.PaymentStatus" Label="Payment Status">
+                        @foreach (var st in Enum.GetValues<PaymentStatus>())
+                        {
+                            <MudSelectItem Value="@st">@st.ToString()</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="PaymentMethod" @bind-Value="Model.PaymentMethod" Label="Payment Method">
+                        @foreach (var m in Enum.GetValues<PaymentMethod>())
+                        {
+                            <MudSelectItem Value="@m">@m.ToString()</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+
+            <MudPaper Class="pa-3">
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                    <MudSelect T="int" Label="Add exam" ValueChanged="AddProcedureFromExam">
+                        <MudSelectItem Value="0">Select...</MudSelectItem>
+                        @foreach (var ex in _catalog)
+                        {
+                            <MudSelectItem Value="@ex.Id">@ex.Name (@ex.Brand - @ex.Machine) - @ex.SellPrice.ToString("C0")</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudText Color="Color.Secondary">Procedures: @Model.Procedures.Count</MudText>
+                    <MudText Color="Color.Secondary">Total: @Model.TotalValue.ToString("C0")</MudText>
+                </MudStack>
+            </MudPaper>
+
+            <MudTable Items="@Model.Procedures" Dense="true" Hover="true" Bordered="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>Name</MudTh>
+                    <MudTh>Price</MudTh>
+                    <MudTh>Notes</MudTh>
+                    <MudTh style="width:80px; text-align:right;">Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate Context="p">
+                    <MudTd DataLabel="Name">@p.Name</MudTd>
+                    <MudTd DataLabel="Price"><MudNumericField T="int" @bind-Value="p.Price" @bind-Value:after="@RecalculateTotal" /></MudTd>
+                    <MudTd DataLabel="Notes"><MudTextField @bind-Value="p.Notes" /></MudTd>
+                    <MudTd DataLabel="Actions" Class="text-end">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => RemoveProcedure(p))" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudStack>
+    }
+</ModalShell>
+
+@code {
+    [Parameter] public MedicalVisit Visit { get; set; } = new();
+
+    private List<Exam> _catalog = new();
+    private bool _dataLoading = true;
+    private string _initialSnapshot = string.Empty;
+
+    private DateTime? CurrentDate
+    {
+        get => Model.Date;
+        set { Model.Date = value ?? Model.Date; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Model = new MedicalVisit
+        {
+            Id = Visit.Id,
+            Date = Visit.Date,
+            PatientId = Visit.PatientId,
+            PatientName = Visit.PatientName,
+            RecordNumber = Visit.RecordNumber,
+            Responsible = Visit.Responsible,
+            Location = Visit.Location,
+            BudgetNumber = Visit.BudgetNumber,
+            PaymentStatus = Visit.PaymentStatus,
+            PaymentMethod = Visit.PaymentMethod,
+            TotalValue = Visit.TotalValue,
+            Procedures = Visit.Procedures?.Select(x => new VisitProcedure
+            {
+                Id = x.Id,
+                ExamId = x.ExamId,
+                Name = x.Name,
+                Price = x.Price,
+                Notes = x.Notes
+            }).ToList() ?? new List<VisitProcedure>()
+        };
+
+        _catalog = await ExamService.GetAllExamsAsync() ?? new();
+        RecalculateTotal();
+        _initialSnapshot = System.Text.Json.JsonSerializer.Serialize(Model);
+        _dataLoading = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        isLoading = true;
+        try
+        {
+            RecalculateTotal();
+            if (Model.Id == 0)
+                await VisitsService.AddAsync(Model);
+            else
+                await VisitsService.UpdateAsync(Model);
+
+            Snackbar.Add("Visit saved.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(Model));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error while saving: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task OnCancelRequested()
+    {
+        var current = System.Text.Json.JsonSerializer.Serialize(Model);
+        if (!string.Equals(current, _initialSnapshot, StringComparison.Ordinal))
+        {
+            var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = false };
+            var parameters = new DialogParameters<Components.Modals.Common.ConfirmModal>
+            {
+                { x => x.Title, "Discard changes" },
+                { x => x.Message, "There are unsaved changes. Do you want to exit without saving?" },
+                { x => x.ButtonConfirmText, "Exit" },
+                { x => x.ButtonCancelText, "Keep editing" },
+                { x => x.TitleIcon, Icons.Material.Filled.Warning },
+                { x => x.TitleColor, Color.Warning }
+            };
+            var dialog = await DialogService.ShowAsync<Components.Modals.Common.ConfirmModal>(null, parameters, options);
+            var result = await dialog.Result;
+            if (result is { Canceled: true })
+                return;
+        }
+        OnCancel();
+    }
+
+    private async Task AddProcedureFromExam(int examId)
+    {
+        if (examId <= 0) return;
+        var ex = _catalog.FirstOrDefault(e => e.Id == examId);
+        if (ex is null) return;
+        Model.Procedures.Add(new VisitProcedure
+        {
+            ExamId = ex.Id,
+            Name = ex.Name,
+            Price = ex.SellPrice
+        });
+        RecalculateTotal();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void RemoveProcedure(VisitProcedure p)
+    {
+        Model.Procedures.Remove(p);
+        RecalculateTotal();
+    }
+
+    private void RecalculateTotal()
+    {
+        Model.TotalValue = Model.Procedures?.Sum(p => p.Price) ?? 0;
+    }
+}

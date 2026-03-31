@@ -1,0 +1,20 @@
+@using MudBlazor
+
+<MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="1" Class="mt-6 mb-3 text-center">
+    @if (!string.IsNullOrWhiteSpace(Icon))
+    {
+        <MudIcon Icon="@Icon" Color="Color.Primary" Size="Size.Large" />
+    }
+    <MudText Typo="Typo.h4" Class="fw-bold">@Title</MudText>
+    @if (!string.IsNullOrWhiteSpace(Subtitle))
+    {
+        <MudText Typo="Typo.subtitle1" Color="Color.Secondary">@Subtitle</MudText>
+    }
+</MudStack>
+<MudDivider Class="mb-4" />
+
+@code {
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string? Subtitle { get; set; }
+    [Parameter] public string? Icon { get; set; }
+}

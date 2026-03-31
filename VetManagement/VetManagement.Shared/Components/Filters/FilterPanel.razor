@@ -1,0 +1,28 @@
+@using MudBlazor
+
+<MudPaper Class="pa-6 mb-4 elevation-3 rounded-lg app-surface">
+    <MudGrid>
+        @ChildContent
+    </MudGrid>
+
+    @if (ActiveFilterCount > 0 && OnClear.HasDelegate)
+    {
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mt-4 pt-3"
+            Style="border-top: 1px solid var(--mud-palette-divider);">
+            <MudText Typo="Typo.caption" Color="Color.Default" Class="opacity-70">
+                @ActiveFilterCount filter@(ActiveFilterCount > 1 ? "s" : "") active
+            </MudText>
+            <MudButton Color="Color.Default" Variant="Variant.Text" Size="Size.Small"
+                StartIcon="@Icons.Material.Filled.FilterAltOff" OnClick="OnClear" Disabled="@IsLoading">
+                Clear All
+            </MudButton>
+        </MudStack>
+    }
+</MudPaper>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public int ActiveFilterCount { get; set; }
+    [Parameter] public EventCallback OnClear { get; set; }
+    [Parameter] public bool IsLoading { get; set; }
+}

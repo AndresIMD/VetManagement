@@ -1,0 +1,189 @@
+﻿@page "/exams"
+@using VetManagement.Shared.Components.Filters
+@using VetManagement.Shared.Models.Exams
+@using VetManagement.Shared.Helpers
+@inject NavigationManager Navigation
+@inject ExamApiService ExamApi
+@inject VetManagement.Shared.Services.App.Exams.ExamService ExamService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@attribute [Authorize(Policy = "Exams.Read")]
+
+<PageTitle>Exams</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
+    <PageHeader Title="Exams" Icon="@Icons.Material.Filled.Assessment" />
+
+    <MudPaper Class="pa-6 mb-4 elevation-3 rounded-lg app-surface">
+        <MudGrid>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextFilterField @bind-Value="FilterText" Label="Search by name..." />
+            </MudItem>
+            <MudItem xs="12" md="9" Class="d-flex align-center">
+                <ActiveFilterChips Chips="@BuildActiveChips()" />
+            </MudItem>
+        </MudGrid>
+        <MudStack Row="true" Justify="Justify.FlexEnd" AlignItems="AlignItems.Center" Class="mt-3">
+            <MudStack Row="true" Spacing="2">
+                <MudButton Color="Color.Secondary" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Clear"
+                    OnClick="ClearFilters">Clear filters</MudButton>
+                <MudButton Color="Color.Success" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.AddBox"
+                    OnClick="ShowAddModal">New exam</MudButton>
+            </MudStack>
+        </MudStack>
+    </MudPaper>
+</MudContainer>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2">
+    <MudTable TItem="Exam" Items="@_filtered" Loading="@_isLoading" Striped="true" Hover="true" Bordered="true"
+        FixedHeader="true" RowsPerPage="25">
+        <ToolBarContent></ToolBarContent>
+        <HeaderContent>
+            <MudTh style="width:25%">Name</MudTh>
+            <MudTh style="width:20%">Brand</MudTh>
+            <MudTh style="width:20%">Machine</MudTh>
+            <MudTh style="width:15%">Buy</MudTh>
+            <MudTh style="width:20%; text-align:right">Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate Context="exam">
+            <MudTd DataLabel="Name">@exam.Name</MudTd>
+            <MudTd DataLabel="Brand">@exam.Brand</MudTd>
+            <MudTd DataLabel="Machine">@exam.Machine</MudTd>
+            <MudTd DataLabel="Buy">$@exam.BuyPrice</MudTd>
+            <MudTd DataLabel="Actions" Class="text-end">
+                <MudStack Row="true" Spacing="1" Justify="Justify.FlexEnd">
+                    <MudTooltip Text="Edit">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Variant="Variant.Filled"
+                            Size="Size.Small" OnClick="@(() => ShowEditModal(exam))" />
+                    </MudTooltip>
+                    <MudTooltip Text="Delete">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Filled"
+                            Size="Size.Small" OnClick="@(() => ShowDeleteModal(exam))" />
+                    </MudTooltip>
+                </MudStack>
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+</MudContainer>
+
+@code {
+    private string? FilterText
+    {
+        get => _filterText; set
+        {
+            if (_filterText != value)
+            {
+                _filterText = value; ApplyFilters();
+            }
+        }
+    }
+    private string? _filterText;
+
+    private List<Exam> _all = new();
+    private List<Exam> _filtered = new();
+    private bool _isLoading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _isLoading = true;
+        StateHasChanged();
+        try
+        {
+            _all = await ExamService.GetAllAsync();
+            ApplyFilters();
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ApplyFilters()
+    {
+        IEnumerable<Exam> q = _all;
+        if (!string.IsNullOrWhiteSpace(FilterText))
+        {
+            q = q.Where(r => !string.IsNullOrWhiteSpace(r.Name) &&
+            StringExtensions.ContainsIgnoringAccents(r.Name, FilterText));
+        }
+        _filtered = q.OrderBy(r => r.Name).ToList();
+    }
+
+    private void ClearFilters() => FilterText = null;
+
+    private IEnumerable<FilterChipModel> BuildActiveChips()
+    {
+        if (string.IsNullOrWhiteSpace(FilterText))
+            return Enumerable.Empty<FilterChipModel>();
+        return new[] { new FilterChipModel { Label = $"Name: {FilterText}", Color = Color.Primary, OnClear = () => FilterText =
+null } };
+    }
+
+    private async Task ShowAddModal()
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var parameters = new DialogParameters<Components.Modals.Exams.ExamEditModal>
+        {
+            { x => x.Title, "New exam" },
+            { x => x.TitleIcon, Icons.Material.Filled.Assessment },
+            { x => x.TitleColor, Color.Success }
+        };
+        var dialog = await DialogService.ShowAsync<Components.Modals.Exams.ExamEditModal>(null, parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false }) await LoadAsync();
+    }
+
+    private async Task ShowEditModal(Exam exam)
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var parameters = new DialogParameters<Components.Modals.Exams.ExamEditModal>
+        {
+            { x => x.Initial, exam },
+            { x => x.Title, "Edit exam" },
+            { x => x.TitleIcon, Icons.Material.Filled.Edit },
+            { x => x.TitleColor, Color.Primary }
+        };
+        var dialog = await DialogService.ShowAsync<Components.Modals.Exams.ExamEditModal>(null, parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+            await LoadAsync();
+    }
+
+    private async Task ShowDeleteModal(Exam exam)
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = false };
+        var parameters = new DialogParameters<Components.Modals.Common.ConfirmModal>
+        {
+            { x => x.Title, "Delete exam" },
+            { x => x.Message, $"Are you sure you want to delete '{exam.Name}'?" },
+            { x => x.ButtonConfirmText, "Delete" },
+            { x => x.ButtonCancelText, "Cancel" },
+            { x => x.TitleIcon, Icons.Material.Filled.Delete },
+            { x => x.TitleColor, Color.Error }
+        };
+        var dialog = await DialogService.ShowAsync<Components.Modals.Common.ConfirmModal>(null, parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            try
+            {
+                await ExamApi.DeleteExamAsync(exam.Id);
+                Snackbar.Add("Exam deleted.", Severity.Success);
+                await LoadAsync();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error deleting exam: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+}

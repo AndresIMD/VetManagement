@@ -1,0 +1,31 @@
+﻿@inject VetManagement.Shared.Services.Api.AccountApiService AccountApi
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthStateProvider
+
+@if (AccountApi.MustChangePassword && !Nav.Uri.EndsWith("force-change-password", StringComparison.OrdinalIgnoreCase))
+{
+    Nav.NavigateTo("/force-change-password", true);
+}
+
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(Layout.MainLayout).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="routeData" DefaultLayout="@typeof(Layout.MainLayout)">
+                <NotAuthorized>
+                    <AuthorizeView>
+                        <Authorized Context="authContext">
+                            <MudPaper Class="pa-4 mt-6">
+                                <MudText Color="Color.Error" Typo="Typo.h6">
+                                    You don't have permission to access this page.
+                                </MudText>
+                            </MudPaper>
+                        </Authorized>
+                        <NotAuthorized Context="authContext">
+                            <VetManagement.Shared.Pages.Auth.Login />
+                        </NotAuthorized>
+                    </AuthorizeView>
+                </NotAuthorized>
+            </AuthorizeRouteView>
+        </Found>
+    </Router>
+</CascadingAuthenticationState>

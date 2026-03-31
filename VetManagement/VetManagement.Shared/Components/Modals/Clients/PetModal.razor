@@ -1,0 +1,87 @@
+﻿@using MudBlazor
+@inject ClientPetApiService ClientPetApiService
+
+<MudStack Spacing="2">
+    <MudItem>
+        <MudText Typo="Typo.h6">Select Owner</MudText>
+        <MudSelect T="int" Label="Owner" @bind-Value="selectedOwnerId" Dense="true">
+            <MudSelectItem Value="0">-- New Client --</MudSelectItem>
+            @foreach (var client in AllClients)
+            {
+                <MudSelectItem Value="@client.Id">@client.Name @client.LastName</MudSelectItem>
+            }
+        </MudSelect>
+    </MudItem>
+    <MudItem>
+        @if (selectedOwnerId == 0)
+        {
+            <ClientForm ClientModel="newClientModel"
+                        OnValidSubmitCallback="OnNewClientCreated"
+                        OnCancelCallback="Cancel" />
+        }
+    </MudItem>
+    <MudItem>
+        <PetForm PetModel="PetModel"
+                 Breeds="breeds"
+                 BreedsChanged="OnBreedsChanged"
+                 OnValidSubmitCallback="AddPet"
+                 OnCancelCallback="Cancel" />
+    </MudItem>
+    <MudItem>
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Elevation="0">@errorMessage</MudAlert>
+        }
+    </MudItem>
+</MudStack>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public List<Client> AllClients { get; set; } = new();
+    [Parameter] public Pet PetModel { get; set; } = new Pet { Name = string.Empty, Breed = string.Empty };
+
+    private int selectedOwnerId = 0;
+    private Client newClientModel = new();
+    private List<string> breeds = new();
+    private string? errorMessage;
+
+    protected override void OnInitialized()
+    {
+        selectedOwnerId = AllClients.Any() ? AllClients.First().Id : 0;
+        breeds = Pet.GetBreedsBySpecies(PetModel.Species);
+    }
+
+    private void OnNewClientCreated()
+    {
+        MudDialog.Close(DialogResult.Ok(("newClient", newClientModel)));
+    }
+
+    private async Task AddPet()
+    {
+        if (selectedOwnerId == 0) return;
+        
+        errorMessage = null;
+        try
+        {
+            PetModel.OwnerId = selectedOwnerId;
+            await ClientPetApiService.AddPetAsync(PetModel);
+            MudDialog.Close(DialogResult.Ok(("pet", PetModel)));
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Error saving pet: " + ex.Message;
+        }
+    }
+
+    private Task OnBreedsChanged(List<string> newBreeds)
+    {
+        breeds = new List<string>(newBreeds);
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}

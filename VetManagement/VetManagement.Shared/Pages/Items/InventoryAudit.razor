@@ -1,0 +1,294 @@
+@page "/inventory-audit"
+@inject InventoryMovementApiService InventoryService
+@inject AuditApiService AuditService
+@inject ItemsApiService ItemService
+@attribute [Authorize(Roles = "Admin,Manager")]
+
+@using VetManagement.Shared.Components.Filters
+@using VetManagement.Shared.Components.Audit
+@using VetManagement.Shared.Components.Inputs
+@using VetManagement.Shared.Enums
+@using VetManagement.Shared.Helpers
+@using VetManagement.Shared.Models.Audit
+@using VetManagement.Shared.Models.DTOs
+
+<PageTitle>Inventory History</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
+    <PageHeader Title="Inventory Audit" Icon="@Icons.Material.Filled.HistoryEdu" />
+    <FilterPanel ActiveFilterCount="@GetActiveFilterCount()" OnClear="ClearFilters" IsLoading="false">
+        <MudItem xs="12" sm="6" md="3">
+            <MudTextField @bind-Value="FilterItemName" Label="Search item name..." Variant="Variant.Outlined"
+                Clearable="true" Immediate="true" DebounceInterval="400" Adornment="Adornment.Start"
+                AdornmentIcon="@Icons.Material.Filled.Search" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudTextField @bind-Value="FilterResponsible" Label="Responsible / User" Variant="Variant.Outlined"
+                Clearable="true" Immediate="true" DebounceInterval="400" Adornment="Adornment.Start"
+                AdornmentIcon="@Icons.Material.Filled.Person" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudEnumMultiSelect TEnum="AuditActionType" SelectedItems="@FilterActions"
+                SelectedItemsChanged="@(actions => FilterActions = actions)"
+                AllowedValues="@AuditActionHelper.GetInventoryActions()" Label="Type / Action"
+                Variant="Variant.Outlined" Adornment="Adornment.Start"
+                AdornmentIcon="@Icons.Material.Filled.FilterAlt" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <DateRangeFilter @bind-DateRange="FilterDateRange" Label="Date Range" />
+        </MudItem>
+    </FilterPanel>
+</MudContainer>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2">
+    <MudTable @ref="_table" TItem="AuditLog" ServerData="LoadServerData" Striped="true" Hover="true" Bordered="true"
+        FixedHeader="true" Dense="true">
+        <ToolBarContent></ToolBarContent>
+        <HeaderContent>
+            <MudTh Style="width: 150px;">Date</MudTh>
+            <MudTh Style="width: 120px;">Action</MudTh>
+            <MudTh Style="width: 150px;">User</MudTh>
+            <MudTh Style="width: 150px;">Item</MudTh>
+            <MudTh>Changes</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Date">@context.Date.ToString("dd/MM/yyyy HH:mm")</MudTd>
+            <MudTd DataLabel="Action">
+                <MudChip T="string" Size="Size.Small" Color="GetActionColor(context.Action)" Variant="Variant.Text">
+                    @context.Action.GetDisplayString()
+                </MudChip>
+            </MudTd>
+            <MudTd DataLabel="User">@context.User</MudTd>
+            <MudTd DataLabel="Item">@GetItemName(context.EntityId)</MudTd>
+            <MudTd DataLabel="Changes">
+                <AuditChangesDisplay RawChanges="@context.Changes" />
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudStack AlignItems="AlignItems.Center" Spacing="3" Class="pa-8">
+                <MudIcon Icon="@Icons.Material.Outlined.SearchOff" Size="Size.Large" Color="Color.Secondary"
+                    Style="font-size: 4rem;" />
+                <MudText Typo="Typo.h6" Color="Color.Secondary">No audit logs found</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Tertiary" Align="Align.Center">
+                    @if (GetActiveFilterCount() > 0)
+                    {
+                        <text>Try adjusting your filters or clear them to see all logs.</text>
+                    }
+                    else
+                    {
+                        <text>No audit records are available for this inventory.</text>
+                    }
+                </MudText>
+            </MudStack>
+        </NoRecordsContent>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+</MudContainer>
+
+@code {
+    private MudTable<AuditLog>? _table;
+    private Dictionary<int, string> _itemNames = new();
+
+    private string _filterItemName = "";
+    private string FilterItemName
+    {
+        get => _filterItemName;
+        set
+        {
+            if (_filterItemName != value)
+            {
+                _filterItemName = value;
+                _ = (_table?.ReloadServerData() ?? Task.CompletedTask);
+            }
+        }
+    }
+
+    private List<AuditActionType> _filterActions = [];
+    private List<AuditActionType> FilterActions
+    {
+        get => _filterActions;
+        set
+        {
+            if (_filterActions != value)
+            {
+                _filterActions = value;
+                _ = (_table?.ReloadServerData() ?? Task.CompletedTask);
+            }
+        }
+    }
+
+    private string _filterResponsible = "";
+    private string FilterResponsible
+    {
+        get => _filterResponsible;
+        set
+        {
+            if (_filterResponsible != value)
+            {
+                _filterResponsible = value;
+                _ = (_table?.ReloadServerData() ?? Task.CompletedTask);
+            }
+        }
+    }
+
+    private DateRange? _filterDateRange;
+    private DateRange? FilterDateRange
+    {
+        get => _filterDateRange;
+        set
+        {
+            if (_filterDateRange != value)
+            {
+                _filterDateRange = value;
+                _ = (_table?.ReloadServerData() ?? Task.CompletedTask);
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAllItemsAsync();
+    }
+
+    private async Task LoadAllItemsAsync()
+    {
+        var allItems = await ItemService.GetAllItemsAsync();
+        if (allItems != null)
+        {
+            _itemNames = allItems.ToDictionary(i => i.Id, i => i.Name);
+        }
+    }
+
+    private async Task<TableData<AuditLog>> LoadServerData(TableState state, CancellationToken ct)
+    {
+        DateTime? fromDate = FilterDateRange?.Start?.Date;
+        DateTime? toDate = FilterDateRange?.End?.Date.AddDays(1).AddTicks(-1);
+
+        if (FilterActions.Any())
+        {
+            var allLogs = new List<AuditLog>();
+            var seenIds = new HashSet<int>();
+
+            foreach (var action in FilterActions)
+            {
+                var result = await AuditService.GetLogsPagedAsync(
+                page: 0,
+                pageSize: 10000,
+                entityName: "Item",
+                action: action,
+                user: string.IsNullOrWhiteSpace(FilterResponsible) ? null : FilterResponsible,
+                from: fromDate,
+                to: toDate,
+                ct: ct
+                );
+
+                if (result?.Items != null)
+                {
+                    foreach (var log in result.Items)
+                    {
+                        if (seenIds.Add(log.Id))
+                        {
+                            allLogs.Add(log);
+                        }
+                    }
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(FilterItemName))
+            {
+                allLogs = allLogs.Where(log =>
+                {
+                    var itemName = GetItemName(log.EntityId);
+                    return itemName.Contains(FilterItemName, StringComparison.OrdinalIgnoreCase);
+                }).ToList();
+            }
+
+            allLogs = allLogs.OrderByDescending(l => l.Date).ToList();
+
+            var pagedItems = allLogs
+            .Skip(state.Page * state.PageSize)
+            .Take(state.PageSize)
+            .ToList();
+
+            return new TableData<AuditLog>
+            {
+                Items = pagedItems,
+                TotalItems = allLogs.Count
+            };
+        }
+        else
+        {
+            var result = await AuditService.GetLogsPagedAsync(
+            page: 0,
+            pageSize: 10000,
+            entityName: "Item",
+            action: null,
+            user: string.IsNullOrWhiteSpace(FilterResponsible) ? null : FilterResponsible,
+            from: fromDate,
+            to: toDate,
+            ct: ct
+            );
+
+            var allLogs = result?.Items ?? [];
+
+            if (!string.IsNullOrWhiteSpace(FilterItemName))
+            {
+                allLogs = allLogs.Where(log =>
+                {
+                    var itemName = GetItemName(log.EntityId);
+                    return itemName.Contains(FilterItemName, StringComparison.OrdinalIgnoreCase);
+                }).ToList();
+            }
+
+            var pagedItems = allLogs
+            .Skip(state.Page * state.PageSize)
+            .Take(state.PageSize)
+            .ToList();
+
+            return new TableData<AuditLog>
+            {
+                Items = pagedItems,
+                TotalItems = allLogs.Count
+            };
+        }
+    }
+
+    private void ClearFilters()
+    {
+        _filterItemName = "";
+        _filterActions = [];
+        _filterResponsible = "";
+        _filterDateRange = null;
+        _ = (_table?.ReloadServerData() ?? Task.CompletedTask);
+    }
+
+    private int GetActiveFilterCount()
+    {
+        int count = 0;
+        if (!string.IsNullOrWhiteSpace(FilterItemName)) count++;
+        if (!string.IsNullOrWhiteSpace(FilterResponsible)) count++;
+        if (FilterActions.Any()) count++;
+        if (FilterDateRange != null) count++;
+        return count;
+    }
+
+    private string GetItemName(int entityId)
+    {
+        if (_itemNames.TryGetValue(entityId, out var name))
+            return name;
+        return $"ID {entityId}";
+    }
+
+    private Color GetActionColor(AuditActionType action) => action switch
+    {
+        AuditActionType.Add => Color.Success,
+        AuditActionType.Edit => Color.Info,
+        AuditActionType.Delete => Color.Error,
+        AuditActionType.Ingress or AuditActionType.MassiveStockIngress => Color.Primary,
+        AuditActionType.Egress or AuditActionType.MassiveStockEgress => Color.Warning,
+        AuditActionType.Adjustment => Color.Secondary,
+        _ => Color.Default
+    };
+}

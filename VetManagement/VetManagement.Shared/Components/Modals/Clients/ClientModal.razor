@@ -1,0 +1,38 @@
+﻿@using MudBlazor
+@inject ClientPetApiService _clientpetService
+
+<MudPaper Class="pa-4" Elevation="1">
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <MudAlert Severity="Severity.Error" Elevation="0" Class="mb-2">@errorMessage</MudAlert>
+    }
+    <ClientForm ClientModel="ClientModel"
+                OnValidSubmitCallback="HandleValidSubmit"
+                OnCancelCallback="OnCancel" />
+</MudPaper>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public Client ClientModel { get; set; } = new();
+
+    private string? errorMessage;
+
+    private async Task HandleValidSubmit()
+    {
+        errorMessage = null;
+        try
+        {
+            await _clientpetService.AddClientAsync(ClientModel);
+            MudDialog.Close(DialogResult.Ok(ClientModel));
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Error saving the client: " + ex.Message;
+        }
+    }
+
+    private void OnCancel()
+    {
+        MudDialog.Cancel();
+    }
+}

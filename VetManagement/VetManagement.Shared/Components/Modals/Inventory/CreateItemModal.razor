@@ -1,0 +1,93 @@
+﻿@using VetManagement.Shared.Enums
+@using VetManagement.Shared.Helpers
+@using VetManagement.Shared.Models.Configuration
+@using VetManagement.Shared.Services.Api
+@inherits ModalBase<Item>
+@inject ItemsApiService ItemsService
+@inject IDialogService DialogService
+
+<ModalShell Title="@Title"
+            TitleIcon="@TitleIcon"
+            TitleColor="@TitleColor"
+            IsLoading="@isLoading"
+            PrimaryText="Create"
+            PrimaryLoadingText="Saving..."
+            PrimaryDisabled="@(!isValid)"
+            OnPrimaryClick="HandleValidSubmit"
+            OnCancelClick="OnCancelRequested">
+    <ItemForm ItemModel="ItemModel"
+              DrugModel="DrugModel"
+              OnValidSubmitCallback="HandleValidSubmit"
+              OnCancelCallback="OnCancelRequested"
+              BarcodeReadonly="BarcodeReadonly"
+              OnValidChanged="OnFormValidChanged"
+              OnDirtyChanged="OnFormDirtyChanged" />
+</ModalShell>
+
+@code {
+    [Parameter] public bool BarcodeReadonly { get; set; } = false;
+
+    private Item ItemModel = Item.GetEmpty();
+    private Drug DrugModel = Drug.GetEmpty();
+    private bool _isFormDirty;
+
+    protected async Task HandleValidSubmit()
+    {
+        isLoading = true;
+        try
+        {
+            Item entity;
+            if (ItemModel.Type == ItemType.Drug)
+            {
+                ItemModel.CopyPropertiesTo(DrugModel);
+                entity = DrugModel;
+            }
+            else
+            {
+                entity = ItemModel;
+            }
+
+            var options = ItemJsonOptions.GetPolymorphicOptions();
+            var entityJson = System.Text.Json.JsonSerializer.Serialize(entity, options);
+            await ItemsService.AddItemAsync(entity);
+            Snackbar.Add("Item created successfully.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(entity));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error creating item: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task OnCancelRequested()
+    {
+        if (_isFormDirty)
+        {
+            var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = false };
+            var parameters = new DialogParameters<Components.Modals.Common.ConfirmModal>
+            {
+                { x => x.Title, "Discard changes" },
+                { x => x.Message, "There are unsaved changes. Do you want to exit without saving?" },
+                { x => x.ButtonConfirmText, "Exit" },
+                { x => x.ButtonCancelText, "Keep editing" },
+                { x => x.TitleIcon, Icons.Material.Filled.Warning },
+                { x => x.TitleColor, Color.Warning }
+            };
+            var dialog = await DialogService.ShowAsync<Components.Modals.Common.ConfirmModal>(null, parameters, options);
+            var result = await dialog.Result;
+            if (result is { Canceled: true })
+                return;
+        }
+        OnCancel();
+    }
+
+    private Task OnFormDirtyChanged(bool dirty)
+    {
+        _isFormDirty = dirty;
+        return Task.CompletedTask;
+    }
+}
