@@ -10,7 +10,7 @@ namespace VetManagement.Api.Controllers.Inventory;
 
 [ApiController]
 [Route("api/inventory/movements")]
-[Authorize(Policy = "Inventory.READ")]
+[Authorize(Policy = "Inventory.Read")]
 public class InventoryMovementsController(InventoryMovementService movementService) : ApiControllerBase
 {
     [HttpGet]
@@ -47,7 +47,7 @@ public class InventoryMovementsController(InventoryMovementService movementServi
     }
 
     [HttpPost]
-    [Authorize(Policy = "Inventory.UPDATE")]
+    [Authorize(Policy = "Inventory.Update")]
     public async Task<IActionResult> AddMovementAsync([FromBody] InventoryMovement movement)
     {
         await movementService.AddMovementAsync(movement, GetUserName());
@@ -55,7 +55,7 @@ public class InventoryMovementsController(InventoryMovementService movementServi
     }
 
     [HttpPost("adjust-stock")]
-    [Authorize(Policy = "Inventory.UPDATE")]
+    [Authorize(Policy = "Inventory.Update")]
     public async Task<IActionResult> AdjustStockAsync([FromBody] AdjustStockRequest request)
     {
         var result = await movementService.AdjustStockAsync(request.ItemId, request.Amount, request.Reason, GetUserName());
@@ -65,7 +65,7 @@ public class InventoryMovementsController(InventoryMovementService movementServi
     }
 
     [HttpPost("mass-ingress")]
-    [Authorize(Policy = "Inventory.UPDATE")]
+    [Authorize(Policy = "Inventory.Update")]
     public async Task<IActionResult> MassIngressAsync([FromBody] List<MassStockUpdateRequest> items)
     {
         var updated = await movementService.MassStockUpdateAsync(items.Select(MapToLegacyDto).ToList(), true, GetUserName());
@@ -75,7 +75,7 @@ public class InventoryMovementsController(InventoryMovementService movementServi
     }
 
     [HttpPost("mass-egress")]
-    [Authorize(Policy = "Inventory.UPDATE")]
+    [Authorize(Policy = "Inventory.Update")]
     public async Task<IActionResult> MassEgressAsync([FromBody] List<MassStockUpdateRequest> items)
     {
         var updated = await movementService.MassStockUpdateAsync(items.Select(MapToLegacyDto).ToList(), false, GetUserName());

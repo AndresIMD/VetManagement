@@ -9,7 +9,7 @@ namespace VetManagement.Api.Controllers.Inventory;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Policy = "Inventory.READ")]
+[Authorize(Policy = "Inventory.Read")]
 public class ItemsController(ItemService itemService, InventoryQueryService queryService) : ApiControllerBase
 {
     [HttpGet]
@@ -38,7 +38,7 @@ public class ItemsController(ItemService itemService, InventoryQueryService quer
     }
 
     [HttpPost]
-    [Authorize(Policy = "Inventory.CREATE")]
+    [Authorize(Policy = "Inventory.Create")]
     public async Task<IActionResult> AddItemAsync([FromBody] Item item)
     {
         if (item == null)
@@ -52,7 +52,7 @@ public class ItemsController(ItemService itemService, InventoryQueryService quer
     }
 
     [HttpPut("{id}")]
-    [Authorize(Policy = "Inventory.UPDATE")]
+    [Authorize(Policy = "Inventory.Update")]
     public async Task<IActionResult> EditItemAsync(int id, [FromBody] Item item)
     {
         if (item == null)
@@ -74,7 +74,7 @@ public class ItemsController(ItemService itemService, InventoryQueryService quer
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Policy = "Inventory.DELETE")]
+    [Authorize(Policy = "Inventory.Delete")]
     public async Task<IActionResult> DeleteItemAsync(int id)
     {
         var result = await itemService.DeleteAsync(id, GetUserName());

@@ -7,7 +7,7 @@ namespace VetManagement.Api.Controllers.Audit;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Policy = "Audit.READ")]
+[Authorize(Policy = "Audit.Read")]
 public class AuditController(AuditService auditService) : ApiControllerBase
 {
     [HttpGet("logs/paged")]
