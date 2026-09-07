@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  DOTNET_VERSION: '10.0.x'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore VetManagement.sln
+
+      - name: Build API (Api + Application + Infrastructure + Domain + Contracts + Shared)
+        run: dotnet build src/VetManagement.Api/VetManagement.Api.csproj --no-restore
+
+      - name: Build WASM client
+        run: dotnet build src/VetManagement.WASM/VetManagement.WASM.csproj --no-restore
+
+      # Note: the MAUI project (src/VetManagement) targets android/ios/windows
+      # TFMs and requires platform workloads, so it is not built on Linux runners.
+
+      - name: Test
+        run: dotnet test tests/VetManagement.Tests/VetManagement.Tests.csproj --no-restore --no-build --verbosity minimal
