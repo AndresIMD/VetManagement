@@ -7,4 +7,9 @@
     <RootNamespace>VetManagement.Contracts</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- Domain enums are referenced by transport DTOs for type-safe payloads. -->
+    <ProjectReference Include="..\VetManagement.Domain\VetManagement.Domain.csproj" />
+  </ItemGroup>
+
 </Project>
