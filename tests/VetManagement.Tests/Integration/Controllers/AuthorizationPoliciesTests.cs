@@ -48,13 +48,13 @@ public class AuthorizationPoliciesTests : IClassFixture<CustomWebAppFactory>
     [InlineData("Users.Create")]
     [InlineData("Users.ManageRoles")]
     [InlineData("System.SendEmail")]
-    public void Policy_IsRegistered_And_CanBeResolved(string policyName)
+    public async Task Policy_IsRegistered_And_CanBeResolved(string policyName)
     {
         // Arrange
         var policyProvider = _serviceProvider.GetRequiredService<IAuthorizationPolicyProvider>();
 
         // Act & Assert
-        var policy = policyProvider.GetPolicyAsync(policyName).GetAwaiter().GetResult();
+        var policy = await policyProvider.GetPolicyAsync(policyName);
         policy.Should().NotBeNull($"Policy '{policyName}' must be registered in Program.cs");
     }
 }
