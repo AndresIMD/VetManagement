@@ -2,7 +2,6 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 using VetManagement.Api.Authorization;
 using VetManagement.Api.Services;
 using VetManagement.Application.Services;
@@ -15,7 +14,6 @@ namespace VetManagement.Api.Controllers.Setup;
 /// </summary>
 [ApiController]
 [Route("api/setup")]
-[EnableRateLimiting(policyName: "fixed-window")]
 public class SetupController(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager, UserManagementService userService, IConfiguration config, AuditService audit) : ApiControllerBase
 {
     [HttpPost("bootstrap")]
