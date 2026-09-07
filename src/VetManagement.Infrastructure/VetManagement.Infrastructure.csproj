@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.10" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.10" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.10" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VetManagement.Domain\VetManagement.Domain.csproj" />
+    <ProjectReference Include="..\VetManagement.Application\VetManagement.Application.csproj" />
+    <!-- Transitional reference: removed feature-by-feature as legacy models leave Shared. -->
+    <ProjectReference Include="..\VetManagement.Shared\VetManagement.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

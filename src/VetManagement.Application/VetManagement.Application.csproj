@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\VetManagement.Domain\VetManagement.Domain.csproj" />
+    <ProjectReference Include="..\VetManagement.Contracts\VetManagement.Contracts.csproj" />
+    <!-- Transitional reference: removed feature-by-feature as legacy models leave Shared. -->
+    <ProjectReference Include="..\VetManagement.Shared\VetManagement.Shared.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.10" />
+  </ItemGroup>
+
+</Project>
