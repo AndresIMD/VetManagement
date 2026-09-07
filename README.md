@@ -27,17 +27,23 @@ I built this to learn Clean Architecture, explore Blazor WebAssembly, and work w
 The solution is organized using Clean Architecture:
 
 ```
-VetManagement/
-├── Api/  # REST API endpoints
-├── Application/      # Business logic & use cases
-├── Infrastructure/   # Data access (EF Core, repositories)
-├── Shared/       # Models, DTOs, Blazor components
-├── WASM/# Web client (Blazor WebAssembly)
-└── MAUI/             # Desktop/mobile app
+VetManagement.sln
+├── src/
+│   ├── VetManagement.Domain/         # Domain entities & enums (no dependencies)
+│   ├── VetManagement.Contracts/      # API transport contracts (DTOs, requests)
+│   ├── VetManagement.Application/    # Business logic & use cases
+│   ├── VetManagement.Infrastructure/ # Data access (EF Core, repositories, UoW)
+│   ├── VetManagement.Api/            # REST API endpoints, auth, migrations
+│   ├── VetManagement.Shared/         # Blazor UI: pages, components, API clients
+│   ├── VetManagement.WASM/           # Web client (Blazor WebAssembly)
+│   └── VetManagement/                # Desktop/mobile client (.NET MAUI)
+├── tests/
+│   └── VetManagement.Tests/          # Unit + integration tests
+└── docs/                             # Architecture & coding guidelines
 ```
 
 **Why this structure?**  
-Separating business logic (Application) from data access (Infrastructure) makes the code easier to test and maintain. The API layer only handles HTTP concerns.
+Separating business logic (Application) from data access (Infrastructure) makes the code easier to test and maintain. The API layer only handles HTTP concerns. `Shared` is the UI layer only — it must never be referenced by Application or Infrastructure.
 
 ## Key Features
 
@@ -70,7 +76,7 @@ Separating business logic (Application) from data access (Infrastructure) makes 
    
    Navigate to the API project and set user secrets:
 ```bash
-   cd VetManagement/VetManagement.Api
+   cd src/VetManagement.Api
    
    dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=(localdb)\\mssqllocaldb;Database=VetManagement;Trusted_Connection=True;"
    dotnet user-secrets set "Jwt:Key" "your-secret-key-at-least-32-characters-long"
@@ -81,21 +87,21 @@ Separating business logic (Application) from data access (Infrastructure) makes 
 
 3. **Run database migrations**
    ```bash
-   dotnet ef database update
+   dotnet ef database update --project src/VetManagement.Api
    ```
    
    In development mode, migrations run automatically when you start the API.
 
 4. **Start the API**
    ```bash
-   dotnet run --project VetManagement.Api
+   dotnet run --project src/VetManagement.Api
 ```
    
    API runs at `https://localhost:7213` (check console for exact port)
 
 5. **Configure the web client**
    
-   Edit `VetManagement.WASM/wwwroot/config.json`:
+   Edit `src/VetManagement.WASM/wwwroot/config.json`:
    ```json
    {
      "LocalApiBaseUrl": "https://localhost:7213"
@@ -104,7 +110,7 @@ Separating business logic (Application) from data access (Infrastructure) makes 
 
 6. **Start the web client**
    ```bash
-   dotnet run --project VetManagement.WASM
+   dotnet run --project src/VetManagement.WASM
    ```
    
    Web app runs at `https://localhost:7237`
@@ -131,10 +137,10 @@ dotnet format
 
 ```bash
 # Create a new migration
-dotnet ef migrations add MigrationName --project VetManagement.Api
+dotnet ef migrations add MigrationName --project src/VetManagement.Api
 
 # Apply migrations
-dotnet ef database update --project VetManagement.Api
+dotnet ef database update --project src/VetManagement.Api
 ```
 
 ### Project Patterns

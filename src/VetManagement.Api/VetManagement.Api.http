@@ -1,6 +1,15 @@
-@SPLabHybrid.Api_HostAddress = http://localhost:5064
+@VetManagement.Api_HostAddress = https://localhost:44395
 
-GET {{SPLabHybrid.Api_HostAddress}}/weatherforecast/
+### Health Check
+GET {{VetManagement.Api_HostAddress}}/healthz
+Accept: application/json
+
+### Items - Paged
+GET {{VetManagement.Api_HostAddress}}/api/items/paged?page=0&pageSize=10
+Accept: application/json
+
+### Audit Logs - Paged
+GET {{VetManagement.Api_HostAddress}}/api/audit/logs/paged?page=0&pageSize=10
 Accept: application/json
 
 ###

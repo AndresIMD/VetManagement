@@ -41,10 +41,5 @@
         <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </None>
   </ItemGroup>
-  
-  <ItemGroup>
-    <Folder Include="UI\" />
-    <Folder Include="Utility\" />
-  </ItemGroup>
 
 </Project>
