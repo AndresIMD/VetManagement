@@ -1,8 +1,11 @@
 # VetManagement - Project State Tracker
 
-**Last Updated:** 2026-09-08  
-**Current Branch:** main  
-**HEAD:** 33d8246 (F1 additive)
+**Last Updated:** 2026-10-01  
+**Current Branch:** refactor/solution-structure  
+
+**Target dependency direction:** Domain ← Application ← Infrastructure ← Api; Contracts is consumed by Api and all clients.
+Solution folders: Core (Domain, Application, Contracts) · Infrastructure · Server (Api) · Clients (Shared, WASM, MAUI, SPVetClinic) · Tests.
+Backend projects (Application, Infrastructure, Api) must stop referencing Shared — F2 moves Client, Pet, Exams, MedicalVisit, AuditLog and enums from `Shared/Models` to Domain.
 
 ---
 
