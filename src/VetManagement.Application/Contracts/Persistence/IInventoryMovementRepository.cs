@@ -1,5 +1,5 @@
-using VetManagement.Shared.Enums;
-using VetManagement.Shared.Models.Inventory;
+using VetManagement.Domain.Enums;
+using VetManagement.Domain.Inventory;
 
 namespace VetManagement.Application.Contracts.Persistence;
 

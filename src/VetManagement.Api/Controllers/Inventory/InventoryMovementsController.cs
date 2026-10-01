@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VetManagement.Application.Services;
+using VetManagement.Contracts.Common;
 using VetManagement.Contracts.Inventory;
-using VetManagement.Shared.Enums;
 using VetManagement.Shared.Models.DTOs;
-using VetManagement.Shared.Models.Inventory;
+using DomainInventoryMovement = VetManagement.Domain.Inventory.InventoryMovement;
+using DomainInventoryMovementType = VetManagement.Domain.Enums.InventoryMovementType;
 
 namespace VetManagement.Api.Controllers.Inventory;
 
@@ -16,13 +17,13 @@ public class InventoryMovementsController(InventoryMovementService movementServi
     [HttpGet]
     public async Task<IActionResult> GetMovementsFilteredAsync(
         [FromQuery] string? itemName = null,
-        [FromQuery] InventoryMovementType? type = null,
+        [FromQuery] DomainInventoryMovementType? type = null,
         [FromQuery] string? responsible = null,
         [FromQuery] DateTime? from = null,
         [FromQuery] DateTime? to = null)
     {
         var movements = await movementService.GetMovementsFilteredAsync(itemName, type, responsible, from, to);
-        return Ok(movements);
+        return Ok(movements.Select(MapToDto).ToList());
     }
 
     [HttpGet("paged")]
@@ -30,26 +31,37 @@ public class InventoryMovementsController(InventoryMovementService movementServi
         [FromQuery] int page = 0,
         [FromQuery] int pageSize = 25,
         [FromQuery] int? itemId = null,
-        [FromQuery] InventoryMovementType? type = null,
+        [FromQuery] DomainInventoryMovementType? type = null,
         [FromQuery] string? responsible = null,
         [FromQuery] DateTime? from = null,
         [FromQuery] DateTime? to = null)
     {
         var result = await movementService.GetMovementsFilteredPagedAsync(page, pageSize, itemId, type, responsible, from, to);
-        return Ok(result);
+        return Ok(new PagedResponse<MovementDto>(
+            result.Items.Select(MapToDto).ToList(),
+            result.TotalCount,
+            result.Page,
+            result.PageSize));
     }
 
     [HttpGet("{itemId}")]
     public async Task<IActionResult> GetMovementsByItemIdAsync(int itemId)
     {
         var movements = await movementService.GetMovementsByItemIdAsync(itemId);
-        return Ok(movements);
+        return Ok(movements.Select(MapToDto).ToList());
     }
 
     [HttpPost]
     [Authorize(Policy = "Inventory.Update")]
-    public async Task<IActionResult> AddMovementAsync([FromBody] InventoryMovement movement)
+    public async Task<IActionResult> AddMovementAsync([FromBody] MovementCreateRequest request)
     {
+        var movement = new DomainInventoryMovement
+        {
+            ItemId = request.ItemId,
+            Type = request.Type,
+            Quantity = request.Quantity,
+            Reason = request.Reason
+        };
         await movementService.AddMovementAsync(movement, GetUserName());
         return Ok();
     }
@@ -90,5 +102,17 @@ public class InventoryMovementsController(InventoryMovementService movementServi
         Name = request.Name,
         Barcode = request.Barcode,
         Quantity = request.Quantity
+    };
+
+    private static MovementDto MapToDto(DomainInventoryMovement movement) => new()
+    {
+        Id = movement.Id,
+        ItemId = movement.ItemId,
+        ItemName = movement.Item?.Name ?? string.Empty,
+        Type = movement.Type,
+        Quantity = movement.Quantity,
+        Date = movement.Date,
+        Responsible = movement.Responsible,
+        Reason = movement.Reason
     };
 }

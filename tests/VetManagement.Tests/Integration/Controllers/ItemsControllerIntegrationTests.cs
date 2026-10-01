@@ -2,10 +2,10 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using VetManagement.Application.Contracts.Persistence;
 using VetManagement.Application.Services;
+using VetManagement.Domain.Enums;
+using VetManagement.Domain.Inventory;
 using VetManagement.Infrastructure.Data;
 using VetManagement.Infrastructure.Persistence;
-using VetManagement.Shared.Enums;
-using VetManagement.Shared.Models.Core;
 
 namespace VetManagement.Tests.Integration.Controllers;
 

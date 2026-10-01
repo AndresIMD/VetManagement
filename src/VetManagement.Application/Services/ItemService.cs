@@ -1,8 +1,9 @@
 using System.Text.Json;
 using VetManagement.Application.Contracts.Persistence;
 using VetManagement.Application.Contracts.Services;
-using VetManagement.Shared.Enums;
-using VetManagement.Shared.Models.Core;
+using VetManagement.Domain.Inventory;
+using AuditActionType = VetManagement.Shared.Enums.AuditActionType;
+using ItemType = VetManagement.Domain.Enums.ItemType;
 
 namespace VetManagement.Application.Services;
 

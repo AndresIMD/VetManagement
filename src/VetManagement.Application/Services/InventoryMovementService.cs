@@ -1,12 +1,12 @@
 using System.Text.Json;
 using VetManagement.Application.Contracts.Persistence;
 using VetManagement.Application.Contracts.Services;
+using VetManagement.Domain.Inventory;
 using VetManagement.Shared.Constants;
-using VetManagement.Shared.Enums;
 using VetManagement.Shared.Helpers;
-using VetManagement.Shared.Models.Core;
 using VetManagement.Shared.Models.DTOs;
-using VetManagement.Shared.Models.Inventory;
+using AuditActionType = VetManagement.Shared.Enums.AuditActionType;
+using DomainInventoryMovementType = VetManagement.Domain.Enums.InventoryMovementType;
 
 namespace VetManagement.Application.Services;
 
@@ -25,7 +25,7 @@ public class InventoryMovementService(IUnitOfWork unitOfWork, IRealtimeNotificat
 
     public async Task<List<InventoryMovement>> GetMovementsFilteredAsync(
         string? itemName = null,
-        InventoryMovementType? type = null,
+        DomainInventoryMovementType? type = null,
         string? responsible = null,
         DateTime? from = null,
         DateTime? to = null)
@@ -46,7 +46,7 @@ public class InventoryMovementService(IUnitOfWork unitOfWork, IRealtimeNotificat
         int page = 0,
         int pageSize = 25,
         int? itemId = null,
-        InventoryMovementType? type = null,
+        DomainInventoryMovementType? type = null,
         string? responsible = null,
         DateTime? from = null,
         DateTime? to = null)
@@ -82,7 +82,9 @@ public class InventoryMovementService(IUnitOfWork unitOfWork, IRealtimeNotificat
         await unitOfWork.InventoryMovements.AddAsync(movement);
         await unitOfWork.SaveChangesAsync();
 
-        await LogAuditAsync(nameof(InventoryMovement), movement.Id, movement.Type.ToAuditActionType(), JsonSerializer.Serialize(movement), userName);
+        await LogAuditAsync(nameof(InventoryMovement), movement.Id,
+            ((VetManagement.Shared.Enums.InventoryMovementType)movement.Type).ToAuditActionType(),
+            JsonSerializer.Serialize(movement), userName);
 
         if (notificationService is not null)
         {
@@ -102,7 +104,7 @@ public class InventoryMovementService(IUnitOfWork unitOfWork, IRealtimeNotificat
 
         int oldStock = item.Stock;
         item.Stock += amount;
-        var moveType = amount > 0 ? InventoryMovementType.Ingress : InventoryMovementType.Egress;
+        var moveType = amount > 0 ? DomainInventoryMovementType.Ingress : DomainInventoryMovementType.Egress;
 
         unitOfWork.Items.Update(item);
 
@@ -164,15 +166,16 @@ public class InventoryMovementService(IUnitOfWork unitOfWork, IRealtimeNotificat
             await unitOfWork.InventoryMovements.AddAsync(new()
             {
                 ItemId = item.Id,
-                Type = isIngress ? InventoryMovementType.MassiveStockIngress : InventoryMovementType.MassiveStockEgress,
+                Type = isIngress ? DomainInventoryMovementType.MassiveStockIngress : DomainInventoryMovementType.MassiveStockEgress,
                 Quantity = appliedQuantity,
                 Date = DateTime.UtcNow,
                 Reason = isIngress ? InventoryReasons.MASSIVE_INGRESS : InventoryReasons.MASSIVE_EGRESS,
                 Responsible = userName
             });
 
-            var movementType = isIngress ? InventoryMovementType.MassiveStockIngress : InventoryMovementType.MassiveStockEgress;
-            await LogAuditAsync(nameof(Item), item.Id, movementType.ToAuditActionType(),
+            var movementType = isIngress ? DomainInventoryMovementType.MassiveStockIngress : DomainInventoryMovementType.MassiveStockEgress;
+            await LogAuditAsync(nameof(Item), item.Id,
+                ((VetManagement.Shared.Enums.InventoryMovementType)movementType).ToAuditActionType(),
                 $"Stock before: {oldStock}, Stock after: {item.Stock}, Applied quantity: {appliedQuantity}, ID: {item.Id}, Barcode: {item.Barcode}", userName);
 
             changedItems.Add((item.Id, item.Stock));

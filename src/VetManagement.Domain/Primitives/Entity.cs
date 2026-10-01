@@ -5,5 +5,5 @@ namespace VetManagement.Domain.Primitives;
 /// </summary>
 public abstract class Entity<TId>(TId id) where TId : notnull
 {
-    public TId Id { get; protected init; } = id;
+    public TId Id { get; set; } = id;
 }

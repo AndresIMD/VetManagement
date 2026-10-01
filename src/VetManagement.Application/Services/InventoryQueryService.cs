@@ -1,24 +1,28 @@
 using VetManagement.Application.Contracts.Persistence;
-using VetManagement.Shared.Enums;
-using VetManagement.Shared.Models.Core;
-using VetManagement.Shared.Models.DTOs;
+using VetManagement.Contracts.Common;
+using VetManagement.Contracts.Inventory;
+using VetManagement.Domain.Inventory;
+using DomainItemSortField = VetManagement.Domain.Enums.ItemSortField;
+using DomainItemType = VetManagement.Domain.Enums.ItemType;
+using DomainSortDirection = VetManagement.Domain.Enums.SortDirection;
+using DomainStockAlertFilter = VetManagement.Domain.Enums.StockAlertFilter;
 
 namespace VetManagement.Application.Services;
 
 public class InventoryQueryService(IUnitOfWork unitOfWork)
 {
-    public async Task<PagedResult<InventoryItemDTO>> GetItemsPagedAsync(
+    public async Task<PagedResponse<InventoryItemDto>> GetItemsPagedAsync(
         string? search,
-        ItemType? type,
+        DomainItemType? type,
         int page,
         int pageSize,
-        StockAlertFilter? alertFilter = null,
-        ItemSortField? sortBy = null,
-        SortDirection sortDirection = SortDirection.Ascending)
+        DomainStockAlertFilter? alertFilter = null,
+        DomainItemSortField? sortBy = null,
+        DomainSortDirection sortDirection = DomainSortDirection.Ascending)
     {
         var (items, totalCount) = await unitOfWork.Items.GetPagedListAsync(search, type, page, pageSize, alertFilter, sortBy, sortDirection);
 
-        var pageItems = items.Select(i => new InventoryItemDTO
+        var pageItems = items.Select(i => new InventoryItemDto
         {
             Id = i.Id,
             Name = i.Name,
@@ -32,12 +36,6 @@ public class InventoryQueryService(IUnitOfWork unitOfWork)
             LowStockThreshold = i.LowStockThreshold
         }).ToList();
 
-        return new()
-        {
-            Items = pageItems,
-            TotalCount = totalCount,
-            Page = page,
-            PageSize = pageSize
-        };
+        return new(pageItems, totalCount, page, pageSize);
     }
 }

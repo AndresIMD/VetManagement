@@ -1,9 +1,12 @@
 using System.Net.Http.Json;
+using VetManagement.Contracts.Common;
+using VetManagement.Contracts.Inventory;
 using VetManagement.Shared.Constants;
 using VetManagement.Shared.Enums;
 using VetManagement.Shared.Models.Configuration;
 using VetManagement.Shared.Models.DTOs;
 using VetManagement.Shared.Models.Inventory;
+using DomainInventoryMovementType = VetManagement.Domain.Enums.InventoryMovementType;
 
 namespace VetManagement.Shared.Services.Api;
 
@@ -13,14 +16,16 @@ public class InventoryMovementApiService(HttpClient http)
     {
         var response = await http.GetAsync(ApiRouteConstants.INVENTORY_MOVEMENTS_BASE);
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<List<InventoryMovement>>(ItemJsonOptions.GetPolymorphicOptions());
+        var movements = await response.Content.ReadFromJsonAsync<List<MovementDto>>();
+        return movements?.Select(MapToShared).ToList();
     }
 
     public async Task<List<InventoryMovement>> GetMovementsByItemIdAsync(int itemId)
     {
         var response = await http.GetAsync(string.Format(ApiRouteConstants.INVENTORY_MOVEMENT_BY_ITEM, itemId));
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<List<InventoryMovement>>(ItemJsonOptions.GetPolymorphicOptions()) ?? [];
+        var movements = await response.Content.ReadFromJsonAsync<List<MovementDto>>();
+        return movements?.Select(MapToShared).ToList() ?? [];
     }
 
     public async Task<List<InventoryMovement>> GetMovementsFilteredAsync(
@@ -50,7 +55,8 @@ public class InventoryMovementApiService(HttpClient http)
 
         var response = await http.GetAsync(url);
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<List<InventoryMovement>>(ItemJsonOptions.GetPolymorphicOptions()) ?? [];
+        var movements = await response.Content.ReadFromJsonAsync<List<MovementDto>>();
+        return movements?.Select(MapToShared).ToList() ?? [];
     }
 
     public async Task<PagedResult<InventoryMovement>?> GetMovementsFilteredPagedAsync(
@@ -83,12 +89,27 @@ public class InventoryMovementApiService(HttpClient http)
 
         var response = await http.GetAsync(url);
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<PagedResult<InventoryMovement>>(ItemJsonOptions.GetPolymorphicOptions());
+        var result = await response.Content.ReadFromJsonAsync<PagedResponse<MovementDto>>();
+        return result is null
+            ? null
+            : new PagedResult<InventoryMovement>
+            {
+                Items = result.Items.Select(MapToShared).ToList(),
+                TotalCount = result.TotalCount,
+                Page = result.Page,
+                PageSize = result.PageSize
+            };
     }
 
     public async Task AddInventoryMovementAsync(InventoryMovement movement)
     {
-        var response = await http.PostAsJsonAsync(ApiRouteConstants.INVENTORY_MOVEMENTS_BASE, movement);
+        var response = await http.PostAsJsonAsync(ApiRouteConstants.INVENTORY_MOVEMENTS_BASE, new MovementCreateRequest
+        {
+            ItemId = movement.ItemId,
+            Type = (DomainInventoryMovementType)movement.Type,
+            Quantity = movement.Quantity,
+            Reason = movement.Reason
+        });
         response.EnsureSuccessStatusCode();
     }
 
@@ -106,13 +127,37 @@ public class InventoryMovementApiService(HttpClient http)
 
     public async Task MassiveEntryAsync(List<InventoryMassUpdateDTO> items)
     {
-        var response = await http.PostAsJsonAsync(ApiRouteConstants.INVENTORY_MASS_INGRESS, items);
+        var response = await http.PostAsJsonAsync(ApiRouteConstants.INVENTORY_MASS_INGRESS, items.Select(MapToContract).ToList());
         response.EnsureSuccessStatusCode();
     }
 
     public async Task MassiveExitAsync(List<InventoryMassUpdateDTO> items)
     {
-        var response = await http.PostAsJsonAsync(ApiRouteConstants.INVENTORY_MASS_EGRESS, items);
+        var response = await http.PostAsJsonAsync(ApiRouteConstants.INVENTORY_MASS_EGRESS, items.Select(MapToContract).ToList());
         response.EnsureSuccessStatusCode();
     }
+
+    private static InventoryMovement MapToShared(MovementDto movement) => new()
+    {
+        Id = movement.Id,
+        ItemId = movement.ItemId,
+        Item = new()
+        {
+            Id = movement.ItemId,
+            Name = movement.ItemName
+        },
+        Type = (InventoryMovementType)movement.Type,
+        Quantity = movement.Quantity,
+        Date = movement.Date,
+        Responsible = movement.Responsible,
+        Reason = movement.Reason
+    };
+
+    private static MassStockUpdateRequest MapToContract(InventoryMassUpdateDTO item) => new()
+    {
+        ItemId = item.ItemId,
+        Name = item.Name,
+        Barcode = item.Barcode,
+        Quantity = item.Quantity
+    };
 }

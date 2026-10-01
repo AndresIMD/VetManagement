@@ -1,7 +1,7 @@
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using VetManagement.Infrastructure.Data;
-using VetManagement.Shared.Models.Core;
+using VetManagement.Domain.Inventory;
 
 namespace VetManagement.Api.Services;
 

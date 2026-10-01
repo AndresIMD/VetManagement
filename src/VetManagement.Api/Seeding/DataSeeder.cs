@@ -6,6 +6,10 @@ using VetManagement.Shared.Models.Audit;
 using VetManagement.Shared.Models.Core;
 using VetManagement.Shared.Models.Exams;
 using VetManagement.Shared.Models.Medical;
+using DomainItemType = VetManagement.Domain.Enums.ItemType;
+using DomainItem = VetManagement.Domain.Inventory.Item;
+using DomainDrug = VetManagement.Domain.Inventory.Drug;
+using DomainDosageRange = VetManagement.Domain.Inventory.DosageRange;
 
 namespace VetManagement.Api.Seeding;
 
@@ -125,9 +129,9 @@ public class DataSeeder(
         for (int i = 0; i < 20; i++)
         {
             var name = $"{materialNames[random.Next(materialNames.Length)]} - {i + 1}";
-            var item = new Item(
+            var item = new DomainItem(
                 name: name,
-                type: ItemType.Material,
+                type: DomainItemType.Material,
                 barcode: $"MAT-{1000 + i}",
                 description: $"Standard medical material: {name}",
                 stock: random.Next(10, 500),
@@ -144,16 +148,16 @@ public class DataSeeder(
             var baseName = drugNames[random.Next(drugNames.Length)];
             var name = $"{baseName} {random.Next(10, 100)}mg";
 
-            var drug = new Drug(
-                type: ItemType.Drug,
+            var drug = new DomainDrug(
+                type: DomainItemType.Drug,
                 name: name,
                 barcode: $"DRUG-{2000 + i}",
                 description: $"Veterinary drug: {name}",
                 compound: baseName,
                 ml: random.Next(10, 500),
                 concentration: (float)random.NextDouble() * 100,
-                dosageDog: new DosageRange(random.Next(5, 10), random.Next(15, 20)),
-                dosageCat: new DosageRange(random.Next(2, 5), random.Next(8, 12)),
+                dosageDog: new DomainDosageRange(random.Next(5, 10), random.Next(15, 20)),
+                dosageCat: new DomainDosageRange(random.Next(2, 5), random.Next(8, 12)),
                 stock: random.Next(5, 100),
                 sellPrice: random.Next(500, 5000) * 10,
                 brand: brands[random.Next(brands.Length)]

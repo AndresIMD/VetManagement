@@ -1,7 +1,7 @@
 using System.Collections.Frozen;
 using System.Runtime.CompilerServices;
 using VetManagement.Application.Contracts.Persistence;
-using VetManagement.Shared.Models.Core;
+using VetManagement.Domain.Inventory;
 
 namespace VetManagement.Application.Services;
 

@@ -2,12 +2,13 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
-using VetManagement.Shared.Enums;
+using VetManagement.Domain.Enums;
+using VetManagement.Domain.Inventory;
 using VetManagement.Shared.Models.Audit;
-using VetManagement.Shared.Models.Core;
 using VetManagement.Shared.Models.Exams;
-using VetManagement.Shared.Models.Inventory;
 using VetManagement.Shared.Models.Medical;
+using Client = VetManagement.Shared.Models.Core.Client;
+using Pet = VetManagement.Shared.Models.Core.Pet;
 
 namespace VetManagement.Infrastructure.Data;
 

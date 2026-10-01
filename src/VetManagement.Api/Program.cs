@@ -308,12 +308,14 @@ app.MapHealthChecks("/healthz").AllowAnonymous();
 if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
 
 // Database Migration & Seeding
-using (var scope = app.Services.CreateScope())
+if (!app.Environment.IsEnvironment("Testing"))
 {
+    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     try
     {
         await db.Database.MigrateAsync();
+
         var seeder = scope.ServiceProvider.GetRequiredService<IDataSeeder>();
         await seeder.SeedAsync();
     }

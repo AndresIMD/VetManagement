@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using VetManagement.Application.Contracts.Persistence;
 using VetManagement.Infrastructure.Data;
-using VetManagement.Shared.Enums;
-using VetManagement.Shared.Models.Core;
+using VetManagement.Domain.Enums;
+using VetManagement.Domain.Inventory;
 
 namespace VetManagement.Infrastructure.Repositories;
 
