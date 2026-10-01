@@ -1,0 +1,268 @@
+@page "/conocenos"
+
+<PageTitle>Conócenos | San Pablo Vet clínic</PageTitle>
+<HeadContent>
+    <meta name="description"
+          content="Conoce la historia de San Pablo Vet clínic. Más de 10 años cuidando mascotas en Rancagua con un equipo de especialistas certificados y tecnología IDEXX." />
+    <meta property="og:title" content="Conócenos | San Pablo Vet clínic" />
+    <meta property="og:description"
+          content="Conoce la historia de San Pablo Vet clínic. Más de 10 años cuidando mascotas en Rancagua con un equipo de especialistas certificados y tecnología IDEXX." />
+    <meta property="og:type" content="website" />
+</HeadContent>
+
+<PageHero Tag="Nuestra clínica" TagIcon="clinic"     Title="Conócenos"
+          Subtitle="@($"{AppConstants.Clinic.YearsOfServiceCapitalized} cuidando a tus mascotas en {AppConstants.Clinic.City}")"
+          CssClass="hero--teal" BackgroundImage="@ImagePaths.PageHeroes.Conocenos" />
+
+<!-- ============================================
+     HISTORIA
+     ============================================ -->
+<section class="historia-section">
+    <div class="historia-container">
+        <div class="historia-image reveal-left">
+            <img src="@ImagePaths.Clinic.Historia" alt="Fachada de San Pablo Vet clínic" loading="lazy" />
+        </div>
+        <div class="historia-content reveal-right stagger-2">
+            <h2 class="section-title">Nuestra historia</h2>
+            <p>
+                Fundada en 2014, San Pablo Vet clínic nace del sueño de crear un espacio donde las mascotas reciban
+                atención médica de calidad con calidez humana. Desde nuestros inicios, hemos trabajado incansablemente
+                para convertirnos en la clínica veterinaria de referencia en Rancagua.
+            </p>
+            <p>
+                A lo largo de los años, hemos crecido junto a la comunidad, incorporando tecnología de punta como
+                equipos IDEXX para diagnósticos rápidos y precisos, y sumando a nuestro equipo médico distintas
+                áreas de especialización: cardiología, neurología, endocrinología, oftalmología y más. Seguimos
+                ampliando estas capacidades con el tiempo, para ofrecer tratamientos y cirugías de mayor
+                complejidad.
+            </p>
+            <p>
+                Hoy, con @AppConstants.Clinic.YearsOfService de experiencia, somos un centro veterinario integral
+                que busca la mejor solución para cada paciente, acompañando su salud en cada etapa de su vida
+                con diagnóstico preciso y un equipo médico certificado. Ofrecemos atención en la clínica y a
+                domicilio, los 365 días del año, con un equipo profesional disponible cuando tu mascota más lo
+                necesite.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================
+     VALORES
+     ============================================ -->
+<section class="valores-section">
+    <div class="section-header">
+        <span class="section-tag">Nuestros Principios</span>
+        <h2 class="section-title">Lo que nos define</h2>
+        <p class="section-subtitle">Los valores que guían cada decisión en nuestra clínica</p>
+    </div>
+
+    <div class="valores-grid">
+        <div class="valor-card reveal stagger-1">
+            <div class="valor-icon">
+                <Icon Name="stethoscope" Size="40" />
+            </div>
+            <h3>Profesionalismo</h3>
+            <p>Especialistas certificados y equipo médico de primer nivel comprometidos con la excelencia.</p>
+        </div>
+
+        <div class="valor-card reveal stagger-2">
+            <div class="valor-icon">
+                <Icon Name="heart" Size="40" />
+            </div>
+            <h3>Calidez humana</h3>
+            <p>Tratamos a cada mascota como si fuera nuestra, con amor, paciencia y dedicación.</p>
+        </div>
+
+        <div class="valor-card reveal stagger-3">
+            <div class="valor-icon">
+                <Icon Name="microscope" Size="40" />
+            </div>
+            <h3>Tecnología</h3>
+            <p>Equipamiento de última generación para diagnósticos precisos y tratamientos efectivos.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================
+    GALERÍA INSTALACIONES
+    ============================================ -->
+<section class="galeria-section">
+    <div class="section-header">
+        <span class="section-tag">Nuestras Instalaciones</span>
+        <h2 class="section-title">Un espacio diseñado para ellos</h2>
+        <p class="section-subtitle">Instalaciones modernas y acogedoras para el bienestar de tu mascota</p>
+    </div>
+
+    <div class="galeria-grid">
+        @{ int i = 0; }
+        @foreach (var foto in galeriaFotos)
+        {
+            var index = i;
+            i++;
+            <button type="button" class="galeria-item reveal stagger-@i" @onclick="() => OpenLightbox(index)">
+                <img src="@foto.Src" alt="@foto.Alt" loading="lazy" />
+            </button>
+        }
+        @for (int p = i + 1; p <= TotalGaleriaSlots; p++)
+        {
+            <div class="galeria-item reveal stagger-@p">
+                <div class="galeria-placeholder">
+                    <Icon Name="image" Size="40" />
+                    <p>Próximamente</p>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+@if (lightboxIndex is not null)
+{
+    var foto = galeriaFotos[lightboxIndex.Value];
+    <div class="lightbox-overlay" tabindex="0" @onclick="CloseLightbox" @onkeydown="OnLightboxKeyDown" autofocus>
+        <button type="button" class="lightbox-close" @onclick="CloseLightbox" @onclick:stopPropagation="true" aria-label="Cerrar">
+            <Icon Name="x" Size="24" />
+        </button>
+
+        @if (galeriaFotos.Count > 1)
+        {
+            <button type="button" class="lightbox-nav lightbox-nav--prev" @onclick="PrevPhoto" @onclick:stopPropagation="true" aria-label="Foto anterior">
+                <Icon Name="chevron-left" Size="26" />
+            </button>
+            <button type="button" class="lightbox-nav lightbox-nav--next" @onclick="NextPhoto" @onclick:stopPropagation="true" aria-label="Foto siguiente">
+                <Icon Name="chevron-right" Size="26" />
+            </button>
+        }
+
+        @* @key fuerza a Blazor a recrear el <img> en cada foto (no solo cambiar su src),
+           para que @starting-style vuelva a animar la entrada en cada navegacion. *@
+        <img class="lightbox-img" src="@foto.Src" alt="@foto.Alt" draggable="false" @key="lightboxIndex"
+             data-dir="@navDirection" @onclick:stopPropagation="true"
+             @onpointerdown="OnDragStart" @onpointerup="OnDragEnd" />
+    </div>
+}
+
+@* Timeline oculto hasta que el cliente confirme las fechas reales de cada hito. *@
+@*
+<!-- ============================================
+     TIMELINE
+     ============================================ -->
+<section class="timeline-section">
+    <div class="section-header">
+        <span class="section-tag">Nuestra Trayectoria</span>
+        <h2 class="section-title">Años de experiencia</h2>
+    </div>
+
+    <div class="timeline">
+        <div class="timeline-item reveal stagger-1">
+            <div class="timeline-year">2014</div>
+            <div class="timeline-content">
+                <h3>Fundación</h3>
+                <p>Apertura de San Pablo Vet clínic con servicios básicos de consulta y vacunación.</p>
+            </div>
+        </div>
+
+        <div class="timeline-item reveal stagger-2">
+            <div class="timeline-year">2018</div>
+            <div class="timeline-content">
+                <h3>Expansión</h3>
+                <p>Incorporación de equipos IDEXX y ampliación del laboratorio clínico.</p>
+            </div>
+        </div>
+
+        <div class="timeline-item reveal stagger-3">
+            <div class="timeline-year">2020</div>
+            <div class="timeline-content">
+                <h3>Especialización</h3>
+                <p>Llegada de especialistas certificados y servicio de atención 24 horas.</p>
+            </div>
+        </div>
+
+        <div class="timeline-item reveal stagger-4">
+            <div class="timeline-year">2024</div>
+            <div class="timeline-content">
+                <h3>Innovación</h3>
+                <p>Lanzamiento del servicio veterinario móvil y nuevas especialidades médicas.</p>
+            </div>
+        </div>
+    </div>
+</section>
+*@
+
+<!-- ============================================
+     CTA FINAL
+     ============================================ -->
+<PageCtaSection IconName="location"
+                Description="Visita nuestra clínica o agenda una cita para conocer a nuestro equipo y nuestras instalaciones.">
+    <TitleContent>¿Quieres conocernos en persona?</TitleContent>
+    <Buttons>
+        <WhatsAppButton Label="Contactar por WhatsApp" Style="WhatsAppButtonStyle.Default" />
+        <NavLink href="contacto" class="btn-secondary">Ver Ubicación</NavLink>
+    </Buttons>
+</PageCtaSection>
+
+@code {
+    private const int TotalGaleriaSlots = 8;
+    private const double DragThresholdPx = 50;
+    private int? lightboxIndex;
+    private double? dragStartX;
+    // "open" | "next" | "prev": que borde anima la entrada de la foto (@starting-style en CSS).
+    private string navDirection = "open";
+
+    private void OpenLightbox(int index)
+    {
+        navDirection = "open";
+        lightboxIndex = index;
+    }
+
+    private void CloseLightbox() => lightboxIndex = null;
+
+    private void NextPhoto()
+    {
+        navDirection = "next";
+        lightboxIndex = (lightboxIndex + 1) % galeriaFotos.Count;
+    }
+
+    private void PrevPhoto()
+    {
+        navDirection = "prev";
+        lightboxIndex = (lightboxIndex - 1 + galeriaFotos.Count) % galeriaFotos.Count;
+    }
+
+    private void OnLightboxKeyDown(KeyboardEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case "Escape": CloseLightbox(); break;
+            case "ArrowRight": NextPhoto(); break;
+            case "ArrowLeft": PrevPhoto(); break;
+        }
+    }
+
+    private void OnDragStart(PointerEventArgs e) => dragStartX = e.ClientX;
+
+    private void OnDragEnd(PointerEventArgs e)
+    {
+        if (dragStartX is null) return;
+
+        var delta = e.ClientX - dragStartX.Value;
+        dragStartX = null;
+        if (delta <= -DragThresholdPx) NextPhoto();
+        else if (delta >= DragThresholdPx) PrevPhoto();
+    }
+
+    // Fotos reales de las instalaciones. Al agregar más, solo hace falta
+    // sumarlas aquí (usando las constantes de ImagePaths) — el resto de los
+    // recuadros "Próximamente" se ajusta solo.
+    private readonly List<(string Src, string Alt)> galeriaFotos = new()
+    {
+        (ImagePaths.Clinic.Reception, "Recepción de San Pablo Vet clínic"),
+        (ImagePaths.Clinic.ReceptionDesk, "Mesón de atención en recepción"),
+        (ImagePaths.Clinic.SpecialistReception, "Sala de espera de especialistas"),
+        (ImagePaths.Clinic.CatRoom, "Sala de juegos para gatos"),
+        (ImagePaths.Clinic.WaitingRoom, "Sala de espera"),
+        (ImagePaths.Clinic.Hospitalizacion, "Área de hospitalización"),
+        (ImagePaths.Clinic.Laboratorio, "Laboratorio clínico"),
+        (ImagePaths.Clinic.Pabellon, "Pabellón quirúrgico"),
+    };
+}

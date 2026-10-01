@@ -1,0 +1,313 @@
+@namespace SPVetClinic.Components.Booking
+@* ============================================
+   PAYMENT STEP - Componente de Pago
+   [MOVIDO a _wip: módulo de booking sin usar todavía. Se mantiene el namespace
+   original con @namespace para no requerir cambios en las referencias.]
+   Uso: <PaymentStep OnPaymentCompleted="HandleSuccess" />
+   Integración: WebPay Plus API
+   ============================================ *@
+
+@using SPVetClinic.Data.Models.Booking
+@using SPVetClinic.Services.Booking
+
+<div class="payment-step">
+    <div class="payment-header">
+        <h2 class="payment-title">Confirmar Pago</h2>
+        <p class="payment-subtitle">Tu información está protegida y segura</p>
+    </div>
+
+    @if (PaymentState == PaymentStepState.Loading)
+    {
+        <div class="payment-loading">
+            <div class="spinner-large"></div>
+            <p>Preparando formulario de pago seguro...</p>
+        </div>
+    }
+    else if (PaymentState == PaymentStepState.Processing)
+    {
+        <div class="payment-processing">
+            <div class="spinner-large"></div>
+            <p>Procesando tu pago con WebPay...</p>
+            <p class="processing-hint">Por favor no cierres esta ventana</p>
+        </div>
+    }
+    else if (PaymentState == PaymentStepState.Success)
+    {
+        <div class="payment-success reveal">
+            <div class="success-icon">
+                <Icon Name="check-circle" Size="64" Color="#4CAF50" />
+            </div>
+            <h3 class="success-title">¡Pago Completado!</h3>
+            <p class="success-message">Tu reserva ha sido confirmada exitosamente</p>
+
+            @if (BookingState?.CurrentReservation != null)
+            {
+                <div class="reservation-confirmation">
+                    <div class="confirmation-row">
+                        <span class="label">Número de Reserva:</span>
+                        <span class="value confirmation-id">@BookingState.CurrentReservation.Id</span>
+                    </div>
+                    <div class="confirmation-row">
+                        <span class="label">Especialista:</span>
+                        <span class="value">@BookingState.CurrentReservation.Specialist?.Name</span>
+                    </div>
+                    <div class="confirmation-row">
+                        <span class="label">Fecha:</span>
+                        <span class="value">@BookingState.CurrentReservation.TimeSlot?.Date.ToString("dddd, d 'de' MMMM")</span>
+                    </div>
+                    <div class="confirmation-row">
+                        <span class="label">Hora:</span>
+                        <span class="value">@BookingState.CurrentReservation.TimeSlot?.FormattedTime</span>
+                    </div>
+                </div>
+            }
+
+            <div class="next-steps">
+                <h4>Próximos Pasos</h4>
+                <ul class="steps-list">
+                    <li>Recibirás un correo de confirmación en <strong>@BookingState?.CurrentReservation?.OwnerEmail</strong></li>
+                    <li>Te enviaremos un recordatorio 24 horas antes de tu cita</li>
+                    <li>Puedes contactarnos si necesitas cambiar la hora</li>
+                </ul>
+            </div>
+
+            <div class="success-actions">
+                <a href="./" class="btn-primary">
+                    <Icon Name="home" Size="18" />
+                    Volver al Inicio
+                </a>
+            </div>
+        </div>
+    }
+    else if (PaymentState == PaymentStepState.Error)
+    {
+        <div class="payment-error reveal">
+            <div class="error-icon">
+                <Icon Name="alert-circle" Size="64" Color="#F44336" />
+            </div>
+            <h3 class="error-title">Error en el Pago</h3>
+            <p class="error-message">@ErrorMessage</p>
+
+            <div class="error-details">
+                <p>Posibles causas:</p>
+                <ul>
+                    <li>Fondos insuficientes</li>
+                    <li>Tarjeta expirada o rechazada</li>
+                    <li>Datos de tarjeta incorrectos</li>
+                    <li>Conexión interrumpida</li>
+                </ul>
+            </div>
+
+            <div class="error-actions">
+                <button class="btn-primary" @onclick="RetryPayment">
+                    <Icon Name="redo" Size="18" />
+                    Intentar Nuevamente
+                </button>
+                <button class="btn-secondary" @onclick="OnBackClick">
+                    <Icon Name="arrow-left" Size="18" />
+                    Volver
+                </button>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="payment-form-container reveal">
+            <!-- Order Summary -->
+            <div class="order-summary">
+                <h3 class="summary-title">Resumen del Pago</h3>
+                <div class="summary-box">
+                    <div class="summary-item">
+                        <span class="item-description">@BookingState?.FormData.SelectedSpecialist?.Name</span>
+                        <span class="item-price">$@BookingState?.FormData.SelectedSpecialist?.ConsultationPrice.ToString("N0")</span>
+                    </div>
+                    <div class="summary-divider"></div>
+                    <div class="summary-total">
+                        <span class="total-label">Monto a Pagar:</span>
+                        <span class="total-amount">$@BookingState?.FormData.SelectedSpecialist?.ConsultationPrice.ToString("N0")</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Method Notice -->
+            <div class="payment-notice">
+                <Icon Name="shield" Size="20" />
+                <div>
+                    <strong>Pago Seguro con WebPay Plus</strong>
+                    <p>Tus datos de pago están protegidos con encriptación de nivel bancario</p>
+                </div>
+            </div>
+
+            <!-- Mock Payment Form (Development) -->
+            <div class="payment-method-section">
+                <h3 class="section-title">Método de Pago</h3>
+
+                @if (IsTestMode)
+                {
+                    <div class="test-mode-warning">
+                        <Icon Name="alert-triangle" Size="20" />
+                        <strong>Modo de Prueba</strong> - Usa tarjetas de prueba de WebPay
+                    </div>
+
+                    <div class="test-credentials">
+                        <h4>Tarjetas de Prueba Disponibles:</h4>
+                        <div class="credential-list">
+                            <div class="credential-item">
+                                <strong>Visa:</strong> 4051885600446623
+                            </div>
+                            <div class="credential-item">
+                                <strong>Mastercard:</strong> 5186059559590568
+                            </div>
+                            <div class="credential-item">
+                                <strong>CVV:</strong> Cualquier número de 3 dígitos
+                            </div>
+                            <div class="credential-item">
+                                <strong>Fecha Vencimiento:</strong> Cualquier fecha futura
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <button type="button" class="btn-webpay" @onclick="InitiateWebPayPayment" disabled="@IsProcessing">
+                    <Icon Name="lock" Size="18" />
+                    @if (IsProcessing)
+                    {
+                        <span>Redirigiendo a WebPay...</span>
+                    }
+                    else
+                    {
+                        <span>Continuar a WebPay Plus</span>
+                    }
+                </button>
+            </div>
+
+            <!-- Alternative Actions -->
+            <div class="payment-actions">
+                <button type="button" class="btn-secondary" @onclick="OnBackClick" disabled="@IsProcessing">
+                    <Icon Name="arrow-left" Size="18" />
+                    Volver a Formulario
+                </button>
+            </div>
+
+            <!-- Security Notice -->
+            <div class="security-notice">
+                <Icon Name="check-circle" Size="16" />
+                <p>
+                    No almacenamos tus datos de tarjeta. El pago se procesa directamente con WebPay Plus, 
+                    el procesador de pagos seguro de Chile.
+                </p>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Inject] private BookingStateService? BookingState { get; set; }
+
+    [Parameter]
+    public EventCallback OnPaymentCompleted { get; set; }
+
+    [Parameter]
+    public EventCallback OnPreviousStep { get; set; }
+
+    private enum PaymentStepState
+    {
+        Initial,
+        Loading,
+        Processing,
+        Success,
+        Error
+    }
+
+    private PaymentStepState PaymentState = PaymentStepState.Initial;
+    private string? ErrorMessage;
+    private bool IsProcessing = false;
+    private bool IsTestMode = true; // En producción, cambiará según el ambiente
+    private decimal TotalAmount => BookingState?.FormData.SelectedSpecialist?.ConsultationPrice ?? 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        PaymentState = PaymentStepState.Initial;
+        await Task.Delay(100); // Simular pequeño delay de inicialización
+    }
+
+    private async Task InitiateWebPayPayment()
+    {
+        if (BookingState?.CurrentReservation == null)
+        {
+            ErrorMessage = "Error: No hay reserva válida";
+            PaymentState = PaymentStepState.Error;
+            return;
+        }
+
+        try
+        {
+            IsProcessing = true;
+            PaymentState = PaymentStepState.Processing;
+
+            // Inicializar transacción en el servicio
+            BookingState.InitializePayment(TotalAmount);
+
+            // AQUÍ IRÍA LA INTEGRACIÓN REAL CON WEBPAY PLUS
+            // Por ahora, simulamos la redirección después de un delay
+            await Task.Delay(2000);
+
+            // Simulación de respuesta exitosa de WebPay
+            SimulateWebPayResponse(success: true);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error al conectar con WebPay: {ex.Message}";
+            PaymentState = PaymentStepState.Error;
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
+    }
+
+    private void SimulateWebPayResponse(bool success)
+    {
+        if (success)
+        {
+            // Simulamos una respuesta exitosa de WebPay
+            var orderId = $"ORD-{DateTime.UtcNow:yyyyMMddHHmmss}-{new Random().Next(1000, 9999)}";
+
+            BookingState?.UpdatePaymentStatus(
+                orderId: orderId,
+                isSuccessful: true,
+                responseCode: "00",
+                message: "Transacción Aprobada"
+            );
+
+            PaymentState = PaymentStepState.Success;
+            BookingState?.CompleteReservation();
+
+            // Simular envío de correo de confirmación (en producción, sería un servicio real)
+            _ = SendConfirmationEmail();
+        }
+        else
+        {
+            ErrorMessage = "Tu tarjeta fue rechazada. Por favor intenta con otra tarjeta o contacta a tu banco.";
+            PaymentState = PaymentStepState.Error;
+        }
+    }
+
+    private async Task SendConfirmationEmail()
+    {
+        // Aquí iría la lógica real de envío de email
+        // Por ahora es solo un placeholder
+        await Task.CompletedTask;
+    }
+
+    private void RetryPayment()
+    {
+        ErrorMessage = null;
+        PaymentState = PaymentStepState.Initial;
+    }
+
+    private async Task OnBackClick()
+    {
+        await OnPreviousStep.InvokeAsync();
+    }
+}

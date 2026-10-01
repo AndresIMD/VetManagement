@@ -1,0 +1,214 @@
+@page "/vacunacion"
+
+<PageTitle>Vacunación | @AppConstants.Clinic.Name</PageTitle>
+<HeadContent>
+    <meta name="description"
+          content="Plan de vacunación para perros y gatos. Calendario completo, vacunas importadas y control sanitario profesional en San Pablo Vet clínic Rancagua." />
+    <meta property="og:title" content="Vacunación | San Pablo Vet clínic" />
+    <meta property="og:description"
+          content="Plan de vacunación para perros y gatos. Calendario completo, vacunas importadas y control sanitario profesional en San Pablo Vet clínic Rancagua." />
+    <meta property="og:type" content="website" />
+</HeadContent>
+
+<!-- HERO -->
+<PageHero Tag="Prevención" TagIcon="syringe" Title="Planes de vacunación"
+          Subtitle="Protege a tu mascota con nuestros completos planes de vacunación para perros y gatos"
+          CssClass="hero--teal">
+    <Actions>
+        <WhatsAppButton Label="Agendar Vacunación" Style="WhatsAppButtonStyle.Default" />
+        <a href="@AppConstants.Clinic.BookingUrl" target="_blank" rel="noopener noreferrer" class="btn-secondary">Reservar Online</a>
+    </Actions>
+</PageHero>
+
+<!-- CALENDARIOS -->
+<section id="calendarios" class="calendars-section">
+    <div class="container-wide">
+        <SectionHeader Tag="Calendarios" Title="Planes de vacunación"
+                       Subtitle="Esquemas completos según la edad y especie de tu mascota" />
+
+        <div class="calendars-grid reveal">
+            <!-- PERROS -->
+            <div class="calendar-block calendar-block--dog">
+                <div class="calendar-header">
+                    <span class="calendar-header__icon"><Icon Name="dog" Size="26" /></span>
+                    <div>
+                        <h3>Calendario para perros</h3>
+                        <p>Desde las 6 semanas de edad</p>
+                    </div>
+                </div>
+
+                <div class="vaccines-timeline">
+                    <div class="vaccine-item stagger-1">
+                        <div class="vaccine-age-marker">6-8 semanas</div>
+                        <div class="vaccine-details">
+                            <h3>Primera vacuna múltiple</h3>
+                            <p>Protección contra: Parvovirus, Distemper, Hepatitis, Parainfluenza, Adenovirus</p>
+                        </div>
+                    </div>
+
+                    <div class="vaccine-item stagger-2">
+                        <div class="vaccine-age-marker">10-12 semanas</div>
+                        <div class="vaccine-details">
+                            <h3>Segunda vacuna múltiple</h3>
+                            <p>Refuerzo de protección + primera dosis de Leptospirosis</p>
+                        </div>
+                    </div>
+
+                    <div class="vaccine-item stagger-3">
+                        <div class="vaccine-age-marker">14-16 semanas</div>
+                        <div class="vaccine-details">
+                            <h3>Tercera vacuna múltiple + antirrábica</h3>
+                            <p>Completar esquema + vacuna obligatoria por ley</p>
+                        </div>
+                    </div>
+
+                    <div class="vaccine-item stagger-4">
+                        <div class="vaccine-age-marker">Anual</div>
+                        <div class="vaccine-details">
+                            <h3>Refuerzos anuales</h3>
+                            <p>Mantener inmunidad activa: Múltiple + Antirrábica + KC (opcional)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GATOS -->
+            <div class="calendar-block calendar-block--cat">
+                <div class="calendar-header">
+                    <span class="calendar-header__icon"><Icon Name="cat" Size="26" /></span>
+                    <div>
+                        <h3>Calendario para gatos</h3>
+                        <p>Desde las 8 semanas de edad</p>
+                    </div>
+                </div>
+
+                <div class="vaccines-timeline">
+                    <div class="vaccine-item stagger-1">
+                        <div class="vaccine-age-marker">8 semanas</div>
+                        <div class="vaccine-details">
+                            <h3>Primera triple felina</h3>
+                            <p>Protección contra: Panleucopenia, Rinotraqueítis, Calicivirus</p>
+                        </div>
+                    </div>
+
+                    <div class="vaccine-item stagger-2">
+                        <div class="vaccine-age-marker">12 semanas</div>
+                        <div class="vaccine-details">
+                            <h3>Segunda triple felina</h3>
+                            <p>Refuerzo de protección</p>
+                        </div>
+                    </div>
+
+                    <div class="vaccine-item stagger-3">
+                        <div class="vaccine-age-marker">16 semanas</div>
+                        <div class="vaccine-details">
+                            <h3>Tercera triple felina + antirrábica</h3>
+                            <p>Completar esquema + vacuna obligatoria</p>
+                        </div>
+                    </div>
+
+                    <div class="vaccine-item stagger-4">
+                        <div class="vaccine-age-marker">Anual</div>
+                        <div class="vaccine-details">
+                            <h3>Refuerzos anuales</h3>
+                            <p>Triple Felina + Antirrábica + Leucemia (si sale al exterior)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- VACUNAS RECOMENDADAS -->
+<section class="optional-vaccines-section">
+    <div class="container-wide">
+        <SectionHeader Tag="Protección extra" Title="Vacunas recomendadas para mayor protección"
+                       Subtitle="Protección adicional según el estilo de vida de tu mascota" />
+
+        <div class="optional-grid reveal">
+            <div class="optional-card stagger-1">
+                <h3>
+                    <Icon Name="dog" Size="20" /> Tos de las Perreras (KC)
+                </h3>
+                <p><strong>Para:</strong> Perros que van a guarderías, parques o pensiones</p>
+                <p><strong>Protege contra:</strong> Bordetella bronchiseptica y Parainfluenza</p>
+                <p><strong>Riesgo:</strong> <span class="risk-badge risk-medium">Muy contagioso</span></p>
+                <p><strong>Frecuencia:</strong> Cada 6-12 meses</p>
+            </div>
+
+            <div class="optional-card stagger-2">
+                <h3>
+                    <Icon Name="cat" Size="20" /> Leucemia Felina (FeLV)
+                </h3>
+                <p><strong>Para:</strong> Gatos que salen al exterior o conviven con otros gatos</p>
+                <p><strong>Protege contra:</strong> Virus de la Leucemia Felina</p>
+                <p><strong>Riesgo:</strong> <span class="risk-badge risk-high">Prevención prioritaria</span></p>
+                <p><strong>Frecuencia:</strong> Anual</p>
+            </div>
+
+            <div class="optional-card stagger-3">
+                <h3>
+                    <Icon Name="cat" Size="20" /> Inmunodeficiencia Felina (FIV)
+                </h3>
+                <p><strong>Para:</strong> Gatos que salen al exterior o tienen contacto con otros gatos</p>
+                <p><strong>Protege contra:</strong> Virus de Inmunodeficiencia Felina</p>
+                <p><strong>Riesgo:</strong> <span class="risk-badge risk-high">Afecta las defensas</span></p>
+                <p><strong>Frecuencia:</strong> Anual</p>
+            </div>
+
+            <div class="optional-card stagger-4">
+                <h3>
+                    <Icon Name="dog" Size="20" /> Giardia
+                </h3>
+                <p><strong>Para:</strong> Perros propensos a infecciones intestinales</p>
+                <p><strong>Protege contra:</strong> Parásito Giardia lamblia</p>
+                <p><strong>Riesgo:</strong> <span class="risk-badge risk-medium">Común en cachorros</span></p>
+                <p><strong>Frecuencia:</strong> Según indicación veterinaria</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq-section">
+    <div class="container-wide">
+        <SectionHeader Tag="Preguntas" Title="Dudas sobre Vacunación" />
+
+        <div class="faq-grid reveal">
+            <div class="faq-card stagger-1">
+                <h3>¿Por qué son necesarios los refuerzos?</h3>
+                <p>La primera vacuna no genera inmunidad completa. Los refuerzos "entrenan" el sistema inmunológico
+                    hasta lograr protección óptima.</p>
+            </div>
+
+            <div class="faq-card stagger-2">
+                <h3>¿Puedo atrasar una vacuna?</h3>
+                <p>No es recomendable. Si hay atraso significativo, puede ser necesario reiniciar el esquema. Consulta
+                    con tu veterinario.</p>
+            </div>
+
+            <div class="faq-card stagger-3">
+                <h3>¿Las vacunas tienen efectos secundarios?</h3>
+                <p>Pueden presentarse efectos leves como decaimiento o dolor en el sitio de aplicación. Las reacciones
+                    importantes son muy poco frecuentes.</p>
+            </div>
+
+            <div class="faq-card stagger-4">
+                <h3>¿Puedo vacunar a mi mascota en casa?</h3>
+                <p>Ofrecemos vacunas a domicilio. Al agendar, informa que necesitas vacunación para que el médico lleve
+                    las vacunas necesarias. La aplicación dependerá del criterio del médico tras examinar al paciente.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+                <!-- CTA -->
+                <PageCtaSection IconName="syringe"
+                                Description="Agenda la vacunación de tu mascota y mantén su salud protegida">
+                    <TitleContent>¿Listo para <em>proteger</em> a tu mascota?</TitleContent>
+                    <Buttons>
+                        <WhatsAppButton Label="Agendar Ahora" Style="WhatsAppButtonStyle.Contact" />
+                        <a href="@AppConstants.Clinic.BookingUrl" target="_blank" rel="noopener noreferrer" class="btn-secondary">Reservar Online</a>
+                    </Buttons>
+                </PageCtaSection>

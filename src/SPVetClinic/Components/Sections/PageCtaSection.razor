@@ -1,0 +1,48 @@
+@* ============================================
+   PAGE CTA SECTION - Componente Reutilizable
+   El bloque "final-cta-section" (icono + h2 + descripcion + nota opcional +
+   botones) que se repite al final de cada pagina de servicio.
+
+   Uso:
+   <PageCtaSection IconName="stethoscope" Description="...">
+       <TitleContent>¿Tu mascota necesita atención <em>especializada</em>?</TitleContent>
+       <Buttons>
+           <WhatsAppButton Label="Contactar por WhatsApp" Style="WhatsAppButtonStyle.Default" />
+           <a href="..." class="btn-secondary">Reservar Online</a>
+       </Buttons>
+   </PageCtaSection>
+
+   No es el mismo componente que Components/Sections/FinalCtaSection.razor
+   (ese es el CTA fijo del Home, sin parametros, con su propio markup
+   ".vc-cta"). Este es el generico para las paginas de servicio.
+   ============================================ *@
+
+<section class="final-cta-section">
+    <div class="container">
+        <div class="final-cta-content reveal">
+            <div class="cta-icon">
+                <Icon Name="@IconName" Size="48" />
+            </div>
+            <h2>@TitleContent</h2>
+            <p>@Description</p>
+            @if (!string.IsNullOrEmpty(NoteText))
+            {
+                <p class="cta-note">
+                    <Icon Name="@NoteIcon" Size="16" /> @NoteText
+                </p>
+            }
+            <div class="cta-buttons">
+                @Buttons
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter] public string IconName { get; set; } = "";
+    [Parameter] public RenderFragment? TitleContent { get; set; }
+    [Parameter] public string Description { get; set; } = "";
+    [Parameter] public string NoteIcon { get; set; } = "info";
+    [Parameter] public string? NoteText { get; set; }
+    [Parameter] public RenderFragment? Buttons { get; set; }
+}

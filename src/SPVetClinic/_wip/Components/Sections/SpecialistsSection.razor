@@ -1,0 +1,28 @@
+@namespace SPVetClinic.Components.Sections
+<!-- ============================================
+     SPECIALISTS SECTION
+     [MOVIDO a _wip: no se usa en ninguna página. Se mantiene el namespace original
+     con @@namespace para no requerir cambios en las referencias.]
+     ============================================ -->
+<section id="specialists" class="specialists-section">
+    <SectionHeader Tag="Nuestro Equipo" Title="Especialistas certificados"
+        Subtitle="Profesionales apasionados por la salud y bienestar de tus mascotas.">
+        <BookingHint Text="Las citas con especialistas requieren 50% de abono • Agenda en línea"
+            CssClass="specialists-hint" />
+    </SectionHeader>
+
+    <div class="specialists-grid">
+        <SpecialistCard Icon="brain" Name="Dr. Hernán Vargas" Specialty="Neurología" Schedule="Todos los Sábados"
+            Description="Especialista en convulsiones, problemas de equilibrio, dolor de cuello y movimientos anormales."
+            AvatarColor="teal" StaggerIndex="1" />
+
+        <SpecialistCard Icon="cat" Name="Dra. Pilar Muñoz" Specialty="Medicina Felina" Schedule="Agenda Disponible"
+            Description="Especialista exclusiva en gatos. Atención cuidadosa y personalizada para felinos."
+            AvatarColor="coral" StaggerIndex="2" />
+
+        <SpecialistCard Icon="flask" Name="Endocrinología" Specialty="Especialista Visitante"
+            Schedule="Consultar disponibilidad"
+            Description="Tratamiento de problemas hormonales, diabetes, tiroides y otras condiciones endocrinas."
+            AvatarColor="purple" StaggerIndex="3" />
+    </div>
+</section>

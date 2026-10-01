@@ -1,0 +1,42 @@
+<section class="vc-section vc-section--soft">
+    <div class="vc-w">
+        <SectionHeader Tag="Servicios" Title="Lo que hacemos"
+                       Subtitle="Atención integral con tecnología de última generación y un equipo comprometido."
+                       CssClass="vc-section-header--home" />
+
+        <div class="vc-svc-grid">
+            @foreach (var s in services)
+            {
+                <a href="@s.Href" class="vc-svc-card reveal">
+                    <div class="vc-svc-card__img">
+                        <img src="@s.Image" alt="@s.Alt" onerror="this.parentElement.classList.add('no-img')" />
+                        <div class="vc-svc-card__fallback"><Icon Name="@s.Icon" Size="28" /></div>
+                    </div>
+                    <h3>@s.Title</h3>
+                    <p>@s.Text</p>
+                    <span class="vc-svc-card__more">Ver más <Icon Name="arrow-right" Size="16" /></span>
+                </a>
+            }
+        </div>
+    </div>
+</section>
+
+@code {
+    private record Service(string Href, string Image, string Alt, string Icon, string Title, string Text);
+
+    private static readonly Service[] services =
+    [
+        new("servicios", ImagePaths.Services.Consulta, "Consulta general veterinaria", "stethoscope",
+            "Consulta General", "Evaluaciones completas, diagnósticos precisos y planes de tratamiento personalizados."),
+        new("examenes", ImagePaths.Services.Examenes, "Laboratorio y diagnóstico por imágenes", "microscope",
+            "Laboratorio y Diagnóstico", "Laboratorio IDEXX, ecografía y radiografía con resultados rápidos y precisos."),
+        new("especialistas", ImagePaths.Clinic.SpecialistReception, "Atención con especialistas veterinarios", "brain",
+            "Especialidades Médicas", "Cardiología, neurología, oftalmología, medicina interna y más áreas especializadas."),
+        new("hospitalizacion", ImagePaths.Services.Cirugia, "Cirugía veterinaria", "syringe",
+            "Cirugía y Hospitalización", "Procedimientos seguros con seguimiento cercano y cuidados post-operatorios."),
+        new("vacunacion", ImagePaths.Services.Vacunacion, "Medicina preventiva y vacunación", "paw",
+            "Medicina Preventiva", "Vacunación, control de parásitos y programas de bienestar para tu mascota."),
+        new("peluqueria", ImagePaths.Services.Grooming, "Peluquería y estética canina", "scissors",
+            "Peluquería y Estética", "Baños medicados, cortes profesionales y cuidado estético integral."),
+    ];
+}

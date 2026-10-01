@@ -1,0 +1,219 @@
+@* ============================================
+   EMERGENCY FAB — Botón flotante de emergencia
+   Aparece en la esquina inferior al hacer scroll.
+   Un click expande opciones: llamar o WhatsApp.
+   ============================================ *@
+
+<div class="efab @(isOpen ? "efab--open" : "")" @ref="fabElement">
+    @* Panel expandido *@
+    <div class="efab__panel">
+        <div class="efab__header">
+            <span class="efab__pulse"></span>
+            <span>Urgencias 24/7</span>
+        </div>
+        <a href="@AppConstants.Urls.TelLink(AppConstants.Phone.MainWhatsApp)" class="efab__option">
+            <Icon Name="phone" Size="18" />
+            <div>
+                <strong>Llamar ahora</strong>
+                <span>@AppConstants.Phone.MainWhatsAppFormatted</span>
+            </div>
+        </a>
+        <a href="@AppConstants.Urls.WhatsAppMainLink" target="_blank" rel="noopener noreferrer" class="efab__option efab__option--wa">
+            <Icon Name="whatsapp" Size="18" />
+            <div>
+                <strong>WhatsApp</strong>
+                <span>Respuesta rápida</span>
+            </div>
+        </a>
+        <a href="@AppConstants.Maps.CompanyDirectLink" target="_blank" rel="noopener noreferrer" class="efab__option efab__option--location">
+            <Icon Name="location" Size="18" />
+            <div>
+                <strong>Dirección</strong>
+                <span>Ver en Google Maps</span>
+            </div>
+        </a>
+    </div>
+
+    @* Botón principal *@
+    <button class="efab__btn" @onclick="Toggle" aria-label="Urgencias">
+        @if (isOpen)
+        {
+            <span class="efab__icon efab__icon--close">✕</span>
+        }
+        else
+        {
+            <Icon Name="alarm" Size="22" />
+        }
+    </button>
+</div>
+
+<style>
+    /* ===== FLOATING EMERGENCY BUTTON ===== */
+    .efab {
+        position: fixed;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        z-index: 1050;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.75rem;
+        pointer-events: none;
+    }
+
+    /* Panel de opciones */
+    .efab__panel {
+        background: #0d0d0d;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        padding: 0;
+        overflow: hidden;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transform: translateY(8px) scale(0.95);
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        min-width: 240px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .efab--open .efab__panel {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: translateY(0) scale(1);
+    }
+
+    .efab__header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--accent-coral, #BB545F);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .efab__pulse {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent-coral, #BB545F);
+        animation: efab-pulse 2s ease-in-out infinite;
+    }
+
+    @@keyframes efab-pulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(187, 84, 95, 0.5); }
+        50% { box-shadow: 0 0 0 5px rgba(187, 84, 95, 0); }
+    }
+
+    .efab__option {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.875rem 1rem;
+        color: rgba(255, 255, 255, 0.85);
+        text-decoration: none;
+        transition: background 0.2s ease;
+    }
+
+    .efab__option:hover {
+        background: rgba(255, 255, 255, 0.06);
+    }
+
+    .efab__option strong {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: white;
+    }
+
+    .efab__option span {
+        font-size: 0.8125rem;
+        color: rgba(255, 255, 255, 0.45);
+    }
+
+    .efab__option--wa:hover {
+        background: rgba(37, 211, 102, 0.1);
+    }
+
+    .efab__option--wa:hover strong {
+        color: #25d366;
+    }
+
+    .efab__option--location:hover {
+        background: rgba(100, 180, 255, 0.1);
+    }
+
+    .efab__option--location:hover strong {
+        color: #64b4ff;
+    }
+
+    /* Botón circular */
+    .efab__btn {
+        pointer-events: auto;
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        border: none;
+        background: var(--accent-coral, #BB545F);
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 20px rgba(187, 84, 95, 0.4);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: efab-glow 3s ease-in-out infinite;
+    }
+
+    .efab__btn:hover {
+        transform: scale(1.08);
+        box-shadow: 0 6px 28px rgba(187, 84, 95, 0.5);
+    }
+
+    /* Fondo sólido: con blanco translúcido el botón desaparecía sobre secciones claras */
+    .efab--open .efab__btn {
+        background: #0d0d0d;
+        color: white;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        animation: none;
+    }
+
+    .efab__icon--close {
+        font-size: 1.1rem;
+        font-weight: 300;
+        line-height: 1;
+        color: white;
+    }
+
+    @@keyframes efab-glow {
+        0%, 100% { box-shadow: 0 4px 20px rgba(187, 84, 95, 0.35); }
+        50% { box-shadow: 0 4px 28px rgba(187, 84, 95, 0.55); }
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @@media (max-width: 480px) {
+        .efab { bottom: 1rem; right: 1rem; }
+        .efab__panel { min-width: 220px; }
+        .efab__btn { width: 48px; height: 48px; }
+    }
+</style>
+
+@code {
+    private bool isOpen;
+    private ElementReference fabElement;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await JS.InvokeVoidAsync("attachClickOutsideHandler", fabElement);
+    }
+
+    private void Toggle() => isOpen = !isOpen;
+
+    @inject IJSRuntime JS
+}

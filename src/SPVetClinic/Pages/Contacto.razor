@@ -1,0 +1,242 @@
+@page "/contacto"
+
+<PageTitle>Contacto | San Pablo Vet clínic</PageTitle>
+<HeadContent>
+    <meta name="description"
+          content="Contacta a San Pablo Vet clínic en Rancagua. Urgencias 24 horas, reserva online, WhatsApp y teléfono. Av. Central 265, Rancagua, Chile." />
+    <meta property="og:title" content="Contacto | San Pablo Vet clínic" />
+    <meta property="og:description"
+          content="Contacta a San Pablo Vet clínic en Rancagua. Urgencias 24 horas, reserva online, WhatsApp y teléfono. Av. Central 265, Rancagua, Chile." />
+    <meta property="og:type" content="website" />
+</HeadContent>
+
+<PageHero Tag="Contacto" TagIcon="phone" Title="Contáctanos" Subtitle="Urgencias 24/7 · Estamos siempre disponibles para ti y tu mascota" CssClass="hero--teal" />
+
+<!-- ============================================
+     BANNER DE URGENCIAS
+     ============================================ -->
+<section class="urgencia-banner" id="urgencia">
+    <div class="urgencia-banner__inner">
+        <div class="urgencia-badge-pill">
+            <span class="urgencia-pulse"></span>
+            URGENCIAS 24 HORAS
+        </div>
+        <h2 class="urgencia-title">¿Necesitas atención veterinaria inmediata?</h2>
+        <p class="urgencia-sub">Disponibles las 24 horas, los 7 días de la semana, incluyendo feriados.</p>
+        <div class="urgencia-actions">
+            <a href="@AppConstants.Urls.WhatsAppMainLink" target="_blank" rel="noopener noreferrer" class="urgencia-btn urgencia-btn--wa">
+                <Icon Name="phone" Size="20" />
+                <div>
+                    <strong>WhatsApp Urgencias</strong>
+                    <span>@AppConstants.Phone.MainWhatsAppFormatted</span>
+                </div>
+            </a>
+            <a href="@AppConstants.Urls.TelLink(AppConstants.Phone.Landline)" class="urgencia-btn urgencia-btn--tel">
+                <Icon Name="phone" Size="20" />
+                <div>
+                    <strong>Llamar Ahora</strong>
+                    <span>@AppConstants.Phone.LandlineFormatted</span>
+                </div>
+            </a>
+        </div>
+        <div class="urgencia-address">
+            <Icon Name="location" Size="16" />
+            <span>@AppConstants.Clinic.FullAddress</span>
+            <span class="urgencia-divider">·</span>
+            <a href="@AppConstants.Maps.DirectionsUrl" target="_blank" rel="noopener noreferrer">Ver en Google Maps →</a>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================
+     CONTACTO + UBICACIÓN
+     ============================================ -->
+<section class="contacto-content-section">
+    <div class="contacto-grid">
+        <!-- Info de Contacto -->
+        <div class="contacto-info-column reveal">
+            <h2>Información de contacto</h2>
+
+            <div class="contacto-item-large">
+                <span class="contacto-icon">
+                    <Icon Name="location" Size="24" />
+                </span>
+                <div>
+                    <h3>Dirección</h3>
+                    <p>@AppConstants.Clinic.Address</p>
+                    <p>@AppConstants.Clinic.City, @AppConstants.Clinic.Country</p>
+                </div>
+            </div>
+
+            <div class="contacto-item-large">
+                <span class="contacto-icon">
+                    <Icon Name="phone" Size="24" />
+                </span>
+                <div>
+                    <h3>Teléfonos</h3>
+                    <p><a
+                        href="@AppConstants.Urls.TelLink(AppConstants.Phone.MainWhatsApp)">@AppConstants.Phone.MainWhatsAppFormatted</a>
+                    </p>
+                    <p><a
+                        href="@AppConstants.Urls.TelLink(AppConstants.Phone.Landline)">@AppConstants.Phone.LandlineFormatted</a>
+                    </p>
+                </div>
+            </div>
+
+            <div class="contacto-item-large">
+                <span class="contacto-icon">
+                    <Icon Name="clock" Size="24" />
+                </span>
+                <div>
+                    <h3>Horario de atención</h3>
+                    <p><strong>@AppConstants.Clinic.Schedule</strong>, incluyendo feriados.</p>
+                </div>
+            </div>
+
+            <div class="contacto-social">
+                <h3>Síguenos en redes sociales</h3>
+                <SocialLinks Style="SocialLinksStyle.Contact" />
+            </div>
+
+            <a href="@AppConstants.Clinic.BookingUrl" target="_blank" rel="noopener noreferrer" class="btn-booking-contacto">
+                <Icon Name="calendar" Size="18" /> Agendar Cita Online
+            </a>
+        </div>
+
+        <!-- Mapa -->
+        <div class="contacto-map-column reveal">
+            <h2>Cómo llegar</h2>
+            <div class="map-container">
+                <iframe
+                    title="Ubicación de San Pablo Vet clínic en Google Maps"
+                    src="@AppConstants.Maps.EmbedUrl"
+                    width="100%" height="600" style="border:0;border-radius:var(--border-radius);" allowfullscreen=""
+                    loading="lazy" referrerpolicy="no-referrer-when-downgrade">
+                </iframe>
+            </div>
+            <p class="map-note">
+                <Icon Name="location" Size="16" /> Ubicados frente a la plaza de Villa Triana, con estacionamiento
+                disponible.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================
+     FAQ SECTION
+     ============================================ -->
+<section class="faq-section">
+    <div class="section-header">
+        <span class="section-tag">Preguntas Frecuentes</span>
+        <h2 class="section-title">¿Tienes dudas?</h2>
+        <p class="section-subtitle">Aquí respondemos las preguntas más comunes</p>
+    </div>
+
+    <div class="faq-container">
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFaq(this)">
+                <span>¿Cómo puedo agendar una cita?</span>
+                <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+                <p>Puedes agendar tu cita de 3 formas: <strong>1)</strong> Online a través de nuestro sistema de
+                    agendamiento,
+                    <strong>2)</strong> Por WhatsApp al @AppConstants.Phone.MainWhatsAppFormatted, o <strong>3)</strong>
+                    Llamando
+                    directamente al @AppConstants.Phone.LandlineFormatted.
+                </p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFaq(this)">
+                <span>¿Atienden urgencias las 24 horas?</span>
+                <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+                <p>Sí, contamos con servicio de <strong>urgencias 24 horas, los 7 días de la semana</strong>, incluidos
+                    feriados.
+                    Para urgencias, llama al @AppConstants.Phone.LandlineFormatted o escríbenos por WhatsApp al @AppConstants.Phone.MainWhatsAppFormatted.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question" onclick="toggleFaq(this)">
+                    <span>¿Qué debo llevar a la primera consulta?</span>
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer">
+                    <p>Para la primera consulta, trae el <strong>carnet de vacunación</strong> (si lo tiene), cualquier
+                        <strong>examen médico previo</strong>, y si es posible, una <strong>muestra de heces</strong> para
+                        análisis parasitológico.
+                    </p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question" onclick="toggleFaq(this)">
+                    <span>¿El veterinario móvil tiene costo adicional?</span>
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer">
+                    <p>El servicio móvil tiene un <strong>costo de traslado según la zona</strong>. Consulta precios y
+                        disponibilidad al @AppConstants.Phone.MainWhatsAppFormatted.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFaq(this)">
+                        <span>¿Cuánto demoran los resultados de exámenes?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Los <strong>exámenes básicos</strong> (hemogramas, bioquímicos) tienen resultados en
+                            <strong>15-30 minutos</strong>. Exámenes especializados (PCR, histopatología) pueden tomar 24-72
+                            horas.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFaq(this)">
+                        <span>¿Aceptan seguros de mascotas?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Sí, trabajamos con las principales aseguradoras de mascotas en Chile. Consulta por tu seguro
+                            específico
+                            en recepción o por WhatsApp.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+<!-- ============================================
+     INFO ÚTIL
+     ============================================ -->
+<section class="info-util-section">
+    <div class="section-header">
+        <span class="section-tag">Información Útil</span>
+        <h2 class="section-title">Antes de tu visita</h2>
+    </div>
+
+    <div class="info-util-grid">
+        <div class="info-util-card reveal stagger-1">
+            <span class="info-util-icon"><Icon Name="credit-card" Size="40" /></span>
+            <h3>Medios de pago</h3>
+            <p>Aceptamos efectivo, tarjetas de débito y crédito, transferencias y principales seguros de mascotas.</p>
+        </div>
+
+        <div class="info-util-card reveal stagger-2">
+            <span class="info-util-icon"><Icon Name="car" Size="40" /></span>
+            <h3>Estacionamiento</h3>
+            <p>Contamos con estacionamiento disponible para nuestros clientes en la entrada de la clínica.</p>
+        </div>
+
+        <div class="info-util-card reveal stagger-3">
+            <span class="info-util-icon"><Icon Name="accessibility" Size="40" /></span>
+            <h3>Accesibilidad</h3>
+            <p>Contamos con rampas de acceso, estacionamiento accesible y espacios adaptados para sillas de ruedas.</p>
+        </div>
+    </div>
+</section>

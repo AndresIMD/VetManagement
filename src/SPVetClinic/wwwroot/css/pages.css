@@ -1,0 +1,1711 @@
+/* ============================================
+   SHARED PAGE STYLES
+   Extracted from inline <style> blocks in pages.
+   Modern hero, FAQ grid, CTA sections, shared layouts.
+   ============================================ */
+
+/* ============================================
+   MODERN PAGE HERO (no wave)
+   Clean gradient with subtle geometric accents
+   ============================================ */
+.page-hero-modern {
+    position: relative;
+    min-height: 50vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    padding: 100px 20px 80px;
+    overflow: hidden;
+    background: #0d0d0d;
+}
+
+.page-hero-modern__overlay {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse at 30% 70%, rgba(98, 171, 191, 0.06) 0%, transparent 60%),
+        radial-gradient(ellipse at 70% 30%, rgba(187, 84, 95, 0.04) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+/* Photographic hero variant — real photo behind a darkening overlay for text legibility */
+.page-hero-modern--photo {
+    background: #0d0d0d;
+}
+
+.page-hero-modern__bg-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+}
+
+.page-hero-modern__content {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+    width: 100%;
+    text-align: center;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.page-hero-modern__tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--accent-coral);
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: var(--spacing-md);
+    user-select: none;
+}
+
+.page-hero-modern__title {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    margin: 0 0 var(--spacing-md);
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    user-select: none;
+}
+
+.page-hero-modern__subtitle {
+    font-size: 1.0625rem;
+    color: rgba(255, 255, 255, 0.75);
+    max-width: 600px;
+    margin: 0 auto var(--spacing-lg);
+    line-height: 1.7;
+    letter-spacing: 0.02em;
+}
+
+.page-hero-modern__actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.page-hero-modern__actions .whatsapp-btn {
+    margin-top: 0;
+}
+
+/* Iguala la altura de los botones de una y dos líneas (WhatsApp con
+   número debajo vs. un link simple) cuando comparten fila, para que no
+   se vean de tamaños distintos. */
+.page-hero-modern__actions .btn-secondary,
+.page-hero-modern__actions .btn-primary-urgency,
+.page-hero-modern__actions .whatsapp-btn,
+.cta-buttons .btn-secondary,
+.cta-buttons .btn-primary-urgency,
+.cta-buttons .whatsapp-btn {
+    min-height: 40px;
+    box-sizing: content-box;
+}
+
+/* Móvil: los botones del hero y de los CTA se apilan con el mismo ancho y el mismo alto
+   (grid + filas 1fr iguala también al botón de dos líneas, p. ej. WhatsApp con número). */
+@media (max-width: 480px) {
+    /* Selector con padre: new-pages.css y home.css cargan despues y redeclaran display: flex */
+    .page-hero-modern__actions,
+    .final-cta-content .cta-buttons,
+    .process-cta .cta-buttons,
+    .vc-cta .vc-cta__btns {
+        display: grid;
+        grid-auto-rows: 1fr;
+        align-items: stretch; /* la regla base usa center: sin esto cada botón se centra en su fila y no se estira */
+        width: 100%;
+    }
+
+    .page-hero-modern__actions .btn-secondary,
+    .page-hero-modern__actions .btn-primary-urgency,
+    .page-hero-modern__actions .whatsapp-btn,
+    .cta-buttons .btn-secondary,
+    .cta-buttons .btn-primary-urgency,
+    .cta-buttons .whatsapp-btn,
+    .vc-cta__btns a {
+        width: 100%;
+        min-height: 0;
+        box-sizing: border-box;
+        justify-content: center;
+        margin: 0;
+    }
+}
+
+/* Color themes — all use dark base, accent via subtle radial glow */
+.hero--teal {
+    background: #0d0d0d;
+}
+
+.hero--teal .page-hero-modern__overlay {
+    background: radial-gradient(ellipse at 50% 80%, rgba(98, 171, 191, 0.12) 0%, transparent 60%);
+}
+
+.hero--coral {
+    background: #0d0d0d;
+}
+
+.hero--coral .page-hero-modern__overlay {
+    background: radial-gradient(ellipse at 50% 80%, rgba(187, 84, 95, 0.15) 0%, transparent 60%);
+}
+
+.hero--danger {
+    background: #0d0d0d;
+}
+
+.hero--danger .page-hero-modern__overlay {
+    background: radial-gradient(ellipse at 50% 80%, rgba(158, 69, 78, 0.2) 0%, transparent 60%);
+}
+
+/* Variante con foto de fondo: el oscurecido para legibilidad del texto debe
+   ganarle siempre al brillo de color del tema (mismas clases, mayor especificidad
+   por tener ambos selectores en el mismo elemento). */
+.page-hero-modern--photo.hero--teal .page-hero-modern__overlay,
+.page-hero-modern--photo.hero--coral .page-hero-modern__overlay,
+.page-hero-modern--photo.hero--danger .page-hero-modern__overlay {
+    background: rgba(13, 13, 13, 0.72);
+}
+
+/* Highlight span dentro del titulo del hero: ya solo lo usa Parvovirus
+   (las 7 paginas de servicio se estandarizaron a titulo blanco liso). */
+.page-hero-modern .highlight-danger {
+    color: var(--accent-coral);
+}
+
+@media (max-width: 768px) {
+    .page-hero-modern {
+        min-height: 40vh;
+        padding: 90px 20px 60px;
+    }
+}
+
+/* ============================================
+   SHARED SECTION CONTAINERS
+   ============================================ */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.container-wide {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 40px;
+}
+
+@media (max-width: 768px) {
+    .container-wide {
+        padding: 0 20px;
+    }
+}
+
+/* ============================================
+   SHARED SECTION SPACING
+   ============================================ */
+/* ============================================
+   SHARED INTRO / BENEFIT PATTERNS
+   ============================================ */
+.intro-section {
+    padding: 80px 20px;
+    background: white;
+}
+
+.intro-content {
+    max-width: 800px;
+    margin: 0 auto 60px;
+    text-align: center;
+}
+
+.intro-content h2 {
+    font-size: var(--font-size-h1);
+    margin-bottom: 20px;
+    color: var(--text-dark);
+}
+
+.intro-text {
+    font-size: var(--font-size-lg);
+    line-height: 1.8;
+    color: var(--text-gray);
+}
+
+.lead-text {
+    font-size: var(--font-size-lg);
+    line-height: 1.8;
+    color: var(--text-gray);
+    margin-bottom: 30px;
+}
+
+.intro-benefits {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.benefit-item {
+    text-align: center;
+    padding: 30px 20px;
+    background: white;
+    border: 1px solid #eef1f5;
+    border-radius: 14px;
+    transition: var(--transition);
+}
+
+.benefit-item:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-soft);
+    border-color: var(--primary-teal);
+}
+
+.benefit-icon {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(98, 171, 191, 0.10), rgba(98, 171, 191, 0.20));
+    color: var(--primary-teal);
+}
+
+.benefit-item h3 {
+    font-size: var(--font-size-h3);
+    margin-bottom: 10px;
+    color: var(--text-dark);
+}
+
+.benefit-item p {
+    color: var(--text-gray);
+    line-height: 1.6;
+}
+
+/* ============================================
+   SHARED FAQ GRID (non-accordion, card style)
+   Used in: Especialistas, Hospitalizacion,
+   Parvovirus, VetMovil, Vacunacion
+
+   .faq-card (no .faq-item): app.css ya usa .faq-item para el FAQ
+   acordeon de Home/Contacto. Con el mismo nombre, esta tarjeta sumaba
+   su padding/border-radius/hover encima del acordeon en esas paginas
+   (misma especificidad, este archivo carga despues) y lo desalineaba.
+   ============================================ */
+.faq-section {
+    padding: 80px 20px;
+    background: var(--bg-light);
+}
+
+.faq-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 24px;
+    margin-top: 50px;
+}
+
+.faq-card {
+    background: white;
+    padding: 28px;
+    border-radius: 14px;
+    border: 1px solid #eef1f5;
+    transition: var(--transition);
+}
+
+.faq-card:hover {
+    box-shadow: var(--shadow-soft);
+    border-color: var(--primary-teal);
+    transform: translateY(-2px);
+}
+
+.faq-card h4,
+.faq-card h3 {
+    color: var(--text-dark);
+    margin-bottom: 12px;
+    font-size: var(--font-size-h4);
+}
+
+.faq-card p {
+    color: var(--text-gray);
+    line-height: 1.7;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .faq-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================
+   SHARED FINAL CTA SECTION
+   ============================================ */
+.final-cta-section {
+    padding: 80px 20px;
+    background: #0d0d0d;
+    color: white;
+    text-align: center;
+}
+
+.final-cta-content {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.cta-icon {
+    width: 88px;
+    height: 88px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    background: rgba(98, 171, 191, 0.18);
+    color: var(--primary-teal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.final-cta-content h2 {
+    font-size: var(--font-size-h1);
+    margin-bottom: 16px;
+}
+
+/* Palabra destacada en el titulo, mismo tratamiento que el <em> del
+   cierre de Home (.vc-cta h2 em). */
+.final-cta-content h2 em {
+    font-style: italic;
+    color: var(--primary-teal);
+}
+
+.final-cta-content p {
+    font-size: var(--font-size-lg);
+    margin-bottom: 32px;
+    opacity: 0.95;
+}
+
+.cta-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.cta-buttons .whatsapp-btn,
+.cta-buttons .btn-whatsapp-vet {
+    margin-top: 0;
+}
+
+/* Fondo oscuro (dentro de .final-cta-section): mismo componente que .cta-note
+   en app.css, pero con texto/fondo adaptados para leerse sobre negro. */
+.final-cta-section .cta-note {
+    color: white;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* ============================================
+   SHARED STEP / PROCESS PATTERNS
+   ============================================ */
+.process-steps,
+.protocols-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+    margin: 50px 0;
+}
+
+.process-step,
+.protocol-step {
+    text-align: center;
+    padding: 30px 20px;
+    background: white;
+    border: 1px solid #eef1f5;
+    border-radius: 14px;
+    position: relative;
+    transition: var(--transition);
+}
+
+.process-step:hover,
+.protocol-step:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-soft);
+    border-color: var(--primary-teal);
+}
+
+.step-number {
+    width: 56px;
+    height: 56px;
+    background: #0d0d0d;
+    color: white;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 0 auto 20px;
+}
+
+.process-step h3,
+.protocol-step h3 {
+    font-size: var(--font-size-h3);
+    color: var(--text-dark);
+    margin-bottom: 12px;
+}
+
+.process-step p,
+.protocol-step p {
+    color: var(--text-gray);
+    line-height: 1.7;
+}
+
+/* ============================================
+   SHARED CARD GRID PATTERNS
+   ============================================ */
+.equipment-grid,
+.benefits-grid,
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    margin-top: 50px;
+}
+
+.equipment-card,
+.benefit-card {
+    background: white;
+    padding: 28px;
+    border-radius: 14px;
+    text-align: center;
+    border: 1px solid #eef1f5;
+    transition: var(--transition);
+}
+
+.equipment-card:hover,
+.benefit-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-soft);
+    border-color: var(--primary-teal);
+}
+
+.equipment-icon {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(98, 171, 191, 0.10), rgba(98, 171, 191, 0.20));
+    color: var(--primary-teal);
+}
+
+.equipment-card h3,
+.benefit-card h3 {
+    color: var(--text-dark);
+    margin-bottom: 12px;
+    font-size: var(--font-size-h3);
+}
+
+.equipment-card p,
+.benefit-card p {
+    color: var(--text-gray);
+    line-height: 1.6;
+}
+
+/* ============================================
+   SHARED STAT BOXES
+   ============================================ */
+.stat-box,
+.stat-card {
+    padding: 28px;
+    border-radius: 14px;
+    text-align: center;
+    color: white;
+    transition: var(--transition);
+}
+
+.stat-box:hover,
+.stat-card:hover {
+    transform: translateY(-3px);
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+}
+
+.stat-box .stat-label,
+.stat-card .stat-label {
+    color: inherit; /* el gris global de .stat-label no se lee sobre el fondo oscuro */
+}
+
+.stat-label {
+    font-size: var(--font-size-sm);
+    line-height: 1.4;
+    opacity: 0.85;
+}
+
+/* Tarjeta blanca con acento de color a la izquierda, mismo lenguaje que
+   el resto de las tarjetas del sitio (servicio-hub-card, exam-category):
+   ni bloque de color solido (se leia "oscura") ni tinte pastel (se leia
+   "muy clara") — un dato destacado sobre una tarjeta neutra. */
+.stat-primary,
+.stat-success,
+.stat-info {
+    background: white;
+    border: 1px solid #eef1f5;
+    border-left: 4px solid var(--stat-accent);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    color: var(--text-dark);
+}
+
+.stat-primary {
+    --stat-accent: var(--primary-teal);
+}
+
+.stat-primary .stat-number {
+    color: var(--primary-teal-dark);
+}
+
+.stat-success {
+    --stat-accent: var(--success);
+}
+
+.stat-success .stat-number {
+    color: var(--success-dark);
+}
+
+.stat-info {
+    --stat-accent: var(--accent-coral);
+}
+
+.stat-info .stat-number {
+    color: var(--accent-coral-dark);
+}
+
+.stat-primary .stat-label,
+.stat-success .stat-label,
+.stat-info .stat-label {
+    color: var(--text-gray);
+}
+
+
+.danger-stat {
+    background: #0d0d0d;
+    border: 1px solid rgba(187, 84, 95, 0.3);
+    color: white;
+}
+
+.success-stat {
+    background: #0d0d0d;
+    border: 1px solid rgba(79, 143, 110, 0.3);
+    color: white;
+}
+
+.info-stat {
+    background: #0d0d0d;
+    border: 1px solid rgba(98, 171, 191, 0.3);
+    color: white;
+}
+
+/* ============================================
+   SHARED ALERT / WARNING BOX
+   ============================================ */
+.alert-box,
+.warning-box {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    max-width: 1000px;
+    margin: 0 auto;
+    background: #fef2f2;
+    padding: 28px;
+    border-radius: 14px;
+    border: 1px solid rgba(187, 84, 95, 0.15);
+}
+
+.alert-icon,
+.warning-icon {
+    flex-shrink: 0;
+    color: var(--accent-coral);
+}
+
+.alert-content h3,
+.alert-content h2 {
+    color: var(--text-dark);
+    margin-bottom: 8px;
+    font-size: var(--font-size-h3);
+}
+
+.alert-content p {
+    color: var(--text-gray);
+    line-height: 1.7;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+
+    .alert-box,
+    .warning-box {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+/* ============================================
+   SHARED SPECIALIST CARDS
+   ============================================ */
+.specialists-detail-section {
+    padding: 80px 20px;
+    background: var(--bg-light);
+}
+
+.specialty-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 24px;
+}
+
+.specialty-card {
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border: 1px solid #eef1f5;
+    border-radius: 14px;
+    padding: 28px;
+    transition: var(--transition);
+}
+
+.specialty-card:hover {
+    box-shadow: var(--shadow-soft);
+    border-color: var(--primary-teal);
+}
+
+.specialty-card__icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-teal);
+    color: white;
+    margin-bottom: 16px;
+}
+
+.specialty-card:nth-child(even) .specialty-card__icon { background: var(--accent-coral); }
+
+.specialty-card h3 { font-size: 1.25rem; color: var(--text-dark); margin: 0 0 8px; }
+.specialty-card p { color: var(--text-gray); line-height: 1.6; margin: 0 0 16px; }
+
+.specialty-card__doctors {
+    list-style: none;
+    padding: 12px 0 0;
+    margin: 0 0 16px;
+    border-top: 1px solid #eef1f5;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.specialty-card__doctors li + li { margin-top: 4px; }
+
+.specialty-card__link {
+    margin-top: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    color: var(--primary-teal-dark);
+    transition: var(--transition-fast);
+}
+
+.specialty-card__link:hover {
+    gap: 10px;
+    color: var(--primary-teal);
+}
+
+.specialty-card__link:active {
+    transform: scale(0.97);
+}
+
+/* ============================================
+   SHARED SERVICE DETAIL CARDS
+   ============================================ */
+.services-detail-section {
+    padding: 80px 20px;
+    background: var(--bg-light);
+}
+
+.service-detail-card {
+    background: white;
+    padding: 32px;
+    border-radius: 14px;
+    border: 1px solid #eef1f5;
+    transition: var(--transition);
+}
+
+.service-detail-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-soft);
+    border-color: var(--primary-teal);
+}
+
+.service-icon {
+    font-size: 2.5rem;
+    margin-bottom: 16px;
+}
+
+.service-detail-card h3 {
+    font-size: var(--font-size-h3);
+    color: var(--text-dark);
+    margin-bottom: 12px;
+}
+
+.service-detail-card>p {
+    color: var(--text-gray);
+    line-height: 1.7;
+    margin-bottom: 16px;
+}
+
+.service-includes {
+    list-style: none;
+    padding: 0;
+    margin: 16px 0 0;
+}
+
+.service-includes li {
+    padding: 6px 0;
+    color: var(--text-gray);
+    font-size: var(--font-size-base);
+}
+
+.service-includes li::before {
+    content: "✓ ";
+    color: var(--primary-teal);
+    font-weight: 700;
+}
+
+/* ============================================
+   SHARED TIMELINE PATTERN
+   ============================================ */
+.steps-timeline {
+    max-width: 900px;
+    margin: 50px auto;
+    position: relative;
+}
+
+.steps-timeline::before {
+    content: '';
+    position: absolute;
+    left: 28px;
+    top: 28px;
+    bottom: 28px;
+    width: 3px;
+    background: linear-gradient(180deg, var(--primary-teal), var(--primary-teal-dark));
+}
+
+.timeline-step {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 40px;
+    position: relative;
+}
+
+.timeline-step:last-child {
+    margin-bottom: 0;
+}
+
+.step-marker {
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    background: #0d0d0d;
+    color: white;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    position: relative;
+    z-index: 1;
+}
+
+
+.step-content {
+    flex: 1;
+    background: white;
+    padding: 24px;
+    border-radius: 14px;
+    border: 1px solid #eef1f5;
+}
+
+.step-content h3 {
+    font-size: var(--font-size-h3);
+    color: var(--text-dark);
+    margin-bottom: 8px;
+}
+
+.step-content p {
+    color: var(--text-gray);
+    line-height: 1.7;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .steps-timeline::before {
+        display: none;
+    }
+
+    .timeline-step {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .step-marker {
+        margin: 0 auto;
+    }
+}
+
+/* ============================================
+   SHARED BUTTON STYLES
+   Unified button system
+   ============================================ */
+.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 1rem 2rem;
+    background: transparent;
+    color: var(--primary-teal);
+    border-radius: var(--border-radius);
+    font-weight: 700;
+    font-size: var(--font-size-base);
+    text-decoration: none;
+    border: 2px solid var(--primary-teal);
+    transition: var(--transition);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.btn-secondary:hover {
+    background: var(--primary-teal);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(98, 171, 191, 0.35);
+}
+
+.btn-primary-urgency {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent-coral);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: var(--border-radius);
+    font-weight: 700;
+    font-size: var(--font-size-base);
+    text-decoration: none;
+    transition: var(--transition);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.btn-primary-urgency:hover {
+    background: var(--accent-coral-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(187, 84, 95, 0.4);
+}
+
+/* ============================================
+   SHARED COVERAGE SECTION (VetMovil)
+   ============================================ */
+.coverage-section {
+    padding: 80px 20px;
+    background: white;
+}
+
+.coverage-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.coverage-info h2 {
+    font-size: var(--font-size-h1);
+    color: var(--text-dark);
+    margin-bottom: 32px;
+}
+
+.coverage-info .info-item {
+    margin-bottom: 16px;
+}
+
+.coverage-map {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.map-placeholder {
+    background: color-mix(in srgb, var(--primary-teal) 6%, white);
+    border-radius: var(--border-radius);
+    padding: 48px 32px;
+    text-align: center;
+    width: 100%;
+    border: 1px solid color-mix(in srgb, var(--primary-teal) 20%, white);
+}
+
+.map-icon {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(98, 171, 191, 0.14);
+    color: var(--primary-teal);
+}
+
+.map-placeholder h3 {
+    font-size: var(--font-size-h2);
+    color: var(--text-dark);
+    margin-bottom: 12px;
+}
+
+.map-placeholder p {
+    color: var(--text-gray);
+    line-height: 1.7;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 968px) {
+    .coverage-grid {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+}
+
+/* ============================================
+   SHARED HOSPITAL INFO LAYOUT
+   ============================================ */
+.hospital-info-section {
+    padding: 80px 20px;
+    background: white;
+}
+
+.hospital-info-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 60px;
+    margin-top: 50px;
+}
+
+.hospital-info-text h3 {
+    color: var(--text-dark);
+    margin: 24px 0 16px;
+    font-size: var(--font-size-h2);
+}
+
+.hospital-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+@media (max-width: 968px) {
+    .hospital-info-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================
+   SHARED TUTOR INFO / INFO BOX
+   ============================================ */
+.tutor-info-section {
+    padding: 80px 20px;
+    background: var(--bg-light);
+}
+
+.tutor-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-top: 50px;
+}
+
+.info-box {
+    background: white;
+    padding: 24px;
+    border-radius: var(--border-radius);
+}
+
+.info-note {
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--bg-light);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-gray);
+    font-size: var(--font-size-sm);
+    line-height: 1.6;
+}
+
+@media (max-width: 968px) {
+    .tutor-info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================
+   24/7 SERVICE SECTION (Hospital)
+   ============================================ */
+.service-247-section {
+    padding: 48px 20px;
+    background: var(--primary-teal-light);
+}
+
+.service-247-content {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    max-width: 1000px;
+    margin: 0 auto;
+    background: white;
+    padding: 32px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-soft);
+}
+
+.service-247-icon {
+    font-size: 4rem;
+    flex-shrink: 0;
+}
+
+.service-247-text h2 {
+    color: var(--text-dark);
+    margin-bottom: 12px;
+    font-size: var(--font-size-h2);
+}
+
+.service-247-text p {
+    color: var(--text-gray);
+    font-size: var(--font-size-base);
+    line-height: 1.7;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .service-247-content {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+/* ============================================
+   EQUIPMENT SECTION (Hospital)
+   ============================================ */
+.equipment-section {
+    padding: 80px 20px;
+    background: var(--bg-light);
+}
+
+/* ============================================
+   CARE PROTOCOLS (Hospital)
+   ============================================ */
+.care-protocols-section {
+    padding: 80px 20px;
+    background: white;
+}
+
+/* ============================================
+   APPOINTMENT PROCESS (Especialistas)
+   ============================================ */
+.appointment-process-section {
+    padding: 80px 20px;
+    background: white;
+}
+
+.process-cta {
+    text-align: center;
+    margin-top: 50px;
+}
+
+.process-cta__note {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 24px;
+    padding: 10px 20px;
+    background: rgba(187, 84, 95, 0.06);
+    border-left: 3px solid var(--accent-coral);
+    border-radius: 6px;
+    color: var(--text-dark);
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+}
+
+.process-cta__note svg { color: var(--accent-coral); flex-shrink: 0; }
+
+.process-cta .cta-buttons {
+    margin-bottom: 0;
+}
+
+/* ============================================
+   ALERT SECTION (Parvovirus)
+   ============================================ */
+.alert-section {
+    padding: 48px 20px;
+    background: color-mix(in srgb, var(--warning) 12%, white);
+}
+
+/* ============================================
+   SYMPTOMS SECTION (Parvovirus)
+   ============================================ */
+.symptoms-section {
+    padding: 80px 20px;
+    background: var(--bg-light);
+}
+
+.symptoms-intro {
+    max-width: 900px;
+    margin: 32px auto;
+    text-align: center;
+}
+
+.emphasis-text {
+    font-size: var(--font-size-lg);
+    padding: 20px 24px;
+    background: white;
+    border-radius: var(--border-radius);
+    border-left: 4px solid var(--accent-coral);
+    line-height: 1.7;
+}
+
+.symptoms-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin: 50px 0;
+}
+
+.symptom-card {
+    background: white;
+    padding: 28px;
+    border-radius: var(--border-radius);
+    text-align: center;
+    border-top: 3px solid;
+    position: relative;
+    transition: var(--transition);
+}
+
+.symptom-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-medium);
+}
+
+.symptom-card.severe {
+    border-top-color: var(--accent-coral);
+}
+
+.symptom-card.moderate {
+    border-top-color: var(--warning);
+}
+
+.symptom-severity {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: var(--border-radius-pill);
+    background: var(--accent-coral);
+    color: white;
+}
+
+.symptom-card.moderate .symptom-severity {
+    background: var(--warning);
+}
+
+.symptom-icon {
+    font-size: 2.5rem;
+    margin: 16px 0;
+}
+
+.symptom-card h3 {
+    color: var(--text-dark);
+    margin-bottom: 12px;
+}
+
+.symptom-card p {
+    color: var(--text-gray);
+    line-height: 1.6;
+}
+
+.emergency-cta {
+    background: linear-gradient(135deg, var(--accent-coral) 0%, var(--accent-coral-dark) 100%);
+    color: white;
+    padding: 48px;
+    border-radius: var(--border-radius);
+    text-align: center;
+    margin-top: 50px;
+}
+
+.emergency-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+}
+
+.emergency-content h3 {
+    font-size: var(--font-size-h2);
+    margin-bottom: 12px;
+}
+
+.emergency-content p {
+    font-size: var(--font-size-lg);
+    margin-bottom: 24px;
+    opacity: 0.95;
+}
+
+.emergency-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 968px) {
+    .symptoms-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================
+   TREATMENT SECTION (Parvovirus)
+   ============================================ */
+.treatment-section {
+    padding: 80px 20px;
+    background: white;
+}
+
+.treatment-intro {
+    max-width: 800px;
+    margin: 32px auto 50px;
+    text-align: center;
+}
+
+.treatment-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 24px;
+    margin-bottom: 50px;
+}
+
+.treatment-step {
+    background: var(--bg-light);
+    padding: 32px;
+    border-radius: var(--border-radius);
+    text-align: center;
+    transition: var(--transition);
+}
+
+.treatment-step:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-medium);
+}
+
+.step-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+}
+
+.treatment-step h3 {
+    color: var(--text-dark);
+    margin-bottom: 12px;
+    font-size: var(--font-size-h3);
+}
+
+.treatment-step p {
+    color: var(--text-gray);
+    line-height: 1.7;
+}
+
+.treatment-note {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* ============================================
+   PREVENTION SECTION (Parvovirus)
+   ============================================ */
+.prevention-section {
+    padding: 80px 20px;
+    background: var(--bg-light);
+}
+
+.prevention-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 50px;
+    margin-top: 50px;
+}
+
+.prevention-main h3,
+.prevention-tips h3 {
+    color: var(--text-dark);
+    margin-bottom: 24px;
+    font-size: var(--font-size-h2);
+}
+
+.vaccine-schedule {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.vaccine-step {
+    background: white;
+    padding: 20px;
+    border-radius: var(--border-radius);
+    border-left: 4px solid var(--success);
+}
+
+.vaccine-age {
+    display: inline-block;
+    background: var(--success);
+    color: white;
+    padding: 4px 14px;
+    border-radius: var(--border-radius-pill);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.vaccine-step h4 {
+    color: var(--text-dark);
+    margin-bottom: 8px;
+}
+
+.vaccine-step p {
+    color: var(--text-gray);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.prevention-list {
+    list-style: none;
+    padding: 0;
+}
+
+.prevention-list li {
+    padding: 12px;
+    margin-bottom: 12px;
+    background: white;
+    border-radius: var(--border-radius);
+    line-height: 1.6;
+    color: var(--text-gray);
+    transition: var(--transition);
+}
+
+.prevention-list li:hover {
+    box-shadow: var(--shadow-soft);
+}
+
+@media (max-width: 968px) {
+    .prevention-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================
+   INFO SECTION (Parvovirus)
+   ============================================ */
+.info-section {
+    padding: 80px 20px;
+    background: white;
+}
+
+.info-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 50px;
+    margin-top: 50px;
+}
+
+.info-text h3 {
+    color: var(--text-dark);
+    margin: 24px 0 16px;
+    font-size: var(--font-size-h2);
+}
+
+.info-list {
+    list-style: none;
+    padding: 0;
+}
+
+.info-list li {
+    padding: 10px 0;
+    font-size: var(--font-size-base);
+    color: var(--text-gray);
+    line-height: 1.6;
+}
+
+.info-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+@media (max-width: 968px) {
+    .info-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================
+   HOW IT WORKS (VetMovil)
+   ============================================ */
+.how-it-works-section {
+    padding: 80px 20px;
+    background: var(--bg-light);
+}
+
+.cta-center {
+    text-align: center;
+    margin-top: 50px;
+}
+
+/* ============================================
+   BENEFITS SECTION (VetMovil)
+   ============================================ */
+.benefits-section {
+    padding: 80px 20px;
+    background: white;
+}
+
+/* ============================================
+   VACUNACION - Calendar specific styles
+   Mismo lenguaje que el Home: sección con fondo suave, tarjetas blancas de
+   radio 14px con borde fino, y solo los dos colores de marca (teal = perros,
+   coral = gatos) en lugar de los verdes de éxito que tenía antes.
+   ============================================ */
+.calendars-section {
+    padding: 80px 20px;
+    background: var(--bg-light);
+}
+
+.calendars-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+    margin-top: 50px;
+    align-items: start;
+}
+
+.calendar-block {
+    --cal: var(--primary-teal);
+    /* texto sobre el teal claro de fondo: --primary-teal-text daba ~4.4:1, este ~5.6:1 */
+    --cal-text: color-mix(in srgb, var(--primary-teal) 62%, black);
+    --cal-soft: var(--primary-teal-light);
+    background: white;
+    border: 1px solid #eef1f5;
+    border-radius: 14px;
+    padding: 32px;
+    box-shadow: var(--shadow-soft);
+}
+
+.calendar-block--cat {
+    --cal: var(--accent-coral);
+    --cal-text: var(--accent-coral-dark);
+    --cal-soft: rgba(187, 84, 95, 0.09);
+}
+
+.calendar-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    text-align: left;
+    margin-bottom: 28px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid #eef1f5;
+}
+
+.calendar-header__icon {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    background: var(--cal-soft);
+    color: var(--cal-text);
+}
+
+.calendar-header h3 {
+    margin: 0;
+    font-size: var(--font-size-h3);
+    color: var(--text-dark);
+}
+
+.calendar-header p {
+    margin: 2px 0 0;
+    font-size: var(--font-size-sm);
+    color: var(--text-gray);
+}
+
+/* Línea de tiempo: un punto por dosis sobre una línea fina del color de la especie */
+.vaccines-timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.vaccines-timeline::before {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 10px;
+    bottom: 10px;
+    width: 2px;
+    background: color-mix(in srgb, var(--cal) 35%, white);
+}
+
+.vaccine-item {
+    position: relative;
+    margin-bottom: 26px;
+}
+
+.vaccine-item:last-child {
+    margin-bottom: 0;
+}
+
+.vaccine-item::before {
+    content: '';
+    position: absolute;
+    left: -30px;
+    top: 4px;
+    box-sizing: border-box;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: white;
+    border: 3px solid var(--cal);
+}
+
+/* El refuerzo anual es la dosis que se repite: punto lleno */
+.vaccine-item:last-child::before {
+    background: var(--cal);
+}
+
+/* Marcador de edad del calendario de vacunación (Vacunacion.razor).
+   Distinto de .vaccine-age (usado por Parvovirus.razor en un layout
+   de tarjeta apilada). */
+.vaccine-age-marker {
+    display: inline-block;
+    background: var(--cal-soft);
+    color: var(--cal-text);
+    padding: 3px 12px;
+    margin-bottom: 8px;
+    border-radius: var(--border-radius-pill);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.vaccine-details h4,
+.vaccine-details h3 {
+    color: var(--text-dark);
+    margin-bottom: 4px;
+    font-size: var(--font-size-lg);
+}
+
+.vaccine-details p {
+    color: var(--text-gray);
+    margin: 0;
+    line-height: 1.6;
+}
+
+.optional-vaccines-section {
+    padding: 80px 20px;
+    background: white;
+}
+
+.optional-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-top: 50px;
+}
+
+.optional-card {
+    background: white;
+    padding: 24px;
+    border-radius: var(--border-radius);
+    border-top: 3px solid var(--primary-teal);
+    transition: var(--transition);
+}
+
+.optional-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-medium);
+}
+
+.optional-card h3 {
+    color: var(--text-dark);
+    margin-bottom: 16px;
+}
+
+.optional-card p {
+    color: var(--text-gray);
+    line-height: 1.7;
+    margin-bottom: 8px;
+}
+
+.risk-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: var(--border-radius-pill);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: white;
+}
+
+.risk-high {
+    background: var(--accent-coral-dark);
+}
+
+.risk-medium {
+    background: var(--primary-teal-text);
+}
+
+@media (max-width: 1000px) {
+    .calendars-grid {
+        grid-template-columns: 1fr;
+        gap: 28px;
+    }
+}
+
+@media (max-width: 480px) {
+    .calendar-block {
+        padding: 24px 20px;
+    }
+}

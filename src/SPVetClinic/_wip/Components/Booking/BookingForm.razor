@@ -1,0 +1,259 @@
+@namespace SPVetClinic.Components.Booking
+@* ============================================
+   BOOKING FORM - Componente de Formulario
+   [MOVIDO a _wip: módulo de booking sin usar todavía. Se mantiene el namespace
+   original con @namespace para no requerir cambios en las referencias.]
+   Uso: <BookingForm OnFormSubmitted="HandleSubmit" OnPreviousStep="HandleBack" />
+   ============================================ *@
+
+@using SPVetClinic.Data.Models.Booking
+@using SPVetClinic.Services.Booking
+@using System.ComponentModel.DataAnnotations
+
+<div class="booking-form">
+    <div class="form-header">
+        <h2 class="form-title">Información de tu Mascota</h2>
+        <p class="form-subtitle">Completa los datos para confirmar tu reserva</p>
+    </div>
+
+    <EditForm Model="@FormData" OnValidSubmit="@HandleSubmit">
+        <DataAnnotationsValidator />
+
+        <!-- Owner Information Section -->
+        <fieldset class="form-section">
+            <legend class="section-title">
+                <Icon Name="user" Size="20" />
+                Datos del Propietario
+            </legend>
+
+            <div class="form-group">
+                <label for="ownerName" class="form-label">
+                    Nombre Completo *
+                </label>
+                <InputText id="ownerName" 
+                          class="form-control" 
+                          placeholder="Ej: Juan Pérez"
+                          @bind-Value="FormData.OwnerName" />
+                <ValidationMessage For="@(() => FormData.OwnerName)" />
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="ownerEmail" class="form-label">
+                        Email *
+                    </label>
+                    <InputText id="ownerEmail" 
+                              class="form-control" 
+                              placeholder="email@ejemplo.com"
+                              type="email"
+                              @bind-Value="FormData.OwnerEmail" />
+                    <ValidationMessage For="@(() => FormData.OwnerEmail)" />
+                </div>
+
+                <div class="form-group">
+                    <label for="ownerPhone" class="form-label">
+                        Teléfono/WhatsApp *
+                    </label>
+                    <InputText id="ownerPhone" 
+                              class="form-control" 
+                              placeholder="+56 9 XXXX XXXX"
+                              @bind-Value="FormData.OwnerPhone" />
+                    <ValidationMessage For="@(() => FormData.OwnerPhone)" />
+                    <small class="form-hint">Formato: +56 9 XXXX XXXX</small>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- Pet Information Section -->
+        <fieldset class="form-section">
+            <legend class="section-title">
+                <Icon Name="heart" Size="20" />
+                Datos de la Mascota
+            </legend>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="petName" class="form-label">
+                        Nombre de la Mascota *
+                    </label>
+                    <InputText id="petName" 
+                              class="form-control" 
+                              placeholder="Ej: Rex"
+                              @bind-Value="FormData.PetName" />
+                    <ValidationMessage For="@(() => FormData.PetName)" />
+                </div>
+
+                <div class="form-group">
+                    <label for="petSpecies" class="form-label">
+                        Especie *
+                    </label>
+                    <InputSelect id="petSpecies" 
+                                class="form-control" 
+                                @bind-Value="FormData.PetSpecies">
+                        <option value="">-- Selecciona una especie --</option>
+                        <option value="Perro">Perro</option>
+                        <option value="Gato">Gato</option>
+                        <option value="Conejo">Conejo</option>
+                        <option value="Roedor">Roedor</option>
+                        <option value="Ave">Ave</option>
+                        <option value="Reptil">Reptil</option>
+                        <option value="Otro">Otro</option>
+                    </InputSelect>
+                    <ValidationMessage For="@(() => FormData.PetSpecies)" />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="petBreed" class="form-label">
+                        Raza
+                    </label>
+                    <InputText id="petBreed" 
+                              class="form-control" 
+                              placeholder="Ej: Pastor Alemán"
+                              @bind-Value="FormData.PetBreed" />
+                </div>
+
+                <div class="form-group">
+                    <label for="petAge" class="form-label">
+                        Edad
+                    </label>
+                    <InputText id="petAge" 
+                              class="form-control" 
+                              placeholder="Ej: 3 años"
+                              @bind-Value="FormData.PetAge" />
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- Symptoms and Notes Section -->
+        <fieldset class="form-section">
+            <legend class="section-title">
+                <Icon Name="stethoscope" Size="20" />
+                Motivo de la Consulta
+            </legend>
+
+            <div class="form-group">
+                <label for="symptoms" class="form-label">
+                    Síntomas o Motivo de Consulta
+                </label>
+                <InputTextArea id="symptoms" 
+                              class="form-control textarea" 
+                              placeholder="Describe los síntomas o el motivo de la consulta (opcional)"
+                              rows="4"
+                              @bind-Value="FormData.Symptoms" />
+                <small class="form-hint">Esto ayuda al especialista a prepararse mejor</small>
+            </div>
+
+            <div class="form-group">
+                <label for="notes" class="form-label">
+                    Notas Adicionales
+                </label>
+                <InputTextArea id="notes" 
+                              class="form-control textarea" 
+                              placeholder="Información adicional que creas relevante (opcional)"
+                              rows="3"
+                              @bind-Value="FormData.AdditionalNotes" />
+            </div>
+        </fieldset>
+
+        <!-- Selected Appointment Summary -->
+        @if (BookingState?.FormData.SelectedSpecialist != null && BookingState.FormData.SelectedTimeSlot != null)
+        {
+            <div class="appointment-summary">
+                <h3 class="summary-title">Resumen de tu Reserva</h3>
+                <div class="summary-details">
+                    <div class="summary-row">
+                        <span class="summary-label">Especialista:</span>
+                        <span class="summary-value">@BookingState.FormData.SelectedSpecialist.Name</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Especialidad:</span>
+                        <span class="summary-value">@BookingState.FormData.SelectedSpecialist.Specialty</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Fecha:</span>
+                        <span class="summary-value">@BookingState.FormData.SelectedTimeSlot.Date.ToString("dddd, d 'de' MMMM 'de' yyyy")</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Hora:</span>
+                        <span class="summary-value">@BookingState.FormData.SelectedTimeSlot.FormattedTime</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span class="summary-label">Valor Consulta:</span>
+                        <span class="summary-value">$@BookingState.FormData.SelectedSpecialist.ConsultationPrice.ToString("N0")</span>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <button type="button" class="btn-secondary" @onclick="OnPreviousClick">
+                <Icon Name="arrow-left" Size="18" />
+                Atrás
+            </button>
+            <button type="submit" class="btn-primary" disabled="@(!FormData.IsValid())">
+                Continuar al Pago
+                <Icon Name="arrow-right" Size="18" />
+            </button>
+        </div>
+
+        @if (!string.IsNullOrEmpty(FormErrorMessage))
+        {
+            <div class="form-error-message reveal">
+                <Icon Name="alert-circle" Size="20" />
+                <span>@FormErrorMessage</span>
+            </div>
+        }
+    </EditForm>
+</div>
+
+@code {
+    [Inject] private BookingStateService? BookingState { get; set; }
+
+    [Parameter]
+    public EventCallback OnFormSubmitted { get; set; }
+
+    [Parameter]
+    public EventCallback OnPreviousStep { get; set; }
+
+    private BookingFormData FormData => BookingState?.FormData ?? new();
+    private string? FormErrorMessage { get; set; }
+
+    protected override void OnInitialized()
+    {
+        // El BookingState ya tiene los datos sincronizados desde los pasos anteriores
+    }
+
+    private async Task HandleSubmit()
+    {
+        FormErrorMessage = null;
+
+        if (BookingState == null)
+        {
+            FormErrorMessage = "Error: Servicio de reserva no disponible";
+            return;
+        }
+
+        if (!FormData.IsValid())
+        {
+            FormErrorMessage = "Por favor completa todos los campos requeridos";
+            return;
+        }
+
+        if (BookingState.CreateReservation())
+        {
+            await OnFormSubmitted.InvokeAsync();
+        }
+        else
+        {
+            FormErrorMessage = BookingState.ErrorMessage ?? "Error al crear la reserva";
+        }
+    }
+
+    private async Task OnPreviousClick()
+    {
+        await OnPreviousStep.InvokeAsync();
+    }
+}

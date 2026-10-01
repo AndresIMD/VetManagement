@@ -1,0 +1,229 @@
+@page "/peluqueria"
+
+<PageTitle>Peluquería y estética | San Pablo Vet clínic</PageTitle>
+<HeadContent>
+    <meta name="description"
+          content="Peluquería y estética canina profesional en Rancagua. Baño, corte, limpieza dental y más. Productos premium y trato gentil en San Pablo Vet clínic." />
+    <meta property="og:title" content="Peluquería y estética | San Pablo Vet clínic" />
+    <meta property="og:description"
+          content="Peluquería y estética canina profesional en Rancagua. Baño, corte, limpieza dental y más. Productos premium y trato gentil en San Pablo Vet clínic." />
+    <meta property="og:type" content="website" />
+</HeadContent>
+
+<PageHero Tag="Grooming" TagIcon="scissors" Title="Peluquería y estética"
+          Subtitle="Cuidado profesional para la higiene y belleza de tu mascota"
+          CssClass="hero--teal">
+    <Actions>
+        <WhatsAppButton Label="Agendar Hora"
+                        Style="WhatsAppButtonStyle.Vet" />
+        <NavLink href="servicios" class="btn-secondary">Ver Servicios</NavLink>
+    </Actions>
+
+</PageHero>
+
+<!-- ============================================
+     INTRO SECTION
+     ============================================ -->
+<section class="peluqueria-intro-section">
+    <div class="peluqueria-intro-container reveal">
+        <div class="intro-content">
+            <h2 class="section-title">Más que un baño, un cuidado integral</h2>
+            <p>
+                Entendemos que la higiene de tu mascota va más allá de la estética.
+                Nuestro servicio de peluquería combina cuidados profesionales con productos de calidad premium
+                para mantener la salud de la piel y pelaje de tu compañero.
+            </p>
+            <p>
+                Contamos con un equipo capacitado en técnicas de grooming profesional y manejamos con paciencia
+                y cariño a cada paciente, respetando sus tiempos y necesidades especiales.
+            </p>
+        </div>
+        <div class="intro-visual">
+            <img src="@ImagePaths.Services.Grooming" alt="Servicio de peluquería en San Pablo Vet clínic" loading="lazy" />
+        </div>
+    </div>
+</section>
+
+<!-- ============================================
+     SERVICIOS DE PELUQUERÍA
+     ============================================ -->
+<section class="peluqueria-servicios-section">
+    <div class="section-header">
+        <span class="section-tag">Nuestros Servicios</span>
+        <h2 class="section-title">Todo lo que necesita tu mascota</h2>
+    </div>
+
+    <div class="peluqueria-servicios-grid">
+        <!-- Baño Medicado -->
+        <div class="peluqueria-service-card reveal stagger-1">
+            <div class="service-icon">
+                <Icon Name="bath" Size="32" />
+            </div>
+            <h3>Baño medicado</h3>
+            <p>
+                Tratamientos dermatológicos con shampoos especializados para problemas de piel,
+                alergias, hongos o parásitos externos.
+            </p>
+            <ul class="service-features">
+                <li>Shampoo antipulgas</li>
+                <li>Tratamiento antihongos</li>
+                <li>Shampoo hipoalergénico</li>
+                <li>Tratamiento para dermatitis</li>
+            </ul>
+        </div>
+
+        <!-- Baño Regular -->
+        <div class="peluqueria-service-card reveal stagger-2">
+            <div class="service-icon">
+                <Icon Name="shower" Size="32" />
+            </div>
+            <h3>Baño regular</h3>
+            <p>
+                Limpieza completa con productos de alta calidad, secado profesional y cepillado
+                para mantener el pelaje saludable y brillante.
+            </p>
+            <ul class="service-features">
+                <li>Shampoo premium</li>
+                <li>Acondicionador nutritivo</li>
+                <li>Secado con sopladoras especializadas</li>
+                <li>Cepillado y desenredado</li>
+            </ul>
+        </div>
+
+        <!-- Corte de Pelo -->
+        <div class="peluqueria-service-card reveal stagger-3">
+            <div class="service-icon">
+                <Icon Name="scissors" Size="32" />
+            </div>
+            <h3>Corte de pelo</h3>
+            <p>
+                Cortes profesionales adaptados a la raza, tipo de pelaje y preferencias del dueño.
+                Ideal para razas de pelo largo o estaciones de calor.
+            </p>
+            <ul class="service-features">
+                <li>Cortes según raza</li>
+                <li>Cortes de verano</li>
+                <li>Deslanado profesional</li>
+                <li>Rasurado higiénico</li>
+            </ul>
+        </div>
+
+        <!-- Limpieza de Oídos -->
+        <div class="peluqueria-service-card reveal stagger-4">
+            <div class="service-icon">
+                <Icon Name="ear" Size="32" />
+            </div>
+            <h3>Limpieza de oídos</h3>
+            <p>
+                Limpieza profunda del canal auditivo para prevenir infecciones, mal olor y
+                acumulación de cerumen.
+            </p>
+            <ul class="service-features">
+                <li>Limpieza con solución especializada</li>
+                <li>Extracción de pelos</li>
+                <li>Inspección veterinaria</li>
+                <li>Prevención de otitis</li>
+            </ul>
+        </div>
+
+        <!-- Corte de Uñas -->
+        <div class="peluqueria-service-card reveal stagger-5">
+            <div class="service-icon">
+                <Icon Name="scissors-nails" Size="32" />
+            </div>
+            <h3>Corte de uñas</h3>
+            <p>
+                Recorte profesional de uñas para evitar molestias al caminar, lesiones en almohadillas
+                y problemas posturales.
+            </p>
+            <ul class="service-features">
+                <li>Corte seguro y preciso</li>
+                <li>Lima de uñas</li>
+                <li>Cuidado de almohadillas</li>
+                <li>Prevención de uñas encarnadas</li>
+            </ul>
+        </div>
+
+        <!-- Limpieza Dental -->
+        <div class="peluqueria-service-card reveal stagger-6">
+            <div class="service-icon">
+                <Icon Name="tooth" Size="32" />
+            </div>
+            <h3>Limpieza dental</h3>
+            <p>
+                Cepillado dental para prevenir sarro, mal aliento y enfermedades periodontales.
+                Importante para la salud general de tu mascota.
+            </p>
+            <ul class="service-features">
+                <li>Cepillado con pasta especial</li>
+                <li>Eliminación de sarro superficial</li>
+                <li>Inspección bucal</li>
+                <li>Productos seguros para mascotas</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+@* Oculto por ahora a pedido del cliente.
+<!-- ============================================
+     PAQUETES ESPECIALES
+     ============================================ -->
+<section class="peluqueria-paquetes-section">
+    <div class="section-header">
+        <span class="section-tag">Ahorra con Nuestros Paquetes</span>
+        <h2 class="section-title">Paquetes especiales</h2>
+        <p class="section-subtitle">Combinaciones diseñadas para el cuidado completo de tu mascota</p>
+    </div>
+
+    <div class="paquetes-grid">
+        <div class="paquete-card reveal stagger-1">
+            <div class="paquete-badge">Más Vendido</div>
+            <h3>Paquete básico</h3>
+            <p class="paquete-description">Higiene esencial para el día a día</p>
+            <ul class="paquete-includes">
+                <li>Baño regular</li>
+                <li>Secado y cepillado</li>
+                <li>Corte de uñas</li>
+                <li>Limpieza de oídos</li>
+            </ul>
+        </div>
+
+        <div class="paquete-card paquete-premium reveal stagger-2">
+            <div class="paquete-badge badge-premium">Recomendado</div>
+            <h3>Paquete premium</h3>
+            <p class="paquete-description">Cuidado completo y profesional</p>
+            <ul class="paquete-includes">
+                <li>Todo del paquete básico</li>
+                <li>Corte de pelo profesional</li>
+                <li>Limpieza dental</li>
+                <li>Perfume especial</li>
+                <li>Tratamiento de pelaje</li>
+            </ul>
+        </div>
+
+        <div class="paquete-card reveal stagger-3">
+            <div class="paquete-badge badge-medical">Salud y Belleza</div>
+            <h3>Paquete medicado</h3>
+            <p class="paquete-description">Tratamiento especializado</p>
+            <ul class="paquete-includes">
+                <li>Baño medicado especializado</li>
+                <li>Tratamiento dermatológico</li>
+                <li>Secado y cepillado</li>
+                <li>Inspección veterinaria</li>
+            </ul>
+        </div>
+    </div>
+</section>
+*@
+
+<!-- ============================================
+     CTA SECTION
+     ============================================ -->
+<PageCtaSection IconName="scissors"
+                Description="Agenda una cita para peluquería y deja a tu compañero en manos expertas. Saldrá limpio, cómodo y luciendo espectacular.">
+    <TitleContent>¿Listo para el <em>Spa</em> de tu Mascota?</TitleContent>
+    <Buttons>
+        <WhatsAppButton Label="Consultar por WhatsApp" Style="WhatsAppButtonStyle.Default" />
+        <a href="@AppConstants.Clinic.BookingUrl" target="_blank" rel="noopener noreferrer" class="btn-secondary">Reservar Online</a>
+    </Buttons>
+</PageCtaSection>

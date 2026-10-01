@@ -1,0 +1,235 @@
+@namespace SPVetClinic.Components.Booking
+@* ============================================
+   BOOKING SUMMARY - Componente de Resumen
+   [MOVIDO a _wip: módulo de booking sin usar todavía. Se mantiene el namespace
+   original con @namespace para no requerir cambios en las referencias.]
+   Uso: <BookingSummary OnConfirmed="HandleConfirm" />
+   ============================================ *@
+
+@using SPVetClinic.Data.Models.Booking
+@using SPVetClinic.Services.Booking
+
+<div class="booking-summary">
+    <div class="summary-header">
+        <h2 class="summary-title">Revisa tu Reserva</h2>
+        <p class="summary-subtitle">Por favor verifica todos los datos antes de proceder al pago</p>
+    </div>
+
+    @if (BookingState?.CurrentReservation == null)
+    {
+        <div class="empty-state">
+            <p>No hay datos de reserva disponibles.</p>
+        </div>
+        return;
+    }
+
+    <div class="summary-content reveal">
+        <!-- Specialist Information -->
+        <div class="summary-card">
+            <div class="card-header">
+                <Icon Name="stethoscope" Size="24" />
+                <h3>Especialista</h3>
+            </div>
+            <div class="card-body">
+                @if (BookingState.FormData.SelectedSpecialist != null)
+                {
+                    <div class="info-row">
+                        <span class="label">Nombre:</span>
+                        <span class="value">@BookingState.FormData.SelectedSpecialist.Name</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Especialidad:</span>
+                        <span class="value">@BookingState.FormData.SelectedSpecialist.Specialty</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Duración:</span>
+                        <span class="value">@BookingState.FormData.SelectedSpecialist.ConsultationDurationMinutes minutos</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Appointment Information -->
+        <div class="summary-card">
+            <div class="card-header">
+                <Icon Name="calendar" Size="24" />
+                <h3>Cita</h3>
+            </div>
+            <div class="card-body">
+                @if (BookingState.FormData.SelectedTimeSlot != null)
+                {
+                    <div class="info-row">
+                        <span class="label">Fecha:</span>
+                        <span class="value">@BookingState.FormData.SelectedTimeSlot.Date.ToString("dddd, d 'de' MMMM 'de' yyyy")</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Hora:</span>
+                        <span class="value">@BookingState.FormData.SelectedTimeSlot.FormattedTime</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Owner Information -->
+        <div class="summary-card">
+            <div class="card-header">
+                <Icon Name="user" Size="24" />
+                <h3>Propietario</h3>
+            </div>
+            <div class="card-body">
+                <div class="info-row">
+                    <span class="label">Nombre:</span>
+                    <span class="value">@BookingState.CurrentReservation.OwnerName</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Email:</span>
+                    <span class="value">@BookingState.CurrentReservation.OwnerEmail</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Teléfono:</span>
+                    <span class="value">@BookingState.CurrentReservation.OwnerPhone</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pet Information -->
+        <div class="summary-card">
+            <div class="card-header">
+                <Icon Name="heart" Size="24" />
+                <h3>Mascota</h3>
+            </div>
+            <div class="card-body">
+                <div class="info-row">
+                    <span class="label">Nombre:</span>
+                    <span class="value">@BookingState.CurrentReservation.PetName</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Especie:</span>
+                    <span class="value">@BookingState.CurrentReservation.PetSpecies</span>
+                </div>
+                @if (!string.IsNullOrEmpty(BookingState.CurrentReservation.PetBreed))
+                {
+                    <div class="info-row">
+                        <span class="label">Raza:</span>
+                        <span class="value">@BookingState.CurrentReservation.PetBreed</span>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(BookingState.CurrentReservation.PetAge))
+                {
+                    <div class="info-row">
+                        <span class="label">Edad:</span>
+                        <span class="value">@BookingState.CurrentReservation.PetAge</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Symptoms and Notes -->
+        @if (!string.IsNullOrEmpty(BookingState.CurrentReservation.Symptoms))
+        {
+            <div class="summary-card">
+                <div class="card-header">
+                    <Icon Name="alert-circle" Size="24" />
+                    <h3>Síntomas</h3>
+                </div>
+                <div class="card-body">
+                    <p class="symptoms-text">@BookingState.CurrentReservation.Symptoms</p>
+                </div>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(BookingState.CurrentReservation.AdditionalNotes))
+        {
+            <div class="summary-card">
+                <div class="card-header">
+                    <Icon Name="note" Size="24" />
+                    <h3>Notas Adicionales</h3>
+                </div>
+                <div class="card-body">
+                    <p class="notes-text">@BookingState.CurrentReservation.AdditionalNotes</p>
+                </div>
+            </div>
+        }
+
+        <!-- Price Summary -->
+        <div class="summary-card price-summary">
+            <div class="price-row">
+                <span class="price-label">Consulta Veterinaria:</span>
+                <span class="price-value">$@BookingState.FormData.SelectedSpecialist?.ConsultationPrice.ToString("N0")</span>
+            </div>
+            <div class="price-divider"></div>
+            <div class="price-row total">
+                <span class="total-label">Monto Total:</span>
+                <span class="total-value">$@BookingState.CurrentReservation.TotalPrice.ToString("N0")</span>
+            </div>
+        </div>
+
+        <!-- Terms and Conditions -->
+        <div class="terms-section">
+            <label class="checkbox-label">
+                <input type="checkbox" @bind="@TermsAccepted" />
+                <span>Acepto los términos y condiciones de San Pablo Vet Clínic</span>
+            </label>
+        </div>
+
+        <!-- Actions -->
+        <div class="summary-actions">
+            <button type="button" class="btn-secondary" @onclick="OnEditClick" disabled="@IsConfirming">
+                <Icon Name="arrow-left" Size="18" />
+                Editar
+            </button>
+            <button type="button" class="btn-primary" disabled="@(!TermsAccepted || IsConfirming)" @onclick="OnConfirmClick">
+                @if (IsConfirming)
+                {
+                    <span>
+                        <span class="spinner-small"></span>
+                        Procesando...
+                    </span>
+                }
+                else
+                {
+                    <span>
+                        Proceder al Pago
+                        <Icon Name="arrow-right" Size="18" />
+                    </span>
+                }
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Inject] private BookingStateService? BookingState { get; set; }
+
+    [Parameter]
+    public EventCallback OnConfirmed { get; set; }
+
+    [Parameter]
+    public EventCallback OnEditRequested { get; set; }
+
+    private bool TermsAccepted = false;
+    private bool IsConfirming = false;
+
+    private async Task OnConfirmClick()
+    {
+        if (!TermsAccepted)
+        {
+            return;
+        }
+
+        IsConfirming = true;
+        try
+        {
+            await OnConfirmed.InvokeAsync();
+        }
+        finally
+        {
+            IsConfirming = false;
+        }
+    }
+
+    private async Task OnEditClick()
+    {
+        await OnEditRequested.InvokeAsync();
+    }
+}

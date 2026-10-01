@@ -1,0 +1,44 @@
+@namespace SPVetClinic.Components.Sections
+<!-- ============================================
+     SERVICES SECTION
+     [MOVIDO a _wip: no se usa en ninguna página. Se mantiene el namespace original
+     con @@namespace para no requerir cambios en las referencias.]
+     ============================================ -->
+<section id="services" class="services-section">
+    <SectionHeader Tag="Nuestros Servicios" Title="Atención integral para tu mascota"
+        Subtitle="Contamos con equipamiento de última generación y un equipo profesional comprometido con la salud animal.">
+        <BookingHint Text="Agenda tu cita para cualquier servicio en línea" />
+    </SectionHeader>
+
+    <div class="services-grid">
+        <ServiceCard ImageSrc="" ImageAlt="Consulta General" Icon="stethoscope"
+            Title="Consulta General"
+            Description="Evaluaciones de salud completas, diagnósticos precisos y planes de tratamiento personalizados para tu mascota."
+            StaggerIndex="1" />
+
+        <ServiceCard ImageSrc="" ImageAlt="Especialidades" Icon="microscope"
+            Title="Especialidades Médicas"
+            Description="Neurología, endocrinología, cardiología y medicina felina. Especialistas certificados a tu disposición."
+            StaggerIndex="2" />
+
+        <ServiceCard ImageSrc="@ImagePaths.Services.Cirugia" ImageAlt="Cirugía" Icon="syringe"
+            Title="Cirugía y Hospitalización"
+            Description="Procedimientos quirúrgicos seguros con monitoreo constante y cuidados post-operatorios especializados."
+            StaggerIndex="3" />
+
+        <ServiceCard ImageSrc="@ImagePaths.Services.Examenes" ImageAlt="Exámenes" Icon="chart"
+            Title="Exámenes y Diagnóstico"
+            Description="Laboratorio clínico IDEXX, ecografía, radiografía y electrocardiograma para diagnósticos certeros."
+            Link="examenes" LinkText="Ver todos los exámenes →" StaggerIndex="4" />
+
+        <ServiceCard ImageSrc="" ImageAlt="Peluquería" Icon="scissors"
+            Title="Peluquería y Estética"
+            Description="Baños medicados, cortes de pelo profesionales y cuidado estético para que tu mascota luzca espectacular."
+            StaggerIndex="5" />
+
+        <ServiceCard ImageSrc="" ImageAlt="Vacunación" Icon="pill"
+            Title="Vacunación y Prevención"
+            Description="Programas de vacunación, desparasitación y medicina preventiva para mantener a tu mascota siempre sana."
+            StaggerIndex="6" />
+    </div>
+</section>

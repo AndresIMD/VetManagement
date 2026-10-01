@@ -1,0 +1,59 @@
+@namespace SPVetClinic.Components.Cards
+@* ============================================
+   SERVICE CARD - Componente Reutilizable
+   [MOVIDO a _wip: no se usa en ninguna página. Se mantiene el namespace original
+   con @namespace para no requerir cambios en las referencias.]
+   Uso: <ServiceCard ImageSrc="images/service.svg" Icon="stethoscope" Title="Consulta" Description="..." />
+   Íconos: stethoscope, microscope, syringe, chart, scissors, pill
+   ============================================ *@
+
+@if (string.IsNullOrEmpty(Link))
+{
+    <div class="service-card reveal stagger-@StaggerIndex">
+        <div class="service-card-image-wrapper">
+            <img src="@ImageSrc" alt="@ImageAlt" class="service-card-image" />
+            <div class="service-card-icon">
+                <Icon Name="@Icon" Size="20" Color="white" />
+            </div>
+        </div>
+        <div class="service-card-content">
+            <h3 class="service-card-title">@Title</h3>
+            <p class="service-card-description">@Description</p>
+            @ChildContent
+        </div>
+    </div>
+}
+else
+{
+    <NavLink href="@Link" class="@GetCardClass()">
+        <div class="service-card-image-wrapper">
+            <img src="@ImageSrc" alt="@ImageAlt" class="service-card-image" />
+            <div class="service-card-icon">
+                <Icon Name="@Icon" Size="20" Color="white" />
+            </div>
+        </div>
+        <div class="service-card-content">
+            <h3 class="service-card-title">@Title</h3>
+            <p class="service-card-description">@Description</p>
+            @if (!string.IsNullOrEmpty(LinkText))
+            {
+                <span class="service-card-link">@LinkText</span>
+            }
+            @ChildContent
+        </div>
+    </NavLink>
+}
+
+@code {
+    [Parameter] public string ImageSrc { get; set; } = "";
+    [Parameter] public string ImageAlt { get; set; } = "";
+    [Parameter] public string Icon { get; set; } = "stethoscope";
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string Description { get; set; } = "";
+    [Parameter] public string Link { get; set; } = "";
+    [Parameter] public string LinkText { get; set; } = "";
+    [Parameter] public int StaggerIndex { get; set; } = 1;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string GetCardClass() => $"service-card reveal stagger-{StaggerIndex}";
+}

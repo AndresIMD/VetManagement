@@ -1,0 +1,28 @@
+@page "/reservas"
+
+@inject NavigationManager Navigation
+
+<PageTitle>Reserva con especialista | @AppConstants.Clinic.Name</PageTitle>
+
+<HeadContent>
+    <meta name="description"
+          content="Reserva tu consulta con los especialistas veterinarios de San Pablo Vet clínic." />
+</HeadContent>
+
+<main class="container" style="padding: 6rem 1rem; text-align: center;">
+    <h1>Redirigiendo a reservas</h1>
+    <p>Serás dirigido al sistema oficial de reservas de la clínica.</p>
+    <a href="@AppConstants.Clinic.BookingUrl"
+       target="_blank"
+       rel="noopener noreferrer"
+       class="btn-primary">
+        Continuar a reservas
+    </a>
+</main>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Navigation.NavigateTo(AppConstants.Clinic.BookingUrl, forceLoad: true);
+    }
+}

@@ -1,0 +1,30 @@
+<section class="vc-section vc-specs-band">
+    <div class="vc-w vc-specs-band__grid">
+        <div class="vc-specs-band__intro reveal">
+            <span class="vc-tag">Equipo Médico</span>
+            <h2>Especialistas <span class="vc-accent">certificados</span></h2>
+            <p>Profesionales de distintas áreas trabajan juntos para darle a tu mascota un diagnóstico preciso y el tratamiento que necesita. Revisa sus horas disponibles y reserva en línea.</p>
+            <a href="@AppConstants.Clinic.BookingUrl" target="_blank" rel="noopener noreferrer" class="btn-primary-large">
+                <Icon Name="calendar" Size="20" /> Ver disponibilidad
+            </a>
+            <a href="especialistas" class="vc-specs-band__more">Conocer el equipo <Icon Name="arrow-right" Size="16" /></a>
+        </div>
+
+        <div class="vc-specs">
+            @for (var i = 0; i < Specialties.All.Length; i++)
+            {
+                var s = Specialties.All[i];
+                <a href="especialistas" class="vc-spec-card reveal">
+                    <div class="vc-spec-card__icon"><Icon Name="@s.Icon" Size="24" /></div>
+                    <div class="vc-spec-card__text">
+                        <h3>@s.Name</h3>
+                        @foreach (var d in s.Doctors)
+                        {
+                            <span class="vc-spec-card__role">@d</span>
+                        }
+                    </div>
+                </a>
+            }
+        </div>
+    </div>
+</section>

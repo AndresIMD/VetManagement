@@ -1,0 +1,290 @@
+@page "/hospitalizacion"
+
+<PageTitle>Hospitalización 24/7 | @AppConstants.Clinic.Name</PageTitle>
+<HeadContent>
+    <meta name="description"
+          content="Hospitalización veterinaria 24/7 en Rancagua. Seguimiento cercano, equipo especializado y visitas coordinadas. Contáctanos para información de tu mascota." />
+    <meta property="og:title" content="Hospitalización 24/7 | San Pablo Vet clínic" />
+    <meta property="og:description"
+          content="Hospitalización veterinaria 24/7 en Rancagua. Seguimiento cercano, equipo especializado y visitas coordinadas. Contáctanos para información de tu mascota." />
+    <meta property="og:type" content="website" />
+</HeadContent>
+
+<!-- HERO -->
+<PageHero Tag="Seguimiento cercano" TagIcon="clinic" Title="Hospitalización 24/7"
+          Subtitle="Cuidados especializados cuando tu mascota más lo necesita" CssClass="hero--coral"
+          BackgroundImage="@ImagePaths.PageHeroes.Hospitalizacion" />
+
+@*<!-- SERVICIO 24/7 -->
+<section class="service-247-section">
+    <div class="container">
+        <div class="service-247-content reveal">
+            <div class="service-247-icon">
+                <Icon Name="alert" Size="40" />
+            </div>
+            <div class="service-247-text">
+                <h2>Servicio de Urgencias 24 Horas, Todos los Días</h2>
+                <p>
+                    Contamos con veterinarios disponibles las 24 horas del día, los 7 días de la semana,
+                    incluidos feriados. Tu mascota nunca estará sola cuando necesite atención de emergencia.
+                </p>
+            </div>
+        </div>
+    </div>
+</section> *@
+
+<!-- QUÉ ES LA HOSPITALIZACIÓN -->
+<section id="info" class="hospital-info-section">
+    <div class="container">
+        <SectionHeader Tag="El servicio" Title="¿Qué es la hospitalización veterinaria?"
+                       Subtitle="Atención especializada para casos que requieren seguimiento cercano" />
+
+        <div class="hospital-info-content reveal">
+            <div class="hospital-info-text">
+                <p class="lead-text">
+                    La hospitalización veterinaria es necesaria cuando tu mascota requiere atención médica continua,
+                    administración frecuente de medicamentos, fluidoterapia o seguimiento cercano de sus signos vitales.
+                </p>
+
+                <h3>¿Cuándo se requiere hospitalización?</h3>
+                <ul class="conditions-list styled-list">
+                    <li>Enfermedades infecciosas graves</li>
+                    <li>Cirugías complejas que requieren cuidados postoperatorios</li>
+                    <li>Deshidratación severa que necesita fluidoterapia intensiva</li>
+                    <li>Intoxicaciones o envenenamientos</li>
+                    <li>Problemas respiratorios que requieren oxigenoterapia</li>
+                    <li>Insuficiencia renal o hepática aguda</li>
+                    <li>Diabetes descompensada</li>
+                    <li>Traumatismos graves</li>
+                </ul>
+            </div>
+
+            <div class="hospital-stats">
+                <div class="stat-box stat-primary stagger-1">
+                    <div class="stat-number">24/7</div>
+                    <div class="stat-label">Atención Disponible</div>
+                </div>
+                <div class="stat-box stat-success stagger-2">
+                    <div class="stat-number">@AppConstants.Clinic.YearsOfServiceStat</div>
+                    <div class="stat-label">Años de Experiencia</div>
+                </div>
+                <div class="stat-box stat-info stagger-3">
+                    <div class="stat-number">100%</div>
+                    <div class="stat-label">Equipo especializado</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- EQUIPAMIENTO -->
+<section class="equipment-section">
+    <div class="container">
+        <SectionHeader Tag="Instalaciones" Title="Equipamiento de Última Generación"
+                       Subtitle="Tecnología y confort para el mejor cuidado" />
+
+        <div class="equipment-grid reveal">
+            <div class="equipment-card stagger-1">
+                <div class="equipment-icon">
+                    <Icon Name="clinic" Size="32" />
+                </div>
+                <h3>Área de hospitalización</h3>
+                <p>Jaulas amplias y cómodas con temperatura controlada, separadas por especie y tamaño.</p>
+            </div>
+
+            <div class="equipment-card stagger-2">
+                <div class="equipment-icon">
+                    <Icon Name="syringe" Size="32" />
+                </div>
+                <h3>Bombas de infusión</h3>
+                <p>Administración precisa de fluidos y medicamentos intravenosos.</p>
+            </div>
+
+            <div class="equipment-card stagger-3">
+                <div class="equipment-icon">
+                    <Icon Name="thermometer" Size="32" />
+                </div>
+                <h3>Monitoreo de signos</h3>
+                <p>Equipos para control periódico de temperatura, frecuencia cardíaca y respiratoria.</p>
+            </div>
+
+            <div class="equipment-card stagger-4">
+                <div class="equipment-icon">
+                    <Icon Name="wind" Size="32" />
+                </div>
+                <h3>Oxigenoterapia</h3>
+                <p>Cámaras y máscaras de oxígeno para pacientes con dificultad respiratoria.</p>
+            </div>
+
+            <div class="equipment-card stagger-5">
+                <div class="equipment-icon">
+                    <Icon Name="microscope" Size="32" />
+                </div>
+                <h3>Laboratorio interno</h3>
+                <p>Análisis rápidos de sangre, orina y otros para ajustar tratamientos.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CUIDADOS Y PROTOCOLOS -->
+<section class="care-protocols-section">
+    <div class="container">
+        <SectionHeader Tag="Nuestros cuidados" Title="Protocolo de Atención"
+                       Subtitle="Procedimientos estandarizados para garantizar el mejor cuidado" />
+
+        <div class="protocols-grid reveal">
+            <div class="protocol-step stagger-1">
+                <div class="step-number">1</div>
+                <h3>Evaluación inicial</h3>
+                <p>
+                    Examen completo al ingreso, toma de signos vitales, análisis de laboratorio si es necesario
+                    y establecimiento del plan de tratamiento.
+                </p>
+            </div>
+
+            <div class="protocol-step stagger-2">
+                <div class="step-number">2</div>
+                <h3>Monitoreo continuo</h3>
+                <p>
+                    Control cada 2-4 horas de signos vitales, nivel de hidratación, apetito,
+                    actitud y respuesta al tratamiento.
+                </p>
+            </div>
+
+            <div class="protocol-step stagger-3">
+                <div class="step-number">3</div>
+                <h3>Administración de tratamiento</h3>
+                <p>
+                    Fluidoterapia, medicación según protocolo, alimentación asistida si es necesario,
+                    y ajustes según evolución del paciente.
+                </p>
+            </div>
+
+            <div class="protocol-step stagger-4">
+                <div class="step-number">4</div>
+                <h3>Comunicación con el tutor</h3>
+                <p>
+                    Actualizaciones diarias sobre el estado del paciente por WhatsApp, con
+                    contacto directo para cualquier consulta.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- INFORMACIÓN PARA TUTORES -->
+<section class="tutor-info-section">
+    <div class="container">
+        <SectionHeader Tag="Para tutores" Title="Información importante"
+                       Subtitle="Todo lo que necesitas saber sobre las visitas y comunicación" />
+
+        <div class="tutor-info-grid reveal">
+            <div class="info-box stagger-1">
+                <InfoCard Icon="phone" Title="Contacto directo" Value="@AppConstants.Hospital.ContactMethod"
+                          Style="InfoCardStyle.Contact" />
+                <p class="info-note">
+                    El estado diario de tu mascota se informa por este medio, directamente al tutor
+                    registrado. En caso de emergencia, también intentaremos contactarte por llamada.
+                </p>
+            </div>
+
+            <div class="info-box stagger-2">
+                <InfoCard Icon="clinic" Title="Horario de Visitas" Value="@AppConstants.Hospital.VisitsInfo"
+                          Style="InfoCardStyle.Contact" />
+                <p class="info-note">
+                    Tu próxima visita queda agendada al finalizar la anterior, directamente en la clínica.
+                </p>
+            </div>
+
+            <div class="info-box stagger-3">
+                <InfoCard Icon="home" Title="Horario de Alta" Value="@AppConstants.Hospital.DischargeInfo"
+                          Style="InfoCardStyle.Contact" />
+                <p class="info-note">
+                    Se coordina con el veterinario tratante cuando tu mascota esté en condiciones
+                    de volver a casa. El alta se entrega con indicaciones detalladas para el cuidado.
+                </p>
+            </div>
+
+            <div class="info-box stagger-4">
+                <InfoCard Icon="info" Title="Política de Información" Value="@AppConstants.Hospital.InfoPolicy"
+                          Style="InfoCardStyle.Contact" />
+                <p class="info-note">
+                    Por seguridad y privacidad del paciente, solo el tutor registrado puede
+                    recibir información médica.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq-section">
+    <div class="container">
+        <SectionHeader Tag="Preguntas" Title="Preguntas frecuentes sobre hospitalización" />
+
+        <div class="faq-grid reveal">
+            <div class="faq-card stagger-1">
+                <h3>¿Puedo visitar a mi mascota?</h3>
+                <p>
+                    Sí. Cada visita se agenda directamente en la clínica al finalizar la anterior,
+                    para coordinar el mejor momento sin interrumpir el descanso del paciente.
+                </p>
+            </div>
+
+            <div class="faq-card stagger-2">
+                <h3>¿Mi mascota estará sola por la noche?</h3>
+                <p>
+                    No. Contamos con veterinarios de turno las 24 horas que monitorean a todos los
+                    pacientes hospitalizados durante la noche.
+                </p>
+            </div>
+
+            <div class="faq-card stagger-3">
+                <h3>¿Puedo dejar la cama o juguete de mi mascota?</h3>
+                <p>
+                    Sí, pero solo objetos que puedan ser desinfectados. No recomendamos peluches
+                    o telas delicadas por temas de higiene hospitalaria.
+                </p>
+            </div>
+
+            <div class="faq-card stagger-4">
+                <h3>¿Cuánto cuesta la hospitalización?</h3>
+                <p>
+                    El costo varía según el motivo de hospitalización, tratamientos necesarios y
+                    duración. Consulta por presupuesto personalizado.
+                </p>
+            </div>
+
+            <div class="faq-card stagger-5">
+                <h3>¿Cómo sabré del estado de mi mascota?</h3>
+                <p>
+                    Te enviamos una actualización diaria por WhatsApp con el estado de tu mascota.
+                    Si ocurre algo urgente te llamaremos directamente. Mantén tu contacto actualizado
+                    con nosotros para no perder ninguna novedad.
+                </p>
+            </div>
+
+            <div class="faq-card stagger-6">
+                <h3>¿Qué pasa si mi mascota necesita cirugía?</h3>
+                <p>
+                    Te contactaremos inmediatamente para explicar la situación, opciones de tratamiento
+                    y solicitar tu autorización antes de proceder.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<PageCtaSection IconName="clinic" Description="Contáctanos inmediatamente. Nuestro equipo está disponible 24/7"
+                NoteIcon="alert" NoteText="Para urgencias, llama directamente al número de recepción.">
+    <TitleContent>¿Tu mascota necesita <em>hospitalización</em>?</TitleContent>
+    <Buttons>
+        <a href="contacto" class="btn-primary-urgency">
+            <Icon Name="alarm" Size="20" /> Urgencias 24/7
+        </a>
+        <WhatsAppButton PhoneNumber="@AppConstants.Phone.MainWhatsApp" Label="Consultas por WhatsApp"
+                        Style="WhatsAppButtonStyle.Default" />
+    </Buttons>
+</PageCtaSection>

@@ -1,0 +1,23 @@
+@inherits LayoutComponentBase
+@inject IJSRuntime JS
+
+<a href="#main-content" class="skip-link">Saltar al contenido</a>
+<EmergencyBar />
+<TopNav Theme="dark" />
+<div class="page main-layout-onepage">
+    <main id="main-content" role="main">
+        @Body
+    </main>
+    <Footer />
+</div>
+<EmergencyFab />
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Must run on every render so new .reveal elements from page
+        // navigation get observed by the IntersectionObserver.
+        await JS.InvokeVoidAsync("initScrollAnimations");
+        await JS.InvokeVoidAsync("clearTextSelection");
+    }
+}

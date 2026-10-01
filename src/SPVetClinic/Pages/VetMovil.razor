@@ -1,0 +1,408 @@
+@page "/vet-movil"
+
+<PageTitle>Veterinaria móvil | @AppConstants.Clinic.Name</PageTitle>
+<HeadContent>
+    <meta name="description"
+          content="Servicio veterinario a domicilio en Rancagua y alrededores. Consultas, vacunación y controles en la comodidad de tu hogar. San Pablo Vet clínic." />
+    <meta property="og:title" content="Veterinaria móvil a domicilio | San Pablo Vet clínic" />
+    <meta property="og:description"
+          content="Servicio veterinario a domicilio en Rancagua y alrededores. Consultas, vacunación y controles en la comodidad de tu hogar. San Pablo Vet clínic." />
+    <meta property="og:type" content="website" />
+</HeadContent>
+
+<PageHero Tag="Atención a Domicilio" TagIcon="van" Title="San Pablo Vet Móvil"
+          Subtitle="Llevamos la atención veterinaria profesional hasta la puerta de tu casa. Comodidad para ti, menos estrés para tu mascota."
+          CssClass="hero--coral" BackgroundImage="@ImagePaths.PageHeroes.VetMovil">
+    <Actions>
+        <WhatsAppButton PhoneNumber="@AppConstants.Phone.MobileVetWhatsApp" Label="Agendar Visita"
+                        SecondaryLabel="@AppConstants.Phone.MobileVetWhatsAppFormatted" Style="WhatsAppButtonStyle.Vet" />
+        <NavLink href="servicios" class="btn-secondary">Ver Servicios</NavLink>
+    </Actions>
+</PageHero>
+
+<!-- ============================================
+     BENEFICIOS
+     ============================================ -->
+<section class="benefits-section">
+    <div class="container">
+        <SectionHeader Tag="Ventajas" Title="¿Por qué elegir atención a domicilio?"
+                       Subtitle="La comodidad y tranquilidad que tu mascota merece" />
+
+        <div class="benefits-grid reveal">
+            <div class="benefit-card stagger-1">
+                <div class="benefit-icon">
+                    <Icon Name="home" Size="32" />
+                </div>
+                <h3>Comodidad total</h3>
+                <p>
+                    No necesitas salir de casa. Ahorra tiempo en traslados y evita
+                    complicaciones de transporte con tu mascota.
+                </p>
+            </div>
+
+            <div class="benefit-card stagger-2">
+                <div class="benefit-icon">
+                    <Icon Name="smile" Size="32" />
+                </div>
+                <h3>Menos estrés</h3>
+                <p>
+                    Muchas mascotas sufren ansiedad al salir de casa. La atención domiciliaria
+                    les permite estar en su entorno seguro y conocido.
+                </p>
+            </div>
+
+            <div class="benefit-card stagger-3">
+                <div class="benefit-icon">
+                    <Icon Name="stethoscope" Size="32" />
+                </div>
+                <h3>Atención personalizada</h3>
+                <p>
+                    El veterinario puede dedicar más tiempo a tu mascota sin las distracciones
+                    de una clínica llena. Atención 100% enfocada.
+                </p>
+            </div>
+
+            <div class="benefit-card stagger-4">
+                <div class="benefit-icon">
+                    <Icon Name="users" Size="32" />
+                </div>
+                <h3>Ideal para todos</h3>
+                <p>
+                    Perfecto para tutores con movilidad reducida, mascotas muy nerviosas,
+                    hogares con múltiples animales o pacientes crónicos.
+                </p>
+            </div>
+
+            <div class="benefit-card stagger-5">
+                <div class="benefit-icon">
+                    <Icon Name="clock" Size="32" />
+                </div>
+                <h3>Horarios flexibles</h3>
+                <p>
+                    Coordinamos horarios que se ajusten a tu agenda.
+                    Disponible de lunes a domingo de 09:00 a 16:30 hrs.
+                </p>
+            </div>
+
+            <div class="benefit-card stagger-6">
+                <div class="benefit-icon">
+                    <Icon Name="heart" Size="32" />
+                </div>
+                <h3>Mismo estándar</h3>
+                <p>
+                    La misma calidad de atención profesional de nuestra clínica,
+                    pero en la comodidad de tu hogar.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================
+     SERVICIOS DISPONIBLES
+     ============================================ -->
+<section id="servicios" class="services-detail-section">
+    <div class="container">
+        <SectionHeader Tag="Servicios" Title="¿Qué podemos hacer en tu domicilio?"
+                       Subtitle="Amplia gama de servicios veterinarios a domicilio" />
+
+        <div class="services-grid reveal">
+            <!-- Consultas -->
+            <div class="service-detail-card stagger-1">
+                <div class="service-icon">
+                    <Icon Name="stethoscope" Size="32" />
+                </div>
+                <h3>Consultas veterinarias</h3>
+                <p>
+                    Evaluación general del estado de salud de tu mascota. Diagnóstico de
+                    enfermedades comunes, revisión física completa y recomendaciones.
+                </p>
+                <ul class="service-includes">
+                    <li>Examen físico completo</li>
+                    <li>Evaluación de signos vitales</li>
+                    <li>Diagnóstico de problemas comunes</li>
+                    <li>Prescripción de medicamentos</li>
+                </ul>
+            </div>
+
+            <!-- Vacunación -->
+            <div class="service-detail-card stagger-2">
+                <div class="service-icon">
+                    <Icon Name="syringe" Size="32" />
+                </div>
+                <h3>Vacunación completa</h3>
+                <p>
+                    Plan de vacunación preventiva según la edad y necesidades de tu mascota.
+                    Mantén protegida la salud de tu compañero.
+                </p>
+                <ul class="service-includes">
+                    <li>Vacunas esenciales</li>
+                    <li>Vacunas opcionales según riesgo</li>
+                    <li>Refuerzos anuales</li>
+                    <li>Cartilla de vacunación actualizada</li>
+                </ul>
+            </div>
+
+            <!-- Toma de Muestras -->
+            <div class="service-detail-card stagger-3">
+                <div class="service-icon">
+                    <Icon Name="microscope" Size="32" />
+                </div>
+                <h3>Toma de muestras</h3>
+                <p>
+                    Recolección de muestras de sangre, orina, heces y otros para
+                    análisis de laboratorio. Resultados precisos sin salir de casa.
+                </p>
+                <ul class="service-includes">
+                    <li>Análisis de sangre completo</li>
+                    <li>Examen de orina</li>
+                    <li>Copro-parasitológico</li>
+                    <li>Envío a laboratorio certificado</li>
+                </ul>
+            </div>
+
+            <!-- Control de Crónicos -->
+            <div class="service-detail-card stagger-4">
+                <div class="service-icon">
+                    <Icon Name="clipboard" Size="32" />
+                </div>
+                <h3>Control de pacientes crónicos</h3>
+                <p>
+                    Seguimiento regular de mascotas con enfermedades crónicas como
+                    diabetes, insuficiencia renal, cardiopatías, entre otras.
+                </p>
+                <ul class="service-includes">
+                    <li>Evaluación de evolución</li>
+                    <li>Ajuste de tratamientos</li>
+                    <li>Toma de muestras de control</li>
+                    <li>Asesoría nutricional</li>
+                </ul>
+            </div>
+
+            <!-- Traslado -->
+            <div class="service-detail-card stagger-5">
+                <div class="service-icon">
+                    <Icon Name="van" Size="32" />
+                </div>
+                <h3>Traslado</h3>
+                <p>
+                    Si tu mascota necesita procedimientos en la clínica, coordinamos el traslado
+                    desde tu domicilio y la acompañamos de vuelta a casa cuando esté lista.
+                </p>
+                <ul class="service-includes">
+                    <li>Traslado seguro</li>
+                    <li>Coordinación de horarios</li>
+                    <li>Actualización de estado</li>
+                    <li>Entrega con indicaciones</li>
+                </ul>
+            </div>
+
+            <!-- Eutanasia Humanitaria -->
+            <div class="service-detail-card stagger-6">
+                <div class="service-icon">
+                    <Icon Name="bird" Size="32" />
+                </div>
+                <h3>Eutanasia humanitaria</h3>
+                <p>
+                    Cuando llega el momento más difícil, acompañamos a tu mascota en la
+                    comodidad de su hogar, rodeada de amor familiar.
+                </p>
+                <ul class="service-includes">
+                    <li>Proceso indoloro</li>
+                    <li>Privacidad y tranquilidad</li>
+                    <li>Acompañamiento empático</li>
+                    <li>Coordinación de servicios funerarios</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================
+     COBERTURA Y HORARIOS
+     ============================================ -->
+<section class="coverage-section">
+    <div class="container">
+        <div class="coverage-grid reveal">
+            <div class="coverage-info">
+                <h2>Cobertura de servicio</h2>
+                <div class="info-item stagger-1">
+                    <InfoCard Icon="location" Title="Zona principal" Value="Rancagua y alrededores"
+                              Style="InfoCardStyle.Info" />
+                </div>
+                <div class="info-item stagger-2">
+                    <InfoCard Icon="clock" Title="Horario" Value="Lunes a Domingo • 09:00 a 16:30 hrs"
+                              Style="InfoCardStyle.Info" />
+                </div>
+                <div class="info-item stagger-3">
+                    <InfoCard Icon="alarm" Title="Anticipación" Value="Agenda con al menos 24 horas de anticipación"
+                              Style="InfoCardStyle.Info" />
+                </div>
+                <div class="info-item stagger-4">
+                    <InfoCard Icon="phone" Title="Contacto directo"
+                              Value="@AppConstants.Phone.MobileVetWhatsAppFormatted" Style="InfoCardStyle.Info" />
+                </div>
+            </div>
+
+            <div class="coverage-map">
+                <div class="map-placeholder">
+                    <div class="map-icon">
+                        <Icon Name="location" Size="48" />
+                    </div>
+                    <h3>Rancagua y Alrededores</h3>
+                    <p>
+                        La cobertura se confirma directamente por WhatsApp al agendar: nos cuentas tu
+                        dirección y el equipo evalúa la visita según disponibilidad del día. También
+                        atendemos sectores cercanos previa consulta, sin tarifas fijas por zona.
+                    </p>
+                    <WhatsAppButton PhoneNumber="@AppConstants.Phone.MobileVetWhatsApp" Label="Consultar Cobertura"
+                                    Style="WhatsAppButtonStyle.Default" />
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================
+     CÓMO FUNCIONA
+     ============================================ -->
+<section class="how-it-works-section">
+    <div class="container">
+        <SectionHeader Tag="Proceso" Title="¿Cómo agendar una visita?"
+                       Subtitle="Proceso simple y rápido para recibir atención veterinaria" />
+
+        <div class="steps-timeline reveal">
+            <div class="timeline-step stagger-1">
+                <div class="step-marker">1</div>
+                <div class="step-content">
+                    <h3>Contáctanos por WhatsApp</h3>
+                    <p>
+                        Escríbenos al <strong>@AppConstants.Phone.MobileVetWhatsAppFormatted</strong> indicando
+                        el servicio que necesitas, tu ubicación y el motivo de la consulta.
+                    </p>
+                </div>
+            </div>
+
+            <div class="timeline-step stagger-2">
+                <div class="step-marker">2</div>
+                <div class="step-content">
+                    <h3>Coordinamos fecha y hora</h3>
+                    <p>
+                        Te ofreceremos horarios disponibles considerando tu ubicación y urgencia.
+                        Agenda con al menos 24 horas de anticipación.
+                    </p>
+                </div>
+            </div>
+
+            <div class="timeline-step stagger-3">
+                <div class="step-marker">3</div>
+                <div class="step-content">
+                    <h3>Confirmamos tu visita</h3>
+                    <p>
+                        Te confirmaremos la hora exacta de llegada del veterinario y
+                        te daremos indicaciones sobre cómo preparar a tu mascota.
+                    </p>
+                </div>
+            </div>
+
+            <div class="timeline-step stagger-4">
+                <div class="step-marker">4</div>
+                <div class="step-content">
+                    <h3>Recibe la atención</h3>
+                    <p>
+                        El veterinario llegará con todo el equipamiento necesario.
+                        La consulta se realiza en tu hogar con el mismo profesionalismo de la clínica.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="cta-center reveal">
+            <WhatsAppButton PhoneNumber="@AppConstants.Phone.MobileVetWhatsApp" Label="Agendar Visita Ahora"
+                            SecondaryLabel="@AppConstants.Phone.MobileVetWhatsAppFormatted" Style="WhatsAppButtonStyle.Vet" />
+        </div>
+    </div>
+</section>
+
+<!-- ============================================
+     FAQ
+     ============================================ -->
+<section class="faq-section">
+    <div class="container">
+        <SectionHeader Tag="Preguntas frecuentes" Title="Todo lo que necesitas saber"
+                       Subtitle="Resolvemos tus dudas sobre el servicio móvil" />
+
+        <div class="faq-grid reveal">
+            <div class="faq-card stagger-1">
+                <h3>¿Cuánto cuesta el servicio?</h3>
+                <p>
+                    El costo varía según el servicio solicitado y tu ubicación.
+                    Contáctanos por WhatsApp para recibir una cotización exacta según tus necesidades.
+                </p>
+            </div>
+
+            <div class="faq-card stagger-2">
+                <h3>¿Qué necesito tener preparado?</h3>
+                <p>
+                    Un espacio tranquilo donde podamos atender a tu mascota, su cartilla de
+                    vacunación si la tienes, y cualquier medicamento que esté tomando actualmente.
+                </p>
+            </div>
+
+            <div class="faq-card stagger-3">
+                <h3>¿Atienden urgencias?</h3>
+                <p>
+                    Para urgencias reales, es mejor acudir directamente a nuestra clínica que
+                    cuenta con servicio 24/7. El servicio móvil es para consultas programadas.
+                </p>
+            </div>
+
+            <div class="faq-card stagger-4">
+                <h3>¿Qué formas de pago aceptan?</h3>
+                <p>
+                    Aceptamos efectivo, transferencia bancaria y tarjetas de débito/crédito.
+                    El pago se realiza al finalizar la consulta.
+                </p>
+            </div>
+
+            <div class="faq-card stagger-5">
+                <h3>¿Puedo agendar el mismo día?</h3>
+                <p>
+                    Recomendamos agendar con al menos 24 horas de anticipación. Consultas de
+                    último momento dependen de disponibilidad de agenda y pueden tener recargo.
+                </p>
+            </div>
+
+            <div class="faq-card stagger-6">
+                <h3>¿Atienden múltiples mascotas?</h3>
+                <p>
+                    Sí, podemos atender varias mascotas en la misma visita. Es ideal para
+                    hogares con múltiples animales. Menciona esto al agendar para coordinar mejor.
+                </p>
+            </div>
+
+            <div class="faq-card stagger-7">
+                <h3>¿Puedo cancelar o reprogramar la consulta?</h3>
+                <p>
+                    Puedes cancelar o reprogramar sin costo si avisas con al menos 12 horas de
+                    anticipación. Te pedimos respetar la agenda y avisar oportunamente para no
+                    quitarle el cupo a otro paciente que lo necesite.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================
+     CTA FINAL
+     ============================================ -->
+<PageCtaSection IconName="van" Description="Agenda tu visita ahora y experimenta la comodidad de nuestro servicio móvil"
+                NoteIcon="alarm" NoteText="Recuerda agendar con al menos 24 horas de anticipación">
+    <TitleContent>¿Listo para recibir atención veterinaria en <em>casa</em>?</TitleContent>
+    <Buttons>
+        <WhatsAppButton PhoneNumber="@AppConstants.Phone.MobileVetWhatsApp" Label="Agendar por WhatsApp"
+                        SecondaryLabel="@AppConstants.Phone.MobileVetWhatsAppFormatted" Style="WhatsAppButtonStyle.Vet" />
+        <a href="@AppConstants.Urls.TelLink(AppConstants.Phone.MobileVetWhatsApp)" class="btn-secondary">Llamar
+            Ahora</a>
+        </Buttons>
+    </PageCtaSection>

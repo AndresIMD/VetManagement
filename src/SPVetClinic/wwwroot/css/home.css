@@ -1,0 +1,509 @@
+/* ============================================
+   HOME.RAZOR — estilos de página
+   Extraído del <style> inline de Home.razor (2026-09-12) para que
+   Home.razor sea solo markup + llamadas a componentes, y para que
+   estos estilos no dependan de que Home esté montada en el DOM.
+   ============================================ */
+
+/* ===== VARIABLES LOCALES ===== */
+.vc-hero-carousel,
+.vc-quick-bar,
+.vc-about,
+.vc-section,
+.vc-location,
+.vc-cta {
+    --vc-dark: #0d0d0d;
+    --vc-dark-2: #111;
+    --vc-dark-3: #1a1a1a;
+    --vc-white-10: rgba(255,255,255,0.10);
+    --vc-white-06: rgba(255,255,255,0.06);
+    --vc-white-60: rgba(255,255,255,0.60);
+    --vc-white-35: rgba(255,255,255,0.35);
+}
+
+/* ===== UTILIDADES ===== */
+.vc-w { max-width: 1100px; margin: 0 auto; }
+
+/* .vc-tag, .vc-accent, .vc-accent-coral y .vc-vetmovil__title-sub se movieron a
+   wwwroot/css/app.css ("TOKENS DE MARCA DE HOME") para que estén disponibles
+   aunque Home no esté montada. */
+
+.vc-check-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.vc-check-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: var(--font-size-sm);
+    color: var(--text-dark);
+    font-weight: 500;
+}
+
+/* Botones: se usan las clases compartidas .btn-primary-large / .btn-glass-large
+   definidas en wwwroot/css/app.css, para que el hero de Home use el mismo
+   sistema de botones que el resto del sitio. */
+
+/* ===== HERO CAROUSEL =====
+   Pista horizontal (3 slides reales + 1 clon del ultimo al inicio y 1
+   clon del primero al final, ancho 500%) en vez del crossfade con
+   opacity anterior: permite arrastrar con el puntero y que la imagen se
+   desplace en tiempo real. Los clones evitan que arrastrar mas alla del
+   primer/ultimo slide muestre el fondo oscuro de la seccion: siempre hay
+   una foto (la del otro extremo) esperando al lado. */
+.vc-hero-carousel {
+    min-height: var(--hero-height, 100vh);
+    position: relative;
+    overflow: hidden;
+    touch-action: pan-y; /* scroll vertical normal; el arrastre horizontal lo maneja Blazor (pointer events) */
+    background: var(--vc-dark);
+    cursor: grab;
+}
+
+.vc-hero-carousel:active {
+    cursor: grabbing;
+}
+
+.vc-hc__track {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    display: flex;
+    width: 500%;
+    will-change: transform;
+}
+
+/* Encaje normal (click en flechas/puntos, o al soltar un arrastre):
+   1:1 sin rebote, mismo ease-out que el resto de la UI. */
+.vc-hc__track--snap {
+    transition: transform 0.5s var(--ease-out);
+}
+
+/* Mientras se arrastra, sin transition: el track sigue al puntero 1:1,
+   sin el "retraso" que daria animar cada frame de movimiento. */
+.vc-hc__track--dragging {
+    transition: none;
+}
+
+.vc-hc__slide {
+    position: relative;
+    flex: 0 0 calc(100% / 5);
+    width: calc(100% / 5);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+/* Clones (copia completa del ultimo slide antes del primero, copia
+   completa del primero despues del ultimo, con su mismo titulo/botones):
+   asi el titulo no "aparece" recien al terminar el loop. aria-hidden y
+   tabindex=-1 en sus links (ver markup) los sacan del foco de
+   teclado/lectores de pantalla. */
+.vc-hc__slide--clone {
+    pointer-events: none;
+}
+
+.vc-hc__bg { position: absolute; inset: 0; }
+
+.vc-hc__bg img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    opacity: 0.3;
+    filter: grayscale(20%);
+    /* pointer-events lo maneja la seccion; esto solo evita el "fantasma"
+       de arrastre nativo del navegador sobre la imagen */
+    -webkit-user-drag: none;
+}
+
+.vc-hc__overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(13,13,13,0.25) 0%, rgba(13,13,13,0.70) 100%);
+}
+
+.vc-hc__content {
+    position: relative; z-index: 1;
+    max-width: 800px; padding: 4rem 2rem;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.vc-hc__tag {
+    /* bloque (no flex): el punto fluye en línea con el texto y se centra con él
+       aunque el texto se parta en 2 líneas en móvil */
+    display: block;
+    color: var(--accent-coral);
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    margin-bottom: 1.5rem;
+}
+
+.vc-pulse {
+    display: inline-block;
+    vertical-align: middle;
+    margin: -2px 8px 0 0;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent-coral);
+    animation: vc-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes vc-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(187,84,95,0.5); }
+    50% { box-shadow: 0 0 0 8px rgba(187,84,95,0); }
+}
+
+.vc-hc__title {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    color: white;
+    line-height: 1.05;
+    margin: 0 0 1rem;
+    letter-spacing: -0.04em;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+/* Solo el slide de marca: el nombre de la clínica pesa más que el resto de títulos.
+   "San Pablo" sube al 0.75em para que no parezca secundario frente a "Vet clínic". */
+.vc-hc__title--brand { font-size: clamp(2.75rem, 7vw, 5.25rem); }
+.vc-hc__title--brand .vc-hc__title-sub { font-size: 0.75em; }
+
+.vc-hc__title-sub {
+    font-size: 0.5em;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: white;
+    user-select: none;
+}
+
+.vc-hc__sub {
+    font-size: 1.0625rem;
+    color: var(--vc-white-60);
+    margin: 0 0 2.5rem;
+    letter-spacing: 0.02em;
+    line-height: 1.6;
+}
+
+.vc-hc__btns {
+    display: flex; gap: 1rem;
+    justify-content: center; flex-wrap: wrap;
+}
+
+/* Carousel dots */
+.vc-hc__dots {
+    position: absolute;
+    bottom: 2rem; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 0;
+    z-index: 10;
+}
+
+/* Punto visual de 10px dentro de un botón de 24px (mínimo WCAG 2.2 para tocar):
+   el padding agranda el área táctil y background-clip lo mantiene invisible. */
+.vc-hc__dot {
+    box-sizing: content-box;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    background-clip: content-box;
+    border: none; padding: 7px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.vc-hc__dot.active {
+    background-color: white;
+    width: 28px;
+    border-radius: 5px;
+}
+
+.vc-hc__dot:hover { background-color: rgba(255,255,255,0.6); }
+
+/* Carousel navigation — mismo lenguaje que .lightbox-nav de la galeria:
+   vidrio esmerilado, la flecha se corre hacia su direccion al pasar el
+   mouse y responde a la presion. */
+.vc-hc__nav {
+    position: absolute;
+    top: 50%; transform: translateY(-50%);
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.15);
+    background: rgba(0,0,0,0.25);
+    color: white; font-size: 1.5rem;
+    cursor: pointer; z-index: 10;
+    display: flex; align-items: center; justify-content: center;
+    transition: background-color 0.3s var(--ease-out), border-color 0.3s var(--ease-out), transform 0.3s var(--ease-out);
+    backdrop-filter: blur(4px);
+}
+
+.vc-hc__nav:hover {
+    background: rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.4);
+}
+
+.vc-hc__nav--prev:hover { transform: translateY(-50%) translateX(-3px); }
+.vc-hc__nav--next:hover { transform: translateY(-50%) translateX(3px); }
+
+.vc-hc__nav:active { transform: translateY(-50%) scale(0.94); }
+
+.vc-hc__nav--prev { left: 1.5rem; }
+.vc-hc__nav--next { right: 1.5rem; }
+
+/* ===== BARRA ACCESO RÁPIDO ===== */
+.vc-quick-bar { background: white; padding: 0; border-bottom: 1px solid #eef1f5; }
+
+.vc-quick-bar__grid { display: grid; grid-template-columns: repeat(4, 1fr); }
+
+.vc-qb {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 1.25rem 1.5rem;
+    color: var(--text-gray);
+    text-decoration: none;
+    border-right: 1px solid #eef1f5;
+    transition: var(--transition);
+}
+
+.vc-qb:last-child { border-right: none; }
+.vc-qb:hover { background: #f8fafb; color: var(--text-dark); }
+
+.vc-qb--urgent { color: var(--accent-coral-dark); background: rgba(187,84,95,0.04); }
+.vc-qb--urgent:hover { background: rgba(187,84,95,0.08); }
+
+.vc-qb strong { display: block; font-size: var(--font-size-sm); font-weight: 700; color: var(--text-dark); }
+.vc-qb--urgent strong { color: var(--accent-coral-dark); }
+.vc-qb span { font-size: var(--font-size-sm); }
+
+/* ===== ABOUT ===== */
+.vc-about { padding: 5rem 2rem; background: white; }
+
+.vc-about__grid {
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
+    gap: 3rem;
+    align-items: center;
+}
+
+.vc-about__img {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    aspect-ratio: 4/3;
+}
+
+.vc-about__img img { width: 100%; height: 100%; object-fit: cover; }
+
+.vc-about__img-fallback {
+    display: none;
+    align-items: center; justify-content: center;
+    width: 100%; height: 100%;
+    background: #f0f4f8;
+    color: var(--text-gray);
+}
+
+.vc-about__badge {
+    position: absolute;
+    bottom: 1rem; left: 1rem;
+    background: var(--vc-dark);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: var(--font-size-sm);
+}
+
+.vc-about__text h2 {
+    font-size: var(--font-size-h2);
+    font-weight: 800;
+    color: var(--text-dark);
+    margin: 0.25rem 0 1rem;
+    letter-spacing: -0.02em;
+}
+
+.vc-about__text > p {
+    color: var(--text-gray);
+    line-height: 1.8;
+    margin: 0 0 1.5rem;
+}
+
+/* ===== SECCIONES GENÉRICAS ===== */
+.vc-section { padding: 5rem 2rem; background: white; }
+.vc-section--soft { background: #f9fafb; }
+
+/* El modificador .vc-section-header--home y las tarjetas de servicio/especialista
+   (.vc-svc-*, .vc-spec-*) se movieron a wwwroot/css/app.css ("TOKENS DE MARCA DE HOME")
+   para que ServicesPreviewSection y SpecialistsPreviewSection no dependan de que
+   Home esté montada para verse bien. */
+
+/* ===== VET MÓVIL ===== */
+.vc-vetmovil {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #eef1f5;
+    background: white;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+
+.vc-vetmovil__text { padding: 3rem; }
+.vc-vetmovil__text h2 {
+    font-size: 2rem; font-weight: 800;
+    color: var(--text-dark); margin: 0.5rem 0 1rem;
+    letter-spacing: -0.02em;
+}
+.vc-vetmovil__text > p { color: var(--text-gray); line-height: 1.7; margin: 0 0 1.25rem; }
+
+.vc-vetmovil__img {
+    position: relative; overflow: hidden;
+    min-height: 320px;
+    background: linear-gradient(135deg, rgba(98,171,191,0.08), rgba(98,171,191,0.15));
+}
+
+.vc-vetmovil__img img { width: 100%; height: 100%; object-fit: cover; }
+
+.vc-vetmovil__img-fallback {
+    display: none;
+    flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 0.75rem; height: 100%;
+    color: var(--primary-teal);
+    font-weight: 700; font-size: 1.125rem;
+}
+
+/* ===== UBICACIÓN ===== */
+.vc-location { padding: 5rem 2rem; background: #fafbfc; }
+
+.vc-location__inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #eef1f5;
+    background: white;
+}
+
+.vc-location__info { padding: 2.5rem; }
+.vc-location__info h2 { font-size: 1.625rem; font-weight: 800; color: var(--text-dark); margin: 0.25rem 0 1rem; letter-spacing: -0.02em; }
+.vc-location__info > p {
+    display: flex; align-items: center; gap: 0.5rem;
+    color: var(--text-gray); font-size: var(--font-size-sm);
+    margin: 0 0 0.5rem; line-height: 1.6;
+}
+.vc-location__actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+
+.vc-location__map {
+    min-height: 280px;
+    position: relative; overflow: hidden;
+    background: #eef1f5;
+}
+
+.vc-location__map img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ===== CTA ===== */
+.vc-cta {
+    background: var(--vc-dark);
+    padding: 6rem 2rem;
+    text-align: center;
+}
+
+.vc-cta__inner { max-width: 700px; margin: 0 auto; }
+.vc-cta h2 { font-size: clamp(2rem, 4vw, 3rem); color: white; margin: 0.75rem 0 2rem; font-weight: 800; letter-spacing: -0.03em; }
+.vc-cta h2 em { font-style: italic; color: var(--primary-teal); }
+.vc-cta__btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+.vc-cta__addr {
+    margin-top: 2.5rem; color: var(--vc-white-35);
+    font-size: var(--font-size-sm);
+    display: flex; align-items: center; justify-content: center;
+    gap: 0.35rem; flex-wrap: wrap;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .vc-quick-bar__grid { grid-template-columns: 1fr 1fr; }
+    .vc-about__grid { grid-template-columns: 1fr; }
+    .vc-about__img { aspect-ratio: 16/9; }
+    .vc-vetmovil { grid-template-columns: 1fr; }
+    .vc-vetmovil__img { min-height: 200px; }
+    .vc-location__inner { grid-template-columns: 1fr; }
+    .vc-location__map { min-height: 200px; }
+}
+
+@media (max-width: 480px) {
+    .vc-quick-bar__grid { grid-template-columns: 1fr; }
+    .vc-hc__title { font-size: 2.25rem; }
+    .vc-hc__title--brand { font-size: 3rem; }
+    /* Ambos botones con el mismo ancho y alto: cuadrícula de una columna con filas iguales
+       (antes cada uno medía lo que su texto y se veían de tamaños distintos) */
+    .vc-hc__btns { display: grid; grid-auto-rows: 1fr; width: 100%; }
+    .vc-hc__btns > a { justify-content: center; }
+    .vc-hc__nav { display: none; }
+    .vc-location__actions { flex-direction: column; }
+}
+
+/* ===== REDUCED MOTION =====
+   Cargado último (home.css es la última hoja enlazada en index.html), así
+   gana por orden de cascada sobre las reglas equivalentes de app.css /
+   new-pages.css. Se quita el movimiento continuo y las entradas con
+   translate/scale; se conservan las transiciones de opacidad. */
+@media (prefers-reduced-motion: reduce) {
+    .badge.urgent,
+    .vc-pulse,
+    .urgencia-pulse,
+    .logo-text:hover .vet,
+    .logo-text:hover .clinic {
+        animation: none;
+    }
+
+    .reveal,
+    .reveal-left,
+    .reveal-right {
+        transform: none;
+        transition: opacity 0.3s ease;
+    }
+
+    .lightbox-img {
+        transition: opacity 0.3s ease;
+    }
+
+    @starting-style {
+        .lightbox-img,
+        .lightbox-img[data-dir="next"],
+        .lightbox-img[data-dir="prev"] {
+            transform: none;
+        }
+    }
+
+    .lightbox-close:hover,
+    .lightbox-close:active {
+        transform: none;
+    }
+
+    .lightbox-nav:hover,
+    .lightbox-nav:active {
+        transform: translateY(-50%);
+    }
+
+    .vc-hc__nav:hover,
+    .vc-hc__nav:active {
+        transform: translateY(-50%);
+    }
+
+    .vc-hc__track,
+    .vc-hc__track--snap {
+        transition: none;
+    }
+}

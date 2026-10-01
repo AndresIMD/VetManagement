@@ -1,0 +1,1852 @@
+/* ============================================
+   SAN PABLO VET CLINIC - ONE PAGE DESIGN
+   Paleta Oficial: Celeste #62ABBF, Rojo #BB545F, Negro #222222
+   ============================================ */
+
+:root {
+    --primary-teal: #62ABBF;
+    --primary-teal-dark: #4A8FA3;
+    --primary-teal-light: #E8F4F7;
+    /* teal para texto pequeño sobre claro: el teal puro da ~2.4:1, este ~4.9:1 */
+    --primary-teal-text: color-mix(in srgb, var(--primary-teal) 70%, black);
+    --accent-coral: #BB545F;
+    --accent-coral-dark: #9E454E;
+    --text-dark: #222222;
+    --text-gray: #636E72;
+    --bg-light: #FAFBFC;
+    --bg-white: #FFFFFF;
+    --surface-dark: #0d0d0d;
+
+    /* Tintes derivados de la paleta oficial, para degradados/text-clip
+       (antes cada componente inventaba su propio tono suelto) */
+    --primary-teal-tint: #87D4E8;
+    --accent-coral-tint: #DD7A85;
+
+    /* Acentos semánticos (estado), en la misma familia tonal que la
+       paleta oficial en vez de colores planos genéricos de plantilla */
+    --success: #4F8F6E;
+    --success-dark: #3B7057;
+    --warning: #B98A46;
+    --warning-dark: #96702F;
+    --neutral-accent: #7C8FA0;
+    --neutral-accent-dark: #5E6E7C;
+
+    /* Colores de marcas externas (WhatsApp/Instagram/Facebook): no son parte
+       de la paleta oficial, pero se centralizan aquí en vez de repetir hex
+       sueltos en cada componente que enlaza a esas redes. */
+    --brand-whatsapp: #25D366;
+    --brand-whatsapp-dark: #128C7E;
+    --brand-instagram-start: #833AB4;
+    --brand-instagram-mid: #FD1D1D;
+    --brand-instagram-end: #F77737;
+    --brand-facebook: #1877F2;
+
+    /* Sombras más sutiles y profesionales */
+    --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.06);
+    --shadow-medium: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --shadow-strong: 0 8px 30px rgba(0, 0, 0, 0.12);
+
+    /* Border radius profesional - balance entre formal y amigable */
+    --border-radius: 8px;
+    --border-radius-sm: 6px;
+    --border-radius-xs: 4px;
+    --border-radius-pill: 50px;
+
+    /* Transiciones más sutiles. Propiedades explícitas en vez de "all":
+       cubren lo que hoy cambia en hover/active (color, fondo, borde,
+       sombra, transform, opacidad) sin observar layout (width/height/padding). */
+    /* Curva ease-out con más "punch" que la keyword ease por defecto,
+       para que hovers/presses de UI se sientan intencionales. */
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --transition: background-color 0.3s var(--ease-out), border-color 0.3s var(--ease-out), color 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out), transform 0.3s var(--ease-out), opacity 0.3s var(--ease-out);
+    --transition-fast: background-color 0.15s var(--ease-out), border-color 0.15s var(--ease-out), color 0.15s var(--ease-out), transform 0.15s var(--ease-out), opacity 0.15s var(--ease-out);
+    --transition-bounce: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    /* Sistema tipográfico profesional */
+    --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+    /* Tamaños de texto refinados */
+    --font-size-base: 0.9375rem;
+    /* 15px base */
+    --font-size-sm: 0.8125rem;
+    /* 13px pequeño */
+    --font-size-lg: 1rem;
+    /* 16px grande */
+    --font-size-xl: 1.0625rem;
+    /* 17px extra grande */
+
+    /* Títulos más contenidos */
+    --font-size-h1: 2.25rem;
+    /* 36px títulos principales */
+    --font-size-h2: 1.625rem;
+    /* 26px subtítulos */
+    --font-size-h3: 1.25rem;
+    /* 20px secciones */
+    --font-size-h4: 1.0625rem;
+    /* 17px subsecciones */
+
+    /* Espaciado más compacto */
+    --spacing-xs: 0.375rem;
+    /* 6px */
+    --spacing-sm: 0.75rem;
+    /* 12px */
+    --spacing-md: 1.25rem;
+    /* 20px */
+    --spacing-lg: 1.75rem;
+    /* 28px */
+    --spacing-xl: 2.5rem;
+    /* 40px */
+
+    /* Altura del navbar y barra de emergencia (rem para escalar con font-size) */
+    --ebar-height: 2.25rem;
+    --navbar-height: 3.75rem;
+    --header-height: calc(var(--ebar-height) + var(--navbar-height));
+    --hero-height: calc(100vh - var(--header-height));
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+    font-size: 80%;
+}
+
+@media (max-width: 768px) {
+    html {
+        font-size: 100%;
+    }
+}
+
+body {
+    font-family: var(--font-body);
+    font-size: var(--font-size-base);
+    background: var(--bg-light);
+    color: var(--text-dark);
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Headings usan Plus Jakarta Sans */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+/* ============================================
+   PAGE LAYOUT
+   ============================================ */
+.page {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding-top: var(--header-height);
+}
+
+.page main {
+    flex: 1;
+    min-height: var(--hero-height, 100vh);
+}
+
+/* ============================================
+   SCROLL ANIMATIONS
+   ============================================ */
+.reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* .reveal-left/.reveal-right arrancan desplazados 30px en X. Sin esto, en móvil ese desplazamiento
+   ensanchaba la página (~11px) hasta que el elemento se revelaba, y arrastraba la barra fija.
+   clip (a diferencia de hidden) no crea un contenedor de scroll, así que no afecta position: sticky/fixed. */
+section {
+    overflow-x: clip;
+}
+
+.reveal-left {
+    opacity: 0;
+    transform: translateX(-30px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.reveal-left.active {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.reveal-right {
+    opacity: 0;
+    transform: translateX(30px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.reveal-right.active {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Staggered animations for grids. Short, capped delays (30ms step, 180ms max)
+   so long lists (FAQ, exam categories) cascade quickly instead of trailing off. */
+.stagger-1 {
+    transition-delay: 0.03s;
+}
+
+.stagger-2 {
+    transition-delay: 0.06s;
+}
+
+.stagger-3 {
+    transition-delay: 0.09s;
+}
+
+.stagger-4 {
+    transition-delay: 0.12s;
+}
+
+.stagger-5 {
+    transition-delay: 0.15s;
+}
+
+.stagger-6,
+.stagger-7,
+.stagger-8,
+.stagger-9 {
+    transition-delay: 0.18s;
+}
+
+/* ============================================
+   FOCUS-VISIBLE (WCAG 2.4.7 Accessibility)
+   Visible focus indicator for keyboard navigation.
+   ============================================ */
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.btn-white:focus-visible,
+.btn-booking-cta:focus-visible,
+.btn-primary-urgency:focus-visible,
+.btn-primary-large:focus-visible,
+.btn-whatsapp-hero:focus-visible,
+.btn-whatsapp-vet:focus-visible,
+.whatsapp-btn:focus-visible {
+    outline: 3px solid var(--primary-teal);
+    outline-offset: 3px;
+    box-shadow: 0 0 0 6px rgba(98, 171, 191, 0.2);
+}
+
+a:focus-visible {
+    outline: 2px solid var(--primary-teal);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* <FocusOnNavigate Selector="h1"> (App.razor) enfoca el h1 por código al cargar cada
+   página; no es un elemento interactivo, así que no mostramos el marco de foco. */
+h1[tabindex="-1"]:focus {
+    outline: none;
+}
+
+.nav-link:focus-visible {
+    outline: 2px solid var(--primary-teal);
+    outline-offset: 4px;
+}
+
+/* ============================================
+   NAVIGATION BAR
+   ============================================ */
+.topnav {
+    position: fixed;
+    top: var(--ebar-height);
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 4px 30px rgba(98, 171, 191, 0.1);
+    padding: 0.4rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: var(--transition);
+    border-bottom: 1px solid rgba(98, 171, 191, 0.1);
+    height: var(--navbar-height);
+}
+
+.topnav.scrolled {
+    padding: 0.3rem 2rem;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.12);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+}
+
+.logo-text {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.logo-text:hover {
+    transform: scale(1.02);
+}
+
+.logo-img {
+    height: calc(var(--navbar-height) - 1rem);
+    width: auto;
+    transition: var(--transition);
+}
+
+.logo-text:hover .logo-img {
+    transform: scale(1.05);
+}
+
+.nav-links {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.nav-link {
+    color: var(--text-dark);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 1rem;
+    position: relative;
+    padding: 0.6rem 1rem;
+    border-radius: 10px;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.nav-link::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-teal), var(--accent-coral));
+    transition: all 0.3s ease;
+    border-radius: 3px;
+    transform: translateX(-50%);
+}
+
+.nav-link:hover {
+    color: var(--primary-teal);
+    background: var(--primary-teal-light);
+}
+
+.nav-link:hover::before {
+    width: 60%;
+}
+
+.nav-link::after {
+    display: none;
+}
+
+.nav-icon {
+    font-size: 1rem;
+}
+
+.nav-cta {
+    background: var(--primary-teal);
+    color: white !important;
+    padding: 0.6rem 1.25rem;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    box-shadow: var(--shadow-soft);
+    transition: var(--transition);
+    border: none;
+}
+
+.nav-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+    background: var(--primary-teal-dark);
+    color: white !important;
+}
+
+.nav-cta::before {
+    display: none;
+}
+
+/* Mobile Menu Button */
+.mobile-menu-btn {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    transition: var(--transition);
+}
+
+.mobile-menu-btn:hover {
+    background: var(--primary-teal-light);
+}
+
+.mobile-menu-btn span {
+    display: block;
+    flex-shrink: 0; /* en columna flex (móvil) las barras colapsaban a 0px de alto */
+    width: 24px;
+    height: 3px;
+    background: var(--text-dark);
+    margin: 5px auto;
+    border-radius: 3px;
+    transition: var(--transition);
+}
+
+/* X: las barras están separadas 13px entre centros (3px de alto + 5px de margen arriba y abajo).
+   Se mueven 13px hacia el centro ANTES de rotar; con rotate() primero el desplazamiento
+   seguía los ejes rotados y las barras no se cruzaban (la X salía cortada). */
+.mobile-menu-btn.active span:nth-child(1) {
+    transform: translateY(13px) rotate(45deg);
+}
+
+.mobile-menu-btn.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.mobile-menu-btn.active span:nth-child(3) {
+    transform: translateY(-13px) rotate(-45deg);
+}
+
+/* ============================================
+   TOPNAV — DARK THEME (Variante C)
+   ============================================ */
+.topnav.topnav--dark {
+    background: rgba(13, 13, 13, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Sin variante .scrolled: el navbar oscuro conserva el mismo color y sombra al bajar
+   (antes pasaba de 0.92 a 0.97 de opacidad y se veía demasiado oscuro). */
+
+/* Logo mantiene colores originales en tema oscuro */
+/* .topnav--dark .logo-img {
+    filter: brightness(0) invert(1);
+} */
+
+.topnav--dark .nav-link {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.topnav--dark .nav-link:hover {
+    color: var(--primary-teal);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.topnav--dark .nav-link::before {
+    background: linear-gradient(90deg, var(--primary-teal), var(--accent-coral));
+}
+
+.topnav--dark .nav-cta {
+    background: var(--accent-coral);
+    color: white !important;
+    box-shadow: 0 4px 15px rgba(187, 84, 95, 0.3);
+}
+
+.topnav--dark .nav-cta:hover {
+    background: var(--accent-coral-dark);
+    box-shadow: 0 6px 20px rgba(187, 84, 95, 0.4);
+    color: white !important;
+}
+
+.topnav--dark .dropdown-arrow {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.topnav--dark .mobile-menu-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.topnav--dark .mobile-menu-btn span {
+    background: rgba(255, 255, 255, 0.85);
+}
+
+.btn-primary {
+    position: relative;
+    overflow: hidden;
+    background: var(--primary-teal);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    font-size: 1rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: var(--shadow-soft);
+    transition: var(--transition);
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+}
+
+.btn-primary:hover {
+    background: var(--primary-teal-dark);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+}
+
+.btn-primary:hover::before {
+    left: 100%;
+}
+
+.btn-secondary {
+    background: transparent;
+    color: var(--primary-teal);
+    padding: 1rem 2rem;
+    border-radius: var(--border-radius);
+    font-weight: 700;
+    font-size: var(--font-size-base);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 2px solid var(--primary-teal);
+    transition: var(--transition);
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.btn-secondary:hover {
+    background: var(--primary-teal);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(98, 171, 191, 0.35);
+}
+
+.btn-whatsapp-hero {
+    border-color: var(--brand-whatsapp);
+    color: var(--brand-whatsapp);
+}
+
+.btn-whatsapp-hero .whatsapp-icon-svg {
+    width: 20px;
+    height: 20px;
+}
+
+.btn-whatsapp-hero:hover {
+    background: var(--brand-whatsapp);
+    border-color: var(--brand-whatsapp);
+    color: white;
+}
+
+/* Modificador solido (fondo verde) para reutilizar sobre otros botones
+   grandes (ej. btn-primary-large) sin recurrir a un style inline. Selector
+   compuesto para ganarle en especificidad a .btn-primary-large (definida
+   más abajo en este archivo). */
+.btn-primary-large.btn-whatsapp-solid {
+    background: var(--brand-whatsapp);
+    border-color: var(--brand-whatsapp);
+    color: white;
+}
+
+.btn-primary-large.btn-whatsapp-solid:hover {
+    background: var(--brand-whatsapp-dark);
+    border-color: var(--brand-whatsapp-dark);
+    color: white;
+}
+
+/* ============================================
+   SECTIONS GENERAL
+   ============================================ */
+section {
+    padding: 6rem 2rem;
+    position: relative;
+}
+
+.section-header {
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto 4rem;
+}
+
+.section-tag {
+    display: inline-block;
+    color: var(--accent-coral-dark);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 0.5rem;
+}
+
+.section-title {
+    font-size: var(--font-size-h2);
+    font-weight: 800;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
+}
+
+.section-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-gray);
+}
+
+/* Home usa el componente compartido <SectionHeader> (arriba) con este modificador
+   para mantener su alineación a la izquierda y ancho completo, en vez de duplicar
+   el markup del componente como se hacía antes. */
+.section-header.vc-section-header--home {
+    text-align: left;
+    max-width: none;
+    margin: 0 0 2.5rem;
+}
+.section-header.vc-section-header--home .section-tag { font-size: 0.75rem; margin-bottom: 0; }
+.section-header.vc-section-header--home .section-title { margin: 0.25rem 0 0; }
+.section-header.vc-section-header--home .section-subtitle {
+    max-width: 520px; margin: 0.5rem 0 0; text-align: left;
+}
+
+/* ============================================
+   TOKENS DE MARCA DE HOME (compartidos)
+   Extraídos del <style> inline de Home.razor para que las secciones que Home
+   incluye (ServicesPreviewSection, SpecialistsPreviewSection, MobileVetPreviewSection,
+   FinalCtaSection, etc.) no dependan de que Home esté montada para verse bien.
+   ============================================ */
+.vc-tag {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--accent-coral);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+}
+
+.vc-accent {
+    color: var(--primary-teal);
+}
+
+.vc-accent-coral {
+    color: var(--accent-coral);
+}
+
+.vc-vetmovil__title-sub {
+    display: inline-block;
+    font-size: 0.6em;
+    font-weight: 700;
+    color: var(--text-dark);
+    letter-spacing: -0.01em;
+}
+
+/* ===== TARJETAS DE SERVICIO (estilo Home) ===== */
+.vc-svc-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+}
+
+.vc-svc-card {
+    display: block;
+    text-decoration: none;
+    background: white;
+    border: 1px solid color-mix(in srgb, var(--primary-teal) 10%, white);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: var(--transition);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.vc-svc-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--primary-teal);
+    box-shadow: 0 12px 36px rgba(0,0,0,0.08);
+}
+
+.vc-svc-card__img {
+    height: 140px;
+    overflow: hidden;
+    position: relative;
+    background: linear-gradient(135deg, rgba(98,171,191,0.06), rgba(98,171,191,0.14));
+}
+
+.vc-svc-card__img img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    object-position: center 25%;
+    transition: transform 0.4s ease;
+}
+
+.vc-svc-card:hover .vc-svc-card__img img { transform: scale(1.06); }
+
+.vc-svc-card__fallback {
+    position: absolute; inset: 0;
+    display: none;
+    align-items: center; justify-content: center;
+    color: var(--primary-teal);
+}
+
+.vc-svc-card__img.no-img img { display: none; }
+.vc-svc-card__img.no-img .vc-svc-card__fallback { display: flex; }
+
+.vc-svc-card h3 {
+    font-size: 1rem; font-weight: 700;
+    color: var(--text-dark);
+    margin: 1rem 1.25rem 0.35rem;
+}
+
+.vc-svc-card p {
+    font-size: var(--font-size-sm);
+    color: var(--text-gray);
+    line-height: 1.6;
+    margin: 0 1.25rem 0.75rem;
+}
+
+.vc-svc-card__more {
+    display: inline-flex; align-items: center; gap: 4px;
+    margin: 0 1.25rem 1.25rem;
+    font-size: var(--font-size-sm); font-weight: 600;
+    color: var(--primary-teal-dark);
+    opacity: 0; transform: translateX(-4px);
+    transition: var(--transition);
+}
+
+.vc-svc-card:hover .vc-svc-card__more,
+.vc-svc-card:focus-visible .vc-svc-card__more { opacity: 1; transform: none; }
+
+/* Sin hover (táctil) la flecha queda siempre visible */
+@media (hover: none) { .vc-svc-card__more { opacity: 1; transform: none; } }
+
+/* ===== TARJETAS DE ESPECIALISTA (estilo Home) ===== */
+.vc-specs-band__grid {
+    display: grid;
+    grid-template-columns: 5fr 7fr;
+    gap: 3.5rem;
+    align-items: center;
+}
+
+.vc-specs-band__intro h2 {
+    font-size: var(--font-size-h2);
+    font-weight: 800;
+    color: var(--text-dark);
+    letter-spacing: -0.02em;
+    margin: 0.25rem 0 1rem;
+}
+
+.vc-specs-band__intro p { color: var(--text-gray); line-height: 1.7; margin: 0 0 1.75rem; }
+
+.vc-specs-band__more {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-left: 1.25rem;
+    color: var(--primary-teal-text); font-weight: 600; text-decoration: none;
+    border-bottom: 1px solid currentColor;
+}
+.vc-specs-band__more:hover { color: var(--primary-teal); }
+/* acento del título sobre fondo blanco: el teal puro da 2.4:1, el dark 3.6:1 (mínimo 3:1 en texto grande) */
+.vc-specs-band__intro .vc-accent { color: var(--primary-teal-dark); }
+/* Área táctil de ~44px sin alterar el subrayado ni el layout */
+.vc-specs-band__more { position: relative; }
+.vc-specs-band__more::after { content: ""; position: absolute; inset: -12px -4px; }
+
+.vc-specs {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.9rem;
+}
+
+.vc-spec-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    background: #fafbfc;
+    border: 1px solid #eef1f5;
+    border-radius: 14px;
+    padding: 1.25rem;
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.vc-spec-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 36px rgba(0,0,0,0.08);
+    border-color: var(--primary-teal);
+}
+
+.vc-spec-card__icon {
+    flex: 0 0 44px;
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--primary-teal);
+    color: white;
+}
+
+.vc-spec-card:nth-child(even) .vc-spec-card__icon { background: var(--accent-coral); }
+
+.vc-spec-card__text { flex: 1; min-width: 0; }
+.vc-spec-card h3 { font-size: 1rem; font-weight: 700; color: var(--text-dark); margin: 0 0 0.2rem; }
+.vc-spec-card__role { display: block; font-size: var(--font-size-sm); color: var(--text-gray); line-height: 1.4; }
+
+@media (max-width: 900px) {
+    .vc-specs-band__grid { grid-template-columns: minmax(0, 1fr); gap: 2.5rem; }
+}
+
+@media (max-width: 520px) {
+    .vc-specs { grid-template-columns: minmax(0, 1fr); }
+    .vc-specs-band__more { margin: 1rem 0 0; }
+}
+
+@media (max-width: 768px) {
+    .vc-svc-grid { grid-template-columns: 1fr; }
+}
+
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ============================================
+   INFO CARD — variante Contact (usada por InfoCard.razor con
+   Style="InfoCardStyle.Contact"; en Hospitalizacion, seccion
+   "Informacion para Tutores")
+   ============================================ */
+.contact-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.contact-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--primary-teal), var(--primary-teal-dark));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.contact-item-content h4,
+.contact-item-content h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 0.25rem;
+}
+
+.contact-item-content p {
+    color: var(--text-gray);
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+/* ============================================
+   SOCIAL LINKS (usado por SocialLinks.razor, Contacto y Footer)
+   ============================================ */
+.social-links {
+    display: flex;
+    gap: 1rem;
+}
+
+.social-link {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    color: white;
+}
+
+.social-link svg {
+    width: 24px;
+    height: 24px;
+}
+
+.social-link.instagram {
+    background: linear-gradient(135deg, var(--brand-instagram-start), var(--brand-instagram-mid), var(--brand-instagram-end));
+}
+
+.social-link.facebook {
+    background: var(--brand-facebook);
+}
+
+.social-link.whatsapp {
+    background: var(--brand-whatsapp);
+}
+
+.social-link:hover {
+    transform: translateY(-3px) scale(1.1);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.whatsapp-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: linear-gradient(135deg, var(--brand-whatsapp), var(--brand-whatsapp-dark));
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    font-size: var(--font-size-base);
+    text-decoration: none;
+    margin-top: 1.5rem;
+    box-shadow: 0 4px 20px rgba(37, 211, 102, 0.3);
+    transition: var(--transition);
+}
+
+.whatsapp-btn .whatsapp-icon-svg {
+    width: 22px;
+    height: 22px;
+}
+
+.whatsapp-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(37, 211, 102, 0.4);
+}
+
+.info-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: white;
+    padding: 0.875rem 1.25rem;
+    border-radius: var(--border-radius-sm);
+    box-shadow: var(--shadow-soft);
+    flex: 1;
+    min-width: 150px;
+}
+
+.info-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(98, 171, 191, 0.10), rgba(98, 171, 191, 0.20));
+    color: var(--primary-teal);
+}
+
+.info-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-text strong {
+    font-size: 0.85rem;
+    color: var(--text-dark);
+}
+
+.info-text span {
+    font-size: 0.85rem;
+    color: var(--text-gray);
+}
+
+/* .btn-whatsapp-vet se usa junto a .whatsapp-btn (clase base: fondo, padding,
+   sombra, hover) — aquí solo van los ajustes propios de la variante de 2 líneas
+   (label + número), que necesita un ícono más grande y más espacio. */
+.btn-whatsapp-vet {
+    gap: 1rem;
+}
+
+.btn-whatsapp-vet .whatsapp-icon-svg {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+}
+
+.whatsapp-text {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.whatsapp-label {
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.whatsapp-number {
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.cta-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text-dark);
+    background: rgba(187, 84, 95, 0.06);
+    border-left: 3px solid var(--accent-coral);
+    padding: 10px 16px;
+    border-radius: 6px;
+    margin: 0.75rem 0 0;
+}
+
+.cta-note svg { color: var(--accent-coral); flex-shrink: 0; }
+
+/* ============================================
+   FAQ SECTION
+   (padding/background de .faq-section viven en pages.css, que carga
+   despues y ya los pisaba: la version de aqui era codigo muerto)
+   ============================================ */
+.faq-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.faq-item {
+    background: var(--bg-light);
+    border-radius: var(--border-radius-sm);
+    margin-bottom: 1rem;
+    overflow: hidden;
+    border: 1px solid rgba(98, 171, 191, 0.1);
+    transition: var(--transition);
+}
+
+.faq-item:hover {
+    border-color: rgba(98, 171, 191, 0.3);
+    box-shadow: var(--shadow-soft);
+}
+
+.faq-item.active {
+    border-color: var(--primary-teal);
+    box-shadow: var(--shadow-medium);
+}
+
+.faq-question {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    transition: var(--transition);
+}
+
+.faq-question:hover {
+    color: var(--primary-teal);
+}
+
+.faq-item.active .faq-question {
+    color: var(--primary-teal);
+    background: var(--primary-teal-light);
+}
+
+.faq-icon {
+    width: 28px;
+    height: 28px;
+    background: var(--primary-teal-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    font-weight: 400;
+    color: var(--primary-teal);
+    transition: var(--transition);
+    flex-shrink: 0;
+}
+
+.faq-item.active .faq-icon {
+    background: var(--primary-teal);
+    color: white;
+    transform: rotate(45deg);
+}
+
+.faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.4s ease;
+}
+
+.faq-item.active .faq-answer {
+    max-height: 300px;
+}
+
+.faq-answer p {
+    padding: 0 1.5rem 1.5rem;
+    margin: 0;
+    color: var(--text-gray);
+    line-height: 1.7;
+    font-size: 0.95rem;
+}
+
+.faq-answer strong {
+    color: var(--text-dark);
+}
+
+/* Responsive for FAQ */
+@media (max-width: 576px) {
+    .faq-question {
+        padding: 1rem 1.25rem;
+        font-size: 0.95rem;
+    }
+
+    .faq-answer p {
+        padding: 0 1.25rem 1.25rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .info-card {
+        justify-content: center;
+    }
+}
+
+/* ============================================
+   FOOTER
+   ============================================ */
+.footer {
+    background: var(--text-dark);
+    color: white;
+    padding: 4rem 2rem 2rem;
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 3rem;
+}
+
+.footer-brand h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.footer-brand .san-pablo {
+    font-family: 'Georgia', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 0.9rem;
+    opacity: 0.8;
+    display: block;
+}
+
+.footer-brand .vet {
+    color: var(--primary-teal);
+}
+
+.footer-brand .clinic {
+    color: var(--accent-coral);
+}
+
+.footer-brand p {
+    opacity: 0.7;
+    font-size: 0.95rem;
+    line-height: 1.7;
+}
+
+.footer-column h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1.25rem;
+    color: var(--primary-teal);
+}
+
+.footer-column ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-column ul li {
+    margin-bottom: 0.75rem;
+}
+
+.footer-column ul li a {
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: var(--transition);
+}
+
+.footer-column ul li a:hover {
+    color: white;
+    padding-left: 5px;
+}
+
+.footer-social {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.footer .social-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.footer .social-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.footer .social-icon.instagram:hover {
+    background: linear-gradient(135deg, #833AB4, #FD1D1D, #F77737);
+    transform: translateY(-3px);
+}
+
+.footer .social-icon.facebook:hover {
+    background: #1877F2;
+    transform: translateY(-3px);
+}
+
+.footer .social-icon.whatsapp:hover {
+    background: #25D366;
+    transform: translateY(-3px);
+}
+
+.footer-bottom {
+    max-width: 1200px;
+    margin: 3rem auto 0;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+    font-size: 0.9rem;
+    opacity: 0.6;
+}
+
+.footer-credit {
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    opacity: 0.5;
+}
+
+.footer-credit a {
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.footer-credit a:hover {
+    color: white;
+    opacity: 1;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+@media (max-width: 992px) {
+    .footer-content {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    /* barra de urgencias ~10% más baja en móvil (2.25rem -> 2.025rem); el resto del layout usa la variable */
+    :root {
+        --ebar-height: 2.025rem;
+    }
+
+    /* logo y hamburguesa alineados con el margen de 1rem de la barra de urgencias */
+    .topnav,
+    .topnav.scrolled {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    /* logo ~8% más chico en móvil */
+    .logo-img {
+        height: calc((var(--navbar-height) - 1rem) * 0.92);
+    }
+
+    .nav-links {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        flex-direction: column;
+        align-items: stretch; /* el base centra; en el menú móvil los ítems ocupan todo el ancho */
+        max-height: calc(100dvh - var(--ebar-height) - var(--navbar-height)); /* si no cabe, el menú se desplaza */
+        overflow-y: auto;
+        padding: 1rem;
+        gap: 0.5rem;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        border-bottom-left-radius: 20px;
+        border-bottom-right-radius: 20px;
+    }
+
+    .nav-links.active {
+        display: flex;
+    }
+
+    /* Dark theme — mobile menu */
+    .topnav--dark .nav-links {
+        background: linear-gradient(180deg, rgba(13, 13, 13, 0.98) 0%, rgba(20, 20, 20, 0.98) 100%);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .topnav--dark .nav-link:hover {
+        background: rgba(255, 255, 255, 0.06);
+    }
+
+    .nav-link {
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .nav-link:hover {
+        background: var(--primary-teal-light);
+    }
+
+    .nav-link::before {
+        display: none;
+    }
+
+    .nav-cta {
+        margin-top: 0.5rem;
+        justify-content: center;
+    }
+
+    .mobile-menu-btn {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    section {
+        padding: 4rem 1rem;
+    }
+
+    .hero-section {
+        padding: 5rem 1rem 3rem;
+        min-height: auto;
+    }
+
+    .services-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .footer-content {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .footer-social {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-text h1 {
+        font-size: 1.75rem;
+    }
+
+    .hero-badges {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .hero-buttons {
+        flex-direction: column;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ============================================
+   TABLET BREAKPOINT (nuevo)
+   ============================================ */
+@media (max-width: 1024px) and (min-width: 769px) {
+    :root {
+        --font-size-h1: 2rem;
+        --font-size-h2: 1.5rem;
+        --font-size-h3: 1.125rem;
+    }
+
+    section {
+        padding: 4rem 1.5rem;
+    }
+
+    .stats-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ============================================
+   GLOBAL FONT SCALING (todos los breakpoints)
+   ============================================ */
+@media (max-width: 768px) {
+    :root {
+        --font-size-h1: 1.75rem;
+        --font-size-h2: 1.375rem;
+        --font-size-h3: 1.0625rem;
+        --font-size-base: 0.875rem;
+    }
+}
+
+@media (max-width: 480px) {
+    :root {
+        --font-size-h1: 1.5rem;
+        --font-size-h2: 1.25rem;
+        --font-size-h3: 1rem;
+    }
+}
+
+.stat-card {
+    text-align: center;
+    padding: 2rem;
+    background: var(--bg-white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-soft);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-teal), var(--accent-coral));
+    transform: scaleX(0);
+    transition: transform 0.4s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-medium);
+}
+
+.stat-card:hover::before {
+    transform: scaleX(1);
+}
+
+.stat-number {
+    font-size: 3rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--primary-teal), var(--accent-coral));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.95rem;
+    color: var(--text-gray);
+    font-weight: 500;
+}
+
+/* GLOWING BUTTONS: fusionado con la definición principal de .btn-primary
+   más arriba (antes estaba duplicado acá). */
+
+/* ============================================
+   LOGO ANIMATION
+   ============================================ */
+.logo-text {
+    text-decoration: none;
+    display: block;
+}
+
+.logo-text:hover .vet {
+    animation: bounce-letter 0.4s ease;
+}
+
+.logo-text:hover .clinic {
+    animation: bounce-letter 0.4s ease 0.1s;
+}
+
+@keyframes bounce-letter {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+/* ============================================
+   RESPONSIVE ADDITIONS
+   ============================================ */
+@media (max-width: 768px) {
+    .stat-card {
+        padding: 1.5rem 1rem;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+
+/* ============================================
+   IDEXX SECTION
+   ============================================ */
+.idexx-section {
+    padding: 5rem 5%;
+    background: var(--bg-white);
+}
+
+.idexx-container {
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.idexx-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--accent-coral);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 1.5rem;
+}
+
+.idexx-title {
+    font-size: clamp(2rem, 4vw, 2.5rem);
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0 0 1.5rem;
+}
+
+.idexx-title .highlight {
+    background: linear-gradient(135deg, var(--primary-teal), var(--accent-coral));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.idexx-description {
+    font-size: 1.1rem;
+    color: var(--text-gray);
+    line-height: 1.8;
+    margin: 0 0 2rem;
+}
+
+.idexx-features {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.idexx-feature {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: white;
+    border: 1px solid #eef1f5;
+    padding: 0.75rem 1.5rem;
+    border-radius: 14px;
+    font-weight: 500;
+    color: var(--text-dark);
+    transition: var(--transition);
+}
+
+.idexx-feature:hover {
+    border-color: var(--primary-teal);
+}
+
+/* ============================================
+   EXAMS CATALOG
+   ============================================ */
+.exams-catalog {
+    padding: 5rem 5%;
+    background: var(--bg-light);
+}
+
+.exams-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.exam-category {
+    background: white;
+    border-radius: 14px;
+    padding: 2rem;
+    border: 1px solid #eef1f5;
+    transition: var(--transition);
+}
+
+.exam-category:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-soft);
+    border-color: var(--primary-teal);
+}
+
+.exam-category-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.exam-category-icon {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(98, 171, 191, 0.10), rgba(98, 171, 191, 0.20));
+    color: var(--primary-teal);
+    border-radius: 14px;
+}
+
+.exam-category-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+.exam-category-description {
+    color: var(--text-gray);
+    font-size: 0.95rem;
+    margin: 0 0 1.5rem;
+    line-height: 1.6;
+}
+
+.exam-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.exam-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.exam-item:last-child {
+    border-bottom: none;
+}
+
+.exam-name {
+    font-weight: 600;
+    color: var(--text-dark);
+    font-size: 0.95rem;
+}
+
+.exam-desc {
+    font-size: 0.85rem;
+    color: var(--text-gray);
+}
+
+.btn-primary-large,
+.btn-glass-large,
+.btn-dark-large,
+.btn-outline-large {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 2rem;
+    border-radius: var(--border-radius);
+    font-weight: 700;
+    text-decoration: none;
+    transition: var(--transition);
+    font-size: var(--font-size-base);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border: 2px solid transparent;
+}
+
+.btn-primary-large {
+    background: var(--accent-coral);
+    color: white;
+    border-color: var(--accent-coral);
+}
+
+.btn-primary-large:hover {
+    background: var(--accent-coral-dark);
+    border-color: var(--accent-coral-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(187, 84, 95, 0.4);
+}
+
+.btn-glass-large {
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+}
+
+.btn-glass-large:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.btn-dark-large {
+    background: var(--text-dark);
+    color: white;
+    border-color: var(--text-dark);
+}
+
+.btn-dark-large:hover {
+    background: color-mix(in srgb, var(--text-dark) 80%, black);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+}
+
+.btn-outline-large {
+    background: transparent;
+    color: var(--text-dark);
+    border-color: color-mix(in srgb, var(--primary-teal) 20%, white);
+}
+
+.btn-outline-large:hover {
+    border-color: var(--primary-teal);
+    color: var(--primary-teal);
+}
+
+/* ============================================
+   EXAM INFO SECTION
+   ============================================ */
+.exam-info-section {
+    padding: 5rem 5%;
+    background: var(--bg-light);
+}
+
+.exam-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.exam-info-card {
+    background: var(--bg-white);
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    text-align: center;
+    box-shadow: var(--shadow-soft);
+}
+
+.exam-info-card h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0 0 0.75rem;
+}
+
+.exam-info-card p {
+    color: var(--text-gray);
+    font-size: 0.95rem;
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* ============================================
+   RESPONSIVE - PAGES
+   ============================================ */
+@media (max-width: 768px) {
+    .exams-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================
+   PRESS FEEDBACK (:active)
+   Al final del archivo para ganar por orden de cascada sobre los :hover
+   de cada botón/tarjeta (misma especificidad, definidos más arriba).
+   Solo transform: el :hover ya anima color/sombra/lift; al presionar
+   se reemplaza momentáneamente por un scale sutil.
+   ============================================ */
+.btn-primary:active,
+.btn-secondary:active,
+.btn-primary-large:active,
+.btn-glass-large:active,
+.btn-dark-large:active,
+.btn-outline-large:active,
+.vc-svc-card:active,
+.vc-spec-card:active {
+    transform: scale(0.97);
+}

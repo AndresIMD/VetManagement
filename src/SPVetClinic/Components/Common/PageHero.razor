@@ -1,0 +1,62 @@
+@* ============================================
+   PAGE HERO - Reusable modern hero section
+   Replaces old wave-based heroes with a clean,
+   professional gradient + geometric accent design.
+   ============================================ *@
+
+<section class="page-hero-modern @CssClass @(HasBackgroundImage ? "page-hero-modern--photo" : "")" role="banner">
+    @if (HasBackgroundImage)
+    {
+        <img class="page-hero-modern__bg-image" src="@BackgroundImage" alt="" loading="eager"
+             style="@(string.IsNullOrEmpty(BackgroundPosition) ? null : $"object-position: {BackgroundPosition}")" />
+    }
+    <div class="page-hero-modern__overlay"></div>
+    <div class="page-hero-modern__content">
+        @if (!string.IsNullOrEmpty(Tag))
+        {
+            <span class="page-hero-modern__tag reveal">
+                @if (!string.IsNullOrEmpty(TagIcon))
+                {
+                    <Icon Name="@TagIcon" Size="18" />
+                }
+                @Tag
+            </span>
+        }
+        <h1 class="page-hero-modern__title reveal">
+            @if (TitleContent is not null)
+            {
+                @TitleContent
+            }
+            else
+            {
+                @Title
+            }
+        </h1>
+        @if (!string.IsNullOrEmpty(Subtitle))
+        {
+            <p class="page-hero-modern__subtitle reveal">@Subtitle</p>
+        }
+        @if (Actions is not null)
+        {
+            <div class="page-hero-modern__actions reveal">
+                @Actions
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter] public string Tag { get; set; } = "";
+    [Parameter] public string TagIcon { get; set; } = "";
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public RenderFragment? TitleContent { get; set; }
+    [Parameter] public string Subtitle { get; set; } = "";
+    [Parameter] public RenderFragment? Actions { get; set; }
+    [Parameter] public string CssClass { get; set; } = "";
+    [Parameter] public string BackgroundImage { get; set; } = "";
+
+    /// <summary>object-position CSS de la foto de fondo (encuadre), p. ej. "center 25%"</summary>
+    [Parameter] public string BackgroundPosition { get; set; } = "";
+
+    private bool HasBackgroundImage => !string.IsNullOrEmpty(BackgroundImage);
+}

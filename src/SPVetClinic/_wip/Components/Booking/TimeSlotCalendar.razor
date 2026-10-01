@@ -1,0 +1,298 @@
+@namespace SPVetClinic.Components.Booking
+@* ============================================
+   TIME SLOT CALENDAR - Componente de Calendario
+   [MOVIDO a _wip: módulo de booking sin usar todavía. Se mantiene el namespace
+   original con @namespace para no requerir cambios en las referencias.]
+   Uso: <TimeSlotCalendar SpecialistId="specialistId" TimeSlots="timeSlots" OnTimeSlotSelected="HandleSelection" />
+   ============================================ *@
+
+@using SPVetClinic.Data.Models.Booking
+@using SPVetClinic.Services.Booking
+
+<div class="time-slot-calendar">
+    <div class="calendar-header">
+        <h2 class="calendar-title">Selecciona Fecha y Hora</h2>
+        <p class="calendar-subtitle">Elige la disponibilidad que mejor se adapte a tu horario</p>
+    </div>
+
+    @if (IsLoading)
+    {
+        <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Cargando horarios disponibles...</p>
+        </div>
+    }
+    else if (!AvailableDates.Any())
+    {
+        <div class="empty-state">
+            <p>No hay horarios disponibles para este especialista.</p>
+            <button class="btn-secondary" @onclick="OnPreviousStep">
+                <Icon Name="arrow-left" Size="18" />
+                Cambiar Especialista
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="calendar-container reveal">
+            <!-- Date Selector -->
+            <div class="date-selector">
+                <div class="date-header">
+                    <button class="btn-nav" @onclick="PreviousWeek" disabled="@IsPreviousWeekDisabled()">
+                        <Icon Name="chevron-left" Size="20" />
+                    </button>
+                    <h3 class="week-label">@GetWeekLabel()</h3>
+                    <button class="btn-nav" @onclick="NextWeek">
+                        <Icon Name="chevron-right" Size="20" />
+                    </button>
+                </div>
+
+                <div class="dates-grid">
+                    @foreach (var date in GetWeekDates())
+                    {
+                        var isAvailable = AvailableDates.Contains(date);
+                        var isSelected = _selectedDate == date;
+
+                        <div class="date-card @GetDateCardClasses(date)" 
+                             @onclick="() => SelectDate(date)"
+                             role="button"
+                             tabindex="0"
+                             @onkeydown="(e) => HandleDateKeyPress(e, date)">
+                            <div class="date-day">@date.ToString("ddd")</div>
+                            <div class="date-number">@date.Day</div>
+                            <div class="date-month">@date.ToString("MMM")</div>
+                            @if (!isAvailable && isSelected)
+                            {
+                                <div class="no-availability">Sin horas</div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Time Slots -->
+            @if (_selectedDate != DateTime.MinValue)
+            {
+                <div class="time-slots-container">
+                    <h3 class="time-header">Horas disponibles - @_selectedDate.ToString("dddd, d 'de' MMMM")</h3>
+
+                    <div class="time-slots-grid">
+                        @if (TimeSlotsForSelectedDate.Any())
+                        {
+                            @foreach (var timeSlot in TimeSlotsForSelectedDate)
+                            {
+                                var isSelected = _selectedTimeSlot?.Id == timeSlot.Id;
+
+                                <button class="time-slot @(isSelected ? "selected" : "")"
+                                        @onclick="() => SelectTimeSlot(timeSlot)">
+                                    <span class="time-text">@timeSlot.FormattedTime</span>
+                                    @if (isSelected)
+                                    {
+                                        <span class="check-mark">✓</span>
+                                    }
+                                </button>
+                            }
+                        }
+                        else
+                        {
+                            <div class="no-slots">
+                                <p>No hay horarios disponibles para este día</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="error-message reveal">
+            <Icon Name="alert-circle" Size="20" />
+            <span>@ErrorMessage</span>
+        </div>
+    }
+
+    <div class="calendar-actions">
+        <button class="btn-secondary" @onclick="OnPreviousStep">
+            <Icon Name="arrow-left" Size="18" />
+            Atrás
+        </button>
+        <button class="btn-primary" 
+                disabled="@(_selectedTimeSlot == null)" 
+                @onclick="ContinueToForm">
+            Continuar
+            <Icon Name="arrow-right" Size="18" />
+        </button>
+    </div>
+</div>
+
+@code {
+    [Inject] private BookingStateService? BookingState { get; set; }
+
+    [Parameter]
+    public int SpecialistId { get; set; }
+
+    [Parameter]
+    public IReadOnlyList<TimeSlot> TimeSlots { get; set; } = new List<TimeSlot>();
+
+    [Parameter]
+    public bool IsLoading { get; set; } = false;
+
+    [Parameter]
+    public string? ErrorMessage { get; set; }
+
+    [Parameter]
+    public EventCallback<TimeSlot> OnTimeSlotSelected { get; set; }
+
+    [Parameter]
+    public EventCallback OnPreviousStep { get; set; }
+
+    private DateTime _selectedDate = DateTime.MinValue;
+    private TimeSlot? _selectedTimeSlot;
+    private int _weekOffset = 0;
+
+    protected override void OnInitialized()
+    {
+        if (BookingState?.FormData.SelectedTimeSlot != null)
+        {
+            _selectedTimeSlot = BookingState.FormData.SelectedTimeSlot;
+            _selectedDate = _selectedTimeSlot.Date.Date;
+        }
+
+        if (AvailableDates.Any() && _selectedDate == DateTime.MinValue)
+        {
+            _selectedDate = AvailableDates.First();
+        }
+    }
+
+    private IReadOnlyList<DateTime> AvailableDates
+    {
+        get
+        {
+            return TimeSlots
+                .Where(ts => ts.IsAvailable)
+                .Select(ts => ts.Date.Date)
+                .Distinct()
+                .OrderBy(d => d)
+                .ToList()
+                .AsReadOnly();
+        }
+    }
+
+    private IReadOnlyList<TimeSlot> TimeSlotsForSelectedDate
+    {
+        get
+        {
+            return TimeSlots
+                .Where(ts => ts.Date.Date == _selectedDate && ts.IsAvailable)
+                .OrderBy(ts => ts.StartTime)
+                .ToList()
+                .AsReadOnly();
+        }
+    }
+
+    private List<DateTime> GetWeekDates()
+    {
+        var today = DateTime.Today;
+        var firstDate = AvailableDates.FirstOrDefault(today);
+        var weekStart = firstDate.AddDays(_weekOffset * 7);
+
+        var weekDates = new List<DateTime>();
+        for (int i = 0; i < 7; i++)
+        {
+            weekDates.Add(weekStart.AddDays(i));
+        }
+        return weekDates;
+    }
+
+    private string GetWeekLabel()
+    {
+        var weekDates = GetWeekDates();
+        var firstDate = weekDates.First();
+        var lastDate = weekDates.Last();
+
+        if (firstDate.Month == lastDate.Month)
+        {
+            return $"{firstDate.Day} - {lastDate:d 'de' MMMM 'de' yyyy}";
+        }
+        else
+        {
+            return $"{firstDate:d 'de' MMMM} - {lastDate:d 'de' MMMM 'de' yyyy}";
+        }
+    }
+
+    private void PreviousWeek()
+    {
+        if (!IsPreviousWeekDisabled())
+        {
+            _weekOffset--;
+            StateHasChanged();
+        }
+    }
+
+    private void NextWeek()
+    {
+        _weekOffset++;
+        StateHasChanged();
+    }
+
+    private bool IsPreviousWeekDisabled()
+    {
+        var weekDates = GetWeekDates();
+        return weekDates.All(d => d < DateTime.Today);
+    }
+
+    private string GetDateCardClasses(DateTime date)
+    {
+        var classes = "card-interactive";
+
+        if (_selectedDate == date)
+        {
+            classes += " selected";
+        }
+
+        if (!AvailableDates.Contains(date))
+        {
+            classes += " disabled";
+        }
+
+        return classes;
+    }
+
+    private void SelectDate(DateTime date)
+    {
+        if (AvailableDates.Contains(date))
+        {
+            _selectedDate = date;
+            _selectedTimeSlot = null;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SelectTimeSlot(TimeSlot timeSlot)
+    {
+        _selectedTimeSlot = timeSlot;
+        if (BookingState != null)
+        {
+            BookingState.SelectTimeSlot(timeSlot);
+        }
+        await OnTimeSlotSelected.InvokeAsync(timeSlot);
+    }
+
+    private async Task ContinueToForm()
+    {
+        if (_selectedTimeSlot != null)
+        {
+            await OnTimeSlotSelected.InvokeAsync(_selectedTimeSlot);
+        }
+    }
+
+    private async Task HandleDateKeyPress(KeyboardEventArgs e, DateTime date)
+    {
+        if (e.Key == "Enter" || e.Key == " ")
+        {
+            SelectDate(date);
+        }
+    }
+}

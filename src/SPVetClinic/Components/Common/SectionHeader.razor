@@ -1,0 +1,26 @@
+@* ============================================
+   SECTION HEADER - Componente Reutilizable
+   Uso: <SectionHeader Tag="Texto" Title="Título" Subtitle="Subtítulo" />
+   ============================================ *@
+
+<div class="section-header @CssClass">
+    @if (!string.IsNullOrEmpty(Tag))
+    {
+        <span class="section-tag @TagClass">@Tag</span>
+    }
+    <h2 class="section-title">@Title</h2>
+    @if (!string.IsNullOrEmpty(Subtitle))
+    {
+        <p class="section-subtitle">@Subtitle</p>
+    }
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public string Tag { get; set; } = "";
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string Subtitle { get; set; } = "";
+    [Parameter] public string TagClass { get; set; } = "";
+    [Parameter] public string CssClass { get; set; } = "";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

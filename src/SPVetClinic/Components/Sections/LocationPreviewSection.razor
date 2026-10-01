@@ -1,0 +1,29 @@
+<section class="vc-section">
+    <div class="vc-w">
+        <div class="vc-location__inner reveal">
+            <div class="vc-location__info">
+                <span class="vc-tag">Encuéntranos</span>
+                <h2>Ubicación</h2>
+                <p><Icon Name="location" Size="16" /> @AppConstants.Clinic.FullAddress</p>
+                <p><Icon Name="clock" Size="16" /> @AppConstants.Clinic.Schedule</p>
+                <p><Icon Name="phone" Size="16" /> @AppConstants.Phone.MainWhatsAppFormatted</p>
+                <div class="vc-location__actions">
+                    <a href="@AppConstants.Maps.CompanyDirectLink" target="_blank" rel="noopener noreferrer" class="btn-dark-large">
+                        <Icon Name="location" Size="18" /> Ver en Google Maps
+                    </a>
+                    <a href="contacto" class="btn-outline-large">
+                        <Icon Name="phone" Size="18" /> Contacto
+                    </a>
+                </div>
+            </div>
+            <div class="vc-location__map">
+                <iframe
+                    title="Ubicación de San Pablo Vet clínic en Google Maps"
+                    src="@AppConstants.Maps.EmbedUrl"
+                    width="100%" height="100%" style="border:0; position:absolute; inset:0;"
+                    allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade">
+                </iframe>
+            </div>
+        </div>
+    </div>
+</section>

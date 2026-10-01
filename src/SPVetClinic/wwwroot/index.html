@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description"
+        content="San Pablo Vet clínic - Clínica veterinaria en Rancagua. Urgencias 24 horas, especialistas en cardiología, neurología, endocrinología y oncología. Atención a domicilio." />
+    <meta name="theme-color" content="#62ABBF" />
+    <title>San Pablo Vet clínic | Clínica veterinaria Rancagua</title>
+    <base href="/" />
+    <link rel="preload" id="webassembly" />
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/app.css?v=13" />
+    <link rel="stylesheet" href="css/pages.css?v=13" />
+    <link rel="stylesheet" href="css/new-pages.css?v=13" />
+    <link rel="stylesheet" href="css/home.css?v=13" />
+    <link rel="icon" type="image/png" href="favicon.png?v=3" />
+    <link href="SPVetClinic.styles.css" rel="stylesheet" />
+    <script type="importmap"></script>
+</head>
+
+<body>
+    <div id="app">
+        <div
+            style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:linear-gradient(135deg,#E8F8F8,#fff);">
+            <svg class="loading-progress" style="width:80px;height:80px;">
+                <circle r="40%" cx="50%" cy="50%" style="fill:none;stroke:#E8F8F8;stroke-width:8px;" />
+                <circle r="40%" cx="50%" cy="50%"
+                    style="fill:none;stroke:#62ABBF;stroke-width:8px;stroke-dasharray:251;stroke-dashoffset:0;animation:spin 1.5s linear infinite;" />
+            </svg>
+            <p style="margin-top:1.5rem;color:#62ABBF;font-family:Inter,sans-serif;font-weight:500;">Cargando San Pablo
+                Vet clínic...</p>
+        </div>
+        <style>
+            @keyframes spin {
+                0% {
+                    stroke-dashoffset: 251;
+                }
+
+                50% {
+                    stroke-dashoffset: 63;
+                }
+
+                100% {
+                    stroke-dashoffset: 251;
+                }
+            }
+        </style>
+    </div>
+
+    <div id="blazor-error-ui" style="background:#BB545F;color:white;padding:1rem;text-align:center;display:none;">
+        Ha ocurrido un error inesperado.
+        <a href="." class="reload" style="color:white;text-decoration:underline;margin-left:0.5rem;">Recargar</a>
+        <span class="dismiss" style="margin-left:1rem;cursor:pointer;">✕</span>
+    </div>
+
+    <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
+    <script src="js/site.js"></script>
+</body>
+
+</html>

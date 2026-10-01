@@ -1,0 +1,82 @@
+<!-- ============================================
+    FOOTER
+    ============================================ -->
+<footer class="footer" role="contentinfo">
+    <div class="footer-content">
+        <div class="footer-brand">
+            <h3>
+                <span class="san-pablo">San Pablo</span>
+                <span class="vet">Vet</span><span class="clinic">clínic</span>
+            </h3>
+            <p>Clínica veterinaria comprometida con el bienestar y salud de tu mascota. Atención profesional con calidez
+                humana desde hace @AppConstants.Clinic.YearsOfService en @AppConstants.Clinic.City.</p>
+                <SocialLinks Style="SocialLinksStyle.Footer" />
+            </div>
+
+            <div class="footer-column">
+                <h4>Servicios</h4>
+                <ul>
+                    <li>
+                        <NavLink href="servicios">Consulta General</NavLink>
+                    </li>
+                    <li>
+                        <NavLink href="hospitalizacion">Cirugía</NavLink>
+                    </li>
+                    <li>
+                        <NavLink href="peluqueria">Peluquería</NavLink>
+                    </li>
+                    <li>
+                        <NavLink href="vacunacion">Vacunación</NavLink>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="footer-column">
+                <h4>Especialistas</h4>
+                <ul>
+                    <li>
+                        <NavLink href="especialistas">Cardiología</NavLink>
+                    </li>
+                    <li>
+                        <NavLink href="especialistas">Especialista Felina</NavLink>
+                    </li>
+                    <li>
+                        <NavLink href="especialistas">Neurología</NavLink>
+                    </li>
+                    <li>
+                        <NavLink href="especialistas">Oftalmología</NavLink>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="footer-column">
+                <h4>Contacto</h4>
+                <ul>
+                    <li>
+                        <NavLink href="contacto">
+                            <Icon Name="location" Size="16" /> @AppConstants.Clinic.Address
+                        </NavLink>
+                    </li>
+                    <li><a href="@AppConstants.Urls.TelLink(AppConstants.Phone.MainWhatsApp)">
+                        <Icon Name="phone" Size="16" />
+                        @AppConstants.Phone.MainWhatsAppFormatted
+                    </a></li>
+                    <li><a href="@AppConstants.Urls.TelLink(AppConstants.Phone.Landline)">
+                        <Icon Name="phone" Size="16" />
+                        @AppConstants.Phone.LandlineFormatted
+                    </a></li>
+                    <li>
+                        <NavLink href="contacto">
+                            <Icon Name="clock" Size="16" /> 24 Horas
+                        </NavLink>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>© @DateTime.Now.Year @AppConstants.Clinic.Name. Todos los derechos reservados. @AppConstants.Clinic.City,
+                @AppConstants.Clinic.Country.</p>
+                @* <p class="footer-credit">Diseñado y desarrollado por <strong><a href="https://github.com/AndresIMD" target="_blank" rel="noopener noreferrer">Andrés M.</a></strong></p> *@
+            </div>
+        </footer>

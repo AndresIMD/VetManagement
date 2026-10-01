@@ -1,0 +1,157 @@
+@namespace SPVetClinic.Components.Booking
+@* ============================================
+   SPECIALIST SELECTOR - Componente de Selección
+   [MOVIDO a _wip: módulo de booking sin usar todavía. Se mantiene el namespace
+   original con @namespace para no requerir cambios en las referencias.]
+   Uso: <SpecialistSelector Specialists="specialistList" OnSpecialistSelected="HandleSelection" />
+   ============================================ *@
+
+@using SPVetClinic.Data.Models.Booking
+@using SPVetClinic.Services.Booking
+
+<div class="specialist-selector">
+    <div class="selector-header">
+        <h2 class="selector-title">Elige tu Especialista</h2>
+        <p class="selector-subtitle">Selecciona el especialista que mejor se adapte a las necesidades de tu mascota</p>
+    </div>
+
+    @if (IsLoading)
+    {
+        <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Cargando especialistas disponibles...</p>
+        </div>
+    }
+    else if (!Specialists.Any())
+    {
+        <div class="empty-state">
+            <p>No hay especialistas disponibles en este momento.</p>
+        </div>
+    }
+    else
+    {
+        <div class="specialists-grid reveal">
+            @foreach (var specialist in Specialists)
+            {
+                <div class="@GetCardClasses(specialist)" 
+                     @onclick="() => SelectSpecialist(specialist)"
+                     role="button"
+                     tabindex="0"
+                     @onkeydown="(e) => HandleKeyPress(e, specialist)">
+
+                    <div class="card-header">
+                        <div class="avatar avatar-@specialist.AvatarColor">
+                            <Icon Name="@specialist.Icon" Size="40" Color="white" />
+                        </div>
+                        <div class="specialist-meta">
+                            <h3 class="specialist-name">@specialist.Name</h3>
+                            <span class="specialty-badge">@specialist.Specialty</span>
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <p class="description">@specialist.Description</p>
+
+                        <div class="details">
+                            <div class="detail-item">
+                                <Icon Name="clock" Size="16" />
+                                <span>@specialist.AvailableSchedule</span>
+                            </div>
+                            <div class="detail-item">
+                                <Icon Name="calendar" Size="16" />
+                                <span>Consulta: @specialist.ConsultationDurationMinutes min</span>
+                            </div>
+                            <div class="detail-item price">
+                                <span class="price-label">Valor:</span>
+                                <span class="price-value">$@specialist.ConsultationPrice.ToString("N0")</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <button class="btn-select" @onclick:stopPropagation="true">
+                            Seleccionar
+                            <Icon Name="arrow-right" Size="18" />
+                        </button>
+                    </div>
+
+                    @if (IsSelectedSpecialist(specialist))
+                    {
+                        <div class="selected-overlay">
+                            <Icon Name="check-circle" Size="48" Color="white" />
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="error-message reveal">
+            <Icon Name="alert-circle" Size="20" />
+            <span>@ErrorMessage</span>
+        </div>
+    }
+</div>
+
+@code {
+    [Inject] private BookingStateService? BookingState { get; set; }
+
+    [Parameter]
+    public List<Specialist> Specialists { get; set; } = new();
+
+    [Parameter]
+    public bool IsLoading { get; set; } = false;
+
+    [Parameter]
+    public string? ErrorMessage { get; set; }
+
+    [Parameter]
+    public EventCallback<Specialist> OnSpecialistSelected { get; set; }
+
+    private Specialist? _selectedSpecialist;
+
+    protected override void OnInitialized()
+    {
+        if (BookingState != null)
+        {
+            _selectedSpecialist = BookingState.FormData.SelectedSpecialist;
+        }
+    }
+
+    private async Task SelectSpecialist(Specialist specialist)
+    {
+        _selectedSpecialist = specialist;
+
+        if (BookingState != null)
+        {
+            BookingState.SelectSpecialist(specialist);
+        }
+
+        await OnSpecialistSelected.InvokeAsync(specialist);
+    }
+
+    private bool IsSelectedSpecialist(Specialist specialist)
+    {
+        return _selectedSpecialist?.Id == specialist.Id;
+    }
+
+    private string GetCardClasses(Specialist specialist)
+    {
+        var classes = "specialist-card-selector card-interactive";
+        if (IsSelectedSpecialist(specialist))
+        {
+            classes += " selected";
+        }
+        return classes;
+    }
+
+    private async Task HandleKeyPress(KeyboardEventArgs e, Specialist specialist)
+    {
+        if (e.Key == "Enter" || e.Key == " ")
+        {
+            await SelectSpecialist(specialist);
+        }
+    }
+}

@@ -1,0 +1,235 @@
+@page "/especialistas"
+
+<PageTitle>Especialistas | @AppConstants.Clinic.Name</PageTitle>
+<HeadContent>
+    <meta name="description"
+          content="Equipo de veterinarios especialistas en cardiología, neurología, endocrinología, oftalmología y más. Atención profesional certificada en Rancagua." />
+    <meta property="og:title" content="Especialistas veterinarios | San Pablo Vet clínic" />
+    <meta property="og:description"
+          content="Equipo de veterinarios especialistas en cardiología, neurología, endocrinología, oftalmología y más. Atención profesional certificada en Rancagua." />
+    <meta property="og:type" content="website" />
+</HeadContent>
+
+<PageHero Tag="Atención especializada" TagIcon="stethoscope" Title="Especialistas certificados"
+          Subtitle="Médicos veterinarios expertos en áreas específicas para brindar el mejor diagnóstico y tratamiento a tu mascota"
+          CssClass="hero--coral" BackgroundImage="@ImagePaths.PageHeroes.Especialistas" BackgroundPosition="center 5%">
+    <Actions>
+        <WhatsAppButton Label="Agendar Consulta" Style="WhatsAppButtonStyle.Vet" />
+        <a href="@AppConstants.Clinic.BookingUrl" target="_blank" rel="noopener noreferrer"
+           class="btn-secondary">Reservar Online</a>
+    </Actions>
+</PageHero>
+
+<!-- ============================================
+     INTRO SECTION
+     ============================================ -->
+<section class="intro-section">
+    <div class="container">
+        <div class="intro-content reveal">
+            <h2>¿Por qué consultar con un especialista?</h2>
+            <p class="intro-text">
+                Algunas condiciones médicas requieren conocimiento profundo y experiencia específica.
+                Nuestros especialistas cuentan con certificaciones y años de experiencia dedicados exclusivamente
+                a su especialidad, garantizando el mejor cuidado para tu mascota.
+            </p>
+        </div>
+
+        <div class="intro-benefits reveal">
+            <div class="benefit-item stagger-1">
+                <div class="benefit-icon">
+                    <Icon Name="graduation" Size="32" />
+                </div>
+                <h3>Certificados</h3>
+                <p>Profesionales con certificaciones nacionales</p>
+            </div>
+            <div class="benefit-item stagger-2">
+                <div class="benefit-icon">
+                    <Icon Name="microscope" Size="32" />
+                </div>
+                <h3>Equipamiento</h3>
+                <p>Tecnología de punta para diagnósticos precisos</p>
+            </div>
+            <div class="benefit-item stagger-3">
+                <div class="benefit-icon">
+                    <Icon Name="heart" Size="32" />
+                </div>
+                <h3>Dedicación</h3>
+                <p>Atención personalizada enfocada en resultados</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================
+     ESPECIALISTAS DETALLADOS
+     ============================================ -->
+<section id="especialistas-lista" class="specialists-detail-section">
+    <div class="container">
+        <SectionHeader Tag="Nuestro equipo" Title="Nuestras especialidades"
+                       Subtitle="Las horas y su disponibilidad se consultan en nuestro calendario de reservas online" />
+
+        <div class="specialty-grid">
+            @foreach (var s in Specialties.All)
+            {
+                <article class="specialty-card reveal">
+                    <div class="specialty-card__icon">
+                        <Icon Name="@s.Icon" Size="32" />
+                    </div>
+                    <h3>@s.Name</h3>
+                    <p>@s.Description</p>
+                    <ul class="specialty-card__doctors">
+                        @foreach (var d in s.Doctors)
+                        {
+                            <li>@d</li>
+                        }
+                    </ul>
+                    <a href="@AppConstants.Clinic.BookingUrl" target="_blank" rel="noopener noreferrer"
+                       class="specialty-card__link">
+                        Ver disponibilidad
+                        <Icon Name="arrow-right" Size="16" />
+                    </a>
+                </article>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- ============================================
+     PROCESO DE CITAS
+     ============================================ -->
+<section class="appointment-process-section">
+    <div class="container">
+        <SectionHeader Tag="Proceso" Title="¿Cómo agendar con un especialista?"
+                       Subtitle="Seguimos un proceso simple para asegurar la mejor atención" />
+
+        <div class="process-steps reveal">
+            <div class="process-step stagger-1">
+                <div class="step-number">1</div>
+                <h3>Evaluación inicial</h3>
+                <p>
+                    Si tu mascota necesita atención especializada, primero debe ser evaluada
+                    por nuestro equipo general para determinar la necesidad del especialista.
+                </p>
+            </div>
+
+            <div class="process-step stagger-2">
+                <div class="step-number">2</div>
+                <h3>Agenda tu hora</h3>
+                <p>
+                    Revisa la disponibilidad en nuestro calendario de reservas online o escríbenos
+                    por WhatsApp para coordinar la cita con el especialista.
+                </p>
+            </div>
+
+            <div class="process-step stagger-3">
+                <div class="step-number">3</div>
+                <h3>Abono del 50%</h3>
+                <p>
+                    Las consultas con especialistas requieren un abono del 50% del valor
+                    para confirmar la reserva. El saldo se paga el día de la consulta.
+                </p>
+            </div>
+
+            <div class="process-step stagger-4">
+                <div class="step-number">4</div>
+                <h3>Día de la consulta</h3>
+                <p>
+                    Trae toda la documentación médica previa de tu mascota.
+                    El especialista realizará una evaluación completa y definirá el plan de tratamiento.
+                </p>
+            </div>
+        </div>
+
+        <div class="process-cta reveal">
+            <p class="process-cta__note">
+                <Icon Name="info" Size="18" />
+                Las citas con especialistas requieren 50% de abono
+            </p>
+            <div class="cta-buttons">
+                <WhatsAppButton Label="Agendar Cita" Style="WhatsAppButtonStyle.Default" />
+                <a href="@AppConstants.Clinic.BookingUrl" target="_blank" rel="noopener noreferrer"
+                   class="btn-secondary">Reserva Online</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================
+     FAQ SECTION
+     ============================================ -->
+<section class="faq-section">
+    <div class="container">
+        <SectionHeader Tag="Preguntas frecuentes" Title="Todo lo que necesitas saber"
+                       Subtitle="Resolvemos tus dudas sobre atención especializada" />
+
+        <div class="faq-grid reveal">
+            <div class="faq-card stagger-1">
+                <h3>¿Necesito una derivación?</h3>
+                <p>
+                    Idealmente sí. Recomendamos que tu mascota sea evaluada primero por nuestro
+                    equipo general, quienes determinarán si necesita atención especializada y
+                    prepararán toda la información necesaria para el especialista.
+                </p>
+            </div>
+
+            <div class="faq-card stagger-2">
+                <h3>¿Por qué se requiere abono?</h3>
+                <p>
+                    El abono del 50% garantiza la reserva de la hora con el especialista,
+                    ya que tienen disponibilidad limitada. Esto asegura tu cupo y nos permite
+                    organizar mejor la agenda.
+                </p>
+            </div>
+
+            <div class="faq-card stagger-3">
+                <h3>¿Qué debo llevar?</h3>
+                <p>
+                    Trae toda la documentación médica previa: exámenes de sangre, radiografías,
+                    ecografías, informes de otros veterinarios, y la cartilla de vacunación.
+                    Mientras más información, mejor será el diagnóstico.
+                </p>
+            </div>
+
+            <div class="faq-card stagger-4">
+                <h3>¿Cómo agendo una hora con un especialista?</h3>
+                <p>
+                    Puedes reservar directamente por WhatsApp o a través de nuestro sistema de
+                    reservas online. Nuestro equipo te ayudará a coordinar la hora según la
+                    disponibilidad del especialista que necesites.
+                </p>
+            </div>
+
+            <div class="faq-card stagger-5">
+                <h3>¿Hay seguimiento posterior?</h3>
+                <p>
+                    Sí. El especialista definirá un plan de tratamiento y agendará controles
+                    de seguimiento según sea necesario. Algunos casos pueden requerir
+                    múltiples visitas para evaluar progreso.
+                </p>
+            </div>
+
+            <div class="faq-card stagger-6">
+                <h3>¿Atienden urgencias?</h3>
+                <p>
+                    Los especialistas atienden con cita previa. Para urgencias, nuestro
+                    equipo de urgencias 24/7 evaluará primero a tu mascota y, si es necesario,
+                    coordinará atención especializada prioritaria.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================
+     CTA FINAL
+     ============================================ -->
+<PageCtaSection IconName="stethoscope"
+                Description="Agenda una evaluación con nuestro equipo o solicita directamente una cita con el especialista"
+                NoteText="Las citas con especialistas requieren 50% de abono">
+    <TitleContent>¿Tu mascota necesita atención <em>especializada</em>?</TitleContent>
+    <Buttons>
+        <WhatsAppButton Label="Contactar por WhatsApp" Style="WhatsAppButtonStyle.Default" />
+        <a href="@AppConstants.Clinic.BookingUrl" target="_blank" rel="noopener noreferrer"
+           class="btn-secondary">Reservar Online</a>
+    </Buttons>
+</PageCtaSection>

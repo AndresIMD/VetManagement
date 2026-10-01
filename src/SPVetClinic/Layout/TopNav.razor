@@ -1,0 +1,79 @@
+@inject Microsoft.AspNetCore.Components.NavigationManager NavigationManager
+
+<nav class="topnav @ThemeClass" id="topnav" aria-label="Navegación principal">
+    <div class="logo-container">
+        <NavLink href="" class="logo-text">
+            <img src="@ImagePaths.Logo" alt="San Pablo Vet clínic" class="logo-img" />
+        </NavLink>
+    </div>
+
+    <div class="nav-links" id="navLinks">
+        <NavLink href="" class="nav-link" Match="NavLinkMatch.All">
+            <span class="nav-link-text">Inicio</span>
+        </NavLink>
+
+        <div class="nav-dropdown">
+            <button class="nav-link nav-dropdown-btn" onclick="toggleDropdown(event)" aria-haspopup="true" aria-expanded="false">
+                <span class="nav-link-text">Servicios</span>
+                <span class="dropdown-arrow">▾</span>
+            </button>
+            <div class="nav-dropdown-content">
+                <NavLink href="servicios" class="dropdown-item">
+                    <Icon Name="clinic" Size="18" />
+                    <span>Todos los Servicios</span>
+                </NavLink>
+                <NavLink href="examenes" class="dropdown-item">
+                    <Icon Name="microscope" Size="18" />
+                    <span>Exámenes</span>
+                </NavLink>
+                <NavLink href="especialistas" class="dropdown-item">
+                    <Icon Name="doctor" Size="18" />
+                    <span>Especialistas</span>
+                </NavLink>
+                <NavLink href="vet-movil" class="dropdown-item">
+                    <Icon Name="van" Size="18" />
+                    <span>Vet Móvil</span>
+                </NavLink>
+                <NavLink href="vacunacion" class="dropdown-item">
+                    <Icon Name="syringe" Size="18" />
+                    <span>Vacunación</span>
+                </NavLink>
+                <NavLink href="peluqueria" class="dropdown-item">
+                    <Icon Name="scissors" Size="18" />
+                    <span>Peluquería</span>
+                </NavLink>
+                <NavLink href="hospitalizacion" class="dropdown-item">
+                    <Icon Name="clinic" Size="18" />
+                    <span>Hospitalización</span>
+                </NavLink>
+            </div>
+        </div>
+
+        <NavLink href="conocenos" class="nav-link">
+            <span class="nav-link-text">Conócenos</span>
+        </NavLink>
+
+        <NavLink href="contacto" class="nav-link">
+            <span class="nav-link-text">Contacto</span>
+        </NavLink>
+
+        <a href="@AppConstants.Clinic.BookingUrl" target="_blank" rel="noopener noreferrer" class="nav-link nav-cta">
+            <span class="nav-icon">
+                <Icon Name="calendar" Size="18" />
+            </span>
+            <span class="nav-link-text">Agendar Hora</span>
+        </a>
+    </div>
+
+    <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Menú" aria-expanded="false" aria-controls="navLinks">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+</nav>
+
+@code {
+    [Parameter] public string Theme { get; set; } = "";
+
+    private string ThemeClass => string.IsNullOrEmpty(Theme) ? "" : $"topnav--{Theme}";
+}

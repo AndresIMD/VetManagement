@@ -1,0 +1,423 @@
+@page "/examenes"
+
+<PageTitle>Exámenes y diagnóstico | San Pablo Vet clínic</PageTitle>
+<HeadContent>
+    <meta name="description"
+          content="Exámenes veterinarios con tecnología IDEXX. Hemogramas, bioquímica, uroanálisis y más. Resultados rápidos y precisos en San Pablo Vet clínic Rancagua." />
+    <meta property="og:title" content="Exámenes y diagnóstico | San Pablo Vet clínic" />
+    <meta property="og:description"
+          content="Exámenes veterinarios con tecnología IDEXX. Hemogramas, bioquímica, uroanálisis y más. Resultados rápidos y precisos en San Pablo Vet clínic Rancagua." />
+    <meta property="og:type" content="website" />
+</HeadContent>
+
+<PageHero Tag="Laboratorio"
+          TagIcon="microscope"
+          Title="Exámenes y diagnóstico"
+          Subtitle="Tecnología de punta para diagnósticos precisos y oportunos"
+          CssClass="hero--teal" BackgroundImage="@ImagePaths.PageHeroes.Examenes" />
+
+<!-- ============================================
+     IDEXX PARTNERSHIP
+     ============================================ -->
+<section class="idexx-section">
+    <div class="idexx-container reveal">
+        <div class="idexx-badge">
+            <Icon Name="microscope" Size="24" />
+            <span class="idexx-text">Tecnología de Punta</span>
+        </div>
+        <h2 class="idexx-title">Laboratorio con equipos premium</h2>
+        <p class="idexx-description">
+            Nuestro laboratorio cuenta con equipos de las marcas más reconocidas en diagnóstico veterinario como
+            <strong>IDEXX</strong> y <strong>GXMED</strong>. Esta tecnología nos permite obtener resultados
+            precisos en minutos, directamente en nuestra clínica, para que tu mascota reciba el tratamiento
+            adecuado lo más rápido posible.
+        </p>
+        <div class="idexx-features">
+            <div class="idexx-feature">
+                <Icon Name="bolt" Size="20" />
+                <span class="idexx-feature-text">Resultados en minutos</span>
+            </div>
+            <div class="idexx-feature">
+                <Icon Name="target" Size="20" />
+                <span class="idexx-feature-text">Alta precisión</span>
+            </div>
+            <div class="idexx-feature">
+                <Icon Name="clinic" Size="20" />
+                <span class="idexx-feature-text">Procesamiento en la clínica</span>
+            </div>
+            <div class="idexx-feature">
+                <Icon Name="dna" Size="20" />
+                <span class="idexx-feature-text">PCR y diagnóstico molecular</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================
+     EXAMS CATALOG
+     ============================================ -->
+<section class="exams-catalog">
+    <div class="section-header">
+        <span class="section-tag">Nuestros Servicios</span>
+        <h2 class="section-title">Catálogo de exámenes</h2>
+        <p class="section-subtitle">Un amplio rango de estudios diagnósticos para el cuidado integral de tu mascota</p>
+    </div>
+
+    <div class="exams-grid">
+        <!-- Laboratorio Clínico -->
+        <div class="exam-category reveal stagger-1">
+            <div class="exam-category-header">
+                <span class="exam-category-icon">
+                    <Icon Name="test-tube" Size="28" />
+                </span>
+                <h3 class="exam-category-title">Laboratorio clínico</h3>
+            </div>
+            <p class="exam-category-description">
+                Análisis sanguíneos completos para evaluar el estado de salud general de tu mascota.
+            </p>
+            <ul class="exam-list">
+                <li class="exam-item">
+                    <span class="exam-name">Hemograma Completo</span>
+                    <span class="exam-desc">Evaluación de glóbulos rojos, blancos y plaquetas</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">Perfil Bioquímico</span>
+                    <span class="exam-desc">Función hepática, renal y metabólica</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">Uroanálisis</span>
+                    <span class="exam-desc">Evaluación completa de orina</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">Coprológico</span>
+                    <span class="exam-desc">Detección de parásitos intestinales</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">Perfil Prequirúrgico</span>
+                    <span class="exam-desc">Evaluación completa antes de cirugías</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">Perfil de Coagulación</span>
+                    <span class="exam-desc">TP, TTPa</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">Perfil de Electrolitos</span>
+                    <span class="exam-desc">Sodio, potasio, cloro</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">Gases en Sangre</span>
+                    <span class="exam-desc">pH, pO2, pCO2, bicarbonato</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">UPC (Relación Proteína/Creatinina)</span>
+                    <span class="exam-desc">Evaluación de proteinuria</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">SDMA</span>
+                    <span class="exam-desc">Marcador temprano de función renal</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Perfiles Hormonales y Especiales -->
+        <div class="exam-category reveal stagger-2">
+            <div class="exam-category-header">
+                <span class="exam-category-icon">
+                    <Icon Name="flask" Size="28" />
+                </span>
+                <h3 class="exam-category-title">Perfiles hormonales</h3>
+            </div>
+            <p class="exam-category-description">
+                Evaluación endocrina y metabólica especializada para diagnósticos precisos.
+            </p>
+            <ul class="exam-list">
+                <li class="exam-item">
+                    <span class="exam-name">Perfil Tiroideo (TSH, T4 total)</span>
+                    <span class="exam-desc">Función tiroidea completa</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">Progesterona</span>
+                    <span class="exam-desc">Seguimiento de ciclo reproductivo</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">Cortisol</span>
+                    <span class="exam-desc">Evaluación de Cushing y Addison</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">Lipasa Pancreática (cPL/fPL)</span>
+                    <span class="exam-desc">Diagnóstico de pancreatitis</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">Ácidos Biliares</span>
+                    <span class="exam-desc">Función hepática y shunts</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">Fructosamina</span>
+                    <span class="exam-desc">Control de diabetes a largo plazo</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Imagenología -->
+        <div class="exam-category reveal stagger-3">
+            <div class="exam-category-header">
+                <span class="exam-category-icon">
+                    <Icon Name="camera" Size="28" />
+                </span>
+                <h3 class="exam-category-title">Imagenología</h3>
+            </div>
+            <p class="exam-category-description">
+                Tecnología de imagen avanzada para visualizar estructuras internas con claridad.
+            </p>
+            <ul class="exam-list">
+                <li class="exam-item">
+                    <span class="exam-name">Radiografía Digital</span>
+                    <span class="exam-desc">Imágenes de alta resolución en segundos</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">Ecografía Abdominal</span>
+                    <span class="exam-desc">Evaluación de órganos internos</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">Ecografía Gestacional</span>
+                    <span class="exam-desc">Seguimiento de embarazo</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Cardiología -->
+        <div class="exam-category reveal stagger-4">
+            <div class="exam-category-header">
+                <span class="exam-category-icon">
+                    <Icon Name="heart" Size="28" />
+                </span>
+                <h3 class="exam-category-title">Cardiología</h3>
+            </div>
+            <p class="exam-category-description">
+                Estudios especializados para evaluar la salud cardiovascular de tu mascota.
+            </p>
+            <ul class="exam-list">
+                <li class="exam-item">
+                    <span class="exam-name">Electrocardiograma (ECG)</span>
+                    <span class="exam-desc">Actividad eléctrica del corazón</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">Ecocardiografía</span>
+                    <span class="exam-desc">Estudio del corazón en movimiento</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Tests Rápidos -->
+        <div class="exam-category reveal stagger-5">
+            <div class="exam-category-header">
+                <span class="exam-category-icon">
+                    <Icon Name="timer" Size="28" />
+                </span>
+                <h3 class="exam-category-title">Tests rápidos</h3>
+            </div>
+            <p class="exam-category-description">
+                Resultados en minutos para diagnósticos de urgencia y enfermedades comunes.
+            </p>
+            <ul class="exam-list">
+                <li class="exam-item">
+                    <span class="exam-name">Test Parvovirus</span>
+                    <span class="exam-desc">Detección rápida en cachorros</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">Test FIV/FeLV</span>
+                    <span class="exam-desc">Inmunodeficiencia y leucemia felina</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">Test Ehrlichia/Anaplasma</span>
+                    <span class="exam-desc">Enfermedades transmitidas por garrapatas</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">Test de Glucosa</span>
+                    <span class="exam-desc">Monitoreo para diabéticos</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- PCR y Diagnóstico Molecular -->
+        <div class="exam-category reveal stagger-6">
+            <div class="exam-category-header">
+                <span class="exam-category-icon">
+                    <Icon Name="dna" Size="28" />
+                </span>
+                <h3 class="exam-category-title">PCR y diagnóstico molecular</h3>
+            </div>
+            <p class="exam-category-description">
+                Detección precisa de patógenos mediante tecnología de amplificación genética.
+            </p>
+            <ul class="exam-list">
+                <li class="exam-item">
+                    <span class="exam-name">PCR FIV/FeLV</span>
+                    <span class="exam-desc">Inmunodeficiencia y leucemia felina</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">PCR Distemper</span>
+                    <span class="exam-desc">Moquillo canino</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">PCR Parvovirus</span>
+                    <span class="exam-desc">Parvovirosis canina</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">PCR Anaplasma/Ehrlichia</span>
+                    <span class="exam-desc">Enfermedades transmitidas por garrapatas</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">PCR Brucela</span>
+                    <span class="exam-desc">Brucelosis canina</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">PCR Leptospira</span>
+                    <span class="exam-desc">Leptospirosis</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">PCR Clostridium spp</span>
+                    <span class="exam-desc">Infecciones intestinales</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">PCR Mycoplasma</span>
+                    <span class="exam-desc">Micoplasmosis</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">PCR Neospora</span>
+                    <span class="exam-desc">Neosporosis canina</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">PCR Toxoplasma</span>
+                    <span class="exam-desc">Toxoplasmosis</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">PCR PIF</span>
+                    <span class="exam-desc">Peritonitis infecciosa felina</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Dermatología -->
+        <div class="exam-category reveal stagger-7">
+            <div class="exam-category-header">
+                <span class="exam-category-icon">
+                    <Icon Name="search" Size="28" />
+                </span>
+                <h3 class="exam-category-title">Dermatología</h3>
+            </div>
+            <p class="exam-category-description">
+                Estudios especializados para problemas de piel, pelo y oídos.
+            </p>
+            <ul class="exam-list">
+                <li class="exam-item">
+                    <span class="exam-name">Raspado de Piel</span>
+                    <span class="exam-desc">Detección de ácaros y hongos</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">Citología Cutánea</span>
+                    <span class="exam-desc">Evaluación celular de lesiones</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">Cultivo Micológico</span>
+                    <span class="exam-desc">Identificación de hongos</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">Citología Ótica</span>
+                    <span class="exam-desc">Infecciones de oído</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Citologías y Biopsias -->
+        <div class="exam-category reveal stagger-8">
+            <div class="exam-category-header">
+                <span class="exam-category-icon">
+                    <Icon Name="microscope" Size="28" />
+                </span>
+                <h3 class="exam-category-title">Citologías y biopsias</h3>
+            </div>
+            <p class="exam-category-description">
+                Estudios celulares y tisulares para diagnósticos precisos de lesiones y tumores.
+            </p>
+            <ul class="exam-list">
+                <li class="exam-item">
+                    <span class="exam-name">Citología por Aspiración</span>
+                    <span class="exam-desc">Evaluación de masas y nódulos</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">Citología de Fluidos</span>
+                    <span class="exam-desc">Análisis de líquido abdominal, pleural y sinovial</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">Biopsia Incisional</span>
+                    <span class="exam-desc">Muestra parcial de tejido para histopatología</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">Biopsia Excisional</span>
+                    <span class="exam-desc">Extracción completa de lesión para análisis</span>
+                </li>
+                <li class="exam-item">
+                    <span class="exam-name">Histopatología</span>
+                    <span class="exam-desc">Estudio microscópico de tejidos</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Otros Exámenes -->
+        <div class="exam-category reveal stagger-9">
+            <div class="exam-category-header">
+                <span class="exam-category-icon">
+                    <Icon Name="search" Size="28" />
+                </span>
+                <h3 class="exam-category-title">Otros estudios</h3>
+            </div>
+            <p class="exam-category-description">
+                Exámenes complementarios para diagnósticos específicos.
+            </p>
+            <ul class="exam-list">
+                <li class="exam-item">
+                    <span class="exam-name">Otoscopía</span>
+                    <span class="exam-desc">Visualización del canal auditivo</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================
+     INFO SECTION
+     ============================================ -->
+<section class="exam-info-section">
+    <div class="exam-info-grid">
+        <div class="exam-info-card reveal stagger-1">
+            <Icon Name="clock" Size="28" />
+            <h3>Horario de laboratorio</h3>
+            <p>Disponible las 24 horas, todos los días. Los resultados de exámenes están disponibles en minutos.</p>
+        </div>
+        <div class="exam-info-card reveal stagger-2">
+            <Icon Name="calendar" Size="28" />
+            <h3>Preparación</h3>
+            <p>
+                Algunos exámenes requieren ayuno de 8-12 horas. Te indicaremos las instrucciones específicas al agendar.
+            </p>
+        </div>
+        <div class="exam-info-card reveal stagger-3">
+            <Icon Name="mail" Size="28" />
+            <h3>Entrega de resultados</h3>
+            <p>Recibirás los resultados por correo electrónico o WhatsApp. También puedes retirarlos en clínica.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================
+     CTA SECTION
+     ============================================ -->
+<PageCtaSection IconName="microscope"
+                Description="Agenda una cita con nuestro equipo. Evaluaremos a tu mascota y determinaremos qué estudios son necesarios para un diagnóstico preciso.">
+    <TitleContent>¿Tu mascota necesita un <em>examen</em>?</TitleContent>
+    <Buttons>
+        <WhatsAppButton Label="Agendar por WhatsApp" Style="WhatsAppButtonStyle.Default" />
+        <a href="@AppConstants.Clinic.BookingUrl" target="_blank" rel="noopener noreferrer" class="btn-secondary">Reservar Online</a>
+    </Buttons>
+</PageCtaSection>

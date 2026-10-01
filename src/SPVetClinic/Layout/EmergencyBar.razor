@@ -1,0 +1,192 @@
+@* ============================================
+   EMERGENCY BAR — Barra fija superior de urgencias
+   Se muestra arriba del TopNav. Ultra delgada,
+   comunica de inmediato que hay atención 24/7.
+   ============================================ *@
+
+<div class="ebar">
+    <div class="ebar__inner">
+        <div class="ebar__left">
+            <span class="ebar__pulse"></span>
+            <span class="ebar__label">Urgencias 24/7</span>
+            <span class="ebar__sep">·</span>
+            <span class="ebar__text">Atención inmediata todos los días</span>
+        </div>
+        <div class="ebar__right">
+            <a href="@AppConstants.Urls.WhatsAppMainLink" target="_blank" rel="noopener noreferrer" class="ebar__link" aria-label="WhatsApp @AppConstants.Phone.MainWhatsAppFormatted">
+                <Icon Name="whatsapp" Size="14" />
+                <span class="ebar__num">@AppConstants.Phone.MainWhatsAppFormatted</span>
+            </a>
+            @* <a href="@AppConstants.Urls.TelLink(AppConstants.Phone.Landline)" class="ebar__cta">
+                Llamar Ahora
+            </a> *@
+        </div>
+    </div>
+</div>
+
+<style>
+    /* ===== EMERGENCY BAR ===== */
+    .ebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1100;
+        background: #0d0d0d;
+        border-bottom: 1px solid rgba(187, 84, 95, 0.25);
+        height: var(--ebar-height, 36px);
+    }
+
+    /* Ancho completo y mismo margen lateral que .topnav, para alinear con el menú */
+    .ebar__inner {
+        padding: 0 2rem;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .ebar__left {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        line-height: 1;
+    }
+
+    .ebar__pulse {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent-coral, #BB545F);
+        animation: ebar-pulse 2s ease-in-out infinite;
+        flex-shrink: 0;
+        /* las mayúsculas se ven ~0.5px sobre el centro de su caja: subir el punto para
+           que su centro coincida con el del texto */
+        position: relative;
+        top: -0.5px;
+    }
+
+    @@keyframes ebar-pulse {
+
+        0%,
+        100% {
+            box-shadow: 0 0 0 0 rgba(187, 84, 95, 0.5);
+        }
+
+        50% {
+            box-shadow: 0 0 0 5px rgba(187, 84, 95, 0);
+        }
+    }
+
+    .ebar__label {
+        /* coral aclarado: el coral puro da ~4.2:1 sobre #0d0d0d, bajo el 4.5:1 de WCAG AA */
+        color: color-mix(in srgb, var(--accent-coral, #BB545F) 80%, white);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        animation: breathing 3s ease-in-out infinite;
+        display: inline-flex;
+        align-items: center;
+        line-height: 1;
+        white-space: nowrap;
+        /* El tamaño normal es el máximo: la animación solo encoge, así nunca
+           ocupa más que su caja ni empuja al resto. Origen a la izquierda para
+           que el texto siga pegado al punto. */
+        transform-origin: left center;
+    }
+
+    @@keyframes breathing {
+
+        0%,
+        100% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(0.94);
+        }
+    }
+
+    .ebar__sep {
+        color: rgba(255, 255, 255, 0.2);
+    }
+
+    .ebar__text {
+        color: rgba(255, 255, 255, 0.5);
+        font-weight: 400;
+    }
+
+    .ebar__right {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .ebar__link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        color: rgba(255, 255, 255, 0.65);
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: color 0.2s ease;
+    }
+
+    .ebar__link:hover {
+        color: #25d366;
+    }
+
+    .ebar__cta {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.75rem;
+        border-radius: 4px;
+        background: var(--accent-coral, #BB545F);
+        color: white;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-decoration: none;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        transition: all 0.2s ease;
+    }
+
+    .ebar__cta:hover {
+        background: var(--accent-coral-dark, #a04450);
+        transform: translateY(-1px);
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @@media (max-width: 768px) {
+        .ebar__text {
+            display: none;
+        }
+
+        .ebar__sep {
+            display: none;
+        }
+
+        .ebar__inner {
+            padding: 0 1rem;
+        }
+
+        /* ~10% más chica que en escritorio (la altura sale de --ebar-height, en app.css) */
+        .ebar__left,
+        .ebar__link {
+            font-size: 0.765rem;
+        }
+    }
+
+    /* Solo en pantallas muy angostas se oculta el número y queda el ícono.
+       Antes se ocultaba todo `span`, incluido el que envuelve el ícono. */
+    @@media (max-width: 340px) {
+        .ebar__num {
+            display: none;
+        }
+    }
+</style>

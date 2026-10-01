@@ -1,0 +1,270 @@
+@implements IDisposable
+
+<!-- ▸ HERO CAROUSEL -->
+<section class="vc-hero-carousel" @onmouseenter="OnHeroEnter" @onmouseleave="OnHeroLeave"
+         @onpointerdown="OnPointerDown" @onpointermove="OnPointerMove"
+         @onpointerup="OnPointerUp" @onpointerleave="OnPointerUp" @onpointercancel="OnPointerUp"
+         aria-live="polite" aria-label="Destacados de la clínica">
+    <div class="vc-hc__track @TrackClass" style="@TrackStyle">
+        <!-- Clon del ultimo slide (Servicios), contenido completo: permite
+             que arrastrar el primer slide hacia la derecha revele esta foto
+             Y su titulo (no solo el fondo), para que no "aparezca" recien al
+             terminar el loop. aria-hidden + tabindex=-1 en sus links para
+             que no sea alcanzable por teclado/lectores de pantalla. -->
+        <div class="vc-hc__slide vc-hc__slide--clone" aria-hidden="true">
+            <div class="vc-hc__bg">
+                <img src="@ImagePaths.Services.Laboratory" draggable="false" alt="" />
+            </div>
+            <div class="vc-hc__overlay"></div>
+            <div class="vc-hc__content">
+                <div class="vc-hc__tag"><span class="vc-pulse"></span> SERVICIOS INTEGRALES</div>
+                <h2 class="vc-hc__title">Todo para el cuidado<br /><span class="vc-accent">de tu mascota</span></h2>
+                <p class="vc-hc__sub">Consultas, laboratorio IDEXX, vacunación, peluquería y atención a domicilio</p>
+                <div class="vc-hc__btns">
+                    <a href="servicios" class="btn-primary-large" tabindex="-1"><Icon Name="stethoscope" Size="18" /> Ver Servicios</a>
+                    <a href="@AppConstants.Urls.WhatsAppMobileVetLink" target="_blank" rel="noopener noreferrer" class="btn-glass-large" tabindex="-1"><Icon Name="van" Size="18" /> Vet a Domicilio</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 1: Principal -->
+        <div class="vc-hc__slide">
+            <div class="vc-hc__bg">
+                <img src="@ImagePaths.Hero.Frontage" draggable="false"
+                     alt="Fachada San Pablo Vet clínic" onerror="this.style.display='none'" />
+            </div>
+            <div class="vc-hc__overlay"></div>
+            <div class="vc-hc__content">
+                <div class="vc-hc__tag"><span class="vc-pulse"></span> URGENCIAS 24/7 - ATENCIÓN VETERINARIA</div>
+                <h1 class="vc-hc__title vc-hc__title--brand">
+                    <span class="vc-hc__title-sub">San Pablo</span>
+                    <br />
+                    <span class="vc-accent">Vet</span> <span class="vc-accent-coral">clínic</span></h1>
+                <p class="vc-hc__sub">
+                    Especialistas certificados, laboratorio IDEXX y atención a domicilio en @AppConstants.Clinic.City
+                </p>
+                <div class="vc-hc__btns">
+                    <a href="contacto#urgencia" class="btn-primary-large"><Icon Name="alarm" Size="18" /> Emergencia Ahora</a>
+                    <a href="@AppConstants.Clinic.BookingUrl" target="_blank" rel="noopener noreferrer" class="btn-glass-large"><Icon Name="calendar" Size="18" /> Reservar Hora</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: Especialistas -->
+        <div class="vc-hc__slide">
+            <div class="vc-hc__bg">
+                <img src="@ImagePaths.Hero.HomeEspecialistas" draggable="false" alt="Cirugía y especialistas veterinarios" onerror="this.style.display='none'" />
+            </div>
+            <div class="vc-hc__overlay"></div>
+            <div class="vc-hc__content">
+                <div class="vc-hc__tag"><span class="vc-pulse"></span> EQUIPO MÉDICO ESPECIALIZADO</div>
+                <h2 class="vc-hc__title">Especialistas<br /><span class="vc-accent">certificados</span></h2>
+                <p class="vc-hc__sub">Neurología, Especialista Felina, Endocrinología y Microcirugía</p>
+                <div class="vc-hc__btns">
+                    <a href="especialistas" class="btn-primary-large"><Icon Name="brain" Size="18" /> Ver Especialistas</a>
+                    <a href="@AppConstants.Clinic.BookingUrl" target="_blank" rel="noopener noreferrer" class="btn-glass-large"><Icon Name="calendar" Size="18" /> Agendar Hora</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Servicios -->
+        <div class="vc-hc__slide">
+            <div class="vc-hc__bg">
+                <img src="@ImagePaths.Services.Laboratory" draggable="false" alt="Laboratorio y exámenes veterinarios" onerror="this.style.display='none'" />
+            </div>
+            <div class="vc-hc__overlay"></div>
+            <div class="vc-hc__content">
+                <div class="vc-hc__tag"><span class="vc-pulse"></span> SERVICIOS INTEGRALES</div>
+                <h2 class="vc-hc__title">Todo para el cuidado<br /><span class="vc-accent">de tu mascota</span></h2>
+                <p class="vc-hc__sub">Consultas, laboratorio IDEXX, vacunación, peluquería y atención a domicilio</p>
+                <div class="vc-hc__btns">
+                    <a href="servicios" class="btn-primary-large"><Icon Name="stethoscope" Size="18" /> Ver Servicios</a>
+                    <a href="@AppConstants.Urls.WhatsAppMobileVetLink" target="_blank" rel="noopener noreferrer" class="btn-glass-large"><Icon Name="van" Size="18" /> Vet a Domicilio</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clon del primer slide (Principal), contenido completo: permite
+             que arrastrar el ultimo slide hacia la izquierda revele esta
+             foto Y su titulo, no solo el fondo. -->
+        <div class="vc-hc__slide vc-hc__slide--clone" aria-hidden="true">
+            <div class="vc-hc__bg">
+                <img src="@ImagePaths.Hero.Frontage" draggable="false" alt="" />
+            </div>
+            <div class="vc-hc__overlay"></div>
+            <div class="vc-hc__content">
+                <div class="vc-hc__tag"><span class="vc-pulse"></span> URGENCIAS 24/7 - ATENCIÓN VETERINARIA</div>
+                <h1 class="vc-hc__title vc-hc__title--brand">
+                    <span class="vc-hc__title-sub">San Pablo</span>
+                    <br />
+                    <span class="vc-accent">Vet</span> <span class="vc-accent-coral">clínic</span></h1>
+                <p class="vc-hc__sub">
+                    Especialistas certificados, laboratorio IDEXX y atención a domicilio en @AppConstants.Clinic.City
+                </p>
+                <div class="vc-hc__btns">
+                    <a href="contacto#urgencia" class="btn-primary-large" tabindex="-1"><Icon Name="alarm" Size="18" /> Emergencia Ahora</a>
+                    <a href="@AppConstants.Clinic.BookingUrl" target="_blank" rel="noopener noreferrer" class="btn-glass-large" tabindex="-1"><Icon Name="calendar" Size="18" /> Reservar Hora</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Indicadores -->
+    <div class="vc-hc__dots" aria-label="Seleccionar slide del carrusel">
+        <button type="button" class="vc-hc__dot @(currentSlide == 0 ? "active" : "")" @onclick="() => GoToSlide(0)" aria-label="Mostrar slide 1" aria-pressed="@(currentSlide == 0)"></button>
+        <button type="button" class="vc-hc__dot @(currentSlide == 1 ? "active" : "")" @onclick="() => GoToSlide(1)" aria-label="Mostrar slide 2" aria-pressed="@(currentSlide == 1)"></button>
+        <button type="button" class="vc-hc__dot @(currentSlide == 2 ? "active" : "")" @onclick="() => GoToSlide(2)" aria-label="Mostrar slide 3" aria-pressed="@(currentSlide == 2)"></button>
+    </div>
+
+    <!-- Navegación -->
+    <button type="button" class="vc-hc__nav vc-hc__nav--prev" @onclick="PrevSlide" aria-label="Anterior">‹</button>
+    <button type="button" class="vc-hc__nav vc-hc__nav--next" @onclick="NextSlide" aria-label="Siguiente">›</button>
+</section>
+
+@code {
+    private const int TotalSlides = 3;
+
+    // El track tiene TotalSlides + 2 elementos: un clon del ultimo slide
+    // antes del primero, y un clon del primero despues del ultimo (ver
+    // markup). trackIndex es la posicion fisica dentro de ese arreglo
+    // (0 = clon del ultimo, 1..TotalSlides = slides reales, TotalSlides+1
+    // = clon del primero); siempre equivale a currentSlide + 1, salvo en
+    // el instante en que se esta animando hacia un clon (ver NextSlide/PrevSlide).
+    private const int VisualSlideCount = TotalSlides + 2;
+    private const double DragActivateThresholdPx = 8;
+    private const double DragSlideThresholdPx = 60;
+    private const int SnapDelayMs = 20;
+    private const int WrapTransitionMs = 520; // > duracion de --ease-out (0.5s) del track
+
+    private int currentSlide = 0;
+    private int trackIndex = 1;
+    private System.Threading.Timer? heroTimer;
+    private bool heroPaused = false;
+
+    // Al terminar de animar hacia un slide clon (ver NextSlide/PrevSlide),
+    // se corta sin transition para saltar al slide real equivalente: como
+    // el clon es visualmente identico, el corte es imperceptible.
+    private bool suppressTransition = false;
+
+    // Arrastre en tiempo real: el track sigue al puntero 1:1 (sin transition)
+    // mientras isDragging es true; al soltar, se decide el slide final y se
+    // reactiva la transition para que encaje.
+    private bool isPointerDown = false;
+    private bool isDragging = false;
+    private double pointerStartX;
+    private double dragOffsetPx;
+
+    private string TrackClass =>
+        (isDragging || suppressTransition) ? "vc-hc__track--dragging" : "vc-hc__track--snap";
+
+    private string TrackStyle
+    {
+        get
+        {
+            var basePercent = -(trackIndex * (100.0 / VisualSlideCount));
+            return FormattableString.Invariant(
+                $"transform: translateX(calc({basePercent:0.####}% + {dragOffsetPx:0.##}px));");
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        heroTimer = new System.Threading.Timer(async _ =>
+        {
+            if (!heroPaused)
+            {
+                await InvokeAsync(NextSlide);
+            }
+        }, null, TimeSpan.FromSeconds(6), TimeSpan.FromSeconds(6));
+    }
+
+    private void GoToSlide(int index)
+    {
+        currentSlide = index;
+        trackIndex = currentSlide + 1;
+    }
+
+    private async Task NextSlide()
+    {
+        var wrapping = currentSlide == TotalSlides - 1;
+        currentSlide = (currentSlide + 1) % TotalSlides;
+        trackIndex++; // si envuelve, avanza un paso mas hacia el clon del primero
+        StateHasChanged();
+        if (wrapping) await SnapPastCloneToReal();
+    }
+
+    private async Task PrevSlide()
+    {
+        var wrapping = currentSlide == 0;
+        currentSlide = (currentSlide - 1 + TotalSlides) % TotalSlides;
+        trackIndex--; // si envuelve, retrocede un paso mas hacia el clon del ultimo
+        StateHasChanged();
+        if (wrapping) await SnapPastCloneToReal();
+    }
+
+    // trackIndex ya quedo un paso mas alla (apuntando al slide clon) y
+    // StateHasChanged ya disparo esa animacion normal (misma distancia que
+    // un cambio de slide comun). Se espera a que termine para saltar sin
+    // transition a la posicion del slide real equivalente, que se ve
+    // identica al clon, asi el corte es imperceptible.
+    private async Task SnapPastCloneToReal()
+    {
+        await Task.Delay(WrapTransitionMs);
+        suppressTransition = true;
+        trackIndex = currentSlide + 1;
+        StateHasChanged();
+        await Task.Delay(SnapDelayMs);
+        suppressTransition = false;
+        StateHasChanged();
+    }
+
+    private void OnHeroEnter() => heroPaused = true;
+    private void OnHeroLeave() => heroPaused = false;
+
+    private void OnPointerDown(PointerEventArgs e)
+    {
+        isPointerDown = true;
+        isDragging = false;
+        pointerStartX = e.ClientX;
+        dragOffsetPx = 0;
+        heroPaused = true;
+    }
+
+    private void OnPointerMove(PointerEventArgs e)
+    {
+        if (!isPointerDown) return;
+
+        var delta = e.ClientX - pointerStartX;
+
+        // Umbral chico antes de considerarlo "arrastre": un click normal en un
+        // boton del contenido no debe interpretarse como un gesto de carrusel.
+        if (!isDragging && Math.Abs(delta) > DragActivateThresholdPx)
+        {
+            isDragging = true;
+        }
+
+        if (isDragging)
+        {
+            dragOffsetPx = delta;
+        }
+    }
+
+    private async Task OnPointerUp(PointerEventArgs e)
+    {
+        var wasDragging = isDragging;
+        var offset = dragOffsetPx;
+
+        isPointerDown = false;
+        isDragging = false;
+        dragOffsetPx = 0;
+        heroPaused = false;
+
+        if (wasDragging)
+        {
+            if (offset <= -DragSlideThresholdPx) await NextSlide();
+            else if (offset >= DragSlideThresholdPx) await PrevSlide();
+        }
+    }
+
+    public void Dispose() => heroTimer?.Dispose();
+}
