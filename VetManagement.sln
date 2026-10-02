@@ -33,7 +33,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{5E2C77BA
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Clinic Sites", "Clinic Sites", "{CA54C134-A350-41B0-83C6-23361D0917EF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SPVetClinic", "src\SPVetClinic\SPVetClinic.csproj", "{87304E68-4BE7-4CC3-8327-5836B1D57992}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SPVetClinic", "sites\SPVetClinic\SPVetClinic.csproj", "{87304E68-4BE7-4CC3-8327-5836B1D57992}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

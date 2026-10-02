@@ -36,8 +36,9 @@ VetManagement.sln
 │   ├── VetManagement.Api/            # REST API endpoints, auth, migrations
 │   ├── VetManagement.Shared/         # Blazor UI: pages, components, API clients
 │   ├── VetManagement.Staff.Web/      # Staff web client (Blazor WebAssembly)
-│   ├── VetManagement.Staff.Maui/     # Staff desktop/mobile client (.NET MAUI)
-│   └── SPVetClinic/                  # Public website of San Pablo Vet Clinic (clinic-specific)
+│   └── VetManagement.Staff.Maui/     # Staff desktop/mobile client (.NET MAUI)
+├── sites/                            # Branded public websites, one per clinic (consume the API)
+│   └── SPVetClinic/                  # San Pablo Vet Clinic
 ├── tests/
 │   └── VetManagement.Tests/          # Unit + integration tests
 └── docs/                             # Architecture & coding guidelines
