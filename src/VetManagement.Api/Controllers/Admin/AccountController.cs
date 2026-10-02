@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using VetManagement.Contracts.Accounts;
 using VetManagement.Api.Authorization;
+using VetManagement.Api.Services;
 using VetManagement.Application.Services;
 using VetManagement.Domain.Enums;
 
@@ -18,7 +19,8 @@ namespace VetManagement.Api.Controllers.Admin;
 public class AccountController(
     UserManager<IdentityUser> userManager,
     IConfiguration configuration,
-    AuditService audit) : ApiControllerBase
+    AuditService audit,
+    UserManagementService userManagement) : ApiControllerBase
 {
     [HttpPost("login")]
     [AllowAnonymous]
@@ -37,6 +39,8 @@ public class AccountController(
         if (user != null && await userManager.CheckPasswordAsync(user, request.Password))
         {
             await userManager.ResetAccessFailedCountAsync(user);
+            // Permissions derive from roles; syncing here gives existing users any permission added since their last login.
+            await userManagement.SyncClaimsForUserAsync(user);
             var userRoles = await userManager.GetRolesAsync(user);
             var userClaims = await userManager.GetClaimsAsync(user);
             var token = GenerateJwtToken(user, userRoles, userClaims, request.RememberMe);

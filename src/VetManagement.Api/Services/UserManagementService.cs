@@ -100,52 +100,6 @@ public class UserManagementService(UserManager<IdentityUser> userManager, RoleMa
     }
 
     private static HashSet<string> GetClaimsForRoles(IEnumerable<string> roles)
-    {
-        HashSet<string> set = [];
-        foreach (var role in roles)
-        {
-            switch (role)
-            {
-                case "Admin":
-                    foreach (var p in Permissions.ALL())
-                        set.Add(p);
-                    break;
-                case "Manager":
-                    set.Add(Permissions.INVENTORY.READ);
-                    set.Add(Permissions.INVENTORY.CREATE);
-                    set.Add(Permissions.INVENTORY.UPDATE);
-                    set.Add(Permissions.EXAMS.READ);
-                    set.Add(Permissions.EXAMS.UPDATE);
-                    set.Add(Permissions.EXTERNAL_LABS.READ);
-                    set.Add(Permissions.EXTERNAL_LABS.UPDATE);
-                    set.Add(Permissions.EXAMS_PERFORMED.READ);
-                    set.Add(Permissions.EXAMS_PERFORMED.CREATE);
-                    set.Add(Permissions.EXAMS_PERFORMED.UPDATE);
-                    set.Add(Permissions.MEDICAL.READ);
-                    set.Add(Permissions.MEDICAL.CREATE);
-                    set.Add(Permissions.MEDICAL.UPDATE);
-                    set.Add(Permissions.CLIENTS_PETS.READ);
-                    set.Add(Permissions.CLIENTS_PETS.CREATE);
-                    set.Add(Permissions.CLIENTS_PETS.UPDATE);
-                    set.Add(Permissions.AUDIT.READ);
-                    set.Add(Permissions.SYSTEM.SEND_EMAIL);
-                    break;
-                case "Employee":
-                    set.Add(Permissions.INVENTORY.READ);
-                    set.Add(Permissions.INVENTORY.CREATE);
-                    set.Add(Permissions.INVENTORY.UPDATE);
-                    set.Add(Permissions.EXAMS.READ);
-                    set.Add(Permissions.EXTERNAL_LABS.READ);
-                    set.Add(Permissions.EXAMS_PERFORMED.READ);
-                    set.Add(Permissions.EXAMS_PERFORMED.CREATE);
-                    set.Add(Permissions.MEDICAL.READ);
-                    set.Add(Permissions.MEDICAL.CREATE);
-                    set.Add(Permissions.CLIENTS_PETS.READ);
-                    set.Add(Permissions.CLIENTS_PETS.CREATE);
-                    break;
-            }
-        }
-        return set;
-    }
+        => roles.SelectMany(Permissions.ForRole).ToHashSet();
 }
 

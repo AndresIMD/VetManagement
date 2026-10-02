@@ -576,30 +576,7 @@ public class DataSeeder(
     {
         var claims = await users.GetClaimsAsync(user);
         var has = claims.Where(c => c.Type == Permissions.CLAIM_TYPE).Select(c => c.Value).ToHashSet();
-        IEnumerable<string> target = role switch
-        {
-            "Admin" => Permissions.ALL(),
-            "Manager" => new[]
-            {
-                Permissions.INVENTORY.READ, Permissions.INVENTORY.CREATE, Permissions.INVENTORY.UPDATE,
-                Permissions.EXAMS.READ, Permissions.EXAMS.UPDATE,
-                Permissions.EXTERNAL_LABS.READ, Permissions.EXTERNAL_LABS.UPDATE,
-                Permissions.EXAMS_PERFORMED.READ, Permissions.EXAMS_PERFORMED.CREATE, Permissions.EXAMS_PERFORMED.UPDATE,
-                Permissions.MEDICAL.READ, Permissions.MEDICAL.CREATE, Permissions.MEDICAL.UPDATE,
-                Permissions.CLIENTS_PETS.READ, Permissions.CLIENTS_PETS.CREATE, Permissions.CLIENTS_PETS.UPDATE,
-                Permissions.AUDIT.READ,
-                Permissions.SYSTEM.SEND_EMAIL
-            },
-            _ => new[]
-            {
-                Permissions.INVENTORY.READ, Permissions.INVENTORY.CREATE, Permissions.INVENTORY.UPDATE,
-                Permissions.EXAMS.READ,
-                Permissions.EXTERNAL_LABS.READ,
-                Permissions.EXAMS_PERFORMED.READ, Permissions.EXAMS_PERFORMED.CREATE,
-                Permissions.MEDICAL.READ, Permissions.MEDICAL.CREATE,
-                Permissions.CLIENTS_PETS.READ, Permissions.CLIENTS_PETS.CREATE
-            }
-        };
+        var target = Permissions.ForRole(role);
         foreach (var perm in target)
             if (!has.Contains(perm))
                 await users.AddClaimAsync(user, new System.Security.Claims.Claim(Permissions.CLAIM_TYPE, perm));

@@ -72,6 +72,44 @@ public static class Permissions
         public const string SEND_EMAIL = "system.send-email";
     }
 
+    public static class SCHEDULING
+    {
+        public const string READ = "scheduling.read";
+        /// <summary>Create, cancel and reassign appointments.</summary>
+        public const string BOOK = "scheduling.book";
+        /// <summary>Edit the clinic's agenda configuration.</summary>
+        public const string MANAGE = "scheduling.manage";
+    }
+
+    /// <summary>Single source of the permissions each role grants (seeding and user management both use it).</summary>
+    public static IEnumerable<string> ForRole(string role) => role switch
+    {
+        "Admin" => ALL(),
+        "Manager" =>
+        [
+            INVENTORY.READ, INVENTORY.CREATE, INVENTORY.UPDATE,
+            EXAMS.READ, EXAMS.UPDATE,
+            EXTERNAL_LABS.READ, EXTERNAL_LABS.UPDATE,
+            EXAMS_PERFORMED.READ, EXAMS_PERFORMED.CREATE, EXAMS_PERFORMED.UPDATE,
+            MEDICAL.READ, MEDICAL.CREATE, MEDICAL.UPDATE,
+            CLIENTS_PETS.READ, CLIENTS_PETS.CREATE, CLIENTS_PETS.UPDATE,
+            AUDIT.READ,
+            SYSTEM.SEND_EMAIL,
+            SCHEDULING.READ, SCHEDULING.BOOK
+        ],
+        "Employee" =>
+        [
+            INVENTORY.READ, INVENTORY.CREATE, INVENTORY.UPDATE,
+            EXAMS.READ,
+            EXTERNAL_LABS.READ,
+            EXAMS_PERFORMED.READ, EXAMS_PERFORMED.CREATE,
+            MEDICAL.READ, MEDICAL.CREATE,
+            CLIENTS_PETS.READ, CLIENTS_PETS.CREATE,
+            SCHEDULING.READ, SCHEDULING.BOOK
+        ],
+        _ => []
+    };
+
     public static IEnumerable<string> ALL()
     {
         yield return INVENTORY.READ;
@@ -103,5 +141,8 @@ public static class Permissions
         yield return USERS.CREATE;
         yield return USERS.MANAGE_ROLES;
         yield return SYSTEM.SEND_EMAIL;
+        yield return SCHEDULING.READ;
+        yield return SCHEDULING.BOOK;
+        yield return SCHEDULING.MANAGE;
     }
 }
