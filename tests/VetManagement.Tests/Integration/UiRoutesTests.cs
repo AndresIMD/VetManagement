@@ -29,11 +29,13 @@ public class UiRoutesTests : IClassFixture<CustomWebAppFactory>
     [MemberData(nameof(UiRoutes))]
     public async Task RouteUsedByTheUi_ExistsInTheApi(string route)
     {
-        // Any method: a matched route answers 2xx/4xx other than 404 (e.g. 405 for a POST-only endpoint).
-        var get = await _admin.GetAsync(route);
-        var post = await _admin.PostAsync(route, new StringContent("{}", System.Text.Encoding.UTF8, "application/json"));
+        // GET only, so no endpoint ever writes during the test: a POST-only route still matches and
+        // answers 405 Method Not Allowed. A controller's own 404 (e.g. no item with id 1) carries a
+        // ProblemDetails body; only an unmatched route returns an empty 404.
+        var response = await _admin.GetAsync(route);
+        var body = await response.Content.ReadAsStringAsync();
 
-        new[] { get.StatusCode, post.StatusCode }.Should().Contain(s => s != HttpStatusCode.NotFound,
+        (response.StatusCode == HttpStatusCode.NotFound && body.Length == 0).Should().BeFalse(
             $"the UI calls '{route}' but the API has no endpoint there");
     }
 }

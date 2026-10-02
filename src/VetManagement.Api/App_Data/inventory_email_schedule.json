@@ -1,11 +1,11 @@
-{
+﻿{
   "Enabled": false,
   "DayOfWeek": 0,
   "Hour": 0,
   "Minute": 0,
   "To": "",
   "Cc": null,
-  "Subject": "Inventory Alerts",
+  "Subject": "Inventory alert",
   "IncludeLowStock": true,
   "IncludeOutOfStock": true,
   "LastSentUtc": null
