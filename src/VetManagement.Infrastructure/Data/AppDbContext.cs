@@ -51,6 +51,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         .Property(i => i.LowStockThreshold)
         .HasDefaultValue(5);
 
+        // Column lengths carried over from the legacy Shared models' [MaxLength] attributes
+        // (Domain types are persistence-ignorant, so the schema lives here).
+        builder.Entity<Item>().Property(i => i.Barcode).HasMaxLength(100);
+        builder.Entity<Item>().Property(i => i.BrandBarcode).HasMaxLength(100);
+        builder.Entity<InventoryMovement>().Property(m => m.Reason).HasMaxLength(200);
+        builder.Entity<InventoryMovement>().Property(m => m.Responsible).HasMaxLength(100);
+
         // Configure DosageRange as owned type for Drug
         builder.Entity<Drug>().OwnsOne(d => d.DosageDog);
         builder.Entity<Drug>().OwnsOne(d => d.DosageCat);
