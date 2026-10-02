@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using VetManagement.Api.Authorization;
 using VetManagement.Api.Hubs;
+using VetManagement.Api.Payments;
 using VetManagement.Api.Seeding;
 using VetManagement.Api.Services;
 using VetManagement.Application.Contracts.Persistence;
@@ -157,6 +158,7 @@ builder.Services.AddSingleton(new VetManagement.Application.Scheduling.Schedulin
 builder.Services.AddScoped<VetManagement.Application.Scheduling.SchedulingSettingsService>();
 builder.Services.AddScoped<VetManagement.Application.Scheduling.AppointmentService>();
 builder.Services.AddScoped<VetManagement.Application.Scheduling.AppointmentNotifier>();
+builder.Services.AddPaymentGateway(builder.Configuration, builder.Environment);
 builder.Services.AddScoped<VetManagement.Application.Contracts.Services.IEmailSender, SmtpEmailSender>();
 builder.Services.AddSingleton(TimeProvider.System);
 
