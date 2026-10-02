@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reserva tu hora</title>
+    <base href="/" />
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+    <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
+</head>
+<body>
+    <div id="app">
+        <div style="font-family: Roboto, sans-serif; text-align: center; margin-top: 20vh; color: #666;">Cargando…</div>
+    </div>
+
+    <div id="blazor-error-ui" style="display:none">
+        Ocurrió un error inesperado. <a href="" class="reload">Recargar</a>
+    </div>
+
+    <script>
+        // Payment providers (WebPay) require a form POST with their fields; Blazor can't navigate with POST.
+        window.bookingPortal = {
+            postForm: function (url, fields) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = url;
+                for (const [name, value] of Object.entries(fields || {})) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = name;
+                    input.value = value;
+                    form.appendChild(input);
+                }
+                document.body.appendChild(form);
+                form.submit();
+            },
+            // Survives the round trip to the payment provider (same tab).
+            setReturnUrl: function (url) { try { sessionStorage.setItem('returnUrl', url); } catch { } },
+            getReturnUrl: function () { try { return sessionStorage.getItem('returnUrl'); } catch { return null; } }
+        };
+    </script>
+    <script src="_framework/blazor.webassembly.js"></script>
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+</body>
+</html>

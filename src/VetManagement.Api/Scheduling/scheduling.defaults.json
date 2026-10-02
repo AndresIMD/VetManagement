@@ -3,6 +3,10 @@
   "timeZone": "America/Santiago",
   "clinicName": "Clínica Veterinaria",
   "clinicPhone": null,
+  "branding": {
+    "primaryColor": "#1565C0",
+    "logoUrl": null
+  },
   "booking": {
     "minNoticeMinutes": 60,
     "horizonDays": 60,

@@ -8,7 +8,11 @@ public sealed class PublicBookingInfoDto
 {
     public bool Enabled { get; set; }
     public string ClinicName { get; set; } = string.Empty;
+    /// <summary>IANA id; the portal shows every time in the clinic's zone.</summary>
+    public string TimeZone { get; set; } = "America/Santiago";
     public string? ClinicPhone { get; set; }
+    public string PrimaryColor { get; set; } = "#1565C0";
+    public string? LogoUrl { get; set; }
     public int CancellationDeadlineHours { get; set; }
     public RefundMode RefundMode { get; set; }
     /// <summary>Origins the portal may send the client back to (the clinic's own websites).</summary>

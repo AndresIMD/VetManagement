@@ -1,0 +1,198 @@
+@page "/book/{ServiceCode}"
+@using VetManagement.Domain.Clients
+@inject BookingApi Api
+@inject PortalState Portal
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>Reserva tu hora</PageTitle>
+
+@if (_service is null)
+{
+    @if (_loaded)
+    {
+        <MudAlert Severity="Severity.Warning">Este servicio no está disponible para reservar en línea. <MudLink Href="">Ver servicios</MudLink></MudAlert>
+    }
+    else
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+    }
+}
+else
+{
+    <MudLink Href="" Typo="Typo.body2">← Servicios</MudLink>
+    <MudText Typo="Typo.h4" Class="mt-2">@_service.Name</MudText>
+    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+        @_service.DurationMinutes minutos · @Home.Money(_service.Price)
+        @if (_service.DepositAmount > 0)
+        {
+            <span> · abono en línea de @Home.Money(_service.DepositAmount)</span>
+        }
+    </MudText>
+
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">1. Elige el día</MudText>
+        <MudDatePicker Label="Fecha" Date="_date" DateChanged="OnDateChanged" MinDate="DateTime.Today" Culture="@System.Globalization.CultureInfo.GetCultureInfo("es-CL")" />
+
+        @if (_date is not null)
+        {
+            <MudText Typo="Typo.h6" Class="mt-4 mb-2">2. Elige la hora</MudText>
+            @if (_loadingSlots)
+            {
+                <MudProgressLinear Indeterminate="true" />
+            }
+            else if (_slots.Count == 0)
+            {
+                <MudText Typo="Typo.body2" Color="Color.Secondary">No quedan horas disponibles este día. Prueba con otra fecha.</MudText>
+            }
+            else
+            {
+                @foreach (var group in _slots.GroupBy(s => s.ResourceCode))
+                {
+                    @if (_service.Resources.Count > 1)
+                    {
+                        <MudText Typo="Typo.subtitle2" Class="mt-2">@ResourceName(group.Key)</MudText>
+                    }
+                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
+                        @foreach (var slot in group)
+                        {
+                            <MudButton Variant="@(slot == _selected ? Variant.Filled : Variant.Outlined)" Color="Color.Primary" Size="Size.Small"
+                                       OnClick="() => _selected = slot">
+                                @Local(slot.StartUtc).ToString("HH:mm")
+                            </MudButton>
+                        }
+                    </MudStack>
+                }
+            }
+        }
+    </MudPaper>
+
+    @if (_selected is not null)
+    {
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6" Class="mb-1">3. Tus datos</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
+                @Local(_selected.StartUtc).ToString("dddd d 'de' MMMM, HH:mm") · @ResourceName(_selected.ResourceCode)
+            </MudText>
+
+            <MudForm @ref="_form" @bind-IsValid="_valid">
+                <MudGrid>
+                    <MudItem xs="12" sm="6"><MudTextField @bind-Value="_firstName" Label="Nombre" Required="true" RequiredError="Ingresa tu nombre" MaxLength="100" /></MudItem>
+                    <MudItem xs="12" sm="6"><MudTextField @bind-Value="_lastName" Label="Apellido" Required="true" RequiredError="Ingresa tu apellido" MaxLength="100" /></MudItem>
+                    <MudItem xs="12" sm="6"><MudTextField @bind-Value="_rut" Label="RUT" Placeholder="12.345.678-5" Required="true" RequiredError="Ingresa tu RUT" Validation="@(new Func<string, string?>(ValidateRut))" MaxLength="20" /></MudItem>
+                    <MudItem xs="12" sm="6"><MudTextField @bind-Value="_phone" Label="Teléfono" Placeholder="+56 9 1234 5678" Required="true" RequiredError="Ingresa tu teléfono" MaxLength="30" /></MudItem>
+                    <MudItem xs="12"><MudTextField @bind-Value="_email" Label="Correo electrónico" InputType="InputType.Email" Required="true" RequiredError="Ingresa tu correo" MaxLength="256"
+                                                   HelperText="Te enviaremos la confirmación aquí." /></MudItem>
+                    <MudItem xs="12" sm="6"><MudTextField @bind-Value="_petName" Label="Nombre de tu mascota" Required="true" RequiredError="Ingresa el nombre de tu mascota" MaxLength="100" /></MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudSelect T="Species" @bind-Value="_species" Label="Especie">
+                            <MudSelectItem Value="Species.Dog">Perro</MudSelectItem>
+                            <MudSelectItem Value="Species.Cat">Gato</MudSelectItem>
+                            <MudSelectItem Value="Species.Bird">Ave</MudSelectItem>
+                            <MudSelectItem Value="Species.Rodent">Roedor</MudSelectItem>
+                            <MudSelectItem Value="Species.Reptile">Reptil</MudSelectItem>
+                            <MudSelectItem Value="Species.Other">Otra</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12"><MudTextField @bind-Value="_notes" Label="Motivo o comentarios (opcional)" Lines="2" MaxLength="1000" /></MudItem>
+                </MudGrid>
+            </MudForm>
+
+            @if (_error is not null)
+            {
+                <MudAlert Severity="Severity.Error" Class="mt-3">@_error</MudAlert>
+            }
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" Class="mt-4" FullWidth="true"
+                       Disabled="@(!_valid || _submitting)" OnClick="SubmitAsync">
+                @(_submitting ? "Reservando…" : _service.DepositAmount > 0 ? $"Pagar abono de {Home.Money(_service.DepositAmount)}" : "Confirmar reserva")
+            </MudButton>
+        </MudPaper>
+    }
+}
+
+@code {
+    [Parameter] public string ServiceCode { get; set; } = string.Empty;
+
+    private PublicServiceDto? _service;
+    private TimeZoneInfo _zone = TimeZoneInfo.Utc;
+    private bool _loaded;
+    private DateTime? _date;
+    private List<AvailableSlotDto> _slots = [];
+    private bool _loadingSlots;
+    private AvailableSlotDto? _selected;
+
+    private MudForm? _form;
+    private bool _valid;
+    private bool _submitting;
+    private string? _error;
+    private string _firstName = "", _lastName = "", _rut = "", _phone = "", _email = "", _petName = "";
+    private Species _species = Species.Dog;
+    private string? _notes;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var info = await Portal.GetInfoAsync();
+        _zone = await Portal.GetClinicTimeZoneAsync();
+        _service = info?.Services.FirstOrDefault(s => string.Equals(s.Code, ServiceCode, StringComparison.OrdinalIgnoreCase));
+        _loaded = true;
+    }
+
+    private async Task OnDateChanged(DateTime? date)
+    {
+        _date = date;
+        _selected = null;
+        _slots = [];
+        if (date is null)
+            return;
+        _loadingSlots = true;
+        var day = DateOnly.FromDateTime(date.Value);
+        _slots = await Api.GetSlotsAsync(_service!.Code, day, day);
+        _loadingSlots = false;
+    }
+
+    private DateTime Local(DateTime utc) => TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), _zone);
+
+    private string ResourceName(string code) => _service?.Resources.FirstOrDefault(r => r.Code == code)?.Name ?? code;
+
+    private static string? ValidateRut(string value) => Rut.TryParse(value, out _) ? null : "El RUT no es válido";
+
+    private async Task SubmitAsync()
+    {
+        await _form!.ValidateAsync();
+        if (!_valid || _selected is null)
+            return;
+
+        _submitting = true;
+        _error = null;
+        var result = await Api.BookAsync(new OnlineBookingRequestDto
+        {
+            ServiceCode = _service!.Code,
+            ResourceCode = _selected.ResourceCode,
+            StartUtc = _selected.StartUtc,
+            OwnerFirstName = _firstName,
+            OwnerLastName = _lastName,
+            OwnerTaxId = _rut,
+            OwnerEmail = _email,
+            OwnerPhone = _phone,
+            PetName = _petName,
+            PetSpecies = _species,
+            Notes = _notes
+        });
+
+        if (!result.Ok)
+        {
+            _error = result.Error;
+            _submitting = false;
+            if (_error!.StartsWith("Esa hora"))
+                await OnDateChanged(_date); // refresh: the slot was just taken
+            return;
+        }
+
+        var booking = result.Value!;
+        if (booking.PaymentUrl is not null)
+            await JS.InvokeVoidAsync("bookingPortal.postForm", booking.PaymentUrl, booking.PaymentFields); // leaves the portal to pay
+        else
+            Navigation.NavigateTo($"booking/{booking.PublicToken}");
+    }
+}

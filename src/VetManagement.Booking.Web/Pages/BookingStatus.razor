@@ -1,0 +1,109 @@
+@page "/booking/{Token}"
+@inject BookingApi Api
+@inject PortalState Portal
+
+<PageTitle>Tu reserva</PageTitle>
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (_booking is null)
+{
+    <MudAlert Severity="Severity.Warning">No encontramos esta reserva. Revisa el enlace de tu correo.</MudAlert>
+}
+else
+{
+    <MudPaper Class="pa-5" Elevation="1">
+        @switch (_booking.Status)
+        {
+            case AppointmentStatus.Confirmed:
+                <MudAlert Severity="Severity.Success" Class="mb-4">¡Tu hora está confirmada! Te enviamos los detalles por correo.</MudAlert>
+                break;
+            case AppointmentStatus.PendingPayment:
+                <MudAlert Severity="Severity.Info" Class="mb-4">Estamos esperando la confirmación del pago. Actualiza esta página en unos segundos.</MudAlert>
+                break;
+            case AppointmentStatus.Cancelled:
+                <MudAlert Severity="Severity.Warning" Class="mb-4">
+                    Esta reserva está cancelada.
+                    @if (_booking.DepositStatus == DepositStatus.Refunded)
+                    {
+                        <span> El abono fue reembolsado.</span>
+                    }
+                    else if (_booking.DepositStatus == DepositStatus.RefundRequested)
+                    {
+                        <span> La clínica revisará el reembolso de tu abono.</span>
+                    }
+                    else if (_booking.DepositStatus == DepositStatus.Forfeited)
+                    {
+                        <span> Según la política de la clínica, el abono no es reembolsable.</span>
+                    }
+                </MudAlert>
+                break;
+            default:
+                <MudAlert Severity="Severity.Info" Class="mb-4">Estado de la reserva: @_booking.Status</MudAlert>
+                break;
+        }
+
+        <MudText Typo="Typo.h5">@_booking.ServiceName</MudText>
+        <MudText Typo="Typo.body1" Class="mt-2">@Local(_booking.StartUtc).ToString("dddd d 'de' MMMM 'de' yyyy, HH:mm")</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">Atiende: @_booking.ResourceName</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">@_booking.OwnerName@(string.IsNullOrWhiteSpace(_booking.PetName) ? "" : $" · {_booking.PetName}")</MudText>
+
+        @if (_error is not null)
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-3">@_error</MudAlert>
+        }
+
+        <MudStack Row="true" Spacing="2" Class="mt-5" Wrap="Wrap.Wrap">
+            @if (_booking.CanCancel)
+            {
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" Disabled="_cancelling" OnClick="CancelAsync">
+                    @(_cancelling ? "Cancelando…" : "Cancelar mi hora")
+                </MudButton>
+            }
+            @if (_returnUrl is not null)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@_returnUrl">Volver al sitio de la clínica</MudButton>
+            }
+            <MudButton Variant="Variant.Text" Color="Color.Primary" Href="">Reservar otra hora</MudButton>
+        </MudStack>
+
+        @if (_booking.CanCancel)
+        {
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2 d-block">
+                Puedes cancelar en línea hasta el @Local(_booking.CancelDeadlineUtc).ToString("dddd d 'de' MMMM, HH:mm").
+            </MudText>
+        }
+    </MudPaper>
+}
+
+@code {
+    [Parameter] public string Token { get; set; } = string.Empty;
+
+    private PublicBookingDto? _booking;
+    private TimeZoneInfo _zone = TimeZoneInfo.Utc;
+    private string? _returnUrl;
+    private bool _loading = true;
+    private bool _cancelling;
+    private string? _error;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _zone = await Portal.GetClinicTimeZoneAsync();
+        _returnUrl = await Portal.GetReturnUrlAsync();
+        _booking = await Api.GetBookingAsync(Token);
+        _loading = false;
+    }
+
+    private DateTime Local(DateTime utc) => TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), _zone);
+
+    private async Task CancelAsync()
+    {
+        _cancelling = true;
+        var result = await Api.CancelAsync(Token);
+        _error = result.Error;
+        _booking = await Api.GetBookingAsync(Token);
+        _cancelling = false;
+    }
+}

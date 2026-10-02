@@ -39,7 +39,10 @@ public class PublicBookingController(
         {
             Enabled = settings.Enabled,
             ClinicName = settings.ClinicName,
+            TimeZone = settings.TimeZone,
             ClinicPhone = settings.ClinicPhone,
+            PrimaryColor = settings.Branding.PrimaryColor,
+            LogoUrl = settings.Branding.LogoUrl,
             CancellationDeadlineHours = settings.Cancellation.ClientDeadlineHours,
             RefundMode = settings.Cancellation.RefundMode,
             AllowedReturnOrigins = portal.AllowedReturnOrigins,

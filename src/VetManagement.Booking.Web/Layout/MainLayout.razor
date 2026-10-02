@@ -1,0 +1,45 @@
+@inherits LayoutComponentBase
+@inject PortalState Portal
+
+<MudThemeProvider Theme="_theme" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1">
+        @if (!string.IsNullOrWhiteSpace(_info?.LogoUrl))
+        {
+            <img src="@_info.LogoUrl" alt="@_info.ClinicName" style="height: 40px; margin-right: 12px;" />
+        }
+        <MudText Typo="Typo.h6">@(_info?.ClinicName ?? "Reserva de horas")</MudText>
+        <MudSpacer />
+        @if (!string.IsNullOrWhiteSpace(_info?.ClinicPhone))
+        {
+            <MudLink Href="@($"tel:{_info.ClinicPhone}")" Color="Color.Inherit" Typo="Typo.body2">@_info.ClinicPhone</MudLink>
+        }
+    </MudAppBar>
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Medium" Class="py-6 px-3">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private MudTheme _theme = new();
+    private PublicBookingInfoDto? _info;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _info = await Portal.GetInfoAsync();
+            _theme = await Portal.GetThemeAsync();
+        }
+        catch (HttpRequestException)
+        {
+            // Pages show their own "service unavailable" message.
+        }
+    }
+}

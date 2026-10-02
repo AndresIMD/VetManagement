@@ -1,0 +1,77 @@
+@page "/"
+@inject PortalState Portal
+@inject NavigationManager Navigation
+
+<PageTitle>Reserva tu hora</PageTitle>
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (_info is null)
+{
+    <MudAlert Severity="Severity.Error">No pudimos conectar con la clínica. Inténtalo de nuevo en unos minutos.</MudAlert>
+}
+else if (!_info.Enabled || _info.Services.Count == 0)
+{
+    <MudAlert Severity="Severity.Info">
+        La reserva en línea no está disponible por ahora.
+        @if (!string.IsNullOrWhiteSpace(_info.ClinicPhone))
+        {
+            <span>Puedes agendar llamando al @_info.ClinicPhone.</span>
+        }
+    </MudAlert>
+}
+else
+{
+    <MudText Typo="Typo.h4" Class="mb-1">Reserva tu hora</MudText>
+    <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">Elige el servicio que necesitas.</MudText>
+
+    <MudGrid>
+        @foreach (var service in _info.Services)
+        {
+            <MudItem xs="12" sm="6">
+                <MudCard Elevation="2" Style="cursor: pointer; height: 100%;" @onclick="() => Choose(service)">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">@service.Name</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">@service.DurationMinutes minutos</MudText>
+                        <MudText Typo="Typo.body1" Class="mt-2">@Money(service.Price)</MudText>
+                        @if (service.DepositAmount > 0)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Info" Class="ml-0 mt-1">Abono en línea: @Money(service.DepositAmount)</MudChip>
+                        }
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => Choose(service)">Elegir</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+}
+
+@code {
+    /// <summary>Clinic website to come back to (validated against the clinic's allowed origins).</summary>
+    [SupplyParameterFromQuery] public string? ReturnUrl { get; set; }
+
+    private PublicBookingInfoDto? _info;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _info = await Portal.GetInfoAsync();
+            await Portal.RememberReturnUrlAsync(ReturnUrl);
+        }
+        catch (HttpRequestException)
+        {
+            _info = null;
+        }
+        _loading = false;
+    }
+
+    private void Choose(PublicServiceDto service) => Navigation.NavigateTo($"book/{Uri.EscapeDataString(service.Code)}");
+
+    internal static string Money(int amount) => $"${amount:N0}";
+}

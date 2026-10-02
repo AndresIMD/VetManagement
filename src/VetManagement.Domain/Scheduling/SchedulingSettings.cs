@@ -13,6 +13,7 @@ public class SchedulingSettings
     /// <summary>Shown to clients in emails and on the booking site.</summary>
     public string ClinicName { get; set; } = string.Empty;
     public string? ClinicPhone { get; set; }
+    public BrandingSettings Branding { get; set; } = new();
     public BookingPolicy Booking { get; set; } = new();
     public CancellationPolicy Cancellation { get; set; } = new();
     public PaymentPolicy Payment { get; set; } = new();
@@ -29,6 +30,10 @@ public class SchedulingSettings
         if (!TimeZoneInfo.TryFindSystemTimeZoneById(TimeZone, out _))
             errors.Add($"Unknown time zone '{TimeZone}'.");
         if (string.IsNullOrWhiteSpace(ClinicName)) errors.Add("ClinicName is required (clients see it in emails).");
+        if (!System.Text.RegularExpressions.Regex.IsMatch(Branding.PrimaryColor ?? "", "^#[0-9A-Fa-f]{6}$"))
+            errors.Add("Branding.PrimaryColor must be a hex color like #1565C0.");
+        if (Branding.LogoUrl is { Length: > 0 } logo && !(Uri.TryCreate(logo, UriKind.Absolute, out var logoUri) && logoUri.Scheme == Uri.UriSchemeHttps))
+            errors.Add("Branding.LogoUrl must be an absolute https URL.");
         if (Booking.MinNoticeMinutes < 0) errors.Add("Booking.MinNoticeMinutes must be 0 or more.");
         if (Booking.HorizonDays < 1) errors.Add("Booking.HorizonDays must be at least 1.");
         if (Booking.SlotStepMinutes < 5) errors.Add("Booking.SlotStepMinutes must be at least 5.");
@@ -101,6 +106,15 @@ public class SchedulingSettings
         foreach (var dup in codes.GroupBy(c => c, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1))
             errors.Add($"Duplicate {what} code '{dup.Key}'.");
     }
+}
+
+/// <summary>Look of the clinic's public booking portal.</summary>
+public class BrandingSettings
+{
+    /// <summary>Hex color, e.g. "#1565C0".</summary>
+    public string PrimaryColor { get; set; } = "#1565C0";
+    /// <summary>Absolute https URL of the clinic's logo (optional).</summary>
+    public string? LogoUrl { get; set; }
 }
 
 public class BookingPolicy
