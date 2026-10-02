@@ -1,6 +1,6 @@
 using System.Net.Http.Json;
 using VetManagement.Shared.Constants;
-using VetManagement.Shared.Enums;
+using VetManagement.Domain.Enums;
 using VetManagement.Shared.Models.Medical;
 
 namespace VetManagement.Shared.Services.Api;

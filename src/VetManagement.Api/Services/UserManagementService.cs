@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using VetManagement.Api.Authorization;
 using VetManagement.Application.Services;
-using VetManagement.Shared.Enums;
+using VetManagement.Domain.Enums;
 
 namespace VetManagement.Api.Services;
 

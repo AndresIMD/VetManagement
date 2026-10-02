@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using VetManagement.Shared.Enums;
+using VetManagement.Domain.Enums;
 using VetManagement.Shared.Models.Core;
 
 namespace VetManagement.Shared.Models.Inventory;

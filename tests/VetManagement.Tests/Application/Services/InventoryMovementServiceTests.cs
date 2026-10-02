@@ -4,7 +4,7 @@ using VetManagement.Application.Contracts.Persistence;
 using VetManagement.Application.Contracts.Services;
 using VetManagement.Application.Services;
 using VetManagement.Domain.Inventory;
-using VetManagement.Shared.Enums;
+using VetManagement.Domain.Enums;
 using VetManagement.Shared.Models.DTOs;
 using DomainInventoryMovementType = VetManagement.Domain.Enums.InventoryMovementType;
 using DomainItemType = VetManagement.Domain.Enums.ItemType;

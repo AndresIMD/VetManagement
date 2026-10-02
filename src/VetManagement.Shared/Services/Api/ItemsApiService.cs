@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using VetManagement.Shared.Constants;
-using VetManagement.Shared.Enums;
+using VetManagement.Domain.Enums;
 using VetManagement.Shared.Models.Configuration;
 using VetManagement.Shared.Models.Core;
 using VetManagement.Shared.Models.DTOs;

@@ -1,4 +1,4 @@
-namespace VetManagement.Shared.Enums;
+namespace VetManagement.Domain.Enums;
 
 /// <summary>
 /// Payment status of a medical visit or sale.
@@ -28,15 +28,6 @@ public enum PaymentMethod
     Transfer,
     [DisplayString("Other")]
     Other
-}
-
-/// <summary>
-/// Sort direction for queries.
-/// </summary>
-public enum SortDirection
-{
-    Ascending,
-    Descending
 }
 
 /// <summary>

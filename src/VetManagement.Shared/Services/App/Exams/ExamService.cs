@@ -1,4 +1,4 @@
-using VetManagement.Shared.Enums;
+using VetManagement.Domain.Enums;
 using VetManagement.Shared.Helpers;
 using VetManagement.Shared.Models.Exams;
 using VetManagement.Shared.Services.Api;

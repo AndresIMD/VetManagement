@@ -8,7 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using VetManagement.Shared.Models.DTOs;
 using VetManagement.Api.Authorization;
 using VetManagement.Application.Services;
-using VetManagement.Shared.Enums;
+using VetManagement.Domain.Enums;
 
 namespace VetManagement.Api.Controllers.Admin;
 

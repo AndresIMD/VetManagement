@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using VetManagement.Shared.Enums;
+using VetManagement.Domain.Enums;
 
 namespace VetManagement.Shared.Models.Medical;
 

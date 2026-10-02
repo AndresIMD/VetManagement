@@ -2,7 +2,7 @@ using System.Net.Http.Json;
 using VetManagement.Contracts.Common;
 using VetManagement.Contracts.Inventory;
 using VetManagement.Shared.Constants;
-using VetManagement.Shared.Enums;
+using VetManagement.Domain.Enums;
 using VetManagement.Shared.Models.Configuration;
 using VetManagement.Shared.Models.DTOs;
 using VetManagement.Shared.Models.Inventory;

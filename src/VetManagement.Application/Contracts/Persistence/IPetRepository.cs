@@ -1,4 +1,4 @@
-using VetManagement.Shared.Enums;
+using VetManagement.Domain.Enums;
 using VetManagement.Shared.Models.Core;
 
 namespace VetManagement.Application.Contracts.Persistence;

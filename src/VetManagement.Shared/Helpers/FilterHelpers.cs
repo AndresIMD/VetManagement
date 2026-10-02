@@ -1,5 +1,5 @@
 using VetManagement.Shared.Components.Filters;
-using VetManagement.Shared.Enums;
+using VetManagement.Domain.Enums;
 using MudBlazor;
 
 namespace VetManagement.Shared.Helpers;

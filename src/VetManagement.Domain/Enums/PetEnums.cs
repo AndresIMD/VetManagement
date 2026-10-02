@@ -1,4 +1,4 @@
-namespace VetManagement.Shared.Enums;
+namespace VetManagement.Domain.Enums;
 
 /// <summary>
 /// Biological sex of a pet.

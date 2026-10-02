@@ -5,7 +5,7 @@ using VetManagement.Domain.Inventory;
 using VetManagement.Shared.Constants;
 using VetManagement.Shared.Helpers;
 using VetManagement.Shared.Models.DTOs;
-using AuditActionType = VetManagement.Shared.Enums.AuditActionType;
+using AuditActionType = VetManagement.Domain.Enums.AuditActionType;
 using DomainInventoryMovementType = VetManagement.Domain.Enums.InventoryMovementType;
 
 namespace VetManagement.Application.Services;
@@ -83,7 +83,7 @@ public class InventoryMovementService(IUnitOfWork unitOfWork, IRealtimeNotificat
         await unitOfWork.SaveChangesAsync();
 
         await LogAuditAsync(nameof(InventoryMovement), movement.Id,
-            ((VetManagement.Shared.Enums.InventoryMovementType)movement.Type).ToAuditActionType(),
+            movement.Type.ToAuditActionType(),
             JsonSerializer.Serialize(movement), userName);
 
         if (notificationService is not null)
@@ -175,7 +175,7 @@ public class InventoryMovementService(IUnitOfWork unitOfWork, IRealtimeNotificat
 
             var movementType = isIngress ? DomainInventoryMovementType.MassiveStockIngress : DomainInventoryMovementType.MassiveStockEgress;
             await LogAuditAsync(nameof(Item), item.Id,
-                ((VetManagement.Shared.Enums.InventoryMovementType)movementType).ToAuditActionType(),
+                movementType.ToAuditActionType(),
                 $"Stock before: {oldStock}, Stock after: {item.Stock}, Applied quantity: {appliedQuantity}, ID: {item.Id}, Barcode: {item.Barcode}", userName);
 
             changedItems.Add((item.Id, item.Stock));

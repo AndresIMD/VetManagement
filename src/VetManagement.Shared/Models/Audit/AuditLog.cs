@@ -1,4 +1,4 @@
-using VetManagement.Shared.Enums;
+using VetManagement.Domain.Enums;
 
 namespace VetManagement.Shared.Models.Audit;
 

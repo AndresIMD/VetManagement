@@ -1,4 +1,4 @@
-namespace VetManagement.Shared.Enums;
+namespace VetManagement.Domain.Enums;
 
 /// <summary>
 /// Type of biological sample required for an exam.

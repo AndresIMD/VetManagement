@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using VetManagement.Api.Authorization;
 using VetManagement.Api.Services;
 using VetManagement.Application.Services;
-using VetManagement.Shared.Enums;
+using VetManagement.Domain.Enums;
 
 namespace VetManagement.Api.Controllers.Setup;
 

@@ -1,7 +1,7 @@
 using Moq;
 using VetManagement.Application.Contracts.Persistence;
 using VetManagement.Application.Services;
-using VetManagement.Shared.Enums;
+using VetManagement.Domain.Enums;
 using VetManagement.Shared.Models.Audit;
 using Xunit;
 

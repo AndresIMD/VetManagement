@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using VetManagement.Api.Authorization;
 using VetManagement.Application.Contracts.Persistence;
-using VetManagement.Shared.Enums;
+using VetManagement.Domain.Enums;
 using VetManagement.Shared.Models.Audit;
 using VetManagement.Shared.Models.Core;
 using VetManagement.Shared.Models.Exams;

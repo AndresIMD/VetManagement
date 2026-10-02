@@ -189,8 +189,8 @@
             }
 
             var sortDirection = state.SortDirection == MudBlazor.SortDirection.Descending
-            ? VetManagement.Shared.Enums.SortDirection.Descending
-            : VetManagement.Shared.Enums.SortDirection.Ascending;
+            ? VetManagement.Domain.Enums.SortDirection.Descending
+            : VetManagement.Domain.Enums.SortDirection.Ascending;
 
             var result = await ItemsService.GetItemsPagedAsync(
             _filterNameOrCompound,

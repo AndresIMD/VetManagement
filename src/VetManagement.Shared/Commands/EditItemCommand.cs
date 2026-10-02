@@ -1,6 +1,6 @@
 using System.Text.Json;
 using VetManagement.Shared.Constants;
-using VetManagement.Shared.Enums;
+using VetManagement.Domain.Enums;
 using VetManagement.Shared.Models.Core;
 using VetManagement.Shared.Models.Inventory;
 using VetManagement.Shared.Services.Api;
