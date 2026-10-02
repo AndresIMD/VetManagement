@@ -42,7 +42,7 @@ date range from the settings, the existing appointments and the current time.
 
 Ceiling: one resource per appointment. Services that need a vet *and* a room at once are a later step.
 
-## Appointments (next stages)
+## Appointments
 
 Statuses: `PendingPayment` → `Confirmed` → `Completed` / `Cancelled` / `NoShow`, plus
 `NeedsReschedule` when an absence affects a confirmed appointment. Online bookings confirm
@@ -57,4 +57,21 @@ Client emails (Spanish, clinic time zone): confirmation on booking, notice when 
 and a reminder sent once by a background job; each one is toggled in the settings and a failed send never
 fails the booking. Tests use a recording sender, so no real email leaves the test run.
 
-Payments: WebPay Plus (Transbank) for deposits; the CRM never handles card data.
+Payments: WebPay Plus (Transbank) for deposits; the CRM never handles card data. The provider and its
+credentials are deployment configuration per clinic (`IPaymentGateway`: WebPay Plus, or a simulated
+gateway outside Production). See [../DEPLOYMENT.md](../DEPLOYMENT.md).
+
+## Online booking (public)
+
+Hosted portal (`VetManagement.Booking.Web`), like WebPay: the clinic's site links to it with
+`?returnUrl=`, the client books, pays if needed, and goes back to the site. The return URL must be
+in `BookingPortal:AllowedReturnOrigins`.
+
+- Anonymous endpoints under `api/public/booking` (`info`, `availability`, `book`, `{token}`,
+  `{token}/cancel`, `payment-return`), rate-limited per IP.
+- Client identified by a valid Chilean RUT (modulo 11). Unknown clients and pets are created
+  automatically; existing ones are matched by normalized RUT and pet name.
+- No deposit → `Confirmed`. Deposit → `PendingPayment` held for `Payment.PendingPaymentHoldMinutes`; the background
+  job releases expired holds. A payment arriving after the hold expired is refunded if the slot was taken.
+- Client cancellation before the deadline applies the clinic's refund mode.
+- The emailed link (`/booking/{publicToken}`) shows status and allows cancellation.

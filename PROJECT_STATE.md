@@ -21,6 +21,8 @@ Guard tests: `ArchitectureTests` (dependency direction), `MigrationsTests` (EF m
 | **F3** | ✅ **COMPLETED** (with F2) | Shared → UI only, renamed `VetManagement.Staff.UI` |
 | **F4** | ✅ **COMPLETED** | Hardening: ProblemDetails + UI error boundary, login lockout + rate limit, DB health check, JSON logs, validation gaps closed |
 | **F5** | ✅ **COMPLETED** | docs/architecture/ARCHITECTURE.md; historical docs moved to docs/archive |
+| **F6** | ✅ **COMPLETED** | Scheduling: per-clinic settings, availability with progressive release, appointments, staff agenda, emails (docs/architecture/SCHEDULING.md) |
+| **F7** | ✅ **COMPLETED** | Online booking: RUT, payment gateways (WebPay Plus / simulated), public API, hosted portal `Booking.Web`, SPVetClinic link (docs/DEPLOYMENT.md) |
 
 ---
 
@@ -80,15 +82,12 @@ git log --oneline -10
 
 ## Next Actions (Priority Order)
 
-F0–F5 are complete. The next phase adds product features and needs decisions from the clinic first.
+F0–F7 are complete. Remaining items need the clinic or a product decision:
 
-1. **F6 — Scheduling (agenda)**: the CRM has no appointments yet; booking on clinic sites depends on it.
-   Open questions: services and their durations, per-vet vs per-room availability, opening hours and
-   exceptions, cancellation rules, whether online bookings need staff confirmation, payment up front
-   (WebPay prototype exists in `sites/SPVetClinic/_wip`).
-2. **F7 — Public API for clinic sites**: anonymous endpoints (services, availability, booking) with
-   per-clinic CORS and rate limits, then `sites/SPVetClinic` consumes it.
-3. **Product decision**: `Responsible` on exams/visits is free text; consider a staff picker.
+1. **Go-live per clinic**: Transbank production credentials, SMTP account, hosting; follow `docs/DEPLOYMENT.md`.
+   Then switch `sites/SPVetClinic` `BookingUrl` from the external CRM to the portal.
+2. **Product decision**: `Responsible` on exams/visits is free text; consider a staff picker.
+3. **Later**: WhatsApp notifications (setting reserved), services needing a vet *and* a room at once.
 
 Recorded decisions (UI view models, Contracts → Domain, migrations, one DB per clinic) are in
 `docs/architecture/ARCHITECTURE.md`.
