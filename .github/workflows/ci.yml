@@ -20,17 +20,23 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
+      # Projects are restored individually instead of the .sln: the MAUI project
+      # (src/VetManagement.Staff.Maui) targets android/ios/windows TFMs and requires
+      # platform workloads, so it is neither restored nor built on Linux runners.
       - name: Restore
-        run: dotnet restore VetManagement.sln
+        run: |
+          dotnet restore tests/VetManagement.Tests/VetManagement.Tests.csproj
+          dotnet restore src/VetManagement.Staff.Web/VetManagement.Staff.Web.csproj
+          dotnet restore sites/SPVetClinic/SPVetClinic.csproj
 
-      - name: Build API (Api + Application + Infrastructure + Domain + Contracts + Shared)
-        run: dotnet build src/VetManagement.Api/VetManagement.Api.csproj --no-restore
+      - name: Build backend + tests (Api, Application, Infrastructure, Domain, Contracts, Shared)
+        run: dotnet build tests/VetManagement.Tests/VetManagement.Tests.csproj --no-restore
 
-      - name: Build WASM client
+      - name: Build staff web client
         run: dotnet build src/VetManagement.Staff.Web/VetManagement.Staff.Web.csproj --no-restore
 
-      # Note: the MAUI project (src/VetManagement.Staff.Maui) targets android/ios/windows
-      # TFMs and requires platform workloads, so it is not built on Linux runners.
+      - name: Build clinic sites
+        run: dotnet build sites/SPVetClinic/SPVetClinic.csproj --no-restore
 
       - name: Test
         run: dotnet test tests/VetManagement.Tests/VetManagement.Tests.csproj --no-restore --no-build --verbosity minimal
