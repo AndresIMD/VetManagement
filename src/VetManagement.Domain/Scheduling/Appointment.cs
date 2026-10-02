@@ -38,6 +38,15 @@ public class Appointment : Entity<int>
     /// <summary>While waiting for the WebPay deposit, the slot is held until this time.</summary>
     public DateTime? PaymentHoldUntilUtc { get; set; }
 
+    /// <summary>Secret in the client's link to view or cancel an online booking.</summary>
+    public string? PublicToken { get; set; }
+
+    public DepositStatus DepositStatus { get; set; } = DepositStatus.NotRequired;
+    /// <summary>Provider that took the deposit ("WebPayPlus", "Simulated", ...) and its transaction token.</summary>
+    public string? PaymentProvider { get; set; }
+    public string? PaymentToken { get; set; }
+    public int PaidAmount { get; set; }
+
     /// <summary>Set once the reminder email went out, so it is never sent twice.</summary>
     public DateTime? ReminderSentAtUtc { get; set; }
 

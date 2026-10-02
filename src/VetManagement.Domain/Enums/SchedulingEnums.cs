@@ -41,3 +41,17 @@ public enum AppointmentSource
     Staff,
     Online
 }
+
+/// <summary>What happened to an appointment's deposit.</summary>
+public enum DepositStatus
+{
+    NotRequired,
+    /// <summary>Waiting for the client to pay at the provider.</summary>
+    Pending,
+    Paid,
+    /// <summary>Cancelled in time but the clinic approves refunds manually (or an automatic refund failed).</summary>
+    RefundRequested,
+    Refunded,
+    /// <summary>Kept by the clinic (late cancellation, no-show or NoRefund policy).</summary>
+    Forfeited
+}

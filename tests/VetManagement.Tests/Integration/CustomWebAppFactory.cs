@@ -51,6 +51,9 @@ public class CustomWebAppFactory : WebApplicationFactory<Program>
         builder.UseSetting("Jwt:Issuer", JwtIssuer);
         builder.UseSetting("Jwt:Audience", JwtIssuer);
         builder.UseSetting("AllowedOrigins:0", "https://localhost");
+        // Tests book many times per minute from one "IP"; the default public limit would return 429.
+        builder.UseSetting("RateLimits:PublicWritePerMinute", "10000");
+        builder.UseSetting("RateLimits:PublicReadPerMinute", "10000");
 
         builder.ConfigureServices(services =>
         {

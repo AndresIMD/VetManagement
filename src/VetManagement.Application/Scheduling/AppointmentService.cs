@@ -36,7 +36,7 @@ public sealed record BookingResult(BookingStatus Status, int? AppointmentId = nu
 /// Staff-side agenda operations. Every booking and move re-checks availability while holding an exclusive
 /// per-resource lock, so two people can never take the same last slot.
 /// </summary>
-public class AppointmentService(IUnitOfWork unitOfWork, SchedulingSettingsService settingsService, AuditService audit, AppointmentNotifier notifier, TimeProvider clock)
+public class AppointmentService(IUnitOfWork unitOfWork, SchedulingSettingsService settingsService, AuditService audit, AppointmentNotifier notifier, AgendaRules rules, TimeProvider clock)
 {
     private const string EntityName = "Appointment";
 
@@ -47,7 +47,7 @@ public class AppointmentService(IUnitOfWork unitOfWork, SchedulingSettingsServic
             return null;
 
         var zone = TimeZoneInfo.FindSystemTimeZoneById(settings.TimeZone);
-        var (fromUtc, toUtc) = UtcRange(from, to, zone);
+        var (fromUtc, toUtc) = AgendaRules.UtcRange(from, to, zone);
         var now = clock.GetUtcNow().UtcDateTime;
         var booked = (await unitOfWork.Appointments.GetOverlappingAsync(fromUtc, toUtc))
             .Where(a => a.OccupiesSlot(now))
@@ -66,14 +66,14 @@ public class AppointmentService(IUnitOfWork unitOfWork, SchedulingSettingsServic
     public async Task<BookingResult> BookAsync(BookingRequest request, string userName)
     {
         var settings = (await settingsService.GetAsync()).Settings;
-        var service = FindBookableService(settings, request.ServiceCode, request.ResourceCode, out var error);
+        var service = AgendaRules.FindBookableService(settings, request.ServiceCode, request.ResourceCode, out var error);
         if (service is null)
             return new BookingResult(BookingStatus.Invalid, Error: error);
 
         Appointment? booked = null;
-        var result = await unitOfWork.ExecuteExclusiveAsync(BookingLockKey(request.ResourceCode), async () =>
+        var result = await unitOfWork.ExecuteExclusiveAsync(AgendaRules.BookingLockKey(request.ResourceCode), async () =>
         {
-            if (!await IsSlotFreeAsync(settings, service, request.ResourceCode, request.StartUtc, request.Overbook, ignoreAppointmentId: null))
+            if (!await rules.IsSlotFreeAsync(settings, service, request.ResourceCode, request.StartUtc, request.Overbook, ignoreAppointmentId: null))
                 return new BookingResult(BookingStatus.SlotUnavailable);
 
             var appointment = new Appointment
@@ -118,7 +118,7 @@ public class AppointmentService(IUnitOfWork unitOfWork, SchedulingSettingsServic
         var settings = (await settingsService.GetAsync()).Settings;
 
         Appointment? moved = null;
-        var result = await unitOfWork.ExecuteExclusiveAsync(BookingLockKey(resourceCode), async () =>
+        var result = await unitOfWork.ExecuteExclusiveAsync(AgendaRules.BookingLockKey(resourceCode), async () =>
         {
             var appointment = await unitOfWork.Appointments.GetByIdAsync(id);
             if (appointment is null)
@@ -126,10 +126,10 @@ public class AppointmentService(IUnitOfWork unitOfWork, SchedulingSettingsServic
             if (appointment.Status is not (AppointmentStatus.Confirmed or AppointmentStatus.NeedsReschedule))
                 return new BookingResult(BookingStatus.Invalid, Error: $"A {appointment.Status} appointment can't be moved.");
 
-            var service = FindBookableService(settings, appointment.ServiceCode, resourceCode, out var error);
+            var service = AgendaRules.FindBookableService(settings, appointment.ServiceCode, resourceCode, out var error);
             if (service is null)
                 return new BookingResult(BookingStatus.Invalid, Error: error);
-            if (!await IsSlotFreeAsync(settings, service, resourceCode, startUtc, overbook, ignoreAppointmentId: id))
+            if (!await rules.IsSlotFreeAsync(settings, service, resourceCode, startUtc, overbook, ignoreAppointmentId: id))
                 return new BookingResult(BookingStatus.SlotUnavailable);
 
             appointment.ResourceCode = resourceCode;
@@ -228,42 +228,4 @@ public class AppointmentService(IUnitOfWork unitOfWork, SchedulingSettingsServic
         return sent;
     }
 
-    private static ServiceDefinition? FindBookableService(SchedulingSettings settings, string serviceCode, string resourceCode, out string? error)
-    {
-        error = null;
-        var service = settings.Services.FirstOrDefault(s => string.Equals(s.Code, serviceCode, StringComparison.OrdinalIgnoreCase));
-        if (service is null || !service.Enabled)
-            error = $"Service '{serviceCode}' is not available.";
-        else if (!service.ResourceCodes.Contains(resourceCode, StringComparer.OrdinalIgnoreCase)
-                 || settings.Resources.All(r => !r.Enabled || !string.Equals(r.Code, resourceCode, StringComparison.OrdinalIgnoreCase)))
-            error = $"Resource '{resourceCode}' can't perform '{serviceCode}'.";
-        return error is null ? service : null;
-    }
-
-    /// <summary>The requested start must be one of the slots the calculator offers to staff (unless overbooking).</summary>
-    private async Task<bool> IsSlotFreeAsync(SchedulingSettings settings, ServiceDefinition service, string resourceCode, DateTime startUtc, bool overbook, int? ignoreAppointmentId)
-    {
-        var now = clock.GetUtcNow().UtcDateTime;
-        if (overbook)
-            return startUtc >= now;
-
-        var zone = TimeZoneInfo.FindSystemTimeZoneById(settings.TimeZone);
-        var date = DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(startUtc, zone));
-        var (fromUtc, toUtc) = UtcRange(date, date, zone);
-        var booked = (await unitOfWork.Appointments.GetOverlappingAsync(fromUtc, toUtc, resourceCode))
-            .Where(a => a.Id != ignoreAppointmentId && a.OccupiesSlot(now))
-            .Select(a => new BookedInterval(a.ResourceCode, a.StartUtc, a.OccupiedUntilUtc))
-            .ToList();
-
-        return AvailabilityCalculator.GetSlots(settings, service.Code, date, date, booked, now, BookingAudience.Staff)
-            .Any(s => string.Equals(s.ResourceCode, resourceCode, StringComparison.OrdinalIgnoreCase) && s.StartUtc == startUtc);
-    }
-
-    /// <summary>Bookings for the same resource are serialized; different resources proceed in parallel.</summary>
-    private static string BookingLockKey(string resourceCode) => $"booking:{resourceCode.ToLowerInvariant()}";
-
-    /// <summary>UTC bounds of whole local days, padded one day so bookings crossing midnight are included.</summary>
-    private static (DateTime FromUtc, DateTime ToUtc) UtcRange(DateOnly from, DateOnly to, TimeZoneInfo zone)
-        => (TimeZoneInfo.ConvertTimeToUtc(from.AddDays(-1).ToDateTime(TimeOnly.MinValue), zone),
-            TimeZoneInfo.ConvertTimeToUtc(to.AddDays(2).ToDateTime(TimeOnly.MinValue), zone));
 }

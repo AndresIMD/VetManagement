@@ -83,6 +83,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         builder.Entity<Appointment>().Property(a => a.CreatedBy).HasMaxLength(256);
         builder.Entity<Appointment>().Property(a => a.CancelledBy).HasMaxLength(256);
         builder.Entity<Appointment>().Property(a => a.CancelReason).HasMaxLength(500);
+        builder.Entity<Appointment>().Property(a => a.PublicToken).HasMaxLength(64);
+        builder.Entity<Appointment>().HasIndex(a => a.PublicToken).IsUnique().HasFilter("[PublicToken] IS NOT NULL");
+        builder.Entity<Appointment>().Property(a => a.PaymentProvider).HasMaxLength(50);
+        builder.Entity<Appointment>().Property(a => a.PaymentToken).HasMaxLength(100);
+        builder.Entity<Appointment>().HasIndex(a => a.PaymentToken);
 
         // Configure DosageRange as owned type for Drug
         builder.Entity<Drug>().OwnsOne(d => d.DosageDog);

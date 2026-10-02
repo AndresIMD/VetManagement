@@ -9,4 +9,11 @@ public interface IAppointmentRepository : IRepository<Appointment>
     Task<List<Appointment>> GetOverlappingAsync(DateTime fromUtc, DateTime toUtc, string? resourceCode = null);
 
     Task<List<Appointment>> GetByStatusFromAsync(AppointmentStatus status, DateTime fromUtc, DateTime? toUtc = null);
+
+    Task<Appointment?> GetByPublicTokenAsync(string publicToken);
+
+    Task<Appointment?> GetByPaymentTokenAsync(string paymentToken);
+
+    /// <summary>Online bookings still waiting for payment whose hold has expired.</summary>
+    Task<List<Appointment>> GetExpiredPaymentHoldsAsync(DateTime nowUtc);
 }

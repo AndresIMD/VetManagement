@@ -157,6 +157,9 @@ builder.Services.AddSingleton(new VetManagement.Application.Scheduling.Schedulin
     File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Scheduling", "scheduling.defaults.json"))));
 builder.Services.AddScoped<VetManagement.Application.Scheduling.SchedulingSettingsService>();
 builder.Services.AddScoped<VetManagement.Application.Scheduling.AppointmentService>();
+builder.Services.AddScoped<VetManagement.Application.Scheduling.AgendaRules>();
+builder.Services.AddScoped<VetManagement.Application.Scheduling.OnlineBookingService>();
+builder.Services.AddSingleton(builder.Configuration.GetSection("BookingPortal").Get<VetManagement.Api.Controllers.Public.BookingPortalOptions>() ?? new());
 builder.Services.AddScoped<VetManagement.Application.Scheduling.AppointmentNotifier>();
 builder.Services.AddPaymentGateway(builder.Configuration, builder.Environment);
 builder.Services.AddScoped<VetManagement.Application.Contracts.Services.IEmailSender, SmtpEmailSender>();
@@ -211,6 +214,14 @@ builder.Services.AddRateLimiter(options =>
             context.HttpContext.Response.Headers.RetryAfter = retryAfter.TotalSeconds.ToString();
         return new ValueTask();
     };
+
+    // Public booking portal (anonymous), per client IP. Defaults 120 reads / 10 writes per minute; tune per clinic with RateLimits:*.
+    options.AddPolicy("public-read", context => System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
+        _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions { PermitLimit = builder.Configuration.GetValue("RateLimits:PublicReadPerMinute", 120), Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+    options.AddPolicy("public-write", context => System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
+        _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions { PermitLimit = builder.Configuration.GetValue("RateLimits:PublicWritePerMinute", 10), Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
 
     // Login attempts per client IP, on top of the global limit and the per-account lockout.
     options.AddPolicy("login", context => System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(

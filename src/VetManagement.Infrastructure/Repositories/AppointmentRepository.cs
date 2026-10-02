@@ -20,4 +20,15 @@ public class AppointmentRepository(AppDbContext context) : Repository<Appointmen
             .Where(a => a.Status == status && a.StartUtc >= fromUtc && (toUtc == null || a.StartUtc < toUtc))
             .OrderBy(a => a.StartUtc)
             .ToListAsync();
+
+    public async Task<Appointment?> GetByPublicTokenAsync(string publicToken)
+        => await _context.Appointments.FirstOrDefaultAsync(a => a.PublicToken == publicToken);
+
+    public async Task<Appointment?> GetByPaymentTokenAsync(string paymentToken)
+        => await _context.Appointments.FirstOrDefaultAsync(a => a.PaymentToken == paymentToken);
+
+    public async Task<List<Appointment>> GetExpiredPaymentHoldsAsync(DateTime nowUtc)
+        => await _context.Appointments
+            .Where(a => a.Status == AppointmentStatus.PendingPayment && a.PaymentHoldUntilUtc < nowUtc)
+            .ToListAsync();
 }
