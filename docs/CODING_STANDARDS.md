@@ -623,13 +623,16 @@ private string FilterName
 
 ### 8.1 Enum Files
 
+All enums live in Domain (one source of truth for backend and UI):
+
 ```
-VetManagement.Staff.UI/Enums/
-├─ InventoryEnums.cs           (Stock movements, filters)
-├─ ExamEnums.cs                (Exam types)
-├─ PetEnums.cs                 (Pet types, breeds)
-├─ CommonEnums.cs              (Sorting, pagination)
-└─ AuditEnums.cs               (Unified audit actions)
+VetManagement.Domain/Enums/
+├─ InventoryEnums.cs                   (Item types, movements, filters, sorting)
+├─ ExamEnums.cs                        (Sample types/containers, exam item status)
+├─ PetEnums.cs                         (Sex, species, reproductive status)
+├─ CommonEnums.cs                      (Payments, audit actions)
+├─ EnumAttributes.cs                   (DisplayString + EnumExtensions)
+└─ InventoryMovementTypeExtensions.cs  (Movement type → audit action)
 ```
 
 ### 8.2 Helper Files
@@ -672,9 +675,9 @@ public async Task<List<Item>> GetItemsAsync(ItemSortField? sortBy, SortDirection
 // FIXME: This needs refactoring
 ```
 
-✅ **DO**: Create a task in `docs/MASTER_STATUS.md` and link it in code if absolutely necessary:
+✅ **DO**: Add the task to "Next Actions" in `PROJECT_STATE.md` and reference it in code only if absolutely necessary:
 ```csharp
-// See docs/MASTER_STATUS.md - T-001: Fixed header table component
+// See PROJECT_STATE.md (Next Actions): fixed header table component
 ```
 
 ---
@@ -722,30 +725,16 @@ public async Task UpdateAsync_WithValidItem_UpdatesSuccessfully()
 
 ## 11. Clean Architecture Layers
 
-### 11.1 Shared Layer (VetManagement.Staff.UI)
-- **Contains**: Enums, DTOs, interfaces, extensions
-- **No dependencies**: On Application, Infrastructure, or API
-- **Consumed by**: All layers
+The full layer map, dependency rules, module pattern and guard tests are in
+[`architecture/ARCHITECTURE.md`](architecture/ARCHITECTURE.md). In short:
 
-### 11.2 Domain/Application Layer (VetManagement.Application)
-- **Contains**: Services, business logic, audit logging
-- **Depends on**: Shared, Infrastructure (via IUnitOfWork)
-- **Pattern**: Service → Repository → Database
-
-### 11.3 Infrastructure Layer (VetManagement.Infrastructure)
-- **Contains**: Repositories, DbContext, EF Core configurations
-- **Depends on**: Shared, Application (interfaces)
-- **Pattern**: Database → Query → Mapping
-
-### 11.4 API Layer (VetManagement.Api)
-- **Contains**: Controllers, middleware, API configuration
-- **Depends on**: All (orchestrates)
-- **Pattern**: HTTP Request → Controller → Service → Repository
-
-### 11.5 Presentation Layer (VetManagement.Staff.Web)
-- **Contains**: Blazor components, pages, client logic
-- **Depends on**: Shared (DTOs, API clients)
-- **Pattern**: User → Component → API Service → Server
+- **Domain**: entities and enums, no dependencies, no attributes.
+- **Contracts**: request/DTO transport types with server-side validation.
+- **Application**: services; depends on Domain and Contracts.
+- **Infrastructure**: EF Core; implements Application's repository interfaces.
+- **Api**: controllers map request → entity → DTO; never return EF entities.
+- **Staff.UI**: pages, components, view models and API clients for Staff.Web and Staff.Maui.
+  The backend must never reference it (`ArchitectureTests`).
 
 ---
 

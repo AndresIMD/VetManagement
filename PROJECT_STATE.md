@@ -19,8 +19,8 @@ Guard tests: `ArchitectureTests` (dependency direction), `MigrationsTests` (EF m
 | **F1** | ✅ **COMPLETED** | Inventory migration to Domain/Contracts |
 | **F2** | ✅ **COMPLETED** | Clients/Pets, Exams, Medical, Audit, enums and DTOs out of Shared; backend no longer references the UI |
 | **F3** | ✅ **COMPLETED** (with F2) | Shared → UI only, renamed `VetManagement.Staff.UI` |
-| **F4** | 🟡 **IN PROGRESS** | Hardening: ✅ ProblemDetails + UI error boundary, ✅ login lockout + rate limit; ⏳ structured logging, health checks per dependency |
-| **F5** | ⏳ Pending | Documentation |
+| **F4** | ✅ **COMPLETED** | Hardening: ProblemDetails + UI error boundary, login lockout + rate limit, DB health check, JSON logs, validation gaps closed |
+| **F5** | ✅ **COMPLETED** | docs/architecture/ARCHITECTURE.md; historical docs moved to docs/archive |
 
 ---
 
@@ -80,12 +80,18 @@ git log --oneline -10
 
 ## Next Actions (Priority Order)
 
-1. **F4 — remaining hardening**: structured logging, health checks per dependency (DB), show a specific message in the login UI when the API answers 429.
-2. **Validation gaps** found during F2 (kept as-is to avoid behavior changes): `ExamPerformed.PatientId` and `ExamRequestItem.ExamId` accept 0 and have no FK.
-3. **Product decision**: `Responsible` on exams/visits is free text (clinical responsible, may differ from who records it; the audit log always stores the authenticated user). Consider a staff picker.
-4. **Public API for clinic sites** (booking, services) with per-clinic CORS, before `sites/` consumes the API.
-5. **Contracts → Domain**: Contracts reference Domain only for enums; move or duplicate those enums before publishing Contracts to clinic sites.
-6. **F5 — Documentation**: refresh README architecture section; archive `docs/reports` and `docs/MASTER_STATUS.md` as historical.
+F0–F5 are complete. The next phase adds product features and needs decisions from the clinic first.
+
+1. **F6 — Scheduling (agenda)**: the CRM has no appointments yet; booking on clinic sites depends on it.
+   Open questions: services and their durations, per-vet vs per-room availability, opening hours and
+   exceptions, cancellation rules, whether online bookings need staff confirmation, payment up front
+   (WebPay prototype exists in `sites/SPVetClinic/_wip`).
+2. **F7 — Public API for clinic sites**: anonymous endpoints (services, availability, booking) with
+   per-clinic CORS and rate limits, then `sites/SPVetClinic` consumes it.
+3. **Product decision**: `Responsible` on exams/visits is free text; consider a staff picker.
+
+Recorded decisions (UI view models, Contracts → Domain, migrations, one DB per clinic) are in
+`docs/architecture/ARCHITECTURE.md`.
 
 ---
 

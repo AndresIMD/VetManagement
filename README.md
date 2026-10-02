@@ -45,7 +45,9 @@ VetManagement.sln
 ```
 
 **Why this structure?**  
-Separating business logic (Application) from data access (Infrastructure) makes the code easier to test and maintain. The API layer only handles HTTP concerns. `Shared` is the UI layer only — it must never be referenced by Application or Infrastructure.
+Separating business logic (Application) from data access (Infrastructure) makes the code easier to test and maintain. The API layer only handles HTTP concerns and talks to every client through `Contracts`. `Staff.UI` is the UI layer only — the backend never references it, and `ArchitectureTests` enforces that.
+
+See [`docs/architecture/ARCHITECTURE.md`](docs/architecture/ARCHITECTURE.md) for the dependency rules, the module pattern and the guard tests, and [`PROJECT_STATE.md`](PROJECT_STATE.md) for the current roadmap.
 
 ## Key Features
 
@@ -172,11 +174,11 @@ Building this project taught me:
 **Solution:** Planning to use SQLite for local cache with sync queue (not yet implemented)
 
 **Challenge:** Keeping UI and API in sync  
-**Solution:** Shared project with common models and DTOs
+**Solution:** A `Contracts` project with request/response DTOs shared by API and clients; the UI keeps its own view models, and `WireContractTests` fail if their JSON shapes drift apart
 
 ## Future Improvements
 
-- [ ] Unit and integration tests
+- [x] Unit, integration and architecture tests (run in CI on every push)
 - [ ] Better offline sync strategy
 - [ ] Reporting dashboard with charts
 - [ ] Mobile apps (iOS/Android via MAUI)
