@@ -101,7 +101,7 @@ public static class MauiProgram
             .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
 
         builder.Services.AddScoped<AuthenticationStateProvider, JwtAuthenticationStateProvider>();
-        builder.Services.AddAuthorizationCore();
+        builder.Services.AddStaffAuthorization();
 
         // Background + Theme services
         builder.Services.AddScoped<BackgroundService>();
