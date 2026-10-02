@@ -1,0 +1,148 @@
+{
+  "enabled": false,
+  "timeZone": "America/Santiago",
+  "booking": {
+    "minNoticeMinutes": 60,
+    "horizonDays": 60,
+    "slotStepMinutes": 15
+  },
+  "cancellation": {
+    "clientDeadlineHours": 24,
+    "refundMode": "ManualApproval"
+  },
+  "payment": {
+    "pendingPaymentHoldMinutes": 15
+  },
+  "notifications": {
+    "sendConfirmation": true,
+    "sendReminder": true,
+    "reminderHoursBefore": 24,
+    "sendRescheduleNotice": true
+  },
+  "services": [
+    {
+      "code": "consultation",
+      "name": "Consulta general",
+      "enabled": false,
+      "allowOnlineBooking": true,
+      "durationMinutes": 30,
+      "bufferMinutes": 0,
+      "price": 25000,
+      "depositPercent": 0,
+      "resourceCodes": [ "vet-general" ]
+    },
+    {
+      "code": "vaccination",
+      "name": "Vacunación",
+      "enabled": false,
+      "allowOnlineBooking": true,
+      "durationMinutes": 15,
+      "bufferMinutes": 0,
+      "price": 15000,
+      "depositPercent": 0,
+      "resourceCodes": [ "vet-general" ]
+    },
+    {
+      "code": "grooming",
+      "name": "Peluquería",
+      "enabled": false,
+      "allowOnlineBooking": true,
+      "durationMinutes": 60,
+      "bufferMinutes": 15,
+      "price": 20000,
+      "depositPercent": 0,
+      "resourceCodes": [ "grooming-room" ]
+    },
+    {
+      "code": "surgery",
+      "name": "Cirugía",
+      "enabled": false,
+      "allowOnlineBooking": false,
+      "durationMinutes": 120,
+      "bufferMinutes": 30,
+      "price": 150000,
+      "depositPercent": 50,
+      "resourceCodes": [ "surgery-room" ]
+    },
+    {
+      "code": "specialist",
+      "name": "Consulta especialista",
+      "enabled": false,
+      "allowOnlineBooking": true,
+      "durationMinutes": 45,
+      "bufferMinutes": 0,
+      "price": 45000,
+      "depositPercent": 50,
+      "resourceCodes": [ "specialist-1" ]
+    }
+  ],
+  "resources": [
+    {
+      "code": "vet-general",
+      "name": "Veterinario general",
+      "kind": "Vet",
+      "enabled": true,
+      "progressiveRelease": false,
+      "releaseThresholdPercent": 100,
+      "weekly": [
+        { "day": "Monday", "blocks": [ { "start": "09:00", "end": "13:00" }, { "start": "14:00", "end": "18:00" } ] },
+        { "day": "Tuesday", "blocks": [ { "start": "09:00", "end": "13:00" }, { "start": "14:00", "end": "18:00" } ] },
+        { "day": "Wednesday", "blocks": [ { "start": "09:00", "end": "13:00" }, { "start": "14:00", "end": "18:00" } ] },
+        { "day": "Thursday", "blocks": [ { "start": "09:00", "end": "13:00" }, { "start": "14:00", "end": "18:00" } ] },
+        { "day": "Friday", "blocks": [ { "start": "09:00", "end": "13:00" }, { "start": "14:00", "end": "18:00" } ] },
+        { "day": "Saturday", "blocks": [ { "start": "09:00", "end": "13:00" } ] }
+      ]
+    },
+    {
+      "code": "specialist-1",
+      "name": "Especialista (ejemplo)",
+      "kind": "Vet",
+      "enabled": true,
+      "progressiveRelease": true,
+      "releaseThresholdPercent": 100,
+      "weekly": [
+        {
+          "day": "Wednesday",
+          "blocks": [
+            { "start": "10:00", "end": "13:00" },
+            { "start": "13:30", "end": "17:00", "isOverflow": true }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "grooming-room",
+      "name": "Sala de peluquería",
+      "kind": "Room",
+      "enabled": true,
+      "progressiveRelease": false,
+      "releaseThresholdPercent": 100,
+      "weekly": [
+        { "day": "Monday", "blocks": [ { "start": "10:00", "end": "18:00", "maxParallel": 2 } ] },
+        { "day": "Wednesday", "blocks": [ { "start": "10:00", "end": "18:00", "maxParallel": 2 } ] },
+        { "day": "Friday", "blocks": [ { "start": "10:00", "end": "18:00", "maxParallel": 2 } ] }
+      ]
+    },
+    {
+      "code": "surgery-room",
+      "name": "Pabellón",
+      "kind": "Room",
+      "enabled": true,
+      "progressiveRelease": false,
+      "releaseThresholdPercent": 100,
+      "weekly": [
+        { "day": "Tuesday", "blocks": [ { "start": "09:00", "end": "14:00" } ] },
+        { "day": "Thursday", "blocks": [ { "start": "09:00", "end": "14:00" } ] }
+      ]
+    }
+  ],
+  "exceptions": [
+    {
+      "from": "2026-12-25",
+      "to": "2026-12-25",
+      "resourceCode": null,
+      "kind": "Closed",
+      "reason": "Navidad"
+    }
+  ]
+}
