@@ -1,0 +1,46 @@
+@using VetManagement.Contracts.Scheduling
+@inherits ModalBase<CancelAppointmentRequest>
+@inject SchedulingApiService SchedulingApi
+
+<ModalShell Title="Cancel appointment"
+            TitleIcon="@Icons.Material.Filled.EventBusy"
+            TitleColor="Color.Error"
+            IsLoading="@isLoading"
+            PrimaryText="Cancel appointment"
+            PrimaryLoadingText="Cancelling..."
+            PrimaryColor="Color.Error"
+            CancelText="Keep it"
+            OnPrimaryClick="CancelAppointmentAsync"
+            OnCancelClick="OnCancel">
+    <MudText Typo="Typo.body2" Class="mb-2">
+        @Appointment.OwnerName@(string.IsNullOrWhiteSpace(Appointment.PetName) ? "" : $" · {Appointment.PetName}") ·
+        @Appointment.StartUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")
+    </MudText>
+    <MudTextField Label="Reason (optional)" @bind-Value="_reason" Lines="2" MaxLength="500" />
+</ModalShell>
+
+@code {
+    [Parameter] public AppointmentDto Appointment { get; set; } = default!;
+
+    private string? _reason;
+
+    private async Task CancelAppointmentAsync()
+    {
+        isLoading = true;
+        try
+        {
+            var result = await SchedulingApi.CancelAsync(Appointment.Id, _reason);
+            if (!result.Ok)
+            {
+                Snackbar.Add(result.Error!, Severity.Error);
+                return;
+            }
+            Snackbar.Add("Appointment cancelled.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

@@ -156,6 +156,17 @@
         },
         new MenuItem
         {
+            Title = "Agenda",
+            Icon = Icons.Material.Filled.CalendarMonth,
+            RequiredPerms = new[] { "scheduling.read", "scheduling.manage" },
+            Children = new List<MenuItem>
+            {
+                new MenuItem { Title = "Calendar", Href = "agenda", RequiredPerms = new[] { "scheduling.read" } },
+                new MenuItem { Title = "Settings", Href = "agenda/settings", RequiredPerms = new[] { "scheduling.manage" } }
+            }
+        },
+        new MenuItem
+        {
             Title = "Administration",
             Icon = Icons.Material.Filled.AdminPanelSettings,
             RequiredPerms = new[] { "users.read", "audit.read" },

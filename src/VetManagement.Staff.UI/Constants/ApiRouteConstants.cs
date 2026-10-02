@@ -54,4 +54,11 @@ public static class ApiRouteConstants
     // Inventory Alerts
     public const string INVENTORY_ALERTS_SCHEDULE = "api/inventory-alerts/schedule";
     public const string SEND_EMAIL = "api/email/send";
+
+    // Scheduling (agenda)
+    public const string SCHEDULING_SETTINGS = "api/scheduling/settings";
+    public const string SCHEDULING_AVAILABILITY = "api/scheduling/availability";
+    public const string SCHEDULING_APPOINTMENTS = "api/scheduling/appointments";
+    public const string SCHEDULING_APPOINTMENT_RESCHEDULE = "api/scheduling/appointments/{0}/reschedule";
+    public const string SCHEDULING_APPOINTMENT_CANCEL = "api/scheduling/appointments/{0}/cancel";
 }

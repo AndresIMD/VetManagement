@@ -84,6 +84,8 @@ public static class MauiProgram
 
         builder.Services.AddHttpClient<AuditApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
             .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
+        builder.Services.AddHttpClient<SchedulingApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
+            .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
 
         // AccountApiService: login/refresh without JWT handler
         builder.Services.AddHttpClient<AccountApiService>(c => c.BaseAddress = new Uri(apiBaseUrl));

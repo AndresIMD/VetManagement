@@ -1,0 +1,124 @@
+@using VetManagement.Contracts.Scheduling
+@inherits ModalBase<RescheduleAppointmentRequest>
+@inject SchedulingApiService SchedulingApi
+
+<ModalShell Title="Reschedule appointment"
+            TitleIcon="@Icons.Material.Filled.EditCalendar"
+            IsLoading="@isLoading"
+            IsValid="@CanSave"
+            PrimaryText="Move"
+            PrimaryLoadingText="Moving..."
+            OnPrimaryClick="MoveAsync"
+            OnCancelClick="OnCancel">
+    <MudText Typo="Typo.body2" Class="mb-2">
+        @Appointment.OwnerName@(string.IsNullOrWhiteSpace(Appointment.PetName) ? "" : $" · {Appointment.PetName}") ·
+        @Catalog.ServiceName(Appointment.ServiceCode) · now @Catalog.ResourceName(Appointment.ResourceCode),
+        @Appointment.StartUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")
+    </MudText>
+
+    <MudGrid>
+        <MudItem xs="12" sm="6">
+            <MudDatePicker Label="New date" Date="_date" DateChanged="OnDateChanged" />
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudSwitch T="bool" @bind-Value="_overbook" Color="Color.Warning" Label="Overbook at a specific time" />
+        </MudItem>
+
+        @if (_overbook)
+        {
+            <MudItem xs="12" sm="6">
+                <MudSelect T="string" Label="Vet / room" @bind-Value="_resourceCode">
+                    @foreach (var resource in ServiceResources)
+                    {
+                        <MudSelectItem Value="@resource">@Catalog.ResourceName(resource)</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6"><MudTimePicker Label="Time" @bind-Time="_time" AmPm="false" /></MudItem>
+        }
+        else
+        {
+            <MudItem xs="12">
+                @if (_loadingSlots)
+                {
+                    <MudProgressLinear Indeterminate="true" />
+                }
+                else if (_slots.Count == 0)
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">No free slots that day.</MudText>
+                }
+                else
+                {
+                    <MudChipSet T="AvailableSlotDto" @bind-SelectedValue="_selected" SelectionMode="SelectionMode.SingleSelection">
+                        @foreach (var slot in _slots)
+                        {
+                            <MudChip Value="slot" Variant="Variant.Outlined" Color="@(slot.IsOverflow ? Color.Warning : Color.Primary)">
+                                @slot.StartUtc.ToLocalTime().ToString("HH:mm") · @Catalog.ResourceName(slot.ResourceCode)
+                            </MudChip>
+                        }
+                    </MudChipSet>
+                }
+            </MudItem>
+        }
+    </MudGrid>
+</ModalShell>
+
+@code {
+    [Parameter] public AgendaCatalog Catalog { get; set; } = default!;
+    [Parameter] public AppointmentDto Appointment { get; set; } = default!;
+
+    private DateTime? _date;
+    private List<AvailableSlotDto> _slots = [];
+    private AvailableSlotDto? _selected;
+    private bool _loadingSlots;
+    private bool _overbook;
+    private string? _resourceCode;
+    private TimeSpan? _time;
+
+    private IReadOnlyList<string> ServiceResources =>
+        Catalog.Services.FirstOrDefault(s => s.Code == Appointment.ServiceCode)?.ResourceCodes ?? [];
+
+    private bool CanSave => _overbook ? _date is not null && _time is not null && _resourceCode is not null : _selected is not null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _resourceCode = Appointment.ResourceCode;
+        await OnDateChanged(DateTime.Today);
+    }
+
+    private async Task OnDateChanged(DateTime? date)
+    {
+        _date = date;
+        _selected = null;
+        _slots = [];
+        if (date is null)
+            return;
+        _loadingSlots = true;
+        var day = DateOnly.FromDateTime(date.Value);
+        _slots = await SchedulingApi.GetAvailabilityAsync(Appointment.ServiceCode, day, day);
+        _loadingSlots = false;
+    }
+
+    private async Task MoveAsync()
+    {
+        isLoading = true;
+        try
+        {
+            var request = _overbook
+                ? new RescheduleAppointmentRequest { ResourceCode = _resourceCode!, StartUtc = (_date!.Value.Date + _time!.Value).ToUniversalTime(), Overbook = true }
+                : new RescheduleAppointmentRequest { ResourceCode = _selected!.ResourceCode, StartUtc = _selected.StartUtc };
+            var result = await SchedulingApi.RescheduleAsync(Appointment.Id, request);
+            if (!result.Ok)
+            {
+                Snackbar.Add(result.Error!, Severity.Error);
+                return;
+            }
+            Snackbar.Add("Appointment moved.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

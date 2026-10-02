@@ -1,0 +1,195 @@
+@page "/agenda"
+@using VetManagement.Contracts.Scheduling
+@using VetManagement.Domain.Enums
+@using VetManagement.Staff.UI.Components.Modals.Agenda
+@inject SchedulingApiService SchedulingApi
+@inject IDialogService DialogService
+@inject AuthenticationStateProvider AuthStateProvider
+@attribute [Authorize(Policy = "Scheduling.Read")]
+
+<PageTitle>Agenda</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mx-auto px-2 mt-8">
+    <PageHeader Title="Agenda" Icon="@Icons.Material.Filled.CalendarMonth" />
+
+    @if (_catalog is null)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+    }
+    else if (EnabledServices.Count == 0)
+    {
+        <MudAlert Severity="Severity.Warning">
+            No service is enabled yet. An administrator enables services (consultations, vaccines, ...) in
+            <MudLink Href="agenda/settings">Agenda Settings</MudLink>.
+        </MudAlert>
+    }
+    else
+    {
+        @if (!_catalog.AgendaEnabled)
+        {
+            <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3">
+                Online booking is off (the agenda is not enabled yet). Staff can still book here.
+            </MudAlert>
+        }
+
+        <MudPaper Class="pa-3 mb-3" Elevation="1">
+            <MudStack Row="true" Spacing="3" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                <MudSelect T="string" Label="Service" Value="_serviceCode" ValueChanged="OnServiceChanged" Style="min-width: 240px;">
+                    @foreach (var service in EnabledServices)
+                    {
+                        <MudSelectItem Value="@service.Code">@service.Name (@service.DurationMinutes min)</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudDatePicker Label="Date" Date="_date" DateChanged="OnDateChanged" Style="max-width: 180px;" />
+                <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ChevronLeft" OnClick="() => OnDateChanged(_date!.Value.AddDays(-1))">Prev</MudButton>
+                <MudButton Variant="Variant.Text" EndIcon="@Icons.Material.Filled.ChevronRight" OnClick="() => OnDateChanged(_date!.Value.AddDays(1))">Next</MudButton>
+                <MudSpacer />
+                @if (_canBook)
+                {
+                    <MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@Icons.Material.Filled.AddAlert" OnClick="() => OpenBookAsync(null)">
+                        Overbook
+                    </MudButton>
+                }
+            </MudStack>
+        </MudPaper>
+
+        <MudGrid>
+            <MudItem xs="12" md="5">
+                <MudPaper Class="pa-3" Elevation="1">
+                    <MudText Typo="Typo.h6" Class="mb-2">Free slots</MudText>
+                    @if (_loading)
+                    {
+                        <MudProgressLinear Indeterminate="true" />
+                    }
+                    else if (_slots.Count == 0)
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">No free slots for this service on this day.</MudText>
+                    }
+                    else
+                    {
+                        @foreach (var group in _slots.GroupBy(s => s.ResourceCode))
+                        {
+                            <MudText Typo="Typo.subtitle2" Class="mt-2">@_catalog.ResourceName(group.Key)</MudText>
+                            <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                                @foreach (var slot in group)
+                                {
+                                    <MudTooltip Text="@(slot.IsOverflow ? "Overflow block: shown to clients as extra capacity" : "Book this time")">
+                                        <MudButton Size="Size.Small" Variant="Variant.Outlined" Disabled="!_canBook"
+                                                   Color="@(slot.IsOverflow ? Color.Warning : Color.Primary)"
+                                                   OnClick="() => OpenBookAsync(slot)">
+                                            @slot.StartUtc.ToLocalTime().ToString("HH:mm")
+                                        </MudButton>
+                                    </MudTooltip>
+                                }
+                            </MudStack>
+                        }
+                    }
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="7">
+                <MudPaper Class="pa-3" Elevation="1">
+                    <MudText Typo="Typo.h6" Class="mb-2">Appointments · @_date?.ToString("dddd dd MMM yyyy")</MudText>
+                    <AppointmentsTable Items="_dayAppointments" Catalog="_catalog" CanBook="_canBook"
+                                       OnReschedule="OpenRescheduleAsync" OnCancel="OpenCancelAsync" EmptyText="No appointments on this day." />
+                </MudPaper>
+            </MudItem>
+
+            @if (_needsReschedule.Count > 0)
+            {
+                <MudItem xs="12">
+                    <MudPaper Class="pa-3" Elevation="1" Style="border-left: 4px solid var(--mud-palette-warning);">
+                        <MudText Typo="Typo.h6" Class="mb-1">Needs rescheduling (@_needsReschedule.Count)</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-2">
+                            Their vet or room became unavailable (absence or closed day). Move or cancel them.
+                        </MudText>
+                        <AppointmentsTable Items="_needsReschedule" Catalog="_catalog" CanBook="_canBook" ShowDate="true"
+                                           OnReschedule="OpenRescheduleAsync" OnCancel="OpenCancelAsync" />
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    private AgendaCatalog? _catalog;
+    private string? _serviceCode;
+    private DateTime? _date = DateTime.Today;
+    private List<AvailableSlotDto> _slots = [];
+    private List<AppointmentDto> _dayAppointments = [];
+    private List<AppointmentDto> _needsReschedule = [];
+    private bool _loading;
+    private bool _canBook;
+
+    private List<CatalogService> EnabledServices => _catalog?.Services.Where(s => s.Enabled).ToList() ?? [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
+        _canBook = user.HasClaim("perm", "scheduling.book");
+        _catalog = await SchedulingApi.GetCatalogAsync();
+        _serviceCode = EnabledServices.FirstOrDefault()?.Code;
+        await RefreshAsync();
+    }
+
+    private async Task OnServiceChanged(string code)
+    {
+        _serviceCode = code;
+        await RefreshAsync();
+    }
+
+    private async Task OnDateChanged(DateTime? date)
+    {
+        _date = date ?? DateTime.Today;
+        await RefreshAsync();
+    }
+
+    private async Task RefreshAsync()
+    {
+        if (_serviceCode is null || _date is null)
+            return;
+        _loading = true;
+        StateHasChanged();
+
+        var day = DateOnly.FromDateTime(_date.Value);
+        var dayStartUtc = _date.Value.Date.ToUniversalTime();
+        _slots = await SchedulingApi.GetAvailabilityAsync(_serviceCode, day, day);
+        _dayAppointments = (await SchedulingApi.GetAppointmentsAsync(dayStartUtc, dayStartUtc.AddDays(1)))
+            .Where(a => a.Status != AppointmentStatus.Cancelled)
+            .OrderBy(a => a.StartUtc).ToList();
+        _needsReschedule = await SchedulingApi.GetAppointmentsAsync(DateTime.UtcNow, DateTime.UtcNow.AddDays(180), AppointmentStatus.NeedsReschedule);
+
+        _loading = false;
+    }
+
+    private static readonly DialogOptions Options = new() { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+
+    private async Task OpenBookAsync(AvailableSlotDto? slot)
+    {
+        var parameters = new DialogParameters<BookAppointmentModal>
+        {
+            { x => x.Catalog, _catalog! },
+            { x => x.ServiceCode, _serviceCode! },
+            { x => x.Slot, slot }
+        };
+        await ShowAndRefreshAsync<BookAppointmentModal>(parameters);
+    }
+
+    private Task OpenRescheduleAsync(AppointmentDto appointment)
+        => ShowAndRefreshAsync<RescheduleAppointmentModal>(new DialogParameters<RescheduleAppointmentModal>
+        {
+            { x => x.Catalog, _catalog! },
+            { x => x.Appointment, appointment }
+        });
+
+    private Task OpenCancelAsync(AppointmentDto appointment)
+        => ShowAndRefreshAsync<CancelAppointmentModal>(new DialogParameters<CancelAppointmentModal> { { x => x.Appointment, appointment } });
+
+    private async Task ShowAndRefreshAsync<TModal>(DialogParameters parameters) where TModal : IComponent
+    {
+        var dialog = await DialogService.ShowAsync<TModal>(null, parameters, Options);
+        if (await dialog.Result is { Canceled: false })
+            await RefreshAsync();
+    }
+}

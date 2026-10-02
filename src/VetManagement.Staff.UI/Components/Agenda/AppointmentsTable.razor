@@ -1,0 +1,82 @@
+@using VetManagement.Contracts.Scheduling
+@using VetManagement.Domain.Enums
+
+@if (Items.Count == 0)
+{
+    <MudText Typo="Typo.body2" Color="Color.Secondary">@EmptyText</MudText>
+}
+else
+{
+    <MudTable Items="Items" Dense="true" Hover="true" Elevation="0">
+        <HeaderContent>
+            <MudTh>@(ShowDate ? "Date" : "Time")</MudTh>
+            <MudTh>Service</MudTh>
+            <MudTh>Vet / room</MudTh>
+            <MudTh>Owner · pet</MudTh>
+            <MudTh>Status</MudTh>
+            @if (CanBook)
+            {
+                <MudTh></MudTh>
+            }
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.StartUtc.ToLocalTime().ToString(ShowDate ? "dd MMM HH:mm" : "HH:mm")–@context.EndUtc.ToLocalTime().ToString("HH:mm")</MudTd>
+            <MudTd>@Catalog.ServiceName(context.ServiceCode)</MudTd>
+            <MudTd>@Catalog.ResourceName(context.ResourceCode)</MudTd>
+            <MudTd>
+                @context.OwnerName@(string.IsNullOrWhiteSpace(context.PetName) ? "" : $" · {context.PetName}")
+                @if (!string.IsNullOrWhiteSpace(context.OwnerPhone))
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">@context.OwnerPhone</MudText>
+                }
+            </MudTd>
+            <MudTd>
+                <MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)">@context.Status</MudChip>
+                @if (context.IsOverbooked)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined">Overbooked</MudChip>
+                }
+                @if (context.Source == AppointmentSource.Online)
+                {
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">Online</MudChip>
+                }
+            </MudTd>
+            @if (CanBook)
+            {
+                <MudTd Style="white-space: nowrap;">
+                    @if (context.Status is AppointmentStatus.Confirmed or AppointmentStatus.NeedsReschedule)
+                    {
+                        <MudTooltip Text="Reschedule">
+                            <MudIconButton Icon="@Icons.Material.Filled.EditCalendar" Size="Size.Small" OnClick="() => OnReschedule.InvokeAsync(context)" />
+                        </MudTooltip>
+                    }
+                    @if (context.Status is AppointmentStatus.Confirmed or AppointmentStatus.NeedsReschedule or AppointmentStatus.PendingPayment)
+                    {
+                        <MudTooltip Text="Cancel">
+                            <MudIconButton Icon="@Icons.Material.Filled.EventBusy" Size="Size.Small" Color="Color.Error" OnClick="() => OnCancel.InvokeAsync(context)" />
+                        </MudTooltip>
+                    }
+                </MudTd>
+            }
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    [Parameter] public List<AppointmentDto> Items { get; set; } = [];
+    [Parameter] public AgendaCatalog Catalog { get; set; } = default!;
+    [Parameter] public bool CanBook { get; set; }
+    [Parameter] public bool ShowDate { get; set; }
+    [Parameter] public string EmptyText { get; set; } = "No appointments.";
+    [Parameter] public EventCallback<AppointmentDto> OnReschedule { get; set; }
+    [Parameter] public EventCallback<AppointmentDto> OnCancel { get; set; }
+
+    private static Color StatusColor(AppointmentStatus status) => status switch
+    {
+        AppointmentStatus.Confirmed => Color.Success,
+        AppointmentStatus.PendingPayment => Color.Info,
+        AppointmentStatus.NeedsReschedule => Color.Warning,
+        AppointmentStatus.Cancelled or AppointmentStatus.NoShow => Color.Error,
+        _ => Color.Default
+    };
+}
