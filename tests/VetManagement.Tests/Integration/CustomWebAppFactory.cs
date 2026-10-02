@@ -33,6 +33,9 @@ public class CustomWebAppFactory : WebApplicationFactory<Program>
         return client;
     }
 
+    /// <summary>Database used by the API under test: in-memory by default (fast, no server needed).</summary>
+    protected virtual void ConfigureDatabase(DbContextOptionsBuilder options) => options.UseInMemoryDatabase(_databaseName);
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
@@ -53,7 +56,7 @@ public class CustomWebAppFactory : WebApplicationFactory<Program>
             services.RemoveAll<DbContextOptions<AppDbContext>>();
             services.RemoveAll<DbContextOptions>();
             services.RemoveAll<AppDbContext>();
-            services.AddDbContext<AppDbContext>(opts => opts.UseInMemoryDatabase(_databaseName));
+            services.AddDbContext<AppDbContext>(ConfigureDatabase);
         });
     }
 }

@@ -9,7 +9,7 @@ namespace VetManagement.Api.Controllers.Scheduling;
 
 [Route("api/scheduling/settings")]
 [Authorize(Policy = "Scheduling.Read")]
-public class SchedulingSettingsController(SchedulingSettingsService service) : ApiControllerBase
+public class SchedulingSettingsController(SchedulingSettingsService service, AppointmentService appointments) : ApiControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<SchedulingSettingsDocument>> GetAsync()
@@ -42,7 +42,7 @@ public class SchedulingSettingsController(SchedulingSettingsService service) : A
         var result = await service.UpdateAsync(settings, document.Version, GetUserName());
         return result.Status switch
         {
-            SettingsUpdateStatus.Saved => Ok(new { version = result.Version }),
+            SettingsUpdateStatus.Saved => Ok(new { version = result.Version, appointmentsNeedingReschedule = await appointments.FlagAffectedByExceptionsAsync(GetUserName()) }),
             SettingsUpdateStatus.Conflict => Conflict(new ProblemDetails
             {
                 Title = "The settings were changed by someone else.",

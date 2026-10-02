@@ -8,6 +8,7 @@ using VetManagement.Domain.Audit;
 using VetManagement.Domain.Exams;
 using VetManagement.Domain.Medical;
 using VetManagement.Domain.Configuration;
+using VetManagement.Domain.Scheduling;
 using Client = VetManagement.Domain.Clients.Client;
 using Pet = VetManagement.Domain.Clients.Pet;
 
@@ -32,6 +33,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<VisitProcedure> VisitProcedures { get; set; }
 
     public DbSet<ClinicSetting> ClinicSettings { get; set; }
+    public DbSet<Appointment> Appointments { get; set; }
 
     private static readonly JsonSerializerOptions _jsonOptions = new();
     private static string SerializeDict(Dictionary<string, string>? v)
@@ -66,6 +68,21 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         builder.Entity<ClinicSetting>().Property(s => s.Key).HasMaxLength(100);
         builder.Entity<ClinicSetting>().Property(s => s.UpdatedBy).HasMaxLength(256);
         builder.Entity<ClinicSetting>().Property(s => s.Version).IsConcurrencyToken();
+
+        // Availability queries filter by resource and time; the index also narrows the serializable range locks taken while booking.
+        builder.Entity<Appointment>().HasIndex(a => new { a.ResourceCode, a.StartUtc });
+        builder.Entity<Appointment>().HasIndex(a => new { a.Status, a.StartUtc });
+        builder.Entity<Appointment>().Property(a => a.ServiceCode).HasMaxLength(100);
+        builder.Entity<Appointment>().Property(a => a.ResourceCode).HasMaxLength(100);
+        builder.Entity<Appointment>().Property(a => a.OwnerName).HasMaxLength(200);
+        builder.Entity<Appointment>().Property(a => a.OwnerTaxId).HasMaxLength(20);
+        builder.Entity<Appointment>().Property(a => a.OwnerEmail).HasMaxLength(256);
+        builder.Entity<Appointment>().Property(a => a.OwnerPhone).HasMaxLength(30);
+        builder.Entity<Appointment>().Property(a => a.PetName).HasMaxLength(100);
+        builder.Entity<Appointment>().Property(a => a.Notes).HasMaxLength(1000);
+        builder.Entity<Appointment>().Property(a => a.CreatedBy).HasMaxLength(256);
+        builder.Entity<Appointment>().Property(a => a.CancelledBy).HasMaxLength(256);
+        builder.Entity<Appointment>().Property(a => a.CancelReason).HasMaxLength(500);
 
         // Configure DosageRange as owned type for Drug
         builder.Entity<Drug>().OwnsOne(d => d.DosageDog);

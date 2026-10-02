@@ -23,3 +23,21 @@ public enum ScheduleExceptionKind
     /// <summary>Replaces the weekly blocks with <c>Blocks</c> for the given dates.</summary>
     CustomHours
 }
+
+public enum AppointmentStatus
+{
+    /// <summary>Online booking waiting for its WebPay deposit; released when the hold expires.</summary>
+    PendingPayment,
+    Confirmed,
+    /// <summary>Its resource became unavailable (absence/closure); staff must move or cancel it.</summary>
+    NeedsReschedule,
+    Completed,
+    Cancelled,
+    NoShow
+}
+
+public enum AppointmentSource
+{
+    Staff,
+    Online
+}

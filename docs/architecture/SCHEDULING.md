@@ -48,6 +48,9 @@ Statuses: `PendingPayment` → `Confirmed` → `Completed` / `Cancelled` / `NoSh
 `NeedsReschedule` when an absence affects a confirmed appointment. Online bookings confirm
 automatically (after payment when the service requires a deposit). Staff can cancel, reassign and
 overbook. Clients are identified by RUT without an account; an emailed link allows cancellation.
-Booking re-checks availability inside a serializable transaction so two people can't take the last slot.
+Booking re-checks availability while holding an exclusive per-resource lock (`sp_getapplock`) inside a
+transaction, so two people can't take the last slot. Serializable isolation alone deadlocked under
+contention; `ConcurrentBookingTests` runs parallel bookings against real SQL Server (locally via LocalDB,
+and in CI via a SQL Server service container).
 
 Payments: WebPay Plus (Transbank) for deposits; the CRM never handles card data.

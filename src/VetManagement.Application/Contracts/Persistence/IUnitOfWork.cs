@@ -20,6 +20,15 @@ public interface IUnitOfWork : IDisposable
 
     IMedicalVisitRepository MedicalVisits { get; }
     IClinicSettingRepository ClinicSettings { get; }
+    IAppointmentRepository Appointments { get; }
 
     Task<int> SaveChangesAsync();
+
+    /// <summary>
+    /// Runs <paramref name="work"/> in a transaction that holds an exclusive lock on <paramref name="lockKey"/>,
+    /// so callers using the same key run one at a time (check-then-insert without races or deadlocks).
+    /// Retried as a whole on transient failures; load everything the work needs inside it, since tracked
+    /// entities are cleared per attempt.
+    /// </summary>
+    Task<T> ExecuteExclusiveAsync<T>(string lockKey, Func<Task<T>> work);
 }

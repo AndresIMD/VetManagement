@@ -155,6 +155,8 @@ builder.Services.AddScoped<VetManagement.Application.Services.MedicalVisitServic
 builder.Services.AddSingleton(new VetManagement.Application.Scheduling.SchedulingDefaults(
     File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Scheduling", "scheduling.defaults.json"))));
 builder.Services.AddScoped<VetManagement.Application.Scheduling.SchedulingSettingsService>();
+builder.Services.AddScoped<VetManagement.Application.Scheduling.AppointmentService>();
+builder.Services.AddSingleton(TimeProvider.System);
 
 builder.Services.AddMemoryCache(options =>
 {

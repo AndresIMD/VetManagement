@@ -67,6 +67,9 @@ Rules:
 | `ErrorHandlingTests` | an unhandled exception leaks details or isn't returned as ProblemDetails |
 | `LoginLockoutTests` / `LoginRateLimitTests` | brute-force protection on login regresses |
 | `RequestValidationTests` | orders/visits can be stored without a patient |
+| `AvailabilityCalculatorTests` | slot rules or progressive release (incl. the overflow specialist case) regress |
+| `SchedulingSettingsApiTests` / `AppointmentsApiTests` | agenda settings versioning or booking rules regress |
+| `ConcurrentBookingTests` (SQL Server) | parallel bookings could both take the last slot |
 
 ## Operations
 
