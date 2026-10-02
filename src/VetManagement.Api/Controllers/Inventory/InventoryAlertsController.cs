@@ -5,7 +5,7 @@ using VetManagement.Api.Services;
 namespace VetManagement.Api.Controllers.Inventory;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/inventory-alerts")]
 public class InventoryAlertsController(IHostEnvironment env) : ApiControllerBase
 {
     /// <summary>

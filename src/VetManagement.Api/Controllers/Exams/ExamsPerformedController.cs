@@ -6,7 +6,7 @@ using VetManagement.Contracts.Exams;
 namespace VetManagement.Api.Controllers.Exams;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/exams-performed")]
 [Authorize(Policy = "ExamsPerformed.Read")]
 public class ExamsPerformedController(ExamPerformedService service) : ApiControllerBase
 {

@@ -25,14 +25,14 @@ public class RequestValidationTests : IClassFixture<CustomWebAppFactory>
 
     [Fact]
     public async Task ExamOrder_Valid_IsAccepted()
-        => (await _client.PostAsJsonAsync("/api/ExamsPerformed", ExamOrder(7, "dr.vet", 4))).StatusCode.Should().Be(HttpStatusCode.OK);
+        => (await _client.PostAsJsonAsync("/api/exams-performed", ExamOrder(7, "dr.vet", 4))).StatusCode.Should().Be(HttpStatusCode.OK);
 
     [Theory]
     [InlineData(0, "dr.vet", 4)]  // no patient
     [InlineData(7, "", 4)]        // no responsible
     [InlineData(7, "dr.vet", 0)]  // item without exam
     public async Task ExamOrder_Invalid_IsRejected(int patientId, string responsible, int examId)
-        => (await _client.PostAsJsonAsync("/api/ExamsPerformed", ExamOrder(patientId, responsible, examId))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        => (await _client.PostAsJsonAsync("/api/exams-performed", ExamOrder(patientId, responsible, examId))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
     [Fact]
     public async Task Visit_Valid_IsAccepted()

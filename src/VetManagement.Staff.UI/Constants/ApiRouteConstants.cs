@@ -31,20 +31,17 @@ public static class ApiRouteConstants
 
     // Account
     public const string ACCOUNT_LOGIN = "api/account/login";
-    public const string ACCOUNT_REGISTER = "api/account/register";
-    public const string ACCOUNT_CONFIRM_EMAIL = "api/account/confirm-email";
     public const string ACCOUNT_USER_INFO = "api/account/user-info";
     public const string ACCOUNT_CHANGE_PASSWORD = "api/account/change-password";
 
     // User Management (Admin)
     public const string USERS_BASE = "api/admin/users";
-    public const string USER_BY_ID = "api/admin/users/{0}";
     public const string USER_ROLES = "api/admin/users/{0}/roles";
     public const string USER_CLAIMS = "api/admin/users/{0}/claims";
     public const string USERS_ROLES_ALL = "api/admin/users/roles";
 
     // Audit
-    public const string AUDIT_LOGS = "api/audit/logs";
+    public const string AUDIT_LOGS_PAGED = "api/audit/logs/paged";
 
     // External Labs
     public const string EXTERNAL_LABS_BASE = "api/external-labs";
@@ -55,6 +52,6 @@ public static class ApiRouteConstants
     public const string EXAM_PERFORMED_BY_ID = "api/exams-performed/{0}";
 
     // Inventory Alerts
-    public const string INVENTORY_ALERTS_BASE = "api/inventory-alerts";
-    public const string INVENTORY_ALERTS_EMAIL = "api/inventory-alerts/send-email";
+    public const string INVENTORY_ALERTS_SCHEDULE = "api/inventory-alerts/schedule";
+    public const string SEND_EMAIL = "api/email/send";
 }

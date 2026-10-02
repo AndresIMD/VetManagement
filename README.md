@@ -151,7 +151,6 @@ dotnet ef database update --project src/VetManagement.Api
 
 - **Repository Pattern** for data access abstraction
 - **Unit of Work** for transaction coordination
-- **Command Pattern** for undo-able operations (inventory adjustments)
 - **Dependency Injection** throughout
 
 ## What I Learned

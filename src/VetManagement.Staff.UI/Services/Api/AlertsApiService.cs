@@ -13,7 +13,7 @@ public class AlertsApiService(HttpClient http)
     public async Task SendInventoryEmailAsync(string to, string? cc, string subject, string body, CancellationToken ct = default)
     {
         var payload = new SendEmailRequest(to, cc, subject, body);
-        var response = await http.PostAsJsonAsync(ApiRouteConstants.INVENTORY_ALERTS_EMAIL, payload, ct);
+        var response = await http.PostAsJsonAsync(ApiRouteConstants.SEND_EMAIL, payload, ct);
 
         if (!response.IsSuccessStatusCode)
         {

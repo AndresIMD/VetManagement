@@ -6,7 +6,7 @@ using VetManagement.Contracts.Exams;
 namespace VetManagement.Api.Controllers.Exams;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/external-labs")]
 [Authorize(Policy = "ExternalLabs.Read")]
 public class ExternalLabsController(ExternalLabService service) : ApiControllerBase
 {
