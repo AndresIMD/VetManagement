@@ -36,7 +36,7 @@ public sealed record BookingResult(BookingStatus Status, int? AppointmentId = nu
 /// Staff-side agenda operations. Every booking and move re-checks availability while holding an exclusive
 /// per-resource lock, so two people can never take the same last slot.
 /// </summary>
-public class AppointmentService(IUnitOfWork unitOfWork, SchedulingSettingsService settingsService, AuditService audit, TimeProvider clock)
+public class AppointmentService(IUnitOfWork unitOfWork, SchedulingSettingsService settingsService, AuditService audit, AppointmentNotifier notifier, TimeProvider clock)
 {
     private const string EntityName = "Appointment";
 
@@ -70,6 +70,7 @@ public class AppointmentService(IUnitOfWork unitOfWork, SchedulingSettingsServic
         if (service is null)
             return new BookingResult(BookingStatus.Invalid, Error: error);
 
+        Appointment? booked = null;
         var result = await unitOfWork.ExecuteExclusiveAsync(BookingLockKey(request.ResourceCode), async () =>
         {
             if (!await IsSlotFreeAsync(settings, service, request.ResourceCode, request.StartUtc, request.Overbook, ignoreAppointmentId: null))
@@ -100,11 +101,15 @@ public class AppointmentService(IUnitOfWork unitOfWork, SchedulingSettingsServic
             };
             await unitOfWork.Appointments.AddAsync(appointment);
             await unitOfWork.SaveChangesAsync();
+            booked = appointment;
             return new BookingResult(BookingStatus.Done, appointment.Id);
         });
 
         if (result.Status == BookingStatus.Done)
-            await audit.LogAsync(EntityName, result.AppointmentId!.Value, AuditActionType.Add, JsonSerializer.Serialize(request), userName);
+        {
+                await audit.LogAsync(EntityName, result.AppointmentId!.Value, AuditActionType.Add, JsonSerializer.Serialize(request), userName);
+            await notifier.SendConfirmationAsync(booked!, settings);
+        }
         return result;
     }
 
@@ -112,6 +117,7 @@ public class AppointmentService(IUnitOfWork unitOfWork, SchedulingSettingsServic
     {
         var settings = (await settingsService.GetAsync()).Settings;
 
+        Appointment? moved = null;
         var result = await unitOfWork.ExecuteExclusiveAsync(BookingLockKey(resourceCode), async () =>
         {
             var appointment = await unitOfWork.Appointments.GetByIdAsync(id);
@@ -133,11 +139,15 @@ public class AppointmentService(IUnitOfWork unitOfWork, SchedulingSettingsServic
             appointment.Status = AppointmentStatus.Confirmed;
             appointment.IsOverbooked = overbook;
             await unitOfWork.SaveChangesAsync();
+            moved = appointment;
             return new BookingResult(BookingStatus.Done, id);
         });
 
         if (result.Status == BookingStatus.Done)
-            await audit.LogAsync(EntityName, id, AuditActionType.Edit, $"Rescheduled to {resourceCode} at {startUtc:O} (overbook: {overbook})", userName);
+        {
+                await audit.LogAsync(EntityName, id, AuditActionType.Edit, $"Rescheduled to {resourceCode} at {startUtc:O} (overbook: {overbook})", userName);
+            await notifier.SendChangeAsync(moved!, settings, AppointmentChange.Rescheduled);
+        }
         return result;
     }
 
@@ -155,6 +165,7 @@ public class AppointmentService(IUnitOfWork unitOfWork, SchedulingSettingsServic
         appointment.CancelReason = reason;
         await unitOfWork.SaveChangesAsync();
         await audit.LogAsync(EntityName, id, AuditActionType.Delete, $"Cancelled: {reason}", userName);
+        await notifier.SendChangeAsync(appointment, (await settingsService.GetAsync()).Settings, AppointmentChange.Cancelled);
         return new BookingResult(BookingStatus.Done, id);
     }
 
@@ -186,6 +197,35 @@ public class AppointmentService(IUnitOfWork unitOfWork, SchedulingSettingsServic
         foreach (var appointment in affected)
             await audit.LogAsync(EntityName, appointment.Id, AuditActionType.Edit, "Needs reschedule: resource unavailable that day", userName);
         return affected.Count;
+    }
+
+    /// <summary>
+    /// Emails the reminder for confirmed appointments starting within the configured window, once each.
+    /// A failed send is retried on the next run. Returns how many were sent.
+    /// </summary>
+    public async Task<int> SendDueRemindersAsync()
+    {
+        var settings = (await settingsService.GetAsync()).Settings;
+        if (!settings.Notifications.SendReminder)
+            return 0;
+
+        var now = clock.GetUtcNow().UtcDateTime;
+        var due = (await unitOfWork.Appointments.GetByStatusFromAsync(
+                AppointmentStatus.Confirmed, now, now.AddHours(settings.Notifications.ReminderHoursBefore)))
+            .Where(a => a.ReminderSentAtUtc is null && !string.IsNullOrWhiteSpace(a.OwnerEmail))
+            .ToList();
+
+        var sent = 0;
+        foreach (var appointment in due)
+        {
+            if (!await notifier.SendReminderAsync(appointment, settings))
+                continue;
+            appointment.ReminderSentAtUtc = now;
+            sent++;
+        }
+        if (sent > 0)
+            await unitOfWork.SaveChangesAsync();
+        return sent;
     }
 
     private static ServiceDefinition? FindBookableService(SchedulingSettings settings, string serviceCode, string resourceCode, out string? error)

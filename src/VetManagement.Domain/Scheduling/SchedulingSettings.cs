@@ -10,6 +10,9 @@ public class SchedulingSettings
 {
     public bool Enabled { get; set; }
     public string TimeZone { get; set; } = "America/Santiago";
+    /// <summary>Shown to clients in emails and on the booking site.</summary>
+    public string ClinicName { get; set; } = string.Empty;
+    public string? ClinicPhone { get; set; }
     public BookingPolicy Booking { get; set; } = new();
     public CancellationPolicy Cancellation { get; set; } = new();
     public PaymentPolicy Payment { get; set; } = new();
@@ -25,6 +28,7 @@ public class SchedulingSettings
 
         if (!TimeZoneInfo.TryFindSystemTimeZoneById(TimeZone, out _))
             errors.Add($"Unknown time zone '{TimeZone}'.");
+        if (string.IsNullOrWhiteSpace(ClinicName)) errors.Add("ClinicName is required (clients see it in emails).");
         if (Booking.MinNoticeMinutes < 0) errors.Add("Booking.MinNoticeMinutes must be 0 or more.");
         if (Booking.HorizonDays < 1) errors.Add("Booking.HorizonDays must be at least 1.");
         if (Booking.SlotStepMinutes < 5) errors.Add("Booking.SlotStepMinutes must be at least 5.");

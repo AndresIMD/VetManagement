@@ -156,6 +156,8 @@ builder.Services.AddSingleton(new VetManagement.Application.Scheduling.Schedulin
     File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Scheduling", "scheduling.defaults.json"))));
 builder.Services.AddScoped<VetManagement.Application.Scheduling.SchedulingSettingsService>();
 builder.Services.AddScoped<VetManagement.Application.Scheduling.AppointmentService>();
+builder.Services.AddScoped<VetManagement.Application.Scheduling.AppointmentNotifier>();
+builder.Services.AddScoped<VetManagement.Application.Contracts.Services.IEmailSender, SmtpEmailSender>();
 builder.Services.AddSingleton(TimeProvider.System);
 
 builder.Services.AddMemoryCache(options =>
@@ -171,6 +173,7 @@ builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<UserManagementService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHostedService<InventoryAlertsHostedService>();
+builder.Services.AddHostedService<AppointmentRemindersHostedService>();
 
 builder.Services.AddScoped<IDataSeeder, DataSeeder>();
 

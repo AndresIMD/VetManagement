@@ -1,6 +1,8 @@
 {
   "enabled": false,
   "timeZone": "America/Santiago",
+  "clinicName": "Clínica Veterinaria",
+  "clinicPhone": null,
   "booking": {
     "minNoticeMinutes": 60,
     "horizonDays": 60,

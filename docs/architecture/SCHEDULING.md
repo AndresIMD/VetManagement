@@ -11,7 +11,7 @@ the admin edits it. Every change is validated, versioned (optimistic concurrency
 
 | Section | Settings |
 |---|---|
-| General | `Enabled`, `TimeZone` (IANA, default `America/Santiago`) |
+| General | `Enabled`, `TimeZone` (IANA, default `America/Santiago`), `ClinicName` (required), `ClinicPhone` (shown in client emails) |
 | Booking | minimum notice, booking horizon (days), slot step |
 | Cancellation | client deadline (hours), refund mode: `Automatic` / `NoRefund` / `ManualApproval` |
 | Payment | pending-payment hold (minutes) while WebPay confirms |
@@ -52,5 +52,9 @@ Booking re-checks availability while holding an exclusive per-resource lock (`sp
 transaction, so two people can't take the last slot. Serializable isolation alone deadlocked under
 contention; `ConcurrentBookingTests` runs parallel bookings against real SQL Server (locally via LocalDB,
 and in CI via a SQL Server service container).
+
+Client emails (Spanish, clinic time zone): confirmation on booking, notice when staff moves or cancels,
+and a reminder sent once by a background job; each one is toggled in the settings and a failed send never
+fails the booking. Tests use a recording sender, so no real email leaves the test run.
 
 Payments: WebPay Plus (Transbank) for deposits; the CRM never handles card data.

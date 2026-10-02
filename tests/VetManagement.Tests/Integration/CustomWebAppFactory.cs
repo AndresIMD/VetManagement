@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Tokens;
 using VetManagement.Api.Authorization;
+using VetManagement.Application.Contracts.Services;
 using VetManagement.Infrastructure.Data;
 
 namespace VetManagement.Tests.Integration;
@@ -18,6 +19,9 @@ public class CustomWebAppFactory : WebApplicationFactory<Program>
 {
     // One in-memory database per factory instance, so test classes never see each other's data.
     private readonly string _databaseName = $"TestDb-{Guid.NewGuid():N}";
+
+    /// <summary>Emails the API "sent" during the test.</summary>
+    public RecordingEmailSender Emails { get; } = new();
 
     private const string JwtKey = "integration-tests-signing-key-0123456789abcdef";
     private const string JwtIssuer = "VetManagement.Tests";
@@ -57,6 +61,26 @@ public class CustomWebAppFactory : WebApplicationFactory<Program>
             services.RemoveAll<DbContextOptions>();
             services.RemoveAll<AppDbContext>();
             services.AddDbContext<AppDbContext>(ConfigureDatabase);
+
+            // Never send real email from tests; record it so tests can assert on it.
+            services.RemoveAll<IEmailSender>();
+            services.AddSingleton<IEmailSender>(Emails);
         });
+    }
+}
+
+public sealed record SentEmail(string To, string Subject, string Body);
+
+/// <summary>Test double for <see cref="IEmailSender"/>: keeps every message instead of sending it.</summary>
+public sealed class RecordingEmailSender : IEmailSender
+{
+    private readonly System.Collections.Concurrent.ConcurrentQueue<SentEmail> _sent = new();
+
+    public IReadOnlyList<SentEmail> Sent => [.. _sent];
+
+    public Task SendAsync(string to, string subject, string body, CancellationToken cancellationToken = default)
+    {
+        _sent.Enqueue(new SentEmail(to, subject, body));
+        return Task.CompletedTask;
     }
 }

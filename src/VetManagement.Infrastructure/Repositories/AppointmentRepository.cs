@@ -15,9 +15,9 @@ public class AppointmentRepository(AppDbContext context) : Repository<Appointmen
             .OrderBy(a => a.StartUtc)
             .ToListAsync();
 
-    public async Task<List<Appointment>> GetByStatusFromAsync(AppointmentStatus status, DateTime fromUtc)
+    public async Task<List<Appointment>> GetByStatusFromAsync(AppointmentStatus status, DateTime fromUtc, DateTime? toUtc = null)
         => await _context.Appointments
-            .Where(a => a.Status == status && a.StartUtc >= fromUtc)
+            .Where(a => a.Status == status && a.StartUtc >= fromUtc && (toUtc == null || a.StartUtc < toUtc))
             .OrderBy(a => a.StartUtc)
             .ToListAsync();
 }

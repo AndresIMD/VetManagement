@@ -38,6 +38,9 @@ public class Appointment : Entity<int>
     /// <summary>While waiting for the WebPay deposit, the slot is held until this time.</summary>
     public DateTime? PaymentHoldUntilUtc { get; set; }
 
+    /// <summary>Set once the reminder email went out, so it is never sent twice.</summary>
+    public DateTime? ReminderSentAtUtc { get; set; }
+
     public DateTime CreatedAtUtc { get; set; }
     public string? CreatedBy { get; set; }
     public DateTime? CancelledAtUtc { get; set; }
