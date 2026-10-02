@@ -19,7 +19,7 @@ Guard tests: `ArchitectureTests` (dependency direction), `MigrationsTests` (EF m
 | **F1** | ✅ **COMPLETED** | Inventory migration to Domain/Contracts |
 | **F2** | ✅ **COMPLETED** | Clients/Pets, Exams, Medical, Audit, enums and DTOs out of Shared; backend no longer references the UI |
 | **F3** | ✅ **COMPLETED** (with F2) | Shared → UI only, renamed `VetManagement.Staff.UI` |
-| **F4** | ⏳ Pending | Hardening |
+| **F4** | 🟡 **IN PROGRESS** | Hardening: ✅ ProblemDetails + UI error boundary, ✅ login lockout + rate limit; ⏳ structured logging, health checks per dependency |
 | **F5** | ⏳ Pending | Documentation |
 
 ---
@@ -80,11 +80,12 @@ git log --oneline -10
 
 ## Next Actions (Priority Order)
 
-1. **F4 — Hardening**: error handling (ProblemDetails), structured logging, health checks per dependency, rate limits on auth endpoints.
-2. **Validation parity gaps** found during F2 (kept as-is to avoid behavior changes): `ExamPerformed.PatientId` and `ExamRequestItem.ExamId` accept 0 and have no FK; exam orders and visits take `Responsible` from the body instead of the authenticated user.
-3. **Public API for clinic sites** (booking, services) with per-clinic CORS, before `sites/` consumes the API.
-4. **Contracts → Domain**: Contracts reference Domain only for enums; move or duplicate those enums before publishing Contracts to clinic sites.
-5. **F5 — Documentation**: refresh README architecture section; archive `docs/reports` and `docs/MASTER_STATUS.md` as historical.
+1. **F4 — remaining hardening**: structured logging, health checks per dependency (DB), show a specific message in the login UI when the API answers 429.
+2. **Validation gaps** found during F2 (kept as-is to avoid behavior changes): `ExamPerformed.PatientId` and `ExamRequestItem.ExamId` accept 0 and have no FK.
+3. **Product decision**: `Responsible` on exams/visits is free text (clinical responsible, may differ from who records it; the audit log always stores the authenticated user). Consider a staff picker.
+4. **Public API for clinic sites** (booking, services) with per-clinic CORS, before `sites/` consumes the API.
+5. **Contracts → Domain**: Contracts reference Domain only for enums; move or duplicate those enums before publishing Contracts to clinic sites.
+6. **F5 — Documentation**: refresh README architecture section; archive `docs/reports` and `docs/MASTER_STATUS.md` as historical.
 
 ---
 
