@@ -1,4 +1,4 @@
-﻿namespace VetManagement
+﻿namespace VetManagement.Staff.Maui
 {
     public partial class MainPage : ContentPage
     {

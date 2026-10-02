@@ -27,9 +27,9 @@ jobs:
         run: dotnet build src/VetManagement.Api/VetManagement.Api.csproj --no-restore
 
       - name: Build WASM client
-        run: dotnet build src/VetManagement.WASM/VetManagement.WASM.csproj --no-restore
+        run: dotnet build src/VetManagement.Staff.Web/VetManagement.Staff.Web.csproj --no-restore
 
-      # Note: the MAUI project (src/VetManagement) targets android/ios/windows
+      # Note: the MAUI project (src/VetManagement.Staff.Maui) targets android/ios/windows
       # TFMs and requires platform workloads, so it is not built on Linux runners.
 
       - name: Test

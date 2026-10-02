@@ -4,7 +4,9 @@
 **Current Branch:** refactor/solution-structure  
 
 **Target dependency direction:** Domain ← Application ← Infrastructure ← Api; Contracts is consumed by Api and all clients.
-Solution folders: Core (Domain, Application, Contracts) · Infrastructure · Server (Api) · Clients (Shared, WASM, MAUI, SPVetClinic) · Tests.
+Solution folders: Core (Domain, Application, Contracts) · Infrastructure · Server (Api) · Clients (Shared, Staff.Web, Staff.Maui) · Clinic Sites (SPVetClinic) · Tests.
+Product model: the staff CRM is generic (same for every clinic); each clinic gets its own branded public site that consumes the API. Clinic sites do not use the `VetManagement.` prefix.
+Pending rename: `VetManagement.Shared` → `VetManagement.Staff.UI` after F2 (avoids touching backend usings that F2 removes).
 Backend projects (Application, Infrastructure, Api) must stop referencing Shared — F2 moves Client, Pet, Exams, MedicalVisit, AuditLog and enums from `Shared/Models` to Domain.
 
 ---

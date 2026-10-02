@@ -35,8 +35,9 @@ VetManagement.sln
 │   ├── VetManagement.Infrastructure/ # Data access (EF Core, repositories, UoW)
 │   ├── VetManagement.Api/            # REST API endpoints, auth, migrations
 │   ├── VetManagement.Shared/         # Blazor UI: pages, components, API clients
-│   ├── VetManagement.WASM/           # Web client (Blazor WebAssembly)
-│   └── VetManagement/                # Desktop/mobile client (.NET MAUI)
+│   ├── VetManagement.Staff.Web/      # Staff web client (Blazor WebAssembly)
+│   ├── VetManagement.Staff.Maui/     # Staff desktop/mobile client (.NET MAUI)
+│   └── SPVetClinic/                  # Public website of San Pablo Vet Clinic (clinic-specific)
 ├── tests/
 │   └── VetManagement.Tests/          # Unit + integration tests
 └── docs/                             # Architecture & coding guidelines
@@ -101,7 +102,7 @@ Separating business logic (Application) from data access (Infrastructure) makes 
 
 5. **Configure the web client**
    
-   Edit `src/VetManagement.WASM/wwwroot/config.json`:
+   Edit `src/VetManagement.Staff.Web/wwwroot/config.json`:
    ```json
    {
      "LocalApiBaseUrl": "https://localhost:7213"
@@ -110,7 +111,7 @@ Separating business logic (Application) from data access (Infrastructure) makes 
 
 6. **Start the web client**
    ```bash
-   dotnet run --project src/VetManagement.WASM
+   dotnet run --project src/VetManagement.Staff.Web
    ```
    
    Web app runs at `https://localhost:7237`

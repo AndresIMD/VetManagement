@@ -1,4 +1,4 @@
-﻿namespace SPLabHybrid;
+﻿namespace VetManagement.Staff.Maui;
 
 [Register("AppDelegate")]
 public class AppDelegate : MauiUIApplicationDelegate

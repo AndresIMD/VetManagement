@@ -1,7 +1,7 @@
 ﻿using Android.App;
 using Android.Runtime;
 
-namespace VetManagement;
+namespace VetManagement.Staff.Maui;
 
 [Application]
 public class MainApplication : MauiApplication

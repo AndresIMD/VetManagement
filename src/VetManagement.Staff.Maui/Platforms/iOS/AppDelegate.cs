@@ -1,6 +1,6 @@
 ﻿using Foundation;
 
-namespace VetManagement;
+namespace VetManagement.Staff.Maui;
 
 [Register("AppDelegate")]
 public class AppDelegate : MauiUIApplicationDelegate

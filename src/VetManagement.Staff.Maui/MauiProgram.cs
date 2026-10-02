@@ -7,7 +7,7 @@ using VetManagement.Shared.Services.App;
 using VetManagement.Shared.Services.Auth;
 using VetManagement.Shared.Services.Realtime;
 
-namespace VetManagement;
+namespace VetManagement.Staff.Maui;
 
 public static class MauiProgram
 {

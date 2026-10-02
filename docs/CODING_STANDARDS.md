@@ -742,7 +742,7 @@ public async Task UpdateAsync_WithValidItem_UpdatesSuccessfully()
 - **Depends on**: All (orchestrates)
 - **Pattern**: HTTP Request → Controller → Service → Repository
 
-### 11.5 Presentation Layer (VetManagement.WASM)
+### 11.5 Presentation Layer (VetManagement.Staff.Web)
 - **Contains**: Blazor components, pages, client logic
 - **Depends on**: Shared (DTOs, API clients)
 - **Pattern**: User → Component → API Service → Server

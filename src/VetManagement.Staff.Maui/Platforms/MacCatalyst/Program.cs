@@ -1,6 +1,4 @@
-﻿using UIKit;
-
-namespace VetManagement;
+﻿namespace VetManagement.Staff.Maui;
 
 public class Program
 {

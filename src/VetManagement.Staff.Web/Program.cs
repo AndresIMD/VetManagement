@@ -7,7 +7,7 @@ using VetManagement.Shared.Services.Api;
 using VetManagement.Shared.Services.App;
 using VetManagement.Shared.Services.Auth;
 using VetManagement.Shared.Services.Realtime;
-using VetManagement.WASM;
+using VetManagement.Staff.Web;
 using AppBackgroundService = VetManagement.Shared.Services.App.BackgroundService;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -155,7 +155,7 @@ builder.Services.AddScoped<ThemeService>();
 
 await builder.Build().RunAsync();
 
-namespace VetManagement.WASM
+namespace VetManagement.Staff.Web
 {
     public class ConfigModel
     {

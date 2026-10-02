@@ -1,4 +1,4 @@
-namespace SPLabHybrid;
+namespace VetManagement.Staff.Maui;
 
 class Program : MauiApplication
 {

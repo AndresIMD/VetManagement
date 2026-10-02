@@ -4,8 +4,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>VetManagement.WASM</RootNamespace>
-    <AssemblyName>VetManagement.WASM</AssemblyName>
+    <RootNamespace>VetManagement.Staff.Web</RootNamespace>
+    <AssemblyName>VetManagement.Staff.Web</AssemblyName>
     <UserSecretsId>aa903c23-0dc5-4366-bbbf-8dbcd8f2658c</UserSecretsId>
     <BlazorWebAssemblyEnableLinking>true</BlazorWebAssemblyEnableLinking>
     <InvariantGlobalization>true</InvariantGlobalization>

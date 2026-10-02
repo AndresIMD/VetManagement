@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.8.12023.21
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VetManagement", "src\VetManagement\VetManagement.csproj", "{30350B3F-EDE4-E83D-6385-7B7DBDBEE756}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VetManagement.Staff.Maui", "src\VetManagement.Staff.Maui\VetManagement.Staff.Maui.csproj", "{30350B3F-EDE4-E83D-6385-7B7DBDBEE756}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VetManagement.Api", "src\VetManagement.Api\VetManagement.Api.csproj", "{DD596E0D-6400-6D26-62FB-075B510966D0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VetManagement.Shared", "src\VetManagement.Shared\VetManagement.Shared.csproj", "{6C04BF95-5ABC-90D0-AC4F-C5C77556D442}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VetManagement.WASM", "src\VetManagement.WASM\VetManagement.WASM.csproj", "{6D5046CA-F60C-35CF-9D75-983A2A03F4C4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VetManagement.Staff.Web", "src\VetManagement.Staff.Web\VetManagement.Staff.Web.csproj", "{6D5046CA-F60C-35CF-9D75-983A2A03F4C4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VetManagement.Application", "src\VetManagement.Application\VetManagement.Application.csproj", "{86919F19-F936-4369-95FE-AB4415BE7514}"
 EndProject
@@ -30,6 +30,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Clients", "Clients", "{CD8B5177-FF5C-48E1-B2DB-CE57388802D5}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{5E2C77BA-93AD-4D3B-88F2-FD209D3C188B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Clinic Sites", "Clinic Sites", "{CA54C134-A350-41B0-83C6-23361D0917EF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SPVetClinic", "src\SPVetClinic\SPVetClinic.csproj", "{87304E68-4BE7-4CC3-8327-5836B1D57992}"
 EndProject
@@ -177,7 +179,7 @@ Global
 		{6C04BF95-5ABC-90D0-AC4F-C5C77556D442} = {CD8B5177-FF5C-48E1-B2DB-CE57388802D5}
 		{6D5046CA-F60C-35CF-9D75-983A2A03F4C4} = {CD8B5177-FF5C-48E1-B2DB-CE57388802D5}
 		{30350B3F-EDE4-E83D-6385-7B7DBDBEE756} = {CD8B5177-FF5C-48E1-B2DB-CE57388802D5}
-		{87304E68-4BE7-4CC3-8327-5836B1D57992} = {CD8B5177-FF5C-48E1-B2DB-CE57388802D5}
+		{87304E68-4BE7-4CC3-8327-5836B1D57992} = {CA54C134-A350-41B0-83C6-23361D0917EF}
 		{B31B6784-A3AE-42C4-87E8-A8613F26B196} = {5E2C77BA-93AD-4D3B-88F2-FD209D3C188B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
