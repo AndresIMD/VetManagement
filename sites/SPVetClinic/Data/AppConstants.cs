@@ -23,7 +23,11 @@ public static class AppConstants
 
         /// <summary>Para frases que empiezan con la cifra: "Más de 10 años…" (la constante base va en minúscula)</summary>
         public static string YearsOfServiceCapitalized => char.ToUpper(YearsOfService[0]) + YearsOfService[1..];
-        public const string BookingUrl = "https://vetsanpablo.crmveterinario.com/reserva_online";
+        /// <summary>
+        /// Destino de los botones "Reservar". Se configura con "BookingUrl" en wwwroot/appsettings*.json (ver Program.cs):
+        /// hoy el CRM de terceros; para usar el portal de reservas propio basta cambiar la configuración.
+        /// </summary>
+        public static string BookingUrl { get; set; } = "https://vetsanpablo.crmveterinario.com/reserva_online";
     }
 
     /// <summary>
