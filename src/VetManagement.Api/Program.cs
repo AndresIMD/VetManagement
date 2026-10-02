@@ -232,6 +232,7 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
 });
 
+builder.Services.AddProblemDetails();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -262,25 +263,11 @@ else
         app.UseHttpsRedirection();
 }
 
+// Outside Development: logs the full exception and returns an RFC 7807 ProblemDetails body without internals.
 if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
 else
-{
-    app.Use(async (context, next) =>
-    {
-        try
-        { await next(); }
-        catch
-        {
-            if (!context.Response.HasStarted)
-            {
-                context.Response.StatusCode = 500;
-                context.Response.ContentType = "application/json";
-                await context.Response.WriteAsJsonAsync(new { error = "Unexpected server error." });
-            }
-        }
-    });
-}
+    app.UseExceptionHandler();
 
 app.UseRateLimiter();
 app.UseCors("LocalOnly");

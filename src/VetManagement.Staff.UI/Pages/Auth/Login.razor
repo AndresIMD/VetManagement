@@ -41,8 +41,20 @@
 
         _loading = true;
         StateHasChanged();
-        var token = await AccountService.LoginAsync(_loginModel.Username, _loginModel.Password, _loginModel.RememberMe);
-        _loading = false;
+        string? token;
+        try
+        {
+            token = await AccountService.LoginAsync(_loginModel.Username, _loginModel.Password, _loginModel.RememberMe);
+        }
+        catch (HttpRequestException)
+        {
+            Snackbar.Add("Could not reach the server. Check your connection and try again.", Severity.Error);
+            return;
+        }
+        finally
+        {
+            _loading = false;
+        }
 
         if (!string.IsNullOrEmpty(token))
         {

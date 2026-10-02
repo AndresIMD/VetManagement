@@ -26,7 +26,23 @@
 <MudLayout>
     <NavMenu OnToggleDarkMode="ToggleDarkMode" />
     <MudMainContent>
-        @Body
+        @* Contains any unhandled page error so the rest of the app stays usable. *@
+        <ErrorBoundary @ref="_errorBoundary">
+            <ChildContent>
+                @Body
+            </ChildContent>
+            <ErrorContent Context="ex">
+                <MudAlert Severity="Severity.Error" Class="ma-4">
+                    <MudText Typo="Typo.subtitle2">Something went wrong</MudText>
+                    <MudText Typo="Typo.body2">
+                        @(ex is HttpRequestException
+                            ? "Could not reach the server. Check your connection and try again."
+                            : "An unexpected error occurred on this page.")
+                    </MudText>
+                    <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="() => _errorBoundary?.Recover()">Try again</MudButton>
+                </MudAlert>
+            </ErrorContent>
+        </ErrorBoundary>
     </MudMainContent>
 </MudLayout>
 
@@ -38,6 +54,10 @@
     [Inject] public VetManagement.Staff.UI.Models.Configuration.AppBootstrapError? _bootstrapError { get; set; }
 
     private MudTheme _theme = AppTheme.Theme;
+    private ErrorBoundary? _errorBoundary;
+
+    // Navigating to another page clears a previous page's error.
+    protected override void OnParametersSet() => _errorBoundary?.Recover();
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
