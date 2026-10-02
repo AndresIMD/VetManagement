@@ -1,7 +1,7 @@
 # VetManagement - Project State Tracker
 
-**Last Updated:** 2026-10-01  
-**Current Branch:** refactor/solution-structure  
+**Last Updated:** 2026-10-02  
+**Current Branch:** main  
 
 **Target dependency direction:** Domain ← Application ← Infrastructure ← Api; Contracts is consumed by Api and all clients.
 Solution folders: Core (Domain, Application, Contracts) · Infrastructure · Server (Api) · Clients (Shared, Staff.Web, Staff.Maui) · Clinic Sites (sites/SPVetClinic) · Tests.
@@ -16,7 +16,7 @@ Backend projects (Application, Infrastructure, Api) must stop referencing Shared
 | Phase | Status | Description |
 |-------|--------|-------------|
 | **F0** | ✅ **COMPLETED** | Restructuring + Critical fixes + CI |
-| **F1** | 🟡 **IN PROGRESS** | Inventory migration to Domain/Contracts |
+| **F1** | ✅ **COMPLETED** | Inventory migration to Domain/Contracts |
 | **F2** | ⏳ Pending | Other modules migration |
 | **F3** | ⏳ Pending | Shared → UI only |
 | **F4** | ⏳ Pending | Hardening |
@@ -37,7 +37,7 @@ Backend projects (Application, Infrastructure, Api) must stop referencing Shared
 
 ---
 
-## F1 - Inventory Migration (Current Phase)
+## F1 - Inventory Migration (Completed)
 
 ### Sub-phase Status
 
@@ -49,16 +49,15 @@ Backend projects (Application, Infrastructure, Api) must stop referencing Shared
 | F1.3b | IItemRepository interface | ✅ Done | Inventory repository contracts use Domain types |
 | F1.3c | Application Services (ItemService, etc.) | ✅ Done | Inventory services use Domain entities and enums |
 | F1.4 | Controllers → Contracts DTOs | ✅ Done | Inventory controllers use request/response contracts and explicit mappings |
-| F1.5 | Shared UI + API clients → DTOs | 🟡 **In Progress** | Items and movement API clients use Contracts over HTTP; UI models remain transitional adapters |
+| F1.5 | Shared UI + API clients → DTOs | ✅ Done (decision) | API clients talk Contracts over HTTP. `Shared` Item/Drug/InventoryMovement are kept as **UI view models** (form validation, `Drug : Item`); mapping lives only in `ItemsApiService` / `InventoryMovementApiService`. Backend no longer uses them. |
 | F1.6 | Tests update | ✅ Done | Existing inventory unit and integration tests use Domain types |
 
 ---
 
 ## Current Blockers / Decisions Needed
 
-1. **Shared UI models** - Inventory pages and components still use legacy `Shared.Models.Core.Item`, `Shared.Models.Inventory.InventoryMovement`, and shared DTOs through adapters.
-2. **ExamPerformed** - Has `List<ExamRequestItem>` in Shared. `ExamRequestItem` doesn't reference Inventory types directly, but existing EF migrations contain legacy inventory type names.
-3. **Legacy migrations** - Existing EF migration snapshots reference `Shared.Models.Core.Item`; validate the production database migration strategy before generating new migrations.
+1. **ExamPerformed** - Has `List<ExamRequestItem>` in Shared. `ExamRequestItem` doesn't reference Inventory types directly, but existing EF migrations contain legacy inventory type names.
+2. **Legacy migrations** - Existing EF migration snapshots reference `Shared.Models.Core.Item`; validate the production database migration strategy before generating new migrations.
 
 ---
 
@@ -82,12 +81,15 @@ git log --oneline -10
 
 ## Next Actions (Priority Order)
 
-1. **Migrate Shared inventory UI models** from legacy entities to `Contracts` DTOs, starting with pages and reusable inventory modals.
-2. Remove the temporary model adapters from `ItemsApiService` and `InventoryMovementApiService` once UI consumers use contracts.
-3. Add focused API/client tests for request and response mappings.
-4. Review legacy EF migrations and establish the migration boundary for Domain inventory entities.
-5. Run build and tests after each UI migration slice.
-6. Commit F1 only after the Shared UI no longer depends on legacy inventory entities.
+**F2 — move remaining entities out of Shared** (one module per commit; build + tests after each):
+1. Review legacy EF migrations / model snapshot: confirm moving CLR types between namespaces produces an empty migration (table names, `Item` discriminator values).
+2. Shared enums used by the backend → `Domain.Enums`.
+3. Clients/Pets: `Client`, `Pet` → Domain; API exposes Contracts DTOs; Shared keeps UI view models + ApiService mapping (same pattern as inventory).
+4. Exams: `Exam`, `ExamPerformed`, `ExamRequestItem`, `ExternalLab` → Domain.
+5. Medical: `MedicalVisit` → Domain. Audit: `AuditLog` → Domain.
+6. Backend DTOs still in `Shared/Models/DTOs` (accounts, users, paging, mass update) → Contracts.
+7. Remove the `Shared` ProjectReference from Application, Infrastructure and Api.
+8. Rename `VetManagement.Shared` → `VetManagement.Staff.UI`.
 
 ---
 
