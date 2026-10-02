@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using VetManagement.Domain.Enums;
 using VetManagement.Domain.Inventory;
-using VetManagement.Shared.Models.Audit;
+using VetManagement.Domain.Audit;
 using VetManagement.Domain.Exams;
-using VetManagement.Shared.Models.Medical;
+using VetManagement.Domain.Medical;
 using Client = VetManagement.Domain.Clients.Client;
 using Pet = VetManagement.Domain.Clients.Pet;
 

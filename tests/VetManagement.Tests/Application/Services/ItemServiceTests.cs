@@ -23,7 +23,7 @@ public class ItemServiceTests
 
         // Mock AuditLogs repository
         var auditRepoMock = new Mock<IAuditLogRepository>();
-        auditRepoMock.Setup(r => r.AddAsync(It.IsAny<Shared.Models.Audit.AuditLog>())).Returns(Task.CompletedTask);
+        auditRepoMock.Setup(r => r.AddAsync(It.IsAny<Domain.Audit.AuditLog>())).Returns(Task.CompletedTask);
         mock.Setup(uow => uow.AuditLogs).Returns(auditRepoMock.Object);
 
         // SaveChangesAsync should return Task<int> (number of changes saved)
@@ -136,7 +136,7 @@ public class ItemServiceTests
         // Verify that the correct methods were called
         mockUnitOfWork.Verify(uow => uow.Items.AddAsync(newItem), Times.Once);
         mockUnitOfWork.Verify(uow => uow.SaveChangesAsync(), Times.Exactly(2)); // Una vez para item, otra para audit
-        mockUnitOfWork.Verify(uow => uow.AuditLogs.AddAsync(It.IsAny<Shared.Models.Audit.AuditLog>()), Times.Once);
+        mockUnitOfWork.Verify(uow => uow.AuditLogs.AddAsync(It.IsAny<Domain.Audit.AuditLog>()), Times.Once);
     }
 
     // TEST #5: Verify that AddAsync rejects invalid items

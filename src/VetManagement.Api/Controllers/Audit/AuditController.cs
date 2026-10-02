@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VetManagement.Application.Services;
+using VetManagement.Contracts.Audit;
+using VetManagement.Contracts.Common;
+using VetManagement.Domain.Audit;
 using VetManagement.Domain.Enums;
 
 namespace VetManagement.Api.Controllers.Audit;
@@ -30,6 +33,18 @@ public class AuditController(AuditService auditService) : ApiControllerBase
             from: from,
             to: to,
             entityId: entityId);
-        return Ok(result);
+        return Ok(new PagedResponse<AuditLogDto>(
+            result.Items.Select(MapToDto).ToList(), result.TotalCount, result.Page, result.PageSize));
     }
+
+    private static AuditLogDto MapToDto(AuditLog log) => new()
+    {
+        Id = log.Id,
+        EntityId = log.EntityId,
+        EntityName = log.EntityName,
+        Date = log.Date,
+        Action = log.Action,
+        Changes = log.Changes,
+        User = log.User
+    };
 }

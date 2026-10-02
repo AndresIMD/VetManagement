@@ -1,6 +1,6 @@
 using VetManagement.Application.Contracts.Persistence;
 using VetManagement.Domain.Enums;
-using VetManagement.Shared.Models.Audit;
+using VetManagement.Domain.Audit;
 using VetManagement.Shared.Models.DTOs;
 
 namespace VetManagement.Application.Services;

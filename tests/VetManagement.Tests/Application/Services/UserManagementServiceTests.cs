@@ -5,7 +5,7 @@ using VetManagement.Api.Authorization;
 using VetManagement.Api.Services;
 using VetManagement.Application.Contracts.Persistence;
 using VetManagement.Application.Services;
-using VetManagement.Shared.Models.Audit;
+using VetManagement.Domain.Audit;
 using Xunit;
 
 namespace VetManagement.Tests;

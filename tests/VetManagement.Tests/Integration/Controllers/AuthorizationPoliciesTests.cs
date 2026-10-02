@@ -1,3 +1,4 @@
+using System.Reflection;
 using FluentAssertions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
@@ -56,5 +57,31 @@ public class AuthorizationPoliciesTests : IClassFixture<CustomWebAppFactory>
         // Act & Assert
         var policy = await policyProvider.GetPolicyAsync(policyName);
         policy.Should().NotBeNull($"Policy '{policyName}' must be registered in Program.cs");
+    }
+
+    // Every [Authorize(Policy = ...)] actually used by a controller must resolve; a typo would
+    // otherwise only surface as a 500 when that endpoint is called.
+    [Fact]
+    public async Task EveryPolicyUsedByControllers_IsRegistered()
+    {
+        var policyProvider = _serviceProvider.GetRequiredService<IAuthorizationPolicyProvider>();
+        var controllers = typeof(Program).Assembly.GetTypes()
+            .Where(t => typeof(Microsoft.AspNetCore.Mvc.ControllerBase).IsAssignableFrom(t) && !t.IsAbstract);
+
+        var usedPolicies = controllers
+            .SelectMany(t => t.GetCustomAttributes<AuthorizeAttribute>(inherit: true)
+                .Concat(t.GetMethods().SelectMany(m => m.GetCustomAttributes<AuthorizeAttribute>(inherit: true))))
+            .Select(a => a.Policy)
+            .OfType<string>()
+            .Distinct()
+            .ToList();
+
+        usedPolicies.Should().NotBeEmpty();
+        var missing = new List<string>();
+        foreach (var name in usedPolicies)
+            if (await policyProvider.GetPolicyAsync(name) is null)
+                missing.Add(name);
+
+        missing.Should().BeEmpty("every policy referenced by [Authorize] must be registered in Program.cs");
     }
 }

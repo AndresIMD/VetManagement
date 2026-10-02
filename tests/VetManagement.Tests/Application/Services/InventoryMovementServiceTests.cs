@@ -76,7 +76,7 @@ public class InventoryMovementServiceTests
         // Assert
         _mockMovementRepo.Verify(r => r.AddAsync(movement), Times.Once);
         _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Exactly(2)); // Once for movement, once for audit
-        _mockAuditRepo.Verify(r => r.AddAsync(It.Is<Shared.Models.Audit.AuditLog>(l =>
+        _mockAuditRepo.Verify(r => r.AddAsync(It.Is<Domain.Audit.AuditLog>(l =>
             l.EntityName == nameof(VetManagement.Domain.Inventory.InventoryMovement) &&
             l.Action == AuditActionType.Ingress &&
             l.User == userName)), Times.Once);

@@ -1,5 +1,5 @@
 using VetManagement.Domain.Enums;
-using VetManagement.Shared.Models.Audit;
+using VetManagement.Domain.Audit;
 
 namespace VetManagement.Application.Contracts.Persistence;
 

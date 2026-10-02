@@ -33,7 +33,7 @@ public class ClientPetServiceTests
         // Default setups
         _mockClientRepo.Setup(r => r.AddAsync(It.IsAny<Client>())).Returns(Task.CompletedTask);
         _mockPetRepo.Setup(r => r.AddAsync(It.IsAny<Pet>())).Returns(Task.CompletedTask);
-        _mockAuditRepo.Setup(r => r.AddAsync(It.IsAny<Shared.Models.Audit.AuditLog>())).Returns(Task.CompletedTask);
+        _mockAuditRepo.Setup(r => r.AddAsync(It.IsAny<Domain.Audit.AuditLog>())).Returns(Task.CompletedTask);
 
         _service = new ClientPetService(_mockUnitOfWork.Object, _mockNotificationService.Object);
     }
@@ -54,7 +54,7 @@ public class ClientPetServiceTests
         _mockClientRepo.Verify(r => r.AddAsync(client), Times.Once);
         _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Exactly(2)); // Client + Audit
 
-        _mockAuditRepo.Verify(r => r.AddAsync(It.Is<Shared.Models.Audit.AuditLog>(l =>
+        _mockAuditRepo.Verify(r => r.AddAsync(It.Is<Domain.Audit.AuditLog>(l =>
             l.EntityName == nameof(Client) &&
             l.Action == AuditActionType.Add &&
             l.User == userName)), Times.Once);
@@ -96,7 +96,7 @@ public class ClientPetServiceTests
         _mockPetRepo.Verify(r => r.AddAsync(pet), Times.Once);
         _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Exactly(2)); // Pet + Audit
 
-        _mockAuditRepo.Verify(r => r.AddAsync(It.Is<Shared.Models.Audit.AuditLog>(l =>
+        _mockAuditRepo.Verify(r => r.AddAsync(It.Is<Domain.Audit.AuditLog>(l =>
             l.EntityName == nameof(Pet) &&
             l.Action == AuditActionType.Add &&
             l.User == userName)), Times.Once);

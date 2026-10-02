@@ -1,13 +1,18 @@
 using System.Text.Json;
 using FluentAssertions;
 using VetManagement.Contracts.Clients;
+using VetManagement.Contracts.Audit;
+using VetManagement.Contracts.Common;
 using VetManagement.Contracts.Exams;
+using VetManagement.Contracts.Medical;
 using VetManagement.Domain.Enums;
 using UiClient = VetManagement.Shared.Models.Core.Client;
 using UiPet = VetManagement.Shared.Models.Core.Pet;
 using UiExam = VetManagement.Shared.Models.Exams.Exam;
 using UiExamPerformed = VetManagement.Shared.Models.Exams.ExamPerformed;
 using UiExternalLab = VetManagement.Shared.Models.Exams.ExternalLab;
+using UiMedicalVisit = VetManagement.Shared.Models.Medical.MedicalVisit;
+using UiAuditLog = VetManagement.Shared.Models.Audit.AuditLog;
 
 namespace VetManagement.Tests.Integration;
 
@@ -110,6 +115,45 @@ public class WireContractTests
 
         RoundTrip<UiExamPerformed>(dto).Should().BeEquivalentTo(dto);
     }
+
+    [Fact]
+    public void UiMedicalVisit_BindsTo_MedicalVisitRequest_WithProcedures()
+    {
+        var ui = SampleVisit();
+
+        RoundTrip<MedicalVisitRequest>(ui).Should().BeEquivalentTo(ui, o => o.ExcludingMissingMembers());
+    }
+
+    [Fact]
+    public void MedicalVisitDto_ReadsInto_UiMedicalVisit()
+    {
+        var dto = RoundTrip<MedicalVisitDto>(SampleVisit());
+
+        RoundTrip<UiMedicalVisit>(dto).Should().BeEquivalentTo(dto);
+    }
+
+    [Fact]
+    public void AuditPagedResponse_ReadsInto_UiPagedResult()
+    {
+        var response = new PagedResponse<AuditLogDto>(
+            [new AuditLogDto { Id = 1, EntityId = 3, EntityName = "Client", Date = new DateTime(2026, 1, 2, 0, 0, 0, DateTimeKind.Utc),
+                Action = AuditActionType.Edit, Changes = "{}", User = "admin" }],
+            TotalCount: 41, Page: 2, PageSize: 20);
+
+        RoundTrip<VetManagement.Shared.Models.DTOs.PagedResult<UiAuditLog>>(response).Should().BeEquivalentTo(response);
+    }
+
+    private static UiMedicalVisit SampleVisit() => new()
+    {
+        Id = 5, Date = new DateTime(2026, 1, 2, 9, 30, 0, DateTimeKind.Utc), PatientId = 7, RecordNumber = "R-1",
+        PatientName = "Luna", Responsible = "dr.vet", Location = "Box 2", BudgetNumber = "B-9",
+        PaymentStatus = PaymentStatus.Partial, PaymentMethod = PaymentMethod.Card, TotalValue = 35000,
+        Procedures =
+        [
+            new() { Id = 1, ExamId = 4, Name = "Hemograma", Price = 12000, Notes = "fasting" },
+            new() { Id = 0, Name = "Consulta", Price = 23000 }
+        ]
+    };
 
     private static UiExternalLab SampleLab() => new()
     {

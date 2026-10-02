@@ -1,5 +1,5 @@
 using VetManagement.Domain.Enums;
-using VetManagement.Shared.Models.Medical;
+using VetManagement.Domain.Medical;
 
 namespace VetManagement.Application.Contracts.Persistence;
 
