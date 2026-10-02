@@ -46,9 +46,11 @@
         {
             token = await AccountService.LoginAsync(_loginModel.Username, _loginModel.Password, _loginModel.RememberMe);
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException ex)
         {
-            Snackbar.Add("Could not reach the server. Check your connection and try again.", Severity.Error);
+            Snackbar.Add(ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests
+                ? "Too many login attempts. Wait a minute and try again."
+                : "Could not reach the server. Check your connection and try again.", Severity.Error);
             return;
         }
         finally

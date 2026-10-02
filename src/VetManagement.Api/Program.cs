@@ -167,7 +167,7 @@ builder.Services.AddHostedService<InventoryAlertsHostedService>();
 
 builder.Services.AddScoped<IDataSeeder, DataSeeder>();
 
-builder.Services.AddHealthChecks();
+builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
 
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>();
 if (allowedOrigins == null || allowedOrigins.Length == 0)

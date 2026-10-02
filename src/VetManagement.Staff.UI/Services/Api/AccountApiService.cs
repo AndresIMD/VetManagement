@@ -35,6 +35,8 @@ public class AccountApiService
     public async Task<string?> LoginAsync(string username, string password, bool rememberMe)
     {
         var response = await _http.PostAsJsonAsync(ApiRouteConstants.ACCOUNT_LOGIN, new { Username = username, Password = password, RememberMe = rememberMe });
+        if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            throw new HttpRequestException("Too many login attempts.", null, response.StatusCode);
         if (!response.IsSuccessStatusCode)
             return null;
 
