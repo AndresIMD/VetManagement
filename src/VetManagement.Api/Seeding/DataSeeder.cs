@@ -3,7 +3,8 @@ using VetManagement.Api.Authorization;
 using VetManagement.Application.Contracts.Persistence;
 using VetManagement.Domain.Enums;
 using VetManagement.Shared.Models.Audit;
-using VetManagement.Shared.Models.Core;
+using VetManagement.Domain.Clients;
+using VetManagement.Domain.Inventory;
 using VetManagement.Shared.Models.Exams;
 using VetManagement.Shared.Models.Medical;
 using DomainItemType = VetManagement.Domain.Enums.ItemType;
@@ -258,6 +259,8 @@ public class DataSeeder(
         var lastNames = new[] { "Smith", "Garcia", "Johnson", "Martinez", "Williams", "Rodriguez", "Brown", "Lopez", "Davis", "Gonzalez" };
         var dogNames = new[] { "Max", "Luna", "Charlie", "Bella", "Rocky", "Daisy", "Cooper", "Lucy", "Buddy", "Molly" };
         var catNames = new[] { "Whiskers", "Shadow", "Mittens", "Tiger", "Simba", "Cleo", "Felix", "Nala", "Oliver", "Luna" };
+        var dogBreeds = new[] { "Labrador Retriever", "German Shepherd", "Golden Retriever", "Bulldog", "Beagle" };
+        var catBreeds = new[] { "Persian", "Maine Coon", "Siamese", "Ragdoll", "Bengal" };
 
         for (int i = 0; i < 15; i++)
         {
@@ -278,7 +281,7 @@ public class DataSeeder(
             {
                 var isDog = random.Next(0, 2) == 0;
                 var species = isDog ? Species.Dog : Species.Cat;
-                var breeds = Pet.BreedsBySpecies[species];
+                var breeds = isDog ? dogBreeds : catBreeds;
                 var age = random.Next(1, 15);
                 var birthdate = DateTime.UtcNow.AddYears(-age).AddMonths(-random.Next(0, 12));
 
@@ -288,7 +291,7 @@ public class DataSeeder(
                     Name = isDog ? dogNames[random.Next(dogNames.Length)] : catNames[random.Next(catNames.Length)],
                     Sex = (Sex)random.Next(1, 3),
                     Species = species,
-                    Breed = breeds[random.Next(breeds.Count)],
+                    Breed = breeds[random.Next(breeds.Length)],
                     Birthdate = birthdate,
                     Age = age,
                     Weight = isDog ? random.Next(5, 40) + (float)random.NextDouble() : random.Next(2, 8) + (float)random.NextDouble(),

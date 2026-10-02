@@ -1,5 +1,4 @@
 using System.Text;
-using System.Text.Json.Serialization.Metadata;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +11,8 @@ using VetManagement.Application.Contracts.Persistence;
 using VetManagement.Application.Services;
 using VetManagement.Infrastructure.Data;
 using VetManagement.Infrastructure.Persistence;
-using VetManagement.Shared.Models.Core;
+using VetManagement.Domain.Clients;
+using VetManagement.Domain.Inventory;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -228,21 +228,6 @@ builder.Services.AddRateLimiter(options =>
 
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
-    var resolver = new DefaultJsonTypeInfoResolver();
-    resolver.Modifiers.Add(ti =>
-    {
-        if (ti.Type == typeof(Item))
-        {
-            ti.PolymorphismOptions = new JsonPolymorphismOptions
-            {
-                TypeDiscriminatorPropertyName = "$type",
-                IgnoreUnrecognizedTypeDiscriminators = false,
-                DerivedTypes = { new JsonDerivedType(typeof(Drug), "Drug") }
-            };
-        }
-    });
-    options.JsonSerializerOptions.TypeInfoResolver = resolver;
-
     options.JsonSerializerOptions.DefaultBufferSize = 16 * 1024;
     options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
 });

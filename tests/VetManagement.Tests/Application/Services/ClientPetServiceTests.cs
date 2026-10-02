@@ -4,7 +4,7 @@ using VetManagement.Application.Contracts.Persistence;
 using VetManagement.Application.Contracts.Services;
 using VetManagement.Application.Services;
 using VetManagement.Domain.Enums;
-using VetManagement.Shared.Models.Core;
+using VetManagement.Domain.Clients;
 
 namespace VetManagement.Tests.Application.Services;
 

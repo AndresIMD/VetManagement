@@ -2,7 +2,7 @@ using System.Text.Json;
 using VetManagement.Application.Contracts.Persistence;
 using VetManagement.Application.Contracts.Services;
 using VetManagement.Domain.Enums;
-using VetManagement.Shared.Models.Core;
+using VetManagement.Domain.Clients;
 
 namespace VetManagement.Application.Services;
 

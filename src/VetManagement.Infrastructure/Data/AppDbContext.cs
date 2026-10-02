@@ -7,8 +7,8 @@ using VetManagement.Domain.Inventory;
 using VetManagement.Shared.Models.Audit;
 using VetManagement.Shared.Models.Exams;
 using VetManagement.Shared.Models.Medical;
-using Client = VetManagement.Shared.Models.Core.Client;
-using Pet = VetManagement.Shared.Models.Core.Pet;
+using Client = VetManagement.Domain.Clients.Client;
+using Pet = VetManagement.Domain.Clients.Pet;
 
 namespace VetManagement.Infrastructure.Data;
 
