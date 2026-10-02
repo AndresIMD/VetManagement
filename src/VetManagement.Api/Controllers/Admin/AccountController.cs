@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using VetManagement.Shared.Models.DTOs;
+using VetManagement.Contracts.Accounts;
 using VetManagement.Api.Authorization;
 using VetManagement.Application.Services;
 using VetManagement.Domain.Enums;

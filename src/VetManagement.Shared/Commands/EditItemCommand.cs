@@ -1,5 +1,5 @@
 using System.Text.Json;
-using VetManagement.Shared.Constants;
+using InventoryReasons = VetManagement.Domain.Inventory.InventoryReasons;
 using VetManagement.Domain.Enums;
 using VetManagement.Shared.Models.Core;
 using VetManagement.Shared.Models.Inventory;

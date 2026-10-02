@@ -1,7 +1,7 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using VetManagement.Shared.Constants;
-using VetManagement.Shared.Models.DTOs;
+using VetManagement.Contracts.Accounts;
 
 #if !ANDROID && !IOS && !WINDOWS
 using Microsoft.JSInterop;

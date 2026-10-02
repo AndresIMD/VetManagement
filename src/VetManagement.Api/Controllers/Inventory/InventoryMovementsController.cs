@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using VetManagement.Application.Services;
 using VetManagement.Contracts.Common;
 using VetManagement.Contracts.Inventory;
-using VetManagement.Shared.Models.DTOs;
 using DomainInventoryMovement = VetManagement.Domain.Inventory.InventoryMovement;
 using DomainInventoryMovementType = VetManagement.Domain.Enums.InventoryMovementType;
 
@@ -80,7 +79,7 @@ public class InventoryMovementsController(InventoryMovementService movementServi
     [Authorize(Policy = "Inventory.Update")]
     public async Task<IActionResult> MassIngressAsync([FromBody] List<MassStockUpdateRequest> items)
     {
-        var updated = await movementService.MassStockUpdateAsync(items.Select(MapToLegacyDto).ToList(), true, GetUserName());
+        var updated = await movementService.MassStockUpdateAsync(items, true, GetUserName());
         if (updated == 0)
             return NotFound("No items updated.");
         return Ok(new { updated });
@@ -90,19 +89,11 @@ public class InventoryMovementsController(InventoryMovementService movementServi
     [Authorize(Policy = "Inventory.Update")]
     public async Task<IActionResult> MassEgressAsync([FromBody] List<MassStockUpdateRequest> items)
     {
-        var updated = await movementService.MassStockUpdateAsync(items.Select(MapToLegacyDto).ToList(), false, GetUserName());
+        var updated = await movementService.MassStockUpdateAsync(items, false, GetUserName());
         if (updated == 0)
             return NotFound("No items updated.");
         return Ok(new { updated });
     }
-
-    private static InventoryMassUpdateDTO MapToLegacyDto(MassStockUpdateRequest request) => new()
-    {
-        ItemId = request.ItemId,
-        Name = request.Name,
-        Barcode = request.Barcode,
-        Quantity = request.Quantity
-    };
 
     private static MovementDto MapToDto(DomainInventoryMovement movement) => new()
     {

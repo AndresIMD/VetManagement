@@ -1,6 +1,6 @@
 using System.Net.Http.Json;
 using VetManagement.Shared.Constants;
-using VetManagement.Shared.Models.DTOs;
+using VetManagement.Contracts.Accounts;
 
 namespace VetManagement.Shared.Services.Api;
 

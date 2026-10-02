@@ -1,10 +1,10 @@
 using System.Text.Json;
 using VetManagement.Application.Contracts.Persistence;
 using VetManagement.Application.Contracts.Services;
+using VetManagement.Domain.Enums;
 using VetManagement.Domain.Inventory;
-using VetManagement.Shared.Constants;
-using VetManagement.Shared.Helpers;
-using VetManagement.Shared.Models.DTOs;
+using VetManagement.Application.Common;
+using VetManagement.Contracts.Inventory;
 using AuditActionType = VetManagement.Domain.Enums.AuditActionType;
 using DomainInventoryMovementType = VetManagement.Domain.Enums.InventoryMovementType;
 
@@ -131,7 +131,7 @@ public class InventoryMovementService(IUnitOfWork unitOfWork, IRealtimeNotificat
         return true;
     }
 
-    public async Task<int> MassStockUpdateAsync(List<InventoryMassUpdateDTO> items, bool isIngress, string userName)
+    public async Task<int> MassStockUpdateAsync(IEnumerable<MassStockUpdateRequest> items, bool isIngress, string userName)
     {
         int updatedCount = 0;
         List<(int ItemId, int NewStock)> changedItems = [];

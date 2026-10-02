@@ -31,7 +31,6 @@
     <ProjectReference Include="..\VetManagement.Application\VetManagement.Application.csproj" />
     <ProjectReference Include="..\VetManagement.Infrastructure\VetManagement.Infrastructure.csproj" />
     <!-- Transitional reference: required by legacy controllers until contracts are migrated. -->
-    <ProjectReference Include="..\VetManagement.Shared\VetManagement.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>

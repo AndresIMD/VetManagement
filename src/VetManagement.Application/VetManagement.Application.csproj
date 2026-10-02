@@ -3,8 +3,6 @@
   <ItemGroup>
     <ProjectReference Include="..\VetManagement.Domain\VetManagement.Domain.csproj" />
     <ProjectReference Include="..\VetManagement.Contracts\VetManagement.Contracts.csproj" />
-    <!-- Transitional reference: removed feature-by-feature as legacy models leave Shared. -->
-    <ProjectReference Include="..\VetManagement.Shared\VetManagement.Shared.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

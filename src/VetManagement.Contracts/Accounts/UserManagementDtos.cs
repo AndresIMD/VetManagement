@@ -1,4 +1,4 @@
-namespace VetManagement.Shared.Models.DTOs;
+namespace VetManagement.Contracts.Accounts;
 
 public class UserDto
 {

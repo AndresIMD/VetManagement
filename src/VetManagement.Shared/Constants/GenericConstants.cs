@@ -15,15 +15,3 @@ public static class GenericConstants
         "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
     ];
 }
-
-/// <summary>
-/// Centralized reasons for inventory movements to ensure consistency across the application.
-/// </summary>
-public static class InventoryReasons
-{
-    public const string QUICK_ADJUSTMENT = "Quick stock adjustment";
-    public const string ITEM_EDIT = "Update via item edit";
-    public const string ITEM_DELETION = "Item deletion";
-    public const string MASSIVE_INGRESS = "Massive Ingress";
-    public const string MASSIVE_EGRESS = "Massive Egress";
-}

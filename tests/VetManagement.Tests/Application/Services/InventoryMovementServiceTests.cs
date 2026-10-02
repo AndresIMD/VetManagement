@@ -5,7 +5,7 @@ using VetManagement.Application.Contracts.Services;
 using VetManagement.Application.Services;
 using VetManagement.Domain.Inventory;
 using VetManagement.Domain.Enums;
-using VetManagement.Shared.Models.DTOs;
+using VetManagement.Contracts.Inventory;
 using DomainInventoryMovementType = VetManagement.Domain.Enums.InventoryMovementType;
 using DomainItemType = VetManagement.Domain.Enums.ItemType;
 using DomainItem = VetManagement.Domain.Inventory.Item;
@@ -153,7 +153,7 @@ public class InventoryMovementServiceTests
     public async Task MassStockUpdateAsync_ShouldUpdateMultipleItems()
     {
         // Arrange
-        var updates = new List<InventoryMassUpdateDTO>
+        var updates = new List<MassStockUpdateRequest>
         {
             new() { ItemId = 1, Quantity = 5 },
             new() { ItemId = 2, Quantity = 3 }
