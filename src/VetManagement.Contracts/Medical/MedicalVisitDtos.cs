@@ -8,10 +8,12 @@ public sealed class MedicalVisitRequest
 {
     public DateTime Date { get; init; } = DateTime.UtcNow;
 
+    [Range(1, int.MaxValue)]
     public int PatientId { get; init; }
 
     public string? RecordNumber { get; init; }
 
+    [Required]
     public string PatientName { get; init; } = string.Empty;
 
     public string Responsible { get; init; } = string.Empty;

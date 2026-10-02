@@ -23,9 +23,8 @@ builder.WebHost.ConfigureKestrel(options =>
     options.Limits.RequestHeadersTimeout = TimeSpan.FromSeconds(30);
 });
 
-#if DEBUG
-builder.Configuration.AddUserSecrets<Program>();
-#endif
+// User secrets are loaded by CreateBuilder in Development only. Loading them in every Debug build
+// (as before) let a developer's secrets override test/production configuration.
 
 static bool IsPlaceholder(string? value)
  => !string.IsNullOrWhiteSpace(value) && value.Trim().StartsWith("<") && value.Trim().EndsWith(">");

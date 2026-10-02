@@ -48,8 +48,10 @@ public sealed class ExternalLabRequest
 /// <summary>Body for creating or updating an exam order with its items.</summary>
 public sealed class ExamPerformedRequest
 {
+    [Range(1, int.MaxValue)]
     public int PatientId { get; init; }
 
+    [Required]
     public string Responsible { get; init; } = string.Empty;
 
     public DateTime Date { get; init; } = DateTime.UtcNow;
@@ -65,6 +67,7 @@ public sealed class ExamRequestItemRequest
 {
     public int Id { get; init; }
 
+    [Range(1, int.MaxValue)]
     public int ExamId { get; init; }
 
     public ExamItemStatus Status { get; init; } = ExamItemStatus.Pending;
