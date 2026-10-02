@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using VetManagement.Infrastructure.Data;
@@ -9,6 +10,9 @@ namespace VetManagement.Tests.Integration;
 
 public class CustomWebAppFactory : WebApplicationFactory<Program>
 {
+    // One in-memory database per factory instance, so test classes never see each other's data.
+    private readonly string _databaseName = $"TestDb-{Guid.NewGuid():N}";
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
@@ -23,10 +27,13 @@ public class CustomWebAppFactory : WebApplicationFactory<Program>
 
         builder.ConfigureServices(services =>
         {
+            // EF Core 9+ keeps the UseSqlServer(...) configuration in IDbContextOptionsConfiguration<T>;
+            // without removing it both providers are registered and any DB access throws.
+            services.RemoveAll<IDbContextOptionsConfiguration<AppDbContext>>();
             services.RemoveAll<DbContextOptions<AppDbContext>>();
             services.RemoveAll<DbContextOptions>();
             services.RemoveAll<AppDbContext>();
-            services.AddDbContext<AppDbContext>(opts => opts.UseInMemoryDatabase("TestDb"));
+            services.AddDbContext<AppDbContext>(opts => opts.UseInMemoryDatabase(_databaseName));
         });
     }
 }

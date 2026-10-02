@@ -4,6 +4,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using VetManagement.Contracts.Accounts;
 using VetManagement.Api.Authorization;
@@ -21,11 +22,21 @@ public class AccountController(
 {
     [HttpPost("login")]
     [AllowAnonymous]
+    [EnableRateLimiting("login")]
     public async Task<IActionResult> LoginAsync([FromBody] LoginRequest request)
     {
         var user = await userManager.FindByNameAsync(request.Username);
+
+        // Same 401 for unknown user, locked account and wrong password, so responses don't reveal which accounts exist.
+        if (user != null && await userManager.IsLockedOutAsync(user))
+        {
+            await audit.LogSecurityAsync(AuditActionType.UserLoginFailed, request.Username, "Account locked out");
+            return Unauthorized("Invalid credentials.");
+        }
+
         if (user != null && await userManager.CheckPasswordAsync(user, request.Password))
         {
+            await userManager.ResetAccessFailedCountAsync(user);
             var userRoles = await userManager.GetRolesAsync(user);
             var userClaims = await userManager.GetClaimsAsync(user);
             var token = GenerateJwtToken(user, userRoles, userClaims, request.RememberMe);
@@ -33,6 +44,9 @@ public class AccountController(
             await audit.LogSecurityAsync(AuditActionType.UserLogin, user.UserName, "Login successful");
             return Ok(new { token, mustChangePassword = mustChange });
         }
+        if (user != null)
+            await userManager.AccessFailedAsync(user); // locks the account after MaxFailedAccessAttempts
+
         await audit.LogSecurityAsync(AuditActionType.UserLoginFailed, request.Username, "Invalid credentials");
         return Unauthorized("Invalid credentials.");
     }

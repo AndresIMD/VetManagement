@@ -56,6 +56,10 @@ builder.Services.AddIdentityCore<IdentityUser>(options =>
     options.Password.RequireUppercase = true;
     options.Password.RequireNonAlphanumeric = true;
     options.Password.RequiredUniqueChars = 3;
+    // Brute-force protection: lock the account after repeated failed logins (enforced in AccountController)
+    options.Lockout.AllowedForNewUsers = true;
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
 })
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<AppDbContext>();
@@ -195,6 +199,16 @@ builder.Services.AddRateLimiter(options =>
             context.HttpContext.Response.Headers.RetryAfter = retryAfter.TotalSeconds.ToString();
         return new ValueTask();
     };
+
+    // Login attempts per client IP, on top of the global limit and the per-account lockout.
+    options.AddPolicy("login", context => System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
+        _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        }));
 
     options.GlobalLimiter = System.Threading.RateLimiting.PartitionedRateLimiter.Create<HttpContext, string>(context =>
     {
