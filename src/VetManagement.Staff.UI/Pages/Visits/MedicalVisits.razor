@@ -1,0 +1,217 @@
+﻿@page "/medical-visits"
+@using MudBlazor
+@using VetManagement.Domain.Enums
+@using VetManagement.Staff.UI.Models.Medical
+@using VetManagement.Staff.UI.Services.Api
+@using VetManagement.Staff.UI.Helpers
+@attribute [Authorize(Roles = "Admin,Manager,Employee")]
+@inject MedicalVisitApiService VisitsService
+@inject ExamApiService ExamService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<PageTitle>Medical Visits</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
+    <PageHeader Title="Home Medical Visits" Icon="@Icons.Material.Filled.Home" />
+
+    <MudPaper Class="pa-6 mb-4 elevation-3 rounded-lg app-surface">
+        <MudGrid>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextFilterField @bind-Value="FilterText" Label="Search patient, record, location..." />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudNumericField T="int?" Label="Pet ID" @bind-Value="FilterPetId" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudSelect T="PaymentStatus ?" @bind-Value="FilterPaymentStatus" Label="Payment Status"
+                    Variant="Variant.Outlined">
+                    <MudSelectItem Value="@((PaymentStatus?)null)">All</MudSelectItem>
+                    <MudSelectItem Value="PaymentStatus.Pending">Pending</MudSelectItem>
+                    <MudSelectItem Value="PaymentStatus.Paid">Paid</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudDateRangePicker @bind-DateRange="FilterRange" Label="Date range" Variant="Variant.Outlined" />
+            </MudItem>
+        </MudGrid>
+        <MudStack Row="true" Justify="Justify.FlexEnd" AlignItems="AlignItems.Center" Class="mt-3">
+            <MudStack Row="true" Spacing="2">
+                <MudButton Color="Color.Secondary" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Clear"
+                    OnClick="ClearFilters">Clear filters</MudButton>
+                <MudButton Color="Color.Success" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.AddBox"
+                    OnClick="ShowCreateModal">New visit</MudButton>
+            </MudStack>
+        </MudStack>
+    </MudPaper>
+</MudContainer>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2">
+    <MudTable TItem="MedicalVisit" Items="@_filtered" Loading="@_isLoading" Striped="true" Hover="true" Bordered="true"
+        FixedHeader="true">
+        <ToolBarContent></ToolBarContent>
+        <HeaderContent>
+            <MudTh style="width:10%">ID</MudTh>
+            <MudTh style="width:12%">Date</MudTh>
+            <MudTh style="width:16%">Patient</MudTh>
+            <MudTh style="width:10%">Record</MudTh>
+            <MudTh style="width:12%">Payment</MudTh>
+            <MudTh style="width:12%">Method</MudTh>
+            <MudTh style="width:12%">Total</MudTh>
+            <MudTh style="width:16%">Location</MudTh>
+            <MudTh style="width:10%; text-align:right">Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate Context="v">
+            <MudTd DataLabel="ID">@v.Id</MudTd>
+            <MudTd DataLabel="Date">@v.Date.ToLocalTime().ToString("g")</MudTd>
+            <MudTd DataLabel="Patient">@v.PatientName (@v.PatientId)</MudTd>
+            <MudTd DataLabel="Record">@v.RecordNumber</MudTd>
+            <MudTd DataLabel="Payment">@v.PaymentStatus</MudTd>
+            <MudTd DataLabel="Method">@v.PaymentMethod</MudTd>
+            <MudTd DataLabel="Total">@v.TotalValue.ToString("C0")</MudTd>
+            <MudTd DataLabel="Location">@v.Location</MudTd>
+            <MudTd DataLabel="Actions" Class="text-end">
+                <MudStack Row="true" Spacing="1" Justify="Justify.FlexEnd">
+                    <MudTooltip Text="Edit">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Tertiary"
+                            Variant="Variant.Filled" Size="Size.Small" OnClick="@(() => ShowEditModal(v))" />
+                    </MudTooltip>
+                    <MudTooltip Text="Delete">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Filled"
+                            Size="Size.Small" OnClick="@(() => ShowDeleteModal(v))" />
+                    </MudTooltip>
+                </MudStack>
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+</MudContainer>
+
+@code {
+    // Filters
+    private string? _filterText;
+    private string? FilterText
+    {
+        get => _filterText; set
+        {
+            if (_filterText != value)
+            {
+                _filterText = value; ApplyFilters();
+            }
+        }
+    }
+    private int? FilterPetId = null;
+    private PaymentStatus? FilterPaymentStatus = null;
+    private DateRange? FilterRange;
+
+    // Data
+    private List<MedicalVisit> _all = new();
+    private List<MedicalVisit> _filtered = new();
+    private bool _isLoading;
+
+    // Modal
+    private MedicalVisit _current = new() { Procedures = new List<VisitProcedure>() };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _isLoading = true;
+        StateHasChanged();
+        try
+        {
+            _all = await VisitsService.GetAllAsync() ?? new();
+            ApplyFilters();
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ApplyFilters()
+    {
+        IEnumerable<MedicalVisit> q = _all;
+        if (!string.IsNullOrWhiteSpace(FilterText))
+        {
+            q = q.Where(v =>
+            StringExtensions.ContainsIgnoringAccents(v.PatientName ?? string.Empty, FilterText) ||
+            StringExtensions.ContainsIgnoringAccents(v.RecordNumber ?? string.Empty, FilterText) ||
+            StringExtensions.ContainsIgnoringAccents(v.Location ?? string.Empty, FilterText)
+            );
+        }
+        if (FilterPetId.HasValue)
+            q = q.Where(v => v.PatientId == FilterPetId);
+        if (FilterPaymentStatus.HasValue)
+            q = q.Where(v => v.PaymentStatus == FilterPaymentStatus);
+        if (FilterRange is not null && FilterRange.Start != null && FilterRange.End != null)
+            q = q.Where(v => v.Date >= FilterRange.Start && v.Date <= FilterRange.End);
+
+        _filtered = q.OrderByDescending(v => v.Date).ToList();
+    }
+
+    private void ClearFilters()
+    {
+        FilterText = null;
+        FilterPetId = null;
+        FilterPaymentStatus = null;
+        FilterRange = null;
+        ApplyFilters();
+    }
+
+    private async Task ShowCreateModal()
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var parameters = new DialogParameters<VetManagement.Staff.UI.Components.Modals.Visits.MedicalVisitEditModal>
+{
+{ x => x.Visit, new MedicalVisit { Date = DateTime.UtcNow, Procedures = new List<VisitProcedure>() } }
+};
+        var dialog = await DialogService.ShowAsync<VetManagement.Staff.UI.Components.Modals.Visits.MedicalVisitEditModal>("New visit", parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+            await LoadAsync();
+    }
+
+    private async Task ShowEditModal(MedicalVisit entity)
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var parameters = new DialogParameters<VetManagement.Staff.UI.Components.Modals.Visits.MedicalVisitEditModal>
+{
+{ x => x.Visit, entity }
+};
+        var dialog = await DialogService.ShowAsync<VetManagement.Staff.UI.Components.Modals.Visits.MedicalVisitEditModal>("Edit visit", parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+            await LoadAsync();
+    }
+
+    private async Task ShowDeleteModal(MedicalVisit entity)
+    {
+        _current = entity;
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = false };
+        var parameters = new DialogParameters<Components.Modals.Common.ConfirmModal>
+        {
+            { x => x.Title, "Delete visit" },
+            { x => x.Message, $"Are you sure you want to delete visit #{_current.Id}?" },
+            { x => x.ButtonConfirmText, "Delete" },
+            { x => x.ButtonCancelText, "Cancel" },
+            { x => x.TitleIcon, Icons.Material.Filled.Delete },
+            { x => x.TitleColor, Color.Error }
+        };
+        var dialog = await DialogService.ShowAsync<Components.Modals.Common.ConfirmModal>("Delete visit", parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            if (_current.Id != 0)
+                await VisitsService.DeleteAsync(_current.Id);
+            Snackbar.Add("Visit deleted.", Severity.Success);
+            await LoadAsync();
+        }
+    }
+}

@@ -4,10 +4,10 @@
 **Current Branch:** main  
 
 **Target dependency direction:** Domain ← Application ← Infrastructure ← Api; Contracts is consumed by Api and all clients.
-Solution folders: Core (Domain, Application, Contracts) · Infrastructure · Server (Api) · Clients (Shared, Staff.Web, Staff.Maui) · Clinic Sites (sites/SPVetClinic) · Tests.
+Solution folders: Core (Domain, Application, Contracts) · Infrastructure · Server (Api) · Clients (Staff.UI, Staff.Web, Staff.Maui) · Clinic Sites (sites/SPVetClinic) · Tests.
 Product model: the staff CRM is generic (same for every clinic); each clinic gets its own branded public site that consumes the API. Clinic sites do not use the `VetManagement.` prefix.
-Pending rename: `VetManagement.Shared` → `VetManagement.Staff.UI` after F2 (avoids touching backend usings that F2 removes).
-Backend projects (Application, Infrastructure, Api) must stop referencing Shared — F2 moves Client, Pet, Exams, MedicalVisit, AuditLog and enums from `Shared/Models` to Domain.
+Module pattern (all modules): Domain entity (no attributes) · Contracts request/DTO (server validation, same JSON shape as the UI model) · controller maps request → entity → DTO, ids only from the route · `Staff.UI` keeps its own view models (form validation, `Drug : Item`) and maps in its `*ApiService`.
+Guard tests: `ArchitectureTests` (dependency direction), `MigrationsTests` (EF model = migrations snapshot), `WireContractTests` (UI ↔ API JSON), `AuthorizationPoliciesTests` (every `[Authorize(Policy)]` is registered).
 
 ---
 
@@ -17,8 +17,8 @@ Backend projects (Application, Infrastructure, Api) must stop referencing Shared
 |-------|--------|-------------|
 | **F0** | ✅ **COMPLETED** | Restructuring + Critical fixes + CI |
 | **F1** | ✅ **COMPLETED** | Inventory migration to Domain/Contracts |
-| **F2** | ⏳ Pending | Other modules migration |
-| **F3** | ⏳ Pending | Shared → UI only |
+| **F2** | ✅ **COMPLETED** | Clients/Pets, Exams, Medical, Audit, enums and DTOs out of Shared; backend no longer references the UI |
+| **F3** | ✅ **COMPLETED** (with F2) | Shared → UI only, renamed `VetManagement.Staff.UI` |
 | **F4** | ⏳ Pending | Hardening |
 | **F5** | ⏳ Pending | Documentation |
 
@@ -54,10 +54,9 @@ Backend projects (Application, Infrastructure, Api) must stop referencing Shared
 
 ---
 
-## Current Blockers / Decisions Needed
+## Notes
 
-1. **ExamPerformed** - Has `List<ExamRequestItem>` in Shared. `ExamRequestItem` doesn't reference Inventory types directly, but existing EF migrations contain legacy inventory type names.
-2. **Legacy migrations** - Existing EF migration snapshots reference `Shared.Models.Core.Item`; validate the production database migration strategy before generating new migrations.
+- **Legacy migration snapshots** still name entities by their old CLR types (`VetManagement.Shared.Models.*`). This is harmless: tables and columns are unchanged, and `MigrationsTests` fails if the model ever drifts. Applied migrations are never edited; the next new migration refreshes the snapshot names.
 
 ---
 
@@ -81,31 +80,17 @@ git log --oneline -10
 
 ## Next Actions (Priority Order)
 
-**F2 — move remaining entities out of Shared** (one module per commit; build + tests after each):
-1. Review legacy EF migrations / model snapshot: confirm moving CLR types between namespaces produces an empty migration (table names, `Item` discriminator values).
-2. Shared enums used by the backend → `Domain.Enums`.
-3. Clients/Pets: `Client`, `Pet` → Domain; API exposes Contracts DTOs; Shared keeps UI view models + ApiService mapping (same pattern as inventory).
-4. Exams: `Exam`, `ExamPerformed`, `ExamRequestItem`, `ExternalLab` → Domain.
-5. Medical: `MedicalVisit` → Domain. Audit: `AuditLog` → Domain.
-6. Backend DTOs still in `Shared/Models/DTOs` (accounts, users, paging, mass update) → Contracts.
-7. Remove the `Shared` ProjectReference from Application, Infrastructure and Api.
-8. Rename `VetManagement.Shared` → `VetManagement.Staff.UI`.
+1. **F4 — Hardening**: error handling (ProblemDetails), structured logging, health checks per dependency, rate limits on auth endpoints.
+2. **Validation parity gaps** found during F2 (kept as-is to avoid behavior changes): `ExamPerformed.PatientId` and `ExamRequestItem.ExamId` accept 0 and have no FK; exam orders and visits take `Responsible` from the body instead of the authenticated user.
+3. **Public API for clinic sites** (booking, services) with per-clinic CORS, before `sites/` consumes the API.
+4. **Contracts → Domain**: Contracts reference Domain only for enums; move or duplicate those enums before publishing Contracts to clinic sites.
+5. **F5 — Documentation**: refresh README architecture section; archive `docs/reports` and `docs/MASTER_STATUS.md` as historical.
 
 ---
 
-## Git History (Last 10)
+## Git History
 
-```
-33d8246 F1 (additive): add Domain inventory types + Contracts transport DTOs
-e0f4359 Add CI workflow for build and test on push/PR
-ae4d548 Add CI workflow for build and test on push/PR
-5d009ca Add CI workflow and fix xUnit1031 async warning in policy tests
-ded4abc Cleanup: remove legacy artifacts and update docs to src/ layout
-fa3a2c8 Fix C2: remove non-existent 'fixed-window' rate limiter policy from SetupController
-3d4c20b Fix C1: normalize authorization policy names to PascalCase in controllers
-746864f Restructure: move projects to src/, tests/, docs/
-ed8175d Initial commit: VetManagement - Full-stack veterinary clinic CRM
-```
+See `git log --oneline` (kept out of this file so it never goes stale).
 
 ---
 

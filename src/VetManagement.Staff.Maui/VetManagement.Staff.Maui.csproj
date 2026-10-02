@@ -40,7 +40,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\VetManagement.Shared\VetManagement.Shared.csproj" />
+    <ProjectReference Include="..\VetManagement.Staff.UI\VetManagement.Staff.UI.csproj" />
   </ItemGroup>
 
 </Project>

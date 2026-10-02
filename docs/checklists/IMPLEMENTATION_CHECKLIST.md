@@ -55,7 +55,7 @@
 **Status**: ⬜ Pending  
 **Effort**: 1 hour  
 **Files Affected**:
-- `VetManagement.Shared/Enums/InventoryEnums.cs` (add new enum)
+- `VetManagement.Staff.UI/Enums/InventoryEnums.cs` (add new enum)
 - `VetManagement.Infrastructure/Repositories/ItemRepository.cs` (update parameter)
 - `VetManagement.Api/Controllers/Inventory/ItemsController.cs` (update call)
 
@@ -103,7 +103,7 @@
 **Status**: ⬜ Pending  
 **Effort**: 1 hour  
 **Files Affected**:
-- `VetManagement.Shared/Helpers/AuditActionHelper.cs` (add method)
+- `VetManagement.Staff.UI/Helpers/AuditActionHelper.cs` (add method)
 - `VetManagement.Application/Services/InventoryMovementService.cs` (update)
 - Any other services using this mapping
 
@@ -126,7 +126,7 @@
 **Status**: ⬜ Pending  
 **Effort**: 30 minutes  
 **Files Affected**:
-- `VetManagement.Shared/Enums/InventoryEnums.cs` (add fields)
+- `VetManagement.Staff.UI/Enums/InventoryEnums.cs` (add fields)
 
 **Checklist**:
 - [ ] Add `Id` to ItemSortField
@@ -168,9 +168,9 @@
 **Status**: ⬜ Pending  
 **Effort**: 3 hours  
 **Files Affected**:
-- Create: `VetManagement.Shared/Helpers/ValidationHelper.cs` (new file)
+- Create: `VetManagement.Staff.UI/Helpers/ValidationHelper.cs` (new file)
 - `VetManagement.Application/Services/ItemService.cs` (use helper)
-- `VetManagement.Shared/Components/Forms/ItemForm.razor` (reference)
+- `VetManagement.Staff.UI/Components/Forms/ItemForm.razor` (reference)
 
 **Checklist**:
 - [ ] Create `public static class ValidationHelper` in correct location
@@ -201,12 +201,12 @@
 **Status**: ⬜ Pending  
 **Effort**: 2 hours  
 **Files Affected**:
-- `VetManagement.Shared/Helpers/` (restructure)
+- `VetManagement.Staff.UI/Helpers/` (restructure)
 
 **Checklist**:
 - [ ] Create folder structure:
   ```
-  VetManagement.Shared/Helpers/
+  VetManagement.Staff.UI/Helpers/
   ├── Domain/
   │   ├── AuditActionHelper.cs       (move & expand)
   │   ├── InventoryHelper.cs         (new - inventory logic)
@@ -241,7 +241,7 @@
 
 **Checklist**:
 - [ ] Review `CollectionHelper` functionality
-- [ ] Move to `VetManagement.Shared/Helpers/Extensions/CollectionExtensions.cs`
+- [ ] Move to `VetManagement.Staff.UI/Helpers/Extensions/CollectionExtensions.cs`
 - [ ] Update all imports in Application layer
 - [ ] Delete original file
 - [ ] Test Application builds

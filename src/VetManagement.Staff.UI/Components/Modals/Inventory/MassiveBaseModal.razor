@@ -1,0 +1,318 @@
+﻿@using VetManagement.Staff.UI.Components.Modals.Base
+@using VetManagement.Staff.UI.Services.Api
+@using VetManagement.Staff.UI.Helpers
+@using VetManagement.Domain.Enums
+@typeparam TItem
+@inherits ModalBase<TItem>
+@using System.Text.Json
+
+<ModalShell Title="@Title"
+            TitleIcon="@TitleIcon"
+            TitleColor="@TitleColor"
+            IsLoading="@isLoading"
+            IsValid="true"
+            PrimaryText="@ConfirmButtonText"
+            PrimaryDisabled="@(items.Count == 0)"
+            OnPrimaryClick="Confirm"
+            OnCancelClick="OnCancelRequested">
+    <MudStack Spacing="2">
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudTextField @ref="barcodeInput"
+                              Label="@BarcodeLabel"
+                              @bind-Value="currentBarcode"
+                              Immediate="true"
+                              OnKeyDown="OnBarcodeKeyDown"
+                              Variant="Variant.Outlined"
+                              AutoFocus="true"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.QrCodeScanner" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextDropdownField T="Item"
+                                      @ref="itemAutocomplete"
+                                      @bind-SelectedItem="selectedItem"
+                                      Label="Search item by name or compound"
+                                      SearchFunc="SearchItemsNormalizedAsync"
+                                      ToStringFunc="@(i => i is null ? string.Empty : i.Name)"
+                                      LoadingText="Searching items..."
+                                      NoItemsText="No items found"
+                                      EmptyText="Type at least 2 characters to search"
+                                      MinCharacters="2">
+                    <ItemTemplate>
+                        @if (context is Drug d)
+                        {
+                            <MudStack Spacing="1">
+                                <MudText Typo="Typo.body2">@d.Name (@d.Brand)</MudText>
+                                @if (!string.IsNullOrWhiteSpace(d.Compound))
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Compound: @d.Compound</MudText>
+                                }
+                                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                    <MudText Typo="Typo.caption" Color="Color.Tertiary">Code: @d.Barcode</MudText>
+                                    <MudChip T="string" Color="@GetStockColor(d.Stock)" Variant="Variant.Outlined" Class="ml-2">Stock: @d.Stock</MudChip>
+                                </MudStack>
+                            </MudStack>
+                        }
+                        else
+                        {
+                            <MudStack Spacing="1">
+                                <MudText Typo="Typo.body2">@context.Name (@context.Brand)</MudText>
+                                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                    <MudText Typo="Typo.caption" Color="Color.Tertiary">Code: @context.Barcode</MudText>
+                                    <MudChip T="string" Color="@GetStockColor(context.Stock)" Variant="Variant.Outlined" Class="ml-2">Stock: @context.Stock</MudChip>
+                                </MudStack>
+                            </MudStack>
+                        }
+                    </ItemTemplate>
+                </MudTextDropdownField>
+            </MudItem>
+        </MudGrid>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Dense="true" Class="mb-2">@errorMessage</MudAlert>
+        }
+
+        <MudTable Items="items" Class="mt-2" Hover="true" Bordered="true" Striped="true" Dense="true">
+            <HeaderContent>
+                <MudTh>Name</MudTh>
+                <MudTh>Stock</MudTh>
+                <MudTh>Quantity</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Name">@GetName(context)</MudTd>
+                <MudTd DataLabel="Stock">
+                    @{
+                        var stock = GetStock(context);
+                    }
+                    @if (stock.HasValue)
+                    {
+                        <MudChip T="string" Color="@GetStockColor(stock.Value)" Variant="Variant.Outlined">@stock</MudChip>
+                    }
+                    else
+                    {
+                        <MudText Color="Color.Tertiary">-</MudText>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Quantity">
+                    @if (GetQuantity(context) <= 0)
+                    {
+                        <MudText Color="Color.Error">Removed</MudText>
+                    }
+                    else
+                    {
+                        var stockVal = GetStock(context);
+                        var tip = stockVal.HasValue ? $"Available stock: {stockVal.Value}" : "Quantity";
+                        <MudTooltip Text="@tip">
+                            <NumericStepper Value="@GetQuantity(context)" ValueChanged="@(v => SetQuantity(context, v))" />
+                        </MudTooltip>
+                    }
+                </MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => RemoveItem(context))" />
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudStack>
+</ModalShell>
+
+@code {
+    [Inject] public ItemsApiService ItemsService { get; set; } = default!;
+    [Inject] public IDialogService DialogService { get; set; } = default!;
+    [Inject] public IJSRuntime JS { get; set; } = default!;
+
+    protected MudTextField<string>? barcodeInput;
+    protected MudTextDropdownField<Item>? itemAutocomplete;
+
+    protected string currentBarcode = string.Empty;
+    protected List<TItem> items = new();
+    protected bool shouldFocusBarcode = true;
+    protected string? errorMessage;
+
+    private List<Item> _cachedItems = new();
+    private bool _itemsLoaded;
+    private Item? _selectedItem;
+    private string _initialSnapshot = string.Empty;
+
+    protected Item? selectedItem
+    {
+        get => _selectedItem;
+        set
+        {
+            _selectedItem = value;
+            if (value is not null)
+            {
+                AddEntity(value);
+            }
+        }
+    }
+
+    [Parameter] public string BarcodeLabel { get; set; } = "Scan the barcode here";
+    [Parameter] public string ConfirmButtonText { get; set; } = "Confirm";
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        _initialSnapshot = JsonSerializer.Serialize(items);
+    }
+
+    protected virtual async Task OnBarcodeKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await ProcessBarcodeAsync();
+        }
+    }
+
+    private void AddEntity(object entity)
+    {
+        if (!CanAddItem(entity, out var reason))
+        {
+            errorMessage = reason;
+            shouldFocusBarcode = true;
+            StateHasChanged();
+            return;
+        }
+
+        var newItem = CreateNewItem(entity);
+        var id = GetItemId(newItem);
+        TItem? existing = default;
+        if (id > 0)
+        {
+            existing = items.FirstOrDefault(x => GetItemId(x) == id);
+        }
+        else
+        {
+            var newBarcode = GetBarcode(newItem);
+            existing = items.FirstOrDefault(x => GetBarcode(x) == newBarcode);
+        }
+        if (existing is not null)
+            SetQuantity(existing, GetQuantity(existing) + 1);
+        else
+            items.Add(newItem);
+
+        _selectedItem = null;
+        errorMessage = null;
+        shouldFocusBarcode = true;
+        StateHasChanged();
+    }
+
+    protected virtual bool CanAddItem(object entity, out string? reason)
+    {
+        reason = null;
+        return true;
+    }
+
+    protected async Task ProcessBarcodeAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(currentBarcode))
+        {
+            var entity = await GetItemByBarcode(currentBarcode);
+            if (entity != null)
+            {
+                AddEntity(entity);
+            }
+            else
+            {
+                errorMessage = $"No item was found with the barcode '{currentBarcode}'.";
+
+                shouldFocusBarcode = true;
+                StateHasChanged();
+            }
+            currentBarcode = string.Empty;
+        }
+    }
+
+    protected virtual async Task<IEnumerable<Item>> SearchItemsNormalizedAsync(string? value, CancellationToken cancellationToken)
+    {
+        if (!_itemsLoaded)
+        {
+            _cachedItems = await ItemsService.GetAllItemsAsync() ?? new List<Item>();
+            _itemsLoaded = true;
+        }
+
+        if (string.IsNullOrWhiteSpace(value))
+            return Array.Empty<Item>();
+
+        return _cachedItems.Where(i =>
+            (!string.IsNullOrWhiteSpace(i.Name) && StringExtensions.ContainsIgnoringAccents(i.Name, value)) ||
+            (i is Drug d && !string.IsNullOrWhiteSpace(d.Compound) && StringExtensions.ContainsIgnoringAccents(d.Compound, value)) ||
+            (!string.IsNullOrWhiteSpace(i.Barcode) && StringExtensions.ContainsIgnoringAccents(i.Barcode, value)) ||
+            (!string.IsNullOrWhiteSpace(i.BrandBarcode) && StringExtensions.ContainsIgnoringAccents(i.BrandBarcode, value))
+        ).OrderBy(i => i.Name).Take(20);
+    }
+
+    private Color GetStockColor(int stock) => stock <= 0 ? Color.Error : (stock < 10 ? Color.Warning : Color.Success);
+
+    protected virtual Task<object?> GetItemByBarcode(string barcode) => Task.FromResult<object?>(null);
+    protected virtual TItem CreateNewItem(object item) => default!;
+    protected virtual string GetName(TItem item) => string.Empty;
+    protected virtual string GetBarcode(TItem item) => string.Empty;
+    protected virtual int GetQuantity(TItem item) => 1;
+    protected virtual void SetQuantity(TItem item, int value) { }
+    protected virtual int? GetStock(TItem item) => null;
+    protected virtual int GetItemId(TItem item) => 0;
+    protected void RemoveItem(TItem item) => items.Remove(item);
+
+    protected async Task Confirm()
+    {
+        var filtered = items.Where(i => GetQuantity(i) > 0).ToList();
+        if (filtered.Count == 0)
+        {
+            var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = false };
+            await DialogService.ShowAsync<Components.Modals.Common.ConfirmModal>(
+                "No items",
+                new DialogParameters<Components.Modals.Common.ConfirmModal>
+                {
+                    { x => x.Title, "No items" },
+                    { x => x.Message, "There are no items with quantity greater than 0 to process." },
+                    { x => x.ButtonConfirmText, "OK" },
+                    { x => x.ButtonCancelText, string.Empty }
+                },
+                options
+            );
+            return;
+        }
+        items = filtered;
+        MudDialog.Close(DialogResult.Ok(items));
+    }
+
+    protected async Task OnCancelRequested()
+    {
+        var current = JsonSerializer.Serialize(items);
+        if (!string.Equals(current, _initialSnapshot, StringComparison.Ordinal))
+        {
+            var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = false };
+            var parameters = new DialogParameters<Components.Modals.Common.ConfirmModal>
+            {
+                { x => x.Title, "Discard changes" },
+                { x => x.Message, "There are unsaved changes. Do you want to exit without saving?" },
+                { x => x.ButtonConfirmText, "Exit" },
+                { x => x.ButtonCancelText, "Keep editing" },
+                { x => x.TitleIcon, Icons.Material.Filled.Warning },
+                { x => x.TitleColor, Color.Warning }
+            };
+            var dialog = await DialogService.ShowAsync<Components.Modals.Common.ConfirmModal>(null, parameters, options);
+            var result = await dialog.Result;
+            if (result is { Canceled: true })
+                return;
+        }
+        OnCancel();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (shouldFocusBarcode && barcodeInput is not null)
+        {
+            shouldFocusBarcode = false;
+            await Task.Delay(50);
+            await barcodeInput.FocusAsync();
+        }
+    }
+    protected async Task BlurBarcodeInputAsync()
+    {
+        await JS.InvokeVoidAsync("eval", "document.activeElement && document.activeElement.blur()");
+    }
+}

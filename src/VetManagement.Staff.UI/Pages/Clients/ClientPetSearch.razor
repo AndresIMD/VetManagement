@@ -1,0 +1,390 @@
+﻿@page "/client-search"
+@using MudBlazor
+@using VetManagement.Staff.UI.Helpers
+@inject ClientPetApiService ClientPetService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+@attribute [Authorize(Roles = "Admin")]
+
+<PageTitle>Client and Pet Search</PageTitle>
+
+<MudStack Spacing="2">
+    <MudItem>
+        <MudPaper Class="pa-4 mb-2" Elevation="1">
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.subtitle2">Filter by Client</MudText>
+                    <MudTextFilterField @bind-Value="FilterOwnerName" Label="Owner First Name" Class="mb-2" />
+                    <MudTextFilterField @bind-Value="FilterOwnerLastName" Label="Owner Last Name" Class="mb-2" />
+                    <MudTextFilterField @bind-Value="FilterTaxId" Label="Tax ID" Class="mb-2" />
+                    <MudNumericField T="int?" Label="Client ID" @bind-Value="FilterClientId" Immediate="true" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.subtitle2">Filter by Pet</MudText>
+                    <MudTextFilterField @bind-Value="FilterPetName" Label="Pet Name" Class="mb-2" />
+                    <MudNumericField T="int?" Label="Pet ID" @bind-Value="FilterPetId" Immediate="true" />
+                    <MudNumericField T="int?" Label="Chip ID" @bind-Value="FilterChipId" Immediate="true" />
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+    </MudItem>
+</MudStack>
+
+<MudStack Spacing="2">
+    <MudItem>
+        <MudTable TItem="ClientWithPetsResult" Items="@_filteredResults" Loading="@_isLoading" Striped="true"
+                  Hover="true" Bordered="true" FixedHeader="true" RowsPerPage="25">
+            <ToolBarContent>
+                <MudSpacer />
+                <MudTooltip Text="Add Client">
+                    <MudIconButton Icon="@Icons.Material.Filled.PersonAdd" Color="Color.Success" Size="Size.Medium"
+                                   OnClick="ShowAddClientModal" />
+                </MudTooltip>
+                <MudTooltip Text="Add Pet">
+                    <MudIconButton Icon="@Icons.Material.Filled.Pets" Color="Color.Primary" Size="Size.Medium"
+                                   OnClick="ShowAddPetModal" Disabled="@((_allClients?.Count ?? 0) == 0)" />
+                </MudTooltip>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Client ID</MudTh>
+                <MudTh>Owner First Name</MudTh>
+                <MudTh>Last Name</MudTh>
+                <MudTh>Tax ID</MudTh>
+                <MudTh>Phone</MudTh>
+                <MudTh>Email</MudTh>
+                <MudTh>Pets</MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Client ID">@context.ClientId</MudTd>
+                <MudTd DataLabel="Owner First Name">@context.OwnerName</MudTd>
+                <MudTd DataLabel="Last Name">@context.OwnerLastName</MudTd>
+                <MudTd DataLabel="Tax ID">@context.TaxId</MudTd>
+                <MudTd DataLabel="Phone">@context.PhoneNumber</MudTd>
+                <MudTd DataLabel="Email">@context.Email</MudTd>
+                <MudTd DataLabel="Pets">
+                    @if (context.Pets.Any())
+                    {
+                        <ul class="mb-0">
+                            @foreach (var pet in context.Pets)
+                            {
+                                <li>
+                                    <b>@pet.Name</b> (ID: @pet.Id, @pet.Species, @pet.Breed, Chip: @pet.ChipId)
+                                    <MudTooltip Text="Register exams">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Biotech" Color="Color.Info"
+                                                       Size="Size.Small" Class="ml-1" OnClick="@(() => GoToExamRequest(pet.Id))" />
+                                    </MudTooltip>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <span class="text-muted">No pets</span>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Actions">
+                    <MudTooltip Text="Edit Client">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Variant="Variant.Filled"
+                                       Color="Color.Tertiary" Size="Size.Small" OnClick="@(() => ShowEditClientModal(context))" />
+                    </MudTooltip>
+                    <MudTooltip Text="Delete Client">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Filled" Color="Color.Error"
+                                       Size="Size.Small" OnClick="@(() => ShowDeleteClientModal(context))" />
+                    </MudTooltip>
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+    </MudItem>
+</MudStack>
+
+@code {
+    // Data
+    private List<Client>? _allClients = new List<Client>();
+    private List<ClientWithPetsResult> _filteredResults = new List<ClientWithPetsResult>();
+    private bool _isLoading;
+
+    // Filters
+    private string? _filterOwnerName;
+    private string? _filterOwnerLastName;
+    private string? _filterPetName;
+    private string? _filterTaxId;
+    private int? _filterClientId;
+    private int? _filterPetId;
+    private int? _filterChipId;
+
+    // Properties for filters
+    private string? FilterOwnerName
+    {
+        get => _filterOwnerName;
+        set { _filterOwnerName = value; ApplyFilters(); }
+    }
+    private string? FilterOwnerLastName
+    {
+        get => _filterOwnerLastName;
+        set { _filterOwnerLastName = value; ApplyFilters(); }
+    }
+    private string? FilterPetName
+    {
+        get => _filterPetName;
+        set { _filterPetName = value; ApplyFilters(); }
+    }
+    private string? FilterTaxId
+    {
+        get => _filterTaxId;
+        set { _filterTaxId = value; ApplyFilters(); }
+    }
+    private int? FilterClientId
+    {
+        get => _filterClientId;
+        set { _filterClientId = value; ApplyFilters(); }
+    }
+    private int? FilterPetId
+    {
+        get => _filterPetId;
+        set { _filterPetId = value; ApplyFilters(); }
+    }
+    private int? FilterChipId
+    {
+        get => _filterChipId;
+        set { _filterChipId = value; ApplyFilters(); }
+    }
+
+    #region Initialization
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadAndFilter();
+    }
+    #endregion
+
+    #region Filters
+    private async Task ReloadAndFilter(string? toastMessage = null)
+    {
+        _isLoading = true;
+        StateHasChanged();
+        try
+        {
+            _allClients = await ClientPetService.GetAllClientsAsync() ?? new List<Client>();
+            ApplyFilters();
+            if (!string.IsNullOrEmpty(toastMessage)) ShowToast(toastMessage);
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ApplyFilters()
+    {
+        if (_allClients is null || !_allClients.Any())
+        {
+            _filteredResults = new List<ClientWithPetsResult>();
+            return;
+        }
+
+        _filteredResults = _allClients
+        .Where(client =>
+        (string.IsNullOrWhiteSpace(_filterOwnerName) || StringExtensions.ContainsIgnoringAccents(client.Name, _filterOwnerName))
+        && (string.IsNullOrWhiteSpace(_filterOwnerLastName) || StringExtensions.ContainsIgnoringAccents(client.LastName, _filterOwnerLastName))
+        && (string.IsNullOrWhiteSpace(_filterTaxId) || StringExtensions.ContainsIgnoringAccents(client.TaxId, _filterTaxId))
+        && (!_filterClientId.HasValue || client.Id == _filterClientId)
+        && (
+        string.IsNullOrWhiteSpace(_filterPetName) && !_filterPetId.HasValue && !_filterChipId.HasValue
+        || client.Pets.Any(pet =>
+        (string.IsNullOrWhiteSpace(_filterPetName) || StringExtensions.ContainsIgnoringAccents(pet.Name, _filterPetName))
+        && (!_filterPetId.HasValue || pet.Id == _filterPetId)
+        && (!_filterChipId.HasValue || pet.ChipId == _filterChipId)
+        )
+        )
+        )
+        .Select(client => new ClientWithPetsResult
+        {
+            ClientId = client.Id,
+            OwnerName = client.Name,
+            OwnerLastName = client.LastName,
+            TaxId = client.TaxId,
+            PhoneNumber = client.PhoneNumber,
+            Email = client.Email,
+            Pets = client.Pets
+        .Where(pet =>
+        (string.IsNullOrWhiteSpace(_filterPetName) || StringExtensions.ContainsIgnoringAccents(pet.Name, _filterPetName))
+        && (!_filterPetId.HasValue || pet.Id == _filterPetId)
+        && (!_filterChipId.HasValue || pet.ChipId == _filterChipId)
+        )
+        .ToList()
+        })
+        .ToList();
+        StateHasChanged();
+    }
+
+    private static bool ClientFilter(ClientWithPetsResult client, string search)
+    {
+        if (string.IsNullOrWhiteSpace(search))
+            return true;
+
+        return
+        StringExtensions.ContainsIgnoringAccents(client.OwnerName, search) ||
+        StringExtensions.ContainsIgnoringAccents(client.OwnerLastName, search) ||
+        StringExtensions.ContainsIgnoringAccents(client.TaxId, search) ||
+        StringExtensions.ContainsIgnoringAccents(client.Email, search) ||
+        client.PhoneNumber.ToString().Contains(search, StringComparison.OrdinalIgnoreCase) ||
+        (client.Pets.Any(p =>
+        StringExtensions.ContainsIgnoringAccents(p.Name, search) ||
+        StringExtensions.ContainsIgnoringAccents(p.Breed ?? string.Empty, search) ||
+        p.ChipId.ToString().Contains(search, StringComparison.OrdinalIgnoreCase)
+        ));
+    }
+    #endregion
+
+    #region CRUD Modals
+    private async Task ShowAddClientModal()
+    {
+        var parameters = new DialogParameters<ClientModal>
+{
+{ x => x.ClientModel, new Client() },
+};
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = await DialogService.ShowAsync<ClientModal>("Add Client", parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+            await ReloadAndFilter("Client added successfully.");
+    }
+    private async Task ShowAddPetModal()
+    {
+        var list = _allClients ?? new List<Client>();
+        var parameters = new DialogParameters<PetModal>
+{
+{ x => x.AllClients, list },
+{ x => x.PetModel, new Pet { Name = string.Empty, Breed = string.Empty } }
+};
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = await DialogService.ShowAsync<PetModal>("Add Pet", parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+            await ReloadAndFilter("Pet added successfully.");
+    }
+    private async Task ShowEditClientModal(ClientWithPetsResult client)
+    {
+        var source = _allClients ?? new List<Client>();
+        var parameters = new DialogParameters<ClientModal>
+{
+{ x => x.ClientModel, source.FirstOrDefault(c => c.Id == client.ClientId) ?? new Client() }
+};
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = await DialogService.ShowAsync<ClientModal>("Edit Client", parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+            await ReloadAndFilter("Client updated successfully.");
+    }
+    private async Task ShowEditPetModal(ClientPetResult petResult)
+    {
+        var client = (_allClients ?? new List<Client>()).FirstOrDefault(c => c.Id == petResult.ClientId);
+        var pet = client?.Pets.FirstOrDefault(p => p.Id == petResult.PetId);
+        if (pet is null) return;
+        var parameters = new DialogParameters<PetModal>
+        {
+            { x => x.AllClients, _allClients ?? new List<Client>() },
+            { x => x.PetModel, new Pet{
+            Id = pet.Id,
+            OwnerId = pet.OwnerId,
+            Name = pet.Name,
+            Sex = pet.Sex,
+            Species = pet.Species,
+            Breed = pet.Breed,
+            Birthdate = pet.Birthdate,
+            Age = pet.Age,
+            Weight = pet.Weight,
+            ReproductiveStatus = pet.ReproductiveStatus,
+            ChipId = pet.ChipId
+            }}
+        };
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = await DialogService.ShowAsync<PetModal>("Edit Pet", parameters, options);
+        var dialogResult = await dialog.Result;
+        if (dialogResult is { Canceled: false })
+            await ReloadAndFilter("Pet updated successfully.");
+    }
+    private async Task ShowDeleteClientModal(ClientWithPetsResult client)
+    {
+        var parameters = new DialogParameters<ConfirmModal>
+        {
+            { x => x.Title, "Delete Client" },
+            { x => x.Message, $"Are you sure you want to delete client {client.OwnerName} {client.OwnerLastName}?" },
+            { x => x.ButtonConfirmText, "Delete" },
+            { x => x.ButtonCancelText, "Cancel" },
+            { x => x.TitleIcon, Icons.Material.Filled.Delete },
+            { x => x.TitleColor, Color.Error }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = await DialogService.ShowAsync<ConfirmModal>("Delete Client", parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            await ClientPetService.DeleteClientAsync(client.ClientId);
+            await ReloadAndFilter("Client deleted successfully.");
+        }
+    }
+    private async Task ShowDeletePetModal(ClientPetResult petResult)
+    {
+        var client = (_allClients ?? new List<Client>()).FirstOrDefault(c => c.Id == petResult.ClientId);
+        var pet = client?.Pets.FirstOrDefault(p => p.Id == petResult.PetId);
+        if (pet is null) return;
+        var parameters = new DialogParameters<ConfirmModal>
+        {
+            { x => x.Title, "Delete Pet" },
+            { x => x.Message, $"Are you sure you want to delete pet {pet.Name} from client {client?.Name} {client?.LastName}?" },
+            { x => x.ButtonConfirmText, "Delete" },
+            { x => x.ButtonCancelText, "Cancel" },
+            { x => x.TitleIcon, Icons.Material.Filled.Delete },
+            { x => x.TitleColor, Color.Error }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = await DialogService.ShowAsync<ConfirmModal>("Delete Pet", parameters, options);
+        var dialogResult = await dialog.Result;
+        if (dialogResult is { Canceled: false })
+        {
+            await ClientPetService.DeletePetAsync(pet.Id);
+            await ReloadAndFilter("Pet deleted successfully.");
+        }
+    }
+    #endregion
+
+    #region Functions
+    private void ShowToast(string message, bool isError = false)
+    => Snackbar.Add(message, isError ? Severity.Error : Severity.Success);
+
+    private void GoToExamRequest(int petId)
+    => Navigation.NavigateTo($"/exam-requests?petId={petId}&new=true");
+    #endregion
+
+    // Internal classes for search results
+    private class ClientWithPetsResult
+    {
+        public int ClientId { get; init; }
+        public string OwnerName { get; init; } = string.Empty;
+        public string OwnerLastName { get; init; } = string.Empty;
+        public string TaxId { get; init; } = string.Empty;
+        public int PhoneNumber { get; init; }
+        public string Email { get; init; } = string.Empty;
+        public List<Pet> Pets { get; init; } = new List<Pet>();
+    }
+
+    public class ClientPetResult
+    {
+        public int ClientId { get; init; }
+        public string OwnerName { get; init; } = string.Empty;
+        public string OwnerLastName { get; init; } = string.Empty;
+        public string TaxId { get; init; } = string.Empty;
+        public int PhoneNumber { get; init; }
+        public string Email { get; init; } = string.Empty;
+        public int PetId { get; init; }
+        public string PetName { get; init; } = string.Empty;
+        public string Species { get; init; } = string.Empty;
+        public string Breed { get; set; } = string.Empty;
+    }
+}

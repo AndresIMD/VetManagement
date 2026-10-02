@@ -1,0 +1,140 @@
+﻿@using VetManagement.Staff.UI.Helpers
+@using VetManagement.Staff.UI.Services.Api
+@inherits ModalBase<Item>
+@inject ItemsApiService ItemsService
+@inject IDialogService DialogService
+
+<ModalShell Title="@Title"
+            TitleIcon="@TitleIcon"
+            TitleColor="@TitleColor"
+            IsLoading="@isLoading"
+            IsValid="@isValid"
+            PrimaryText="Save"
+            PrimaryLoadingText="Saving..."
+            OnPrimaryClick="HandleValidSubmit"
+            OnCancelClick="OnCancelRequested">
+    <ItemForm ItemModel="ItemModel"
+              DrugModel="DrugModel"
+              OnValidSubmitCallback="HandleValidSubmit"
+              OnCancelCallback="OnCancelRequested"
+              OnValidChanged="OnFormValidChanged"
+              OnDirtyChanged="OnFormDirtyChanged" />
+</ModalShell>
+
+@code {
+    [Parameter] public InventoryItemDTO? ItemDTO { get; set; }
+
+    private Item ItemModel = Item.GetEmpty();
+    private Drug DrugModel = Drug.GetEmpty();
+    private bool _isFormDirty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (ItemDTO != null)
+        {
+            var obj = await ItemsService.GetItemByIdAsync(ItemDTO.Id);
+            if (obj is Drug drug)
+            {
+                DrugModel = Drug.GetEmpty();
+                drug.CopyPropertiesTo(DrugModel);
+                ItemModel = Item.GetEmpty();
+                drug.CopyPropertiesTo(ItemModel);
+            }
+            else if (obj is Item item && obj != null)
+            {
+                ItemModel = Item.GetEmpty();
+                item.CopyPropertiesTo(ItemModel);
+                DrugModel = Drug.GetEmpty();
+            }
+            else
+            {
+                ItemModel = Item.GetEmpty();
+                DrugModel = Drug.GetEmpty();
+            }
+        }
+    }
+
+    protected async Task HandleValidSubmit()
+    {
+        isLoading = true;
+        try
+        {
+            if (ItemDTO == null)
+            {
+                Snackbar.Add("Item to edit was not found.", Severity.Error);
+                MudDialog.Cancel();
+                return;
+            }
+
+            var obj = await ItemsService.GetItemByIdAsync(ItemDTO.Id);
+            if (obj == null)
+            {
+                Snackbar.Add("Item to edit was not found.", Severity.Error);
+                MudDialog.Cancel();
+                return;
+            }
+
+            var editedObj = BuildEditedObject(obj);
+            await ItemsService.UpdateItemAsync(editedObj);
+            Snackbar.Add("Item updated successfully.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(editedObj));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error updating item: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task OnCancelRequested()
+    {
+        if (_isFormDirty)
+        {
+            var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = false };
+            var parameters = new DialogParameters<Components.Modals.Common.ConfirmModal>
+            {
+                { x => x.Title, "Discard changes" },
+                { x => x.Message, "There are unsaved changes. Do you want to exit without saving?" },
+                { x => x.ButtonConfirmText, "Exit" },
+                { x => x.ButtonCancelText, "Keep editing" },
+                { x => x.TitleIcon, Icons.Material.Filled.Warning },
+                { x => x.TitleColor, Color.Warning }
+            };
+            var dialog = await DialogService.ShowAsync<Components.Modals.Common.ConfirmModal>(null, parameters, options);
+            var result = await dialog.Result;
+            if (result is { Canceled: true })
+                return;
+        }
+        OnCancel();
+    }
+
+    private Task OnFormDirtyChanged(bool dirty)
+    {
+        _isFormDirty = dirty;
+        return Task.CompletedTask;
+    }
+
+    private Item BuildEditedObject(Item obj)
+    {
+        if (obj is Drug)
+        {
+            var updatedDrug = Drug.GetEmpty();
+            DrugModel.CopyPropertiesTo(updatedDrug);
+            ItemModel.CopyPropertiesTo(updatedDrug);
+            updatedDrug.Id = obj.Id;
+            updatedDrug.Type = obj.Type;
+            return updatedDrug;
+        }
+        else
+        {
+            var updatedItem = Item.GetEmpty();
+            ItemModel.CopyPropertiesTo(updatedItem);
+            updatedItem.Id = obj.Id;
+            updatedItem.Type = obj.Type;
+            return updatedItem;
+        }
+    }
+}

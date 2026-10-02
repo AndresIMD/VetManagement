@@ -5,7 +5,7 @@ namespace VetManagement.Tests;
 
 /// <summary>
 /// Guards the dependency direction: Domain ← Application ← Infrastructure ← Api.
-/// The staff UI (VetManagement.Shared) may depend on Domain/Contracts, never the other way around.
+/// The staff UI (VetManagement.Staff.UI) may depend on Domain/Contracts, never the other way around.
 /// </summary>
 public class ArchitectureTests
 {
@@ -18,7 +18,7 @@ public class ArchitectureTests
     [InlineData(typeof(VetManagement.Infrastructure.Data.AppDbContext))]
     public void Backend_DoesNotReference_StaffUi(Type typeInProject)
     {
-        ReferencesOf(typeInProject.Assembly).Should().NotContain("VetManagement.Shared");
+        ReferencesOf(typeInProject.Assembly).Should().NotContain("VetManagement.Staff.UI");
     }
 
     [Fact]

@@ -1,0 +1,132 @@
+﻿@inherits ModalBase<Exam>
+@inject ExamApiService ExamService
+@inject IDialogService DialogService
+@using System.Text.Json
+@using VetManagement.Staff.UI.Models.Exams
+
+<ModalShell Title="@Title"
+            TitleIcon="@TitleIcon"
+            TitleColor="@TitleColor"
+            IsLoading="@isLoading"
+            IsValid="true"
+            PrimaryText="Save"
+            PrimaryLoadingText="Saving..."
+            OnPrimaryClick="HandleValidSubmit"
+            OnCancelClick="OnCancelRequested">
+    <ExamForm ExamModel="ExamModel"
+              Brands="@brandsDictionary.Keys.ToList()"
+              Machines="@machinesList"
+              OnBrandChangedCallback="OnBrandChanged"
+              OnValidSubmitCallback="HandleValidSubmit"
+              OnCancelCallback="OnCancelRequested"
+              OnDirtyChanged="OnFormDirtyChanged" />
+</ModalShell>
+
+@code {
+    [Parameter] public Exam? Initial { get; set; }
+
+    private Exam ExamModel = new();
+    private bool _isFormDirty;
+
+    // -- Placeholder data --
+    private Dictionary<string, List<string>> brandsDictionary = new()
+    {
+        { "Idexx", new List<string> { "Catalyst One", "ProCyte Dx", "Snap Pro" } },
+        { "BioNote", new List<string> { "Vcheck V200", "Vcheck V2400" } },
+        { "GZMed", new List<string> { "PCR" } }
+    };
+    private List<string> machinesList = new();
+
+    protected override Task OnInitializedAsync()
+    {
+        if (Initial is not null)
+        {
+            ExamModel = new Exam
+            {
+                Id = Initial.Id,
+                Name = Initial.Name,
+                Brand = Initial.Brand,
+                Machine = Initial.Machine,
+                SampleType = Initial.SampleType,
+                SampleContainer = Initial.SampleContainer,
+                BuyPrice = Initial.BuyPrice,
+                SellPrice = Initial.SellPrice
+            };
+        }
+        else
+        {
+            ExamModel = new Exam();
+        }
+        _ = OnBrandChanged(ExamModel.Brand);
+        return Task.CompletedTask;
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            if (ExamModel.Id == 0)
+            {
+                await ExamService.AddExamAsync(ExamModel);
+                Snackbar.Add("Exam created.", Severity.Success);
+            }
+            else
+            {
+                await ExamService.UpdateExamAsync(ExamModel);
+                Snackbar.Add("Exam updated.", Severity.Success);
+            }
+            MudDialog.Close(DialogResult.Ok(ExamModel));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error saving exam: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private Task OnBrandChanged(string value)
+    {
+        ExamModel.Brand = value;
+        if (!string.IsNullOrEmpty(ExamModel.Brand) && brandsDictionary.ContainsKey(ExamModel.Brand))
+        {
+            machinesList = brandsDictionary[ExamModel.Brand];
+            if (!machinesList.Contains(ExamModel.Machine))
+            {
+                ExamModel.Machine = machinesList.Count > 0 ? machinesList[0] : string.Empty;
+            }
+        }
+        else
+        {
+            machinesList = new List<string>();
+            ExamModel.Machine = string.Empty;
+        }
+        return Task.CompletedTask;
+    }
+
+    private async Task OnCancelRequested()
+    {
+        if (_isFormDirty)
+        {
+            var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = false };
+            var parameters = new DialogParameters<Components.Modals.Common.ConfirmModal>
+            {
+                { x => x.Title, "Discard changes" },
+                { x => x.Message, "There are unsaved changes. Do you want to exit without saving?" },
+                { x => x.ButtonConfirmText, "Exit" },
+                { x => x.ButtonCancelText, "Keep editing" },
+                { x => x.TitleIcon, Icons.Material.Filled.Warning },
+                { x => x.TitleColor, Color.Warning }
+            };
+            var dialog = await DialogService.ShowAsync<Components.Modals.Common.ConfirmModal>(null, parameters, options);
+            var result = await dialog.Result;
+            if (result is { Canceled: true })
+                return;
+        }
+        OnCancel();
+    }
+
+    private Task OnFormDirtyChanged(bool dirty)
+    {
+        _isFormDirty = dirty;
+        return Task.CompletedTask;
+    }
+}

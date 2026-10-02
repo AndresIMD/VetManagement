@@ -3,12 +3,12 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using MudBlazor.Services;
-using VetManagement.Shared.Services.Api;
-using VetManagement.Shared.Services.App;
-using VetManagement.Shared.Services.Auth;
-using VetManagement.Shared.Services.Realtime;
+using VetManagement.Staff.UI.Services.Api;
+using VetManagement.Staff.UI.Services.App;
+using VetManagement.Staff.UI.Services.Auth;
+using VetManagement.Staff.UI.Services.Realtime;
 using VetManagement.Staff.Web;
-using AppBackgroundService = VetManagement.Shared.Services.App.BackgroundService;
+using AppBackgroundService = VetManagement.Staff.UI.Services.App.BackgroundService;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -84,7 +84,7 @@ catch
 }
 
 // Always register AppBootstrapError so DI can resolve it in layouts/components
-builder.Services.AddSingleton(new VetManagement.Shared.Models.Configuration.AppBootstrapError(
+builder.Services.AddSingleton(new VetManagement.Staff.UI.Models.Configuration.AppBootstrapError(
  string.IsNullOrWhiteSpace(apiBaseUrl) ? "Configuration error" : string.Empty,
  string.IsNullOrWhiteSpace(apiBaseUrl) ? "config.json is missing valid API base URLs. Set 'LocalApiBaseUrl' (e.g., https://localhost:44395) or 'ApiBaseUrl'." : string.Empty
 ));

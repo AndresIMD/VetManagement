@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VetManagement.Staff.Maui", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VetManagement.Api", "src\VetManagement.Api\VetManagement.Api.csproj", "{DD596E0D-6400-6D26-62FB-075B510966D0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VetManagement.Shared", "src\VetManagement.Shared\VetManagement.Shared.csproj", "{6C04BF95-5ABC-90D0-AC4F-C5C77556D442}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VetManagement.Staff.UI", "src\VetManagement.Staff.UI\VetManagement.Staff.UI.csproj", "{6C04BF95-5ABC-90D0-AC4F-C5C77556D442}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VetManagement.Staff.Web", "src\VetManagement.Staff.Web\VetManagement.Staff.Web.csproj", "{6D5046CA-F60C-35CF-9D75-983A2A03F4C4}"
 EndProject

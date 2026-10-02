@@ -26,7 +26,7 @@
     <ProjectReference Include="..\..\src\VetManagement.Api\VetManagement.Api.csproj" />
     <ProjectReference Include="..\..\src\VetManagement.Application\VetManagement.Application.csproj" />
     <ProjectReference Include="..\..\src\VetManagement.Infrastructure\VetManagement.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\src\VetManagement.Shared\VetManagement.Shared.csproj" />
+    <ProjectReference Include="..\..\src\VetManagement.Staff.UI\VetManagement.Staff.UI.csproj" />
   </ItemGroup>
 
 </Project>

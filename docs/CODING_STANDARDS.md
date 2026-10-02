@@ -407,7 +407,7 @@ public enum InventoryMovementType
 Centralize enum-to-enum mappings:
 
 ```csharp
-// VetManagement.Shared/Helpers/AuditActionHelper.cs
+// VetManagement.Staff.UI/Helpers/AuditActionHelper.cs
 public static class AuditActionHelper
 {
     /// <summary>
@@ -624,7 +624,7 @@ private string FilterName
 ### 8.1 Enum Files
 
 ```
-VetManagement.Shared/Enums/
+VetManagement.Staff.UI/Enums/
 ├─ InventoryEnums.cs           (Stock movements, filters)
 ├─ ExamEnums.cs                (Exam types)
 ├─ PetEnums.cs                 (Pet types, breeds)
@@ -635,7 +635,7 @@ VetManagement.Shared/Enums/
 ### 8.2 Helper Files
 
 ```
-VetManagement.Shared/Helpers/
+VetManagement.Staff.UI/Helpers/
 ├─ AuditActionHelper.cs        (Enum mappings for audit)
 ├─ InventoryUiHelpers.cs       (UI-specific inventory logic)
 └─ StringExtensions.cs         (String manipulation utilities)
@@ -722,7 +722,7 @@ public async Task UpdateAsync_WithValidItem_UpdatesSuccessfully()
 
 ## 11. Clean Architecture Layers
 
-### 11.1 Shared Layer (VetManagement.Shared)
+### 11.1 Shared Layer (VetManagement.Staff.UI)
 - **Contains**: Enums, DTOs, interfaces, extensions
 - **No dependencies**: On Application, Infrastructure, or API
 - **Consumed by**: All layers

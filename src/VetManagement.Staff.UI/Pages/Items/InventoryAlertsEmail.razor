@@ -1,0 +1,299 @@
+﻿@page "/inventory-alerts"
+@using VetManagement.Staff.UI.Services.Api
+@inject ItemsApiService ItemsService
+@inject IJSRuntime Js
+@inject AlertsApiService AlertsService
+@inject InventoryAlertsApiService SchedulesApi
+@inject ISnackbar Snackbar
+
+<PageTitle>Inventory Email Alerts</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mx-auto px-2 mt-8">
+    <PageHeader Title="Send inventory alerts by email" Icon="@Icons.Material.Filled.Email" />
+
+    <MudPaper Class="pa-4 app-surface" Elevation="1">
+        <MudStack Spacing="2">
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudAlert Severity="Severity.Info" Dense="true">
+                        An email will be generated listing items that are "Low stock" and/or "Out of stock". Items with threshold0 will only appear in "Out of stock".
+                    </MudAlert>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTabs>
+                        <MudTabPanel Text="Manual">
+                            <MudText Typo="Typo.subtitle2">Recipients</MudText>
+                            <MudTextField Label="To (comma separated)" @bind-Value="To" Variant="Variant.Outlined" />
+                            <MudTextField Label="CC (optional, comma separated)" @bind-Value="Cc" Variant="Variant.Outlined" Class="mt-2" />
+                            <MudTextField Label="Subject" @bind-Value="Subject" Variant="Variant.Outlined" Class="mt-2" />
+                            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Class="mt-2">
+                                <MudSwitch T="bool" @bind-Checked="IncludeLowStock" Color="Color.Warning" />
+                                <MudText>Include "Low stock"</MudText>
+                                <MudSwitch T="bool" @bind-Checked="IncludeOutOfStock" Color="Color.Error" Class="ml-4" />
+                                <MudText>Include "Out of stock"</MudText>
+                            </MudStack>
+                            <MudText Typo="Typo.subtitle2" Class="mt-3">Preview</MudText>
+                            <MudTextField Value="@BodyPreview" Variant="Variant.Outlined" Lines="10" ReadOnly="true" FullWidth="true" />
+                            <MudStack Row="true" Spacing="2" Class="mt-2">
+                                <MudButton Color="Color.Primary" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ContentCopy" OnClick="CopyToClipboard" Disabled="@(string.IsNullOrWhiteSpace(BodyPreview))">Copy</MudButton>
+                                <MudButton Color="Color.Primary" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Send" OnClick="SendEmailAsync" Disabled="@(string.IsNullOrWhiteSpace(To) || string.IsNullOrWhiteSpace(BodyPreview))">Send</MudButton>
+                                <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Email" OnClick="OpenEmailClient" Disabled="@(string.IsNullOrWhiteSpace(To) || string.IsNullOrWhiteSpace(BodyPreview))">Open email client</MudButton>
+                            </MudStack>
+                        </MudTabPanel>
+                        <MudTabPanel Text="Schedule">
+                            <MudStack Spacing="2">
+                                <MudSwitch T="bool" @bind-Checked="ScheduleEnabled" Color="Color.Primary" />
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Enable weekly automatic send</MudText>
+                                <MudGrid>
+                                    <MudItem xs="12" sm="6">
+                                        <MudSelect T="int" Label="Day of week" @bind-Value="ScheduleDay">
+                                            <MudSelectItem Value="0">Sunday</MudSelectItem>
+                                            <MudSelectItem Value="1">Monday</MudSelectItem>
+                                            <MudSelectItem Value="2">Tuesday</MudSelectItem>
+                                            <MudSelectItem Value="3">Wednesday</MudSelectItem>
+                                            <MudSelectItem Value="4">Thursday</MudSelectItem>
+                                            <MudSelectItem Value="5">Friday</MudSelectItem>
+                                            <MudSelectItem Value="6">Saturday</MudSelectItem>
+                                        </MudSelect>
+                                    </MudItem>
+                                    <MudItem xs="12" sm="6">
+                                        <MudTimePicker Label="Time" @bind-Time="ScheduleTime" AmPm="false" />
+                                    </MudItem>
+                                </MudGrid>
+                                <MudTextField Label="To (comma separated)" @bind-Value="ScheduleTo" Variant="Variant.Outlined" />
+                                <MudTextField Label="CC (optional)" @bind-Value="ScheduleCc" Variant="Variant.Outlined" />
+                                <MudTextField Label="Subject" @bind-Value="ScheduleSubject" Variant="Variant.Outlined" />
+                                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                                    <MudSwitch T="bool" @bind-Checked="ScheduleIncludeLow" Color="Color.Warning" />
+                                    <MudText>Include "Low stock"</MudText>
+                                    <MudSwitch T="bool" @bind-Checked="ScheduleIncludeZero" Color="Color.Error" Class="ml-4" />
+                                    <MudText>Include "Out of stock"</MudText>
+                                </MudStack>
+                                <MudStack Row="true" Spacing="2" Class="mt-2">
+                                    <MudButton Color="Color.Success" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveScheduleAsync">Save schedule</MudButton>
+                                    @if (LastSent.HasValue)
+                                    {
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">Last sent: @LastSent.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</MudText>
+                                    }
+                                </MudStack>
+                            </MudStack>
+                        </MudTabPanel>
+                    </MudTabs>
+                </MudItem>
+            </MudGrid>
+        </MudStack>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private List<ItemAlert> _lowStock = new List<ItemAlert>();
+    private List<ItemAlert> _outOfStock = new List<ItemAlert>();
+
+    public bool IsLoading { get; set; } = true;
+
+    // Manual
+    private string To { get; set; } = string.Empty;
+    private string Cc { get; set; } = string.Empty;
+    private string Subject { get; set; } = "Inventory alerts";
+    private bool IncludeLowStock { get; set; } = true;
+    private bool IncludeOutOfStock { get; set; } = true;
+
+    // Schedule
+    private bool ScheduleEnabled { get; set; }
+    private int ScheduleDay { get; set; } = 1; // Monday
+    private TimeSpan? ScheduleTime { get; set; } = new TimeSpan(9, 0, 0);
+    private string ScheduleTo { get; set; } = string.Empty;
+    private string? ScheduleCc { get; set; }
+    private string ScheduleSubject { get; set; } = "Inventory alerts";
+    private bool ScheduleIncludeLow { get; set; } = true;
+    private bool ScheduleIncludeZero { get; set; } = true;
+    private DateTime? LastSent { get; set; }
+
+    private string BodyPreview => BuildBody();
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = true;
+        var items = await ItemsService.GetAllItemsAsync();
+        if (items != null)
+        {
+            ProcessLowStockItems(items);
+            ProcessOutOfStockItems(items);
+        }
+
+        // load schedule
+        try
+        {
+            var sched = await SchedulesApi.GetScheduleAsync();
+            if (sched is not null)
+            {
+                ScheduleEnabled = sched.Enabled;
+                ScheduleDay = sched.DayOfWeek;
+                ScheduleTime = new TimeSpan(sched.Hour, sched.Minute, 0);
+                ScheduleTo = sched.To;
+                ScheduleCc = sched.Cc;
+                ScheduleSubject = sched.Subject;
+                ScheduleIncludeLow = sched.IncludeLowStock;
+                ScheduleIncludeZero = sched.IncludeOutOfStock;
+                LastSent = sched.LastSentUtc;
+            }
+        }
+        catch
+        {
+            // -- Placeholder for error handling --
+        }
+
+        IsLoading = false;
+    }
+
+    private void ProcessLowStockItems(IEnumerable<Item> items)
+    {
+        var enumerable = items.ToList();
+        var drugGroups = enumerable
+        .Where(i => i is Drug d && !string.IsNullOrWhiteSpace(d.Compound))
+        .Cast<Drug>()
+        .GroupBy(d => d.Compound.Trim(), StringComparer.OrdinalIgnoreCase)
+        .Select(g =>
+        {
+            var positiveThresholds = g.Select(d => d.LowStockThreshold).Where(t => t > 0).ToList();
+            var minThreshold = positiveThresholds.Any() ? positiveThresholds.Min() : 0;
+            return new
+            {
+                g.First().Compound,
+                TotalStock = g.Sum(d => d.Stock),
+                MinThreshold = minThreshold
+            };
+        })
+        .Where(x => x.MinThreshold > 0 && x.TotalStock > 0 && x.TotalStock <= x.MinThreshold)
+        .Select(x => new ItemAlert { Name = x.Compound, Stock = x.TotalStock });
+
+        var nonDrugLow = enumerable
+        .Where(i => i is not Drug)
+        .Where(i => i is { LowStockThreshold: > 0, Stock: > 0 } && i.Stock <= i.LowStockThreshold)
+        .Select(i => new ItemAlert { Name = i.Name, Stock = i.Stock });
+
+        _lowStock = drugGroups
+        .Concat(nonDrugLow)
+        .OrderBy(x => x.Stock)
+        .ToList();
+    }
+
+    private void ProcessOutOfStockItems(IEnumerable<Item> items)
+    {
+        var enumerable = items.ToList();
+        var drugZero = enumerable
+        .Where(i => i is Drug d && !string.IsNullOrWhiteSpace(d.Compound))
+        .Cast<Drug>()
+        .GroupBy(d => d.Compound.Trim(), StringComparer.OrdinalIgnoreCase)
+        .Select(g => new { g.First().Compound, TotalStock = g.Sum(d => d.Stock) })
+        .Where(x => x.TotalStock == 0)
+        .Select(x => new ItemAlert { Name = x.Compound, Stock = 0 });
+
+        var nonDrugZero = enumerable
+        .Where(i => i is not Drug && i.Stock == 0)
+        .Select(i => new ItemAlert { Name = i.Name, Stock = 0 });
+
+        _outOfStock = drugZero.Concat(nonDrugZero).OrderBy(x => x.Name).ToList();
+    }
+
+    private string BuildBody()
+    {
+        var lines = new List<string>
+        {
+            $"Date: {DateTime.Now:dd/MM/yyyy HH:mm}",
+            "System: Inventory Alerts",
+            ""
+        };
+
+        if (IncludeLowStock && _lowStock.Any())
+        {
+            AddLowStockSection(lines);
+        }
+
+        if (!IncludeOutOfStock || !_outOfStock.Any())
+            return lines.Count <= 3 ? string.Empty : string.Join("\n", lines);
+
+        AddOutOfStockSection(lines);
+
+        return lines.Count <= 3 ? string.Empty : string.Join("\n", lines);
+    }
+
+    private void AddLowStockSection(List<string> lines)
+    {
+        lines.Add("Low stock:");
+        lines.AddRange(_lowStock.Select(i => $"- {i.Name} (Stock: {i.Stock})"));
+        lines.Add("");
+    }
+
+    private void AddOutOfStockSection(List<string> lines)
+    {
+        lines.Add("Out of stock:");
+        lines.AddRange(_outOfStock.Select(i => $"- {i.Name}"));
+        lines.Add("");
+    }
+
+    private async Task CopyToClipboard()
+    {
+        if (string.IsNullOrWhiteSpace(BodyPreview)) return;
+
+        await Js.InvokeVoidAsync("navigator.clipboard.writeText", BodyPreview);
+    }
+
+    private void OpenEmailClient()
+    {
+        if (string.IsNullOrWhiteSpace(To) || string.IsNullOrWhiteSpace(BodyPreview)) return;
+
+        var to = Uri.EscapeDataString(To);
+        var cc = string.IsNullOrWhiteSpace(Cc) ? string.Empty : $"&cc={Uri.EscapeDataString(Cc)}";
+        var subject = Uri.EscapeDataString(Subject);
+        var body = Uri.EscapeDataString(BodyPreview);
+        var mailto = $"mailto:{to}?subject={subject}{cc}&body={body}";
+        _ = Js.InvokeVoidAsync("open", mailto, "_self");
+    }
+
+    private async Task SendEmailAsync()
+    {
+        try
+        {
+            await AlertsService.SendInventoryEmailAsync(To, string.IsNullOrWhiteSpace(Cc) ? null : Cc, Subject, BodyPreview);
+            Snackbar.Add("Email sent.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error sending email: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task SaveScheduleAsync()
+    {
+        try
+        {
+            var h = ScheduleTime?.Hours ?? 9;
+            var m = ScheduleTime?.Minutes ?? 0;
+            var dto = new InventoryAlertsApiService.ScheduleDto(
+            Enabled: ScheduleEnabled,
+            DayOfWeek: ScheduleDay,
+            Hour: h,
+            Minute: m,
+            To: ScheduleTo,
+            Cc: ScheduleCc,
+            Subject: ScheduleSubject,
+            IncludeLowStock: ScheduleIncludeLow,
+            IncludeOutOfStock: ScheduleIncludeZero,
+            LastSentUtc: LastSent
+            );
+            await SchedulesApi.SaveScheduleAsync(dto);
+            Snackbar.Add("Schedule saved.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error saving schedule: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private sealed class ItemAlert
+    {
+        public string Name { get; init; } = string.Empty;
+        public int Stock { get; init; }
+    }
+}

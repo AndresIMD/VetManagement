@@ -211,8 +211,8 @@ public async Task<(List<Item> Items, int TotalCount)> GetPagedListAsync(
 
 ### After (Type-Safe)
 ```csharp
-// VetManagement.Shared/Enums/InventoryEnums.cs - ADD NEW ENUM
-namespace VetManagement.Shared.Enums;
+// VetManagement.Staff.UI/Enums/InventoryEnums.cs - ADD NEW ENUM
+namespace VetManagement.Staff.UI.Enums;
 
 /// <summary>
 /// Represents stock alert filter criteria for item inventory.
@@ -307,9 +307,9 @@ public async Task<ActionResult<PagedResult<Item>>> GetPagedAsync(
 ```
 
 ```razor
-<!-- VetManagement.Shared/Pages/Items/InventoryItems.razor - UPDATED FILTER -->
+<!-- VetManagement.Staff.UI/Pages/Items/InventoryItems.razor - UPDATED FILTER -->
 @page "/inventory/items"
-@using VetManagement.Shared.Enums
+@using VetManagement.Staff.UI.Enums
 
 <MudSelect T="StockAlertFilter?" 
            Label="Stock Alert" 
@@ -382,7 +382,7 @@ public enum ItemSortField
 
 ### Updated (Complete)
 ```csharp
-namespace VetManagement.Shared.Enums;
+namespace VetManagement.Staff.UI.Enums;
 
 /// <summary>
 /// Field to sort items by in paged queries.
@@ -465,8 +465,8 @@ public async Task AddMovementAsync(InventoryMovement movement, string userName)
 
 ### After (Single Source of Truth)
 ```csharp
-// VetManagement.Shared/Helpers/AuditActionHelper.cs - EXPANDED
-namespace VetManagement.Shared.Helpers;
+// VetManagement.Staff.UI/Helpers/AuditActionHelper.cs - EXPANDED
+namespace VetManagement.Staff.UI.Helpers;
 
 public static class AuditActionHelper
 {
@@ -535,15 +535,15 @@ public async Task AddMovementAsync(InventoryMovement movement, string userName)
 
 ## Fix #5: Create ValidationHelper
 
-### File: `VetManagement.Shared/Helpers/ValidationHelper.cs`
+### File: `VetManagement.Staff.UI/Helpers/ValidationHelper.cs`
 ```csharp
-namespace VetManagement.Shared.Helpers;
+namespace VetManagement.Staff.UI.Helpers;
 
-using VetManagement.Shared.Constants;
-using VetManagement.Shared.Enums;
-using VetManagement.Shared.Models.Core;
-using VetManagement.Shared.Models.Exams;
-using VetManagement.Shared.Models.Inventory;
+using VetManagement.Staff.UI.Constants;
+using VetManagement.Staff.UI.Enums;
+using VetManagement.Staff.UI.Models.Core;
+using VetManagement.Staff.UI.Models.Exams;
+using VetManagement.Staff.UI.Models.Inventory;
 
 /// <summary>
 /// Centralized validation logic for domain models.
@@ -740,8 +740,8 @@ public async Task<bool> AddAsync(Item item, string userName)
 
 ### Usage in Blazor Form (for consistency)
 ```razor
-<!-- VetManagement.Shared/Components/Forms/ItemForm.razor -->
-@using VetManagement.Shared.Helpers
+<!-- VetManagement.Staff.UI/Components/Forms/ItemForm.razor -->
+@using VetManagement.Staff.UI.Helpers
 
 <MudForm @ref="mudForm" @bind-IsValid="@IsValid">
     <!-- Form fields... -->

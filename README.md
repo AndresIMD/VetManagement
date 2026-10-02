@@ -34,7 +34,7 @@ VetManagement.sln
 │   ├── VetManagement.Application/    # Business logic & use cases
 │   ├── VetManagement.Infrastructure/ # Data access (EF Core, repositories, UoW)
 │   ├── VetManagement.Api/            # REST API endpoints, auth, migrations
-│   ├── VetManagement.Shared/         # Blazor UI: pages, components, API clients
+│   ├── VetManagement.Staff.UI/       # Staff UI (pages, components, API clients) shared by Staff.Web and Staff.Maui
 │   ├── VetManagement.Staff.Web/      # Staff web client (Blazor WebAssembly)
 │   └── VetManagement.Staff.Maui/     # Staff desktop/mobile client (.NET MAUI)
 ├── sites/                            # Branded public websites, one per clinic (consume the API)

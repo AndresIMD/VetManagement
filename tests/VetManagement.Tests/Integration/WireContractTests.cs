@@ -6,13 +6,13 @@ using VetManagement.Contracts.Common;
 using VetManagement.Contracts.Exams;
 using VetManagement.Contracts.Medical;
 using VetManagement.Domain.Enums;
-using UiClient = VetManagement.Shared.Models.Core.Client;
-using UiPet = VetManagement.Shared.Models.Core.Pet;
-using UiExam = VetManagement.Shared.Models.Exams.Exam;
-using UiExamPerformed = VetManagement.Shared.Models.Exams.ExamPerformed;
-using UiExternalLab = VetManagement.Shared.Models.Exams.ExternalLab;
-using UiMedicalVisit = VetManagement.Shared.Models.Medical.MedicalVisit;
-using UiAuditLog = VetManagement.Shared.Models.Audit.AuditLog;
+using UiClient = VetManagement.Staff.UI.Models.Core.Client;
+using UiPet = VetManagement.Staff.UI.Models.Core.Pet;
+using UiExam = VetManagement.Staff.UI.Models.Exams.Exam;
+using UiExamPerformed = VetManagement.Staff.UI.Models.Exams.ExamPerformed;
+using UiExternalLab = VetManagement.Staff.UI.Models.Exams.ExternalLab;
+using UiMedicalVisit = VetManagement.Staff.UI.Models.Medical.MedicalVisit;
+using UiAuditLog = VetManagement.Staff.UI.Models.Audit.AuditLog;
 
 namespace VetManagement.Tests.Integration;
 
@@ -140,7 +140,7 @@ public class WireContractTests
                 Action = AuditActionType.Edit, Changes = "{}", User = "admin" }],
             TotalCount: 41, Page: 2, PageSize: 20);
 
-        RoundTrip<VetManagement.Shared.Models.DTOs.PagedResult<UiAuditLog>>(response).Should().BeEquivalentTo(response);
+        RoundTrip<VetManagement.Staff.UI.Models.DTOs.PagedResult<UiAuditLog>>(response).Should().BeEquivalentTo(response);
     }
 
     private static UiMedicalVisit SampleVisit() => new()

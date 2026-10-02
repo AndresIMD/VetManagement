@@ -1,0 +1,171 @@
+@using VetManagement.Staff.UI.Helpers
+@typeparam TItem
+
+<MudAutocomplete T="TItem" @bind-Value="_tempSelection" Text="@_currentSearchText" TextChanged="@HandleTextChanged"
+    Label="@Label" Placeholder="@Placeholder" Variant="@Variant" SearchFunc="@SearchWithNormalizationAsync"
+    ToStringFunc="@ToStringFunc" Clearable="false" CoerceText="false" CoerceValue="false" ResetValueOnEmptyText="false"
+    SelectValueOnTab="true" Adornment="@Adornment" AdornmentIcon="@(AdornmentIcon ?? Icons.Material.Filled.Search)"
+    AdornmentColor="@AdornmentColor" Dense="@Dense" Disabled="@Disabled" DebounceInterval="@DebounceInterval"
+    MinCharacters="@MinCharacters" MaxItems="@MaxItems" FullWidth="@FullWidth" Class="@Class" Style="@Style"
+    @attributes="@AdditionalAttributes" @onkeydown="@HandleKeyDown">
+    <ItemTemplate>
+        @if (ItemTemplate != null)
+        {
+            @ItemTemplate(context)
+        }
+        else
+        {
+            <MudText>@(ToStringFunc?.Invoke(context) ?? string.Empty)</MudText>
+        }
+    </ItemTemplate>
+    <NoItemsTemplate>
+        @if (_isSearching)
+        {
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="pa-2">
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                <MudText Typo="Typo.body2" Color="Color.Secondary">@LoadingText</MudText>
+            </MudStack>
+        }
+        else if (_hasSearched && !string.IsNullOrWhiteSpace(_lastSearchValue))
+        {
+            <MudStack AlignItems="AlignItems.Center" Spacing="1" Class="pa-3">
+                <MudIcon Icon="@Icons.Material.Outlined.SearchOff" Color="Color.Secondary" Size="Size.Large" />
+                <MudText Typo="Typo.body2" Color="Color.Secondary">@NoItemsText</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Tertiary">Search: "@_lastSearchValue"</MudText>
+            </MudStack>
+        }
+        else
+        {
+            <MudStack AlignItems="AlignItems.Center" Spacing="1" Class="pa-3">
+                <MudIcon Icon="@Icons.Material.Outlined.Search" Color="Color.Info" Size="Size.Large" />
+                <MudText Typo="Typo.caption" Color="Color.Secondary">@EmptyText</MudText>
+            </MudStack>
+        }
+    </NoItemsTemplate>
+</MudAutocomplete>
+
+@if (SelectedItems?.Any() == true)
+{
+    <MudChipSet T="string" Class="mt-2">
+        @foreach (var item in SelectedItems)
+        {
+            <MudChip T="string" Color="@ChipColor" Size="@ChipSize" Variant="@ChipVariant" OnClose="@(() => RemoveItem(item))">
+                @(ToStringFunc?.Invoke(item) ?? string.Empty)
+            </MudChip>
+        }
+    </MudChipSet>
+}
+
+@code {
+    [Parameter] public List<TItem>? SelectedItems { get; set; }
+    [Parameter] public EventCallback<List<TItem>> SelectedItemsChanged { get; set; }
+    [Parameter, EditorRequired] public Func<string?, CancellationToken, Task<IEnumerable<TItem>>>? SearchFunc { get; set; }
+    [Parameter, EditorRequired] public Func<TItem?, string>? ToStringFunc { get; set; }
+    [Parameter] public RenderFragment<TItem>? ItemTemplate { get; set; }
+    [Parameter] public string? Label { get; set; } = "Search...";
+    [Parameter] public string? Placeholder { get; set; }
+    [Parameter] public Variant Variant { get; set; } = Variant.Outlined;
+    [Parameter] public Adornment Adornment { get; set; } = Adornment.Start;
+    [Parameter] public string? AdornmentIcon { get; set; }
+    [Parameter] public Color AdornmentColor { get; set; } = Color.Default;
+    [Parameter] public bool Dense { get; set; } = false;
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public int DebounceInterval { get; set; } = 300;
+    [Parameter] public int MinCharacters { get; set; } = 2;
+    [Parameter] public int? MaxItems { get; set; } = 20;
+    [Parameter] public bool FullWidth { get; set; }
+    [Parameter] public string LoadingText { get; set; } = "Searching...";
+    [Parameter] public string NoItemsText { get; set; } = "No matches found";
+    [Parameter] public string EmptyText { get; set; } = "Type to search...";
+    [Parameter] public Color ChipColor { get; set; } = Color.Primary;
+    [Parameter] public Size ChipSize { get; set; } = Size.Small;
+    [Parameter] public Variant ChipVariant { get; set; } = Variant.Filled;
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public string? Style { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private bool _isSearching;
+    private bool _hasSearched;
+    private string? _lastSearchValue;
+    private string? _currentSearchText;
+    private TItem? _tempSelection;
+
+    protected override void OnInitialized()
+    {
+        SelectedItems ??= [];
+    }
+
+    private async Task HandleTextChanged(string? newText)
+    {
+        _currentSearchText = newText;
+        StateHasChanged();
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && _tempSelection != null)
+        {
+            await AddItem(_tempSelection);
+        }
+    }
+
+    private async Task AddItem(TItem item)
+    {
+        if (item == null || SelectedItems == null)
+            return;
+
+        if (!SelectedItems.Contains(item))
+        {
+            SelectedItems.Add(item);
+            await SelectedItemsChanged.InvokeAsync(SelectedItems);
+        }
+
+        _tempSelection = default;
+        _currentSearchText = string.Empty;
+        StateHasChanged();
+    }
+
+    private async Task RemoveItem(TItem item)
+    {
+        if (SelectedItems == null)
+            return;
+
+        SelectedItems.Remove(item);
+        await SelectedItemsChanged.InvokeAsync(SelectedItems);
+        StateHasChanged();
+    }
+
+    private async Task<IEnumerable<TItem>> SearchWithNormalizationAsync(string? value, CancellationToken cancellationToken)
+    {
+        if (SearchFunc == null)
+            return Enumerable.Empty<TItem>();
+
+        _currentSearchText = value;
+
+        var normalizedValue = string.IsNullOrWhiteSpace(value)
+        ? null
+        : StringExtensions.RemoveDiacritics(value);
+
+        _lastSearchValue = normalizedValue;
+        _isSearching = true;
+        StateHasChanged();
+
+        try
+        {
+            var results = await SearchFunc(normalizedValue, cancellationToken);
+            _hasSearched = true;
+
+            if (SelectedItems?.Any() == true && results != null)
+            {
+                results = results.Where(r => !SelectedItems.Contains(r));
+            }
+
+            return results ?? Enumerable.Empty<TItem>();
+        }
+        finally
+        {
+            _isSearching = false;
+            StateHasChanged();
+        }
+    }
+}

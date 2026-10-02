@@ -1,0 +1,535 @@
+﻿@page "/inventory-items"
+@using VetManagement.Staff.UI.Helpers
+@using VetManagement.Staff.UI.Models.Core
+@using VetManagement.Staff.UI.Services.Api
+@using VetManagement.Staff.UI.Services.Realtime
+@inject IDialogService DialogService
+@inject ItemsApiService ItemsService
+@inject InventoryMovementApiService InventoryMovementService
+@inject ISnackbar Snackbar
+@inject RealtimeService RealtimeService
+@attribute [Authorize(Roles = "Admin,Manager,Employee")]
+@implements IDisposable
+
+
+<PageTitle>Current Inventory</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
+    <PageHeader Title="Current Inventory" Icon="@Icons.Material.Filled.Inventory2" />
+    <MudBreadcrumbs Class="mb-2">
+        <BreadcrumbLink Href="/">Home</BreadcrumbLink>
+        <BreadcrumbSeparator />
+        <BreadcrumbLink Href="inventory">Inventory</BreadcrumbLink>
+        <BreadcrumbSeparator />
+        <BreadcrumbLink Disabled="true">
+            @(_alert switch
+            {
+                "low" => "Low stock",
+                "zero" => "Out of stock",
+                _ when !string.IsNullOrWhiteSpace(FilterNameOrCompound) => $"Filter: {FilterNameOrCompound}",
+                _ => "Items"
+            })
+        </BreadcrumbLink>
+    </MudBreadcrumbs>
+    <MudPaper Class="pa-6 mb-4 elevation-3 rounded-lg app-surface">
+        <MudGrid>
+            <MudItem xs="12" sm="6" md="6">
+                <MudTextFilterField @bind-Value="FilterNameOrCompound"
+                    Label="Search by name, brand, compound or code..." />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudSelect T="ItemType" @bind-Value="FilterItemType" Label="Category" Variant="Variant.Outlined"
+                    AnchorOrigin="Origin.BottomCenter">
+                    <MudSelectItem Value="ItemType.None">All categories</MudSelectItem>
+                    <MudSelectItem Value="ItemType.Material">Material</MudSelectItem>
+                    <MudSelectItem Value="ItemType.Drug">Drug</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="12" md="3" Class="d-flex align-center justify-end">
+                <MudButton Color="Color.Secondary" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Clear"
+                    OnClick="ClearFilters">Clear filter</MudButton>
+            </MudItem>
+            <MudItem xs="12" Class="d-flex align-center">
+                <ActiveFilterChips Chips="@BuildActiveChips()" />
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+</MudContainer>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2">
+    <MudServerTable TItem="InventoryItemDTO" @ref="_table" ServerData="@ServerReload" Striped="true" Hover="true"
+        Bordered="true" Dense="false" RowsPerPage="25">
+        <ActionButtons>
+            <MudItem xs="12" sm="3" Class="d-flex justify-end">
+                <MudStack Row="true" Spacing="2">
+                    <MudTooltip Text="Create item">
+                        <MudIconButton Icon="@Icons.Material.Filled.AddBox" Color="Color.Success"
+                            Variant="Variant.Filled" Size="Size.Medium" OnClick="ShowCreateModal" />
+                    </MudTooltip>
+                    <MudTooltip Text="Mass ingress">
+                        <MudIconButton Icon="@Icons.Material.Filled.Upload" Color="Color.Success"
+                            Variant="Variant.Filled" Size="Size.Medium" OnClick="ShowMassIngressModal" />
+                    </MudTooltip>
+                    <MudTooltip Text="Mass egress">
+                        <MudIconButton Icon="@Icons.Material.Filled.Download" Color="Color.Error"
+                            Variant="Variant.Filled" Size="Size.Medium" OnClick="ShowMassEgressModal" />
+                    </MudTooltip>
+                </MudStack>
+            </MudItem>
+        </ActionButtons>
+        <HeaderContent>
+            <MudTh Style="width:25%; min-width:180px;">
+                <MudTableSortLabel T="InventoryItemDTO" SortLabel="Name">Name</MudTableSortLabel>
+            </MudTh>
+            <MudTh Style="width:20%; min-width:120px;">
+                <MudTableSortLabel T="InventoryItemDTO" SortLabel="Brand">Brand</MudTableSortLabel>
+            </MudTh>
+            <MudTh Style="width:20%; min-width:120px;">
+                <MudTableSortLabel T="InventoryItemDTO" SortLabel="Type">Category</MudTableSortLabel>
+            </MudTh>
+            <MudTh Style="width:15%; min-width:80px;">
+                <MudTableSortLabel T="InventoryItemDTO" SortLabel="Stock">Stock</MudTableSortLabel>
+            </MudTh>
+            <MudTh Style="width:20%; min-width:180px; text-align: right;">
+                Actions
+            </MudTh>
+        </HeaderContent>
+        <RowTemplate Context="item">
+            <MudTd DataLabel="Name">@(!string.IsNullOrWhiteSpace(item.Name) ? item.Name : "-")</MudTd>
+            <MudTd DataLabel="Brand">@(!string.IsNullOrWhiteSpace(item.Brand) ? item.Brand : "-")</MudTd>
+            <MudTd DataLabel="Category">@item.Type.GetDisplayString()</MudTd>
+            <MudTd DataLabel="Stock">
+                <MudText Class="@InventoryUiHelpers.GetStockCss(item.Stock, item.LowStockThreshold)">
+                    @item.Stock
+                </MudText>
+            </MudTd>
+            <MudTd DataLabel="Actions" Class="text-end">
+                <MudStack Row="true" Spacing="1" Justify="Justify.FlexEnd">
+                    <MudTooltip Text="History">
+                        <MudIconButton Icon="@Icons.Material.Filled.History" Variant="Variant.Filled" Color="Color.Info"
+                            Size="Size.Small" OnClick="@(() => ShowHistoryModal(item))" />
+                    </MudTooltip>
+                    <MudTooltip Text="Adjust stock">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Variant="Variant.Filled"
+                            Color="Color.Secondary" Size="Size.Small" OnClick="@(() => ShowAdjustStockModal(item))" />
+                    </MudTooltip>
+                    <AuthorizeView Roles="Admin,Manager">
+                        <Authorized>
+                            <MudTooltip Text="Edit">
+                                <MudIconButton Icon="@Icons.Material.Filled.EditNote" Variant="Variant.Filled"
+                                    Color="Color.Tertiary" Size="Size.Small" OnClick="@(() => ShowEditModal(item))" />
+                            </MudTooltip>
+                            <MudTooltip Text="Delete">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Filled"
+                                    Color="Color.Error" Size="Size.Small" OnClick="@(() => ShowDeleteModal(item))" />
+                            </MudTooltip>
+                        </Authorized>
+                    </AuthorizeView>
+                </MudStack>
+            </MudTd>
+        </RowTemplate>
+    </MudServerTable>
+</MudContainer>
+
+@code {
+    [Parameter, SupplyParameterFromQuery(Name = "q")] public string? InitialQuery { get; set; }
+    [Parameter, SupplyParameterFromQuery(Name = "alert")] public string? InitialAlert { get; set; }
+
+    private MudServerTable<InventoryItemDTO>? _table;
+    private List<InventoryItemDTO> _pagedItems = [];
+
+    private string _filterNameOrCompound = string.Empty;
+    private string? _alert;
+
+    private string FilterNameOrCompound
+    {
+        get => _filterNameOrCompound;
+        set
+        {
+            if (_filterNameOrCompound == value) return;
+            _filterNameOrCompound = value;
+            _table?.ReloadServerData();
+        }
+    }
+    private ItemType _filterItemType = ItemType.None;
+    private ItemType FilterItemType
+    {
+        get => _filterItemType;
+        set
+        {
+            if (_filterItemType == value) return;
+            _filterItemType = value;
+            _table?.ReloadServerData();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(InitialQuery))
+            _filterNameOrCompound = InitialQuery;
+        if (!string.IsNullOrWhiteSpace(InitialAlert))
+            _alert = InitialAlert.ToLowerInvariant();
+
+        // Subscribe to realtime events
+        RealtimeService.OnEntityChanged += HandleEntityChanged;
+        RealtimeService.OnPropertyChanged += HandlePropertyChanged;
+        RealtimeService.OnCollectionChanged += HandleCollectionChanged;
+
+        await Task.CompletedTask;
+    }
+
+    private async Task<TableData<InventoryItemDTO>> ServerReload(TableState state, CancellationToken ct)
+    {
+        try
+        {
+            ItemSortField? sortBy = null;
+            if (!string.IsNullOrWhiteSpace(state.SortLabel) && Enum.TryParse<ItemSortField>(state.SortLabel, out var parsedSort))
+            {
+                sortBy = parsedSort;
+            }
+
+            var sortDirection = state.SortDirection == MudBlazor.SortDirection.Descending
+            ? VetManagement.Domain.Enums.SortDirection.Descending
+            : VetManagement.Domain.Enums.SortDirection.Ascending;
+
+            var result = await ItemsService.GetItemsPagedAsync(
+            _filterNameOrCompound,
+            _filterItemType,
+            state.Page,
+            state.PageSize,
+            ct,
+            _alert,
+            sortBy,
+            sortDirection);
+
+            if (result != null)
+            {
+                _pagedItems = result.Items;
+                return new TableData<InventoryItemDTO> { TotalItems = result.TotalCount, Items = result.Items };
+            }
+        }
+        catch (TaskCanceledException) { }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading items: {ex.Message}", Severity.Error);
+        }
+
+        return new TableData<InventoryItemDTO> { TotalItems = 0, Items = [] };
+    }
+
+    private void HandleEntityChanged(EntityChangedEventArgs args)
+    {
+        if (args.EntityType == nameof(Item))
+        {
+            _ = InvokeAsync(() =>
+            {
+                Snackbar.Add($"Item {args.Action.ToLower()} by another user", Severity.Info);
+                _table?.ReloadServerData();
+            });
+        }
+    }
+
+    private void HandlePropertyChanged(PropertyChangedEventArgs args)
+    {
+        if (args.EntityType == nameof(Item) && args.PropertyName == nameof(Item.Stock))
+        {
+            var item = _pagedItems.FirstOrDefault(x => x.Id == args.EntityId);
+            if (item != null && args.NewValue is int or System.Text.Json.JsonElement)
+            {
+                var newStock = args.NewValue is System.Text.Json.JsonElement jsonElement
+                ? jsonElement.GetInt32()
+                : Convert.ToInt32(args.NewValue);
+
+                if (item.Stock != newStock)
+                {
+                    item.Stock = newStock;
+                    _ = InvokeAsync(StateHasChanged);
+                    Snackbar.Add($"Stock updated for {item.Name}", Severity.Info);
+                }
+            }
+        }
+    }
+
+    private void HandleCollectionChanged(CollectionChangedEventArgs args)
+    {
+        if (args.EntityType == nameof(Item))
+        {
+            _ = InvokeAsync(async () =>
+            {
+                if (_table is not null)
+                {
+                    await _table.ReloadServerData();
+                }
+            });
+        }
+    }
+
+    private void ClearFilters()
+    {
+        FilterNameOrCompound = string.Empty;
+        FilterItemType = ItemType.None;
+        _alert = null;
+        _table?.ReloadServerData();
+    }
+
+    #region Modals
+    private async Task ShowCreateModal()
+    {
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            CloseOnEscapeKey = false
+        };
+        var parameters = new DialogParameters<CreateItemModal>
+        {
+        { x => x.Title, "New product" },
+        { x => x.TitleIcon, Icons.Material.Filled.AddBox },
+        { x => x.TitleColor, Color.Success }
+        };
+        var dialog = await DialogService.ShowAsync<CreateItemModal>(null, parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false } && result.Data is Item)
+        {
+            _table?.ReloadServerData();
+            Snackbar.Add("Product created.", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add("Creation canceled.", Severity.Info);
+        }
+    }
+
+    private async Task ShowEditModal(InventoryItemDTO dto)
+    {
+        var parameters = new DialogParameters<EditItemModal>
+        {
+        { x => x.ItemDTO, dto },
+        { x => x.Title, "Edit item" },
+        { x => x.TitleIcon, Icons.Material.Filled.Edit },
+        { x => x.TitleColor, Color.Primary }
+        };
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            CloseOnEscapeKey = false
+        };
+        var dialog = await DialogService.ShowAsync<EditItemModal>(null, parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            _table?.ReloadServerData();
+            Snackbar.Add("Item edited.", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add("Edit canceled.", Severity.Info);
+        }
+    }
+
+    private async Task ShowHistoryModal(InventoryItemDTO dto)
+    {
+        var parameters = new DialogParameters<HistoryModal>
+        {
+        { x => x.Item, dto },
+        { x => x.Title, "Movement history" },
+        { x => x.TitleIcon, Icons.Material.Filled.History },
+        { x => x.TitleColor, Color.Info }
+        };
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true
+        };
+        var dialog = await DialogService.ShowAsync<HistoryModal>(null, parameters, options);
+        await dialog.Result;
+    }
+
+    private async Task ShowMassIngressModal()
+    {
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            CloseOnEscapeKey = false
+        };
+        var dialog = await DialogService.ShowAsync<MassiveIngressModal>(null, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false, Data: List<InventoryMassUpdateDTO> itemsList })
+        {
+            try
+            {
+                await InventoryMovementService.MassiveEntryAsync(itemsList);
+                Snackbar.Add($"Mass ingress applied ({itemsList.Count} items).", Severity.Success);
+                _table?.ReloadServerData();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Mass ingress error: {ex.Message}", Severity.Error);
+            }
+        }
+        else
+        {
+            Snackbar.Add("Mass ingress canceled.", Severity.Info);
+        }
+    }
+
+    private async Task ShowMassEgressModal()
+    {
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            CloseOnEscapeKey = false
+        };
+        var dialog = await DialogService.ShowAsync<MassiveEgressModal>(null, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false, Data: List<InventoryMassUpdateDTO> itemsList })
+        {
+            try
+            {
+                await InventoryMovementService.MassiveExitAsync(itemsList);
+                Snackbar.Add($"Mass egress applied ({itemsList.Count} items).", Severity.Success);
+                _table?.ReloadServerData();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Mass egress error: {ex.Message}", Severity.Error);
+            }
+        }
+        else
+        {
+            Snackbar.Add("Mass egress canceled.", Severity.Info);
+        }
+    }
+
+    private async Task ShowAdjustStockModal(InventoryItemDTO dto)
+    {
+        var parameters = new DialogParameters<AdjustStockModal>
+        {
+        { x => x.Item, dto },
+        { x => x.Title, "Adjust stock" },
+        { x => x.TitleIcon, Icons.Material.Filled.Edit },
+        { x => x.TitleColor, Color.Secondary }
+        };
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.ExtraSmall,
+            FullWidth = true,
+            CloseOnEscapeKey = false
+        };
+        var dialog = await DialogService.ShowAsync<AdjustStockModal>(null, parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            _table?.ReloadServerData();
+        }
+        else
+        {
+            Snackbar.Add("Stock adjustment canceled.", Severity.Info);
+        }
+    }
+
+    private async Task ShowDeleteModal(InventoryItemDTO dto)
+    {
+        var parameters = new DialogParameters<ConfirmModal>
+        {
+        { x => x.Title, "Delete item" },
+        { x => x.Message, $"Are you sure you want to delete item '{dto.Name}'?" },
+        { x => x.ButtonConfirmText, "Delete" },
+        { x => x.ButtonCancelText, "Cancel" },
+        { x => x.TitleIcon, Icons.Material.Filled.Delete },
+        { x => x.TitleColor, Color.Error }
+        };
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = false
+        };
+        var dialog = await DialogService.ShowAsync<ConfirmModal>(null, parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            try
+            {
+                await ItemsService.DeleteItemAsync(dto.Id);
+                Snackbar.Add("Item deleted.", Severity.Success);
+                _table?.ReloadServerData();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error deleting item: {ex.Message}", Severity.Error);
+            }
+        }
+        else
+        {
+            Snackbar.Add("Deletion canceled.", Severity.Info);
+        }
+    }
+
+    private async Task ShowQuickAdjustStockModal()
+    {
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseOnEscapeKey = false
+        };
+        var parameters = new DialogParameters<QuickAdjustStockBarcodeModal>
+        {
+        { x => x.Title, "Adjust stock by barcode" },
+        { x => x.TitleIcon, Icons.Material.Filled.QrCodeScanner },
+        { x => x.TitleColor, Color.Secondary }
+        };
+        var dialog = await DialogService.ShowAsync<QuickAdjustStockBarcodeModal>(null, parameters, options);
+        var result = await dialog.Result;
+        if (result == null || result.Canceled)
+        {
+            Snackbar.Add("Barcode adjustment canceled.", Severity.Info);
+            return;
+        }
+        if (result.Data is not Item item)
+        {
+            Snackbar.Add("Could not get item from scanner.", Severity.Warning);
+            return;
+        }
+        var dto = item.ToInventoryItemDTO();
+        await ShowAdjustStockModal(dto);
+    }
+    #endregion
+
+    private IEnumerable<FilterChipModel> BuildActiveChips()
+    {
+        var list = new List<FilterChipModel>();
+        if (!string.IsNullOrWhiteSpace(FilterNameOrCompound))
+            list.Add(new FilterChipModel
+            {
+                Label = $"Name/Brand/Compound: {FilterNameOrCompound}",
+                Color = Color.Primary,
+                OnClear = () => FilterNameOrCompound = string.Empty
+            });
+        if (FilterItemType != ItemType.None)
+            list.Add(new FilterChipModel
+            {
+                Label = $"Category: {FilterItemType.GetDisplayString()}",
+                Color = Color.Secondary,
+                OnClear = () => FilterItemType = ItemType.None
+            });
+        if (!string.IsNullOrWhiteSpace(_alert))
+            list.Add(new FilterChipModel
+            {
+                Label = InventoryUiHelpers.GetAlertLabel(_alert),
+                Color = InventoryUiHelpers.GetAlertColor(_alert),
+                OnClear = () => { _alert = null; _table?.ReloadServerData(); }
+            });
+        return list;
+    }
+
+    public void Dispose()
+    {
+        RealtimeService.OnEntityChanged -= HandleEntityChanged;
+        RealtimeService.OnPropertyChanged -= HandlePropertyChanged;
+        RealtimeService.OnCollectionChanged -= HandleCollectionChanged;
+    }
+}

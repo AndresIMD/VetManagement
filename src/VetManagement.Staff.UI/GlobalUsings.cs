@@ -1,0 +1,1 @@
+global using VetManagement.Staff.UI.Models;

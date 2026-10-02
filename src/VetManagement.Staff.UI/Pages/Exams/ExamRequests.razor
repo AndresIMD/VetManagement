@@ -1,0 +1,269 @@
+﻿@page "/exam-requests"
+@inject ExamPerformedApiService RequestsService
+@inject ExamApiService ExamsService
+@inject ExternalLabsApiService LabsService
+@inject ClientPetApiService ClientPetService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@attribute [Authorize(Policy = "ExamsPerformed.Read")]
+@using MudBlazor
+@using VetManagement.Staff.UI.Components.Filters
+@using VetManagement.Staff.UI.Models.Exams
+@using VetManagement.Staff.UI.Helpers
+
+<PageTitle>Exam Requests</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
+    <PageHeader Title="Exam Requests" Icon="@Icons.Material.Filled.ReceiptLong" />
+
+    <MudPaper Class="pa-6 mb-4 elevation-3 rounded-lg app-surface">
+        <MudGrid>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextFilterField @bind-Value="FilterText" Label="Search by responsible..." />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudNumericField T="int?" Label="Pet ID" @bind-Value="FilterPetId" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudDateRangePicker @bind-DateRange="FilterRange" Label="Date range" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" md="3" Class="d-flex align-center">
+                <ActiveFilterChips Chips="@BuildActiveChips()" />
+            </MudItem>
+        </MudGrid>
+        <MudStack Row="true" Justify="Justify.FlexEnd" AlignItems="AlignItems.Center" Class="mt-3">
+            <MudStack Row="true" Spacing="2">
+                <MudButton Color="Color.Secondary" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Clear"
+                    OnClick="ClearFilters">Clear filter</MudButton>
+                <MudButton Color="Color.Success" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.AddBox"
+                    OnClick="ShowAddModal">New request</MudButton>
+            </MudStack>
+        </MudStack>
+    </MudPaper>
+</MudContainer>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2">
+    <MudTable TItem="ExamPerformed" Items="@_filtered" Loading="@_isLoading" Striped="true" Hover="true" Bordered="true"
+        FixedHeader="true" RowsPerPage="25">
+        <ToolBarContent></ToolBarContent>
+        <HeaderContent>
+            <MudTh style="width:12%">ID</MudTh>
+            <MudTh style="width:18%">Pet</MudTh>
+            <MudTh style="width:18%">Responsible</MudTh>
+            <MudTh style="width:20%">Date</MudTh>
+            <MudTh style="width:22%">Summary</MudTh>
+            <MudTh style="width:10%; text-align:right">Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate Context="req">
+            <MudTd DataLabel="ID">@req.Id</MudTd>
+            <MudTd DataLabel="Pet">@req.PatientId</MudTd>
+            <MudTd DataLabel="Responsible">@req.Responsible</MudTd>
+            <MudTd DataLabel="Date">@req.Date.ToLocalTime().ToString("g")</MudTd>
+            <MudTd DataLabel="Summary">
+                @if (req.Items?.Any() == true)
+                {
+                    <MudList T="string" Dense="true">
+                        @foreach (var it in req.Items)
+                        {
+                            <MudListItem T="string">@GetExamName(it.ExamId) - @it.Status@(it.IsExternal ? " (ext)" :
+                                                        string.Empty)</MudListItem>
+                        }
+                    </MudList>
+                }
+            </MudTd>
+            <MudTd DataLabel="Actions" Class="text-end">
+                <MudStack Row="true" Spacing="1" Justify="Justify.FlexEnd">
+                    <MudTooltip Text="Edit">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Tertiary"
+                            Variant="Variant.Filled" Size="Size.Small" OnClick="@(() => ShowEditModal(req))" />
+                    </MudTooltip>
+                    <MudTooltip Text="Delete">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Filled"
+                            Size="Size.Small" OnClick="@(() => ShowDeleteModal(req))" />
+                    </MudTooltip>
+                </MudStack>
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+</MudContainer>
+
+@code {
+    // Filtros
+    private string? _filterText;
+    private string? FilterText
+    {
+        get => _filterText; set
+        {
+            if (_filterText != value)
+            {
+                _filterText = value; ApplyFilters();
+            }
+        }
+    }
+    private int? FilterPetId = null;
+    private DateRange? FilterRange;
+
+    [Parameter, SupplyParameterFromQuery(Name = "petId")] public int? InitialPetId { get; set; }
+    [Parameter, SupplyParameterFromQuery(Name = "new")] public bool? CreateNew { get; set; }
+
+    // Data
+    private List<ExamPerformed> _all = new();
+    private List<ExamPerformed> _filtered = new();
+    private List<Exam> _catalog = new();
+    private List<ExternalLab> _labs = new();
+    private bool _isLoading;
+
+    private ExamPerformed _current = new() { Items = new List<ExamRequestItem>() };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+        if (InitialPetId.HasValue)
+        {
+            FilterPetId = InitialPetId;
+        }
+        if (CreateNew == true)
+        {
+            await ShowAddModal();
+            if (InitialPetId.HasValue) _current.PatientId = InitialPetId.Value;
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        _isLoading = true;
+        StateHasChanged();
+        try
+        {
+            _all = await RequestsService.GetAllAsync() ?? new();
+            _catalog = await ExamsService.GetAllExamsAsync() ?? new();
+            _labs = await LabsService.GetAllAsync() ?? new();
+            ApplyFilters();
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ApplyFilters()
+    {
+        IEnumerable<ExamPerformed> q = _all;
+        if (!string.IsNullOrWhiteSpace(FilterText))
+        {
+            q = q.Where(r => !string.IsNullOrWhiteSpace(r.Responsible) &&
+            StringExtensions.ContainsIgnoringAccents(r.Responsible, FilterText));
+        }
+        if (FilterPetId.HasValue)
+            q = q.Where(r => r.PatientId == FilterPetId);
+        if (FilterRange is not null && FilterRange.Start != null && FilterRange.End != null)
+            q = q.Where(r => r.Date >= FilterRange.Start && r.Date <= FilterRange.End);
+
+        _filtered = q.OrderByDescending(r => r.Date).ToList();
+    }
+
+    private void ClearFilters()
+    {
+        FilterText = null;
+        FilterPetId = null;
+        FilterRange = null;
+    }
+
+    private IEnumerable<FilterChipModel> BuildActiveChips()
+    {
+        var chips = new List<FilterChipModel>();
+        if (!string.IsNullOrWhiteSpace(FilterText))
+            chips.Add(new FilterChipModel
+            {
+                Label = $"Responsible: {FilterText}",
+                Color = Color.Primary,
+                OnClear = () => FilterText
+            = string.Empty
+            });
+        if (FilterPetId.HasValue)
+            chips.Add(new FilterChipModel
+            {
+                Label = $"Pet ID: {FilterPetId}",
+                Color = Color.Secondary,
+                OnClear = () => FilterPetId =
+            null
+            });
+        if (FilterRange is not null && FilterRange.Start.HasValue && FilterRange.End.HasValue)
+            chips.Add(new FilterChipModel
+            {
+                Label = $"Dates: {FilterRange.Start:dd/MM} - {FilterRange.End:dd/MM}",
+                Color =
+            Color.Info,
+                OnClear = () => FilterRange = null
+            });
+        return chips;
+    }
+
+    private async Task ShowAddModal()
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = false };
+        var parameters = new DialogParameters<Components.Modals.Exams.ExamRequestEditModal>
+        {
+            { x => x.Initial, null },
+            { x => x.Title, "New request" },
+            { x => x.TitleIcon, Icons.Material.Filled.ReceiptLong },
+            { x => x.TitleColor, Color.Success }
+        };
+        var dialog = await DialogService.ShowAsync<Components.Modals.Exams.ExamRequestEditModal>(null, parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+            await LoadAsync();
+    }
+
+    private async Task ShowEditModal(ExamPerformed entity)
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = false };
+        var parameters = new DialogParameters<Components.Modals.Exams.ExamRequestEditModal>
+        {
+            { x => x.Initial, entity },
+            { x => x.Title, "Edit request" },
+            { x => x.TitleIcon, Icons.Material.Filled.Edit },
+            { x => x.TitleColor, Color.Primary }
+        };
+        var dialog = await DialogService.ShowAsync<Components.Modals.Exams.ExamRequestEditModal>(null, parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+            await LoadAsync();
+    }
+
+    private async Task ShowDeleteModal(ExamPerformed entity)
+    {
+        _current = entity;
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = false };
+        var parameters = new DialogParameters<Components.Modals.Common.ConfirmModal>
+        {
+            { x => x.Title, "Delete request" },
+            { x => x.Message, $"Are you sure you want to delete request #{entity.Id}?" },
+            { x => x.ButtonConfirmText, "Delete" },
+            { x => x.ButtonCancelText, "Cancel" },
+            { x => x.TitleIcon, Icons.Material.Filled.Delete },
+            { x => x.TitleColor, Color.Error }
+        };
+        var dialog = await DialogService.ShowAsync<Components.Modals.Common.ConfirmModal>(null, parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            try
+            {
+                await RequestsService.DeleteAsync(_current.Id);
+                Snackbar.Add("Request deleted.", Severity.Success);
+                await LoadAsync();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error deleting request: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private string GetExamName(int id) => _catalog.FirstOrDefault(x => x.Id == id)?.Name ?? $"#{id}";
+}

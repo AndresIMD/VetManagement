@@ -1,0 +1,123 @@
+﻿@using VetManagement.Domain.Enums
+@using VetManagement.Staff.UI.Models.Exams
+@using VetManagement.Staff.UI.Models.Medical
+
+<MudForm @ref="_mudForm" Model="ExamModel" @bind-IsValid="IsValid" FieldChanged="OnFormFieldChanged">
+    <MudGrid>
+        <MudItem xs="12" sm="6">
+            <MudTextField Label="Name" @bind-Value="ExamModel.Name" For="@(() => ExamModel.Name)" Required="true" />
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudSelect T="string" Label="Brand" Value="ExamModel.Brand" ValueChanged="OnBrandChangedMud" Required="true">
+                @foreach (var brand in Brands)
+                {
+                    <MudSelectItem Value="@brand">@brand</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudSelect T="string" Label="Machine" @bind-Value="ExamModel.Machine" Required="true">
+                @foreach (var machine in Machines)
+                {
+                    <MudSelectItem Value="@machine">@machine</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudSelect T="SampleType" Label="Sample type" @bind-Value="ExamModel.SampleType" Required="true">
+                @foreach (var value in Enum.GetValues<SampleType>())
+                {
+                    if (value == SampleType.None) { continue; }
+                    <MudSelectItem Value="@value">@value.ToString()</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudSelect T="SampleContainer" Label="Container" @bind-Value="ExamModel.SampleContainer" Required="true">
+                @foreach (var value in Enum.GetValues<SampleContainer>())
+                {
+                    if (value == SampleContainer.None) { continue; }
+                    <MudSelectItem Value="@value">@value.ToString()</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudNumericField T="int" Label="Cost (buy)" @bind-Value="ExamModel.BuyPrice" For="@(() => ExamModel.BuyPrice)" Step="1000" Required="true" />
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudNumericField T="int" Label="Price (sell)" @bind-Value="ExamModel.SellPrice" For="@(() => ExamModel.SellPrice)" Step="1000" Required="true" />
+        </MudItem>
+        <MudItem xs="12">
+            <MudStack Row="true" Spacing="2">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync">Save</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="OnCancel">Cancel</MudButton>
+            </MudStack>
+        </MudItem>
+    </MudGrid>
+    @if (_mudForm != null && _mudForm.Errors?.Any() == true)
+    {
+        <MudAlert Severity="Severity.Error" Class="pa-2 mb-2">
+            <ul>
+                @foreach (var error in _mudForm.Errors)
+                {
+                    <li>@error</li>
+                }
+            </ul>
+        </MudAlert>
+    }
+</MudForm>
+
+@code {
+    [Parameter] public Exam ExamModel { get; set; } = new Exam();
+    [Parameter] public List<string> Brands { get; set; } = new();
+    [Parameter] public List<string> Machines { get; set; } = new();
+    [Parameter] public EventCallback<string> OnBrandChangedCallback { get; set; }
+    [Parameter] public EventCallback OnValidSubmitCallback { get; set; }
+    [Parameter] public EventCallback OnCancelCallback { get; set; }
+    [Parameter] public EventCallback<bool> OnDirtyChanged { get; set; }
+
+    private MudForm? _mudForm;
+    public bool IsValid { get; set; }
+
+    private bool _isDirty;
+    public bool IsDirty
+    {
+        get => _isDirty;
+        set
+        {
+            if (_isDirty == value) return;
+            _isDirty = value;
+            OnDirtyChanged.InvokeAsync(_isDirty);
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_mudForm is null)
+        {
+            await OnValidSubmitCallback.InvokeAsync();
+            return;
+        }
+        await _mudForm.ValidateAsync();
+        if (_mudForm.IsValid)
+        {
+            await OnValidSubmitCallback.InvokeAsync();
+            IsDirty = false;
+        }
+    }
+
+    private async Task OnCancel() => await OnCancelCallback.InvokeAsync();
+
+    private async Task OnBrandChangedMud(string value)
+    {
+        ExamModel.Brand = value;
+        await OnBrandChangedCallback.InvokeAsync(value);
+        IsDirty = true;
+    }
+
+    private Task OnFormFieldChanged(object _)
+    {
+        IsDirty = true;
+        return Task.CompletedTask;
+    }
+}

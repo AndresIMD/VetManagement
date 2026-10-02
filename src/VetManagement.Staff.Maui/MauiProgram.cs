@@ -2,10 +2,10 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Logging;
 using MudBlazor.Services;
 using System.Text.Json;
-using VetManagement.Shared.Services.Api;
-using VetManagement.Shared.Services.App;
-using VetManagement.Shared.Services.Auth;
-using VetManagement.Shared.Services.Realtime;
+using VetManagement.Staff.UI.Services.Api;
+using VetManagement.Staff.UI.Services.App;
+using VetManagement.Staff.UI.Services.Auth;
+using VetManagement.Staff.UI.Services.Realtime;
 
 namespace VetManagement.Staff.Maui;
 

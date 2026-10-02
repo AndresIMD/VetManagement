@@ -1,0 +1,166 @@
+﻿@using VetManagement.Domain.Enums
+@using VetManagement.Staff.UI.Models.Core
+
+<MudForm @ref="mudForm" @bind-IsValid="IsValid" FieldChanged="OnFormFieldChanged">
+    <MudGrid>
+        <MudItem xs="12">
+            <MudText Typo="Typo.subtitle1" Class="mb-1">General data</MudText>
+            <MudDivider Class="mb-2" />
+        </MudItem>
+
+        <MudItem xs="12" sm="6">
+            <MudSelect Variant="Variant.Outlined" T="ItemType" Label="Category" @bind-Value="ItemModel.Type"
+                Required="true">
+                <MudSelectItem Value="@ItemType.Material">Material</MudSelectItem>
+                <MudSelectItem Value="@ItemType.Drug">Drug</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudTextField Variant="Variant.Outlined" Label="Name" @bind-Value="ItemModel.Name"
+                For="@(() => ItemModel.Name)" Required="true" Adornment="Adornment.Start"
+                AdornmentIcon="@Icons.Material.Filled.Inventory2" />
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudTextField Variant="Variant.Outlined" Label="Brand" @bind-Value="ItemModel.Brand"
+                For="@(() => ItemModel.Brand)" Adornment="Adornment.Start"
+                AdornmentIcon="@Icons.Material.Filled.Factory" />
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudNumericField Variant="Variant.Outlined" T="int" Label="Stock" @bind-Value="ItemModel.Stock"
+                For="@(() => ItemModel.Stock)" Min="0" Adornment="Adornment.End"
+                AdornmentIcon="@Icons.Material.Filled.Inventory" />
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudNumericField Variant="Variant.Outlined" T="int" Label="Low stock threshold"
+                @bind-Value="ItemModel.LowStockThreshold" For="@(() => ItemModel.LowStockThreshold)" Min="0"
+                HelperText="Used for low stock alerts" Adornment="Adornment.End"
+                AdornmentIcon="@Icons.Material.Filled.Warning" />
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudNumericField Variant="Variant.Outlined" T="int" Label="Sale price" @bind-Value="ItemModel.SellPrice"
+                For="@(() => ItemModel.SellPrice)" Min="0" Adornment="Adornment.End"
+                AdornmentIcon="@Icons.Material.Filled.AttachMoney" />
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudTextField Variant="Variant.Outlined" Label="Barcode" @bind-Value="ItemModel.Barcode"
+                For="@(() => ItemModel.Barcode)" MaxLength="100" Required="true" RequiredError="Barcode is required."
+                ReadOnly="@BarcodeReadonly" Disabled="@BarcodeReadonly" Adornment="Adornment.Start"
+                AdornmentIcon="@Icons.Material.Filled.QrCode2" />
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudTextField Variant="Variant.Outlined" Label="Description" @bind-Value="ItemModel.Description"
+                For="@(() => ItemModel.Description)" Lines="3" />
+        </MudItem>
+
+        @if (ItemModel.Type == ItemType.Drug)
+        {
+            <MudItem xs="12" Class="mt-2">
+                <MudText Typo="Typo.subtitle1" Class="mb-1">Drug details</MudText>
+                <MudDivider Class="mb-2" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField Variant="Variant.Outlined" Label="Compound" @bind-Value="DrugModel.Compound"
+                    For="@(() => DrugModel.Compound)" Required="true" Adornment="Adornment.Start"
+                    AdornmentIcon="@Icons.Material.Filled.Science" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudGrid>
+                    <MudItem xs="6">
+                        <MudNumericField Variant="Variant.Outlined" T="float" Label="Amount (mL)" @bind-Value="DrugModel.ML"
+                            For="@(() => DrugModel.ML)" Required="true" Margin="Margin.Dense" Min="0.001f"
+                            Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.LocalDrink" />
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudNumericField Variant="Variant.Outlined" T="float" Label="Concentration (%)"
+                            @bind-Value="DrugModel.Concentration" For="@(() => DrugModel.Concentration)" Required="true"
+                            Margin="Margin.Dense" Min="0.001f" Max="100f" Adornment="Adornment.End"
+                            AdornmentIcon="@Icons.Material.Filled.Percent" />
+                    </MudItem>
+                </MudGrid>
+            </MudItem>
+            <MudItem xs="12">
+                <MudStack Row="true" Spacing="4" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.subtitle2" Class="me-2">Dosage</MudText>
+                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                        <MudIcon Icon="@Icons.Material.Filled.Pets" Color="Color.Primary" />
+                        <MudNumericField T="float" Label="Min" @bind-Value="DrugModel.DosageDog.Min" Margin="Margin.Dense"
+                            HideSpinButtons="true" Style="width:90px;" Min="0f" />
+                        <MudText Class="mx-1">-</MudText>
+                        <MudNumericField T="float" Label="Max" @bind-Value="DrugModel.DosageDog.Max" Margin="Margin.Dense"
+                            HideSpinButtons="true" Style="width:90px;" Min="0f" />
+                    </MudStack>
+                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                        <MudIcon Icon="@Icons.Material.Filled.Pets" Color="Color.Secondary" />
+                        <MudNumericField T="float" Label="Min" @bind-Value="DrugModel.DosageCat.Min" Margin="Margin.Dense"
+                            HideSpinButtons="true" Style="width:90px;" Min="0f" />
+                        <MudText Class="mx-1">-</MudText>
+                        <MudNumericField T="float" Label="Max" @bind-Value="DrugModel.DosageCat.Max" Margin="Margin.Dense"
+                            HideSpinButtons="true" Style="width:90px;" Min="0f" />
+                    </MudStack>
+                </MudStack>
+            </MudItem>
+        }
+    </MudGrid>
+</MudForm>
+
+@code {
+    [Parameter] public Item ItemModel { get; set; } = Item.GetEmpty();
+    [Parameter] public Drug DrugModel { get; set; } = Drug.GetEmpty();
+    [Parameter] public EventCallback OnValidSubmitCallback { get; set; }
+    [Parameter] public EventCallback OnCancelCallback { get; set; }
+    [Parameter] public bool BarcodeReadonly { get; set; } = false;
+    [Parameter] public EventCallback<bool> OnValidChanged { get; set; }
+    [Parameter] public EventCallback<bool> OnDirtyChanged { get; set; }
+
+    private MudForm? mudForm;
+    private bool _isValid;
+    public bool IsValid
+    {
+        get => _isValid;
+        set
+        {
+            if (_isValid != value)
+            {
+                _isValid = value;
+                OnValidChanged.InvokeAsync(_isValid);
+            }
+        }
+    }
+
+    private bool _isDirty;
+    public bool IsDirty
+    {
+        get => _isDirty;
+        set
+        {
+            if (_isDirty != value)
+            {
+                _isDirty = value;
+                OnDirtyChanged.InvokeAsync(_isDirty);
+            }
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (mudForm is not null)
+        {
+            await mudForm.ValidateAsync();
+            if (!mudForm.IsValid)
+                return;
+        }
+        await OnValidSubmitCallback.InvokeAsync();
+        IsDirty = false;
+    }
+
+    private async Task OnCancel()
+    {
+        await OnCancelCallback.InvokeAsync();
+    }
+
+    private Task OnFormFieldChanged(object _)
+    {
+        IsDirty = true;
+        return Task.CompletedTask;
+    }
+}
