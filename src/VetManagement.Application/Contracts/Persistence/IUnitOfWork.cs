@@ -19,6 +19,7 @@ public interface IUnitOfWork : IDisposable
     IExternalLabRepository ExternalLabs { get; }
 
     IMedicalVisitRepository MedicalVisits { get; }
+    IClinicSettingRepository ClinicSettings { get; }
 
     Task<int> SaveChangesAsync();
 }

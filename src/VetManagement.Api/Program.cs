@@ -136,7 +136,10 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy("Users.Read", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.USERS.READ))
     .AddPolicy("Users.Create", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.USERS.CREATE))
     .AddPolicy("Users.ManageRoles", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.USERS.MANAGE_ROLES))
-    .AddPolicy("System.SendEmail", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.SYSTEM.SEND_EMAIL));
+    .AddPolicy("System.SendEmail", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.SYSTEM.SEND_EMAIL))
+    .AddPolicy("Scheduling.Read", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.SCHEDULING.READ))
+    .AddPolicy("Scheduling.Book", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.SCHEDULING.BOOK))
+    .AddPolicy("Scheduling.Manage", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.SCHEDULING.MANAGE));
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
@@ -149,6 +152,9 @@ builder.Services.AddScoped<VetManagement.Application.Services.ExamPerformedServi
 builder.Services.AddScoped<VetManagement.Application.Services.ExternalLabService>();
 builder.Services.AddScoped<VetManagement.Application.Services.ClientPetService>();
 builder.Services.AddScoped<VetManagement.Application.Services.MedicalVisitService>();
+builder.Services.AddSingleton(new VetManagement.Application.Scheduling.SchedulingDefaults(
+    File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Scheduling", "scheduling.defaults.json"))));
+builder.Services.AddScoped<VetManagement.Application.Scheduling.SchedulingSettingsService>();
 
 builder.Services.AddMemoryCache(options =>
 {

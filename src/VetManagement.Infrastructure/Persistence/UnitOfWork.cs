@@ -1,3 +1,4 @@
+using VetManagement.Application.Common;
 using VetManagement.Application.Contracts.Persistence;
 using VetManagement.Infrastructure.Data;
 using VetManagement.Infrastructure.Repositories;
@@ -15,6 +16,7 @@ public class UnitOfWork(AppDbContext context) : IUnitOfWork
     private IAuditLogRepository? _auditLogs;
     private IExternalLabRepository? _externalLabs;
     private IMedicalVisitRepository? _medicalVisits;
+    private IClinicSettingRepository? _clinicSettings;
 
     public IItemRepository Items => _items ??= new ItemRepository(context);
 
@@ -34,8 +36,19 @@ public class UnitOfWork(AppDbContext context) : IUnitOfWork
 
     public IMedicalVisitRepository MedicalVisits => _medicalVisits ??= new MedicalVisitRepository(context);
 
+    public IClinicSettingRepository ClinicSettings => _clinicSettings ??= new ClinicSettingRepository(context);
+
     public async Task<int> SaveChangesAsync()
-        => await context.SaveChangesAsync();
+    {
+        try
+        {
+            return await context.SaveChangesAsync();
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException ex)
+        {
+            throw new ConcurrencyConflictException(ex);
+        }
+    }
 
     public void Dispose()
         => context.Dispose();

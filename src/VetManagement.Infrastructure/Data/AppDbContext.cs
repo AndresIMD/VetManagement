@@ -7,6 +7,7 @@ using VetManagement.Domain.Inventory;
 using VetManagement.Domain.Audit;
 using VetManagement.Domain.Exams;
 using VetManagement.Domain.Medical;
+using VetManagement.Domain.Configuration;
 using Client = VetManagement.Domain.Clients.Client;
 using Pet = VetManagement.Domain.Clients.Pet;
 
@@ -29,6 +30,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     // New medical visits
     public DbSet<MedicalVisit> MedicalVisits { get; set; }
     public DbSet<VisitProcedure> VisitProcedures { get; set; }
+
+    public DbSet<ClinicSetting> ClinicSettings { get; set; }
 
     private static readonly JsonSerializerOptions _jsonOptions = new();
     private static string SerializeDict(Dictionary<string, string>? v)
@@ -57,6 +60,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         builder.Entity<Item>().Property(i => i.BrandBarcode).HasMaxLength(100);
         builder.Entity<InventoryMovement>().Property(m => m.Reason).HasMaxLength(200);
         builder.Entity<InventoryMovement>().Property(m => m.Responsible).HasMaxLength(100);
+
+        // One row per configuration document; Version rejects a save based on a stale read.
+        builder.Entity<ClinicSetting>().HasIndex(s => s.Key).IsUnique();
+        builder.Entity<ClinicSetting>().Property(s => s.Key).HasMaxLength(100);
+        builder.Entity<ClinicSetting>().Property(s => s.UpdatedBy).HasMaxLength(256);
+        builder.Entity<ClinicSetting>().Property(s => s.Version).IsConcurrencyToken();
 
         // Configure DosageRange as owned type for Drug
         builder.Entity<Drug>().OwnsOne(d => d.DosageDog);
