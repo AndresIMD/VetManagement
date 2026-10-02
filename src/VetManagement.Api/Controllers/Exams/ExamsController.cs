@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VetManagement.Application.Services;
-using VetManagement.Shared.Models.Exams;
+using VetManagement.Contracts.Exams;
 
 namespace VetManagement.Api.Controllers.Exams;
 
@@ -10,10 +10,10 @@ namespace VetManagement.Api.Controllers.Exams;
 public class ExamsController(ExamService service) : ApiControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<List<Exam>>> GetAllAsync()
+    public async Task<ActionResult<List<ExamDto>>> GetAllAsync()
     {
         var exams = await service.GetAllAsync();
-        return Ok(exams);
+        return Ok(exams.Select(e => e.ToDto()).ToList());
     }
 
     [HttpGet("{id}")]
@@ -22,27 +22,26 @@ public class ExamsController(ExamService service) : ApiControllerBase
         var exam = await service.GetByIdAsync(id);
         if (exam == null)
             return NotFound();
-        return Ok(exam);
+        return Ok(exam.ToDto());
     }
 
     [HttpPost]
     [Authorize(Policy = "Exams.Create")]
-    public async Task<IActionResult> AddAsync([FromBody] Exam exam)
+    public async Task<IActionResult> AddAsync([FromBody] ExamRequest request)
     {
-        await service.AddAsync(exam, GetUserName());
+        await service.AddAsync(request.ToDomain(id: 0), GetUserName());
         return Ok();
     }
 
     [HttpPut("{id}")]
     [Authorize(Policy = "Exams.Update")]
-    public async Task<IActionResult> UpdateAsync(int id, [FromBody] Exam exam)
+    public async Task<IActionResult> UpdateAsync(int id, [FromBody] ExamRequest request)
     {
         var oldData = await service.GetByIdAsNoTrackingAsync(id);
         if (oldData == null)
             return NotFound();
 
-        exam.Id = id;
-        await service.UpdateAsync(exam, oldData, GetUserName());
+        await service.UpdateAsync(request.ToDomain(id), oldData, GetUserName());
         return Ok();
     }
 

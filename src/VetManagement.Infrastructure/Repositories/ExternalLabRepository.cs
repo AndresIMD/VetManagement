@@ -1,6 +1,6 @@
 using VetManagement.Application.Contracts.Persistence;
 using VetManagement.Infrastructure.Data;
-using VetManagement.Shared.Models.Exams;
+using VetManagement.Domain.Exams;
 
 namespace VetManagement.Infrastructure.Repositories;
 

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VetManagement.Application.Services;
-using VetManagement.Shared.Models.Exams;
+using VetManagement.Contracts.Exams;
 
 namespace VetManagement.Api.Controllers.Exams;
 
@@ -12,30 +12,28 @@ public class ExternalLabsController(ExternalLabService service) : ApiControllerB
 {
     [HttpGet]
     public async Task<IActionResult> GetAllAsync()
-        => Ok(await service.GetAllAsync());
+        => Ok((await service.GetAllAsync()).Select(l => l.ToDto()).ToList());
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetAsync(int id)
     {
         var lab = await service.GetByIdAsync(id);
-        return lab is null ? NotFound() : Ok(lab);
+        return lab is null ? NotFound() : Ok(lab.ToDto());
     }
 
     [HttpPost]
     [Authorize(Policy = "ExternalLabs.Create")]
-    public async Task<IActionResult> AddAsync([FromBody] ExternalLab lab)
+    public async Task<IActionResult> AddAsync([FromBody] ExternalLabRequest request)
     {
-        var created = await service.AddAsync(lab, GetUserName());
-        return Ok(created);
+        var created = await service.AddAsync(request.ToDomain(id: 0), GetUserName());
+        return Ok(created.ToDto());
     }
 
     [HttpPut("{id}")]
     [Authorize(Policy = "ExternalLabs.Update")]
-    public async Task<IActionResult> UpdateAsync(int id, [FromBody] ExternalLab lab)
+    public async Task<IActionResult> UpdateAsync(int id, [FromBody] ExternalLabRequest request)
     {
-        if (id != lab.Id)
-            return BadRequest();
-        await service.UpdateAsync(lab, GetUserName());
+        await service.UpdateAsync(request.ToDomain(id), GetUserName());
         return Ok();
     }
 

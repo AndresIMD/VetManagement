@@ -1,4 +1,4 @@
-using VetManagement.Shared.Models.Exams;
+using VetManagement.Domain.Exams;
 
 namespace VetManagement.Application.Contracts.Persistence;
 

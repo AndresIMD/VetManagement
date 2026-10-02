@@ -5,7 +5,7 @@ using VetManagement.Domain.Enums;
 using VetManagement.Shared.Models.Audit;
 using VetManagement.Domain.Clients;
 using VetManagement.Domain.Inventory;
-using VetManagement.Shared.Models.Exams;
+using VetManagement.Domain.Exams;
 using VetManagement.Shared.Models.Medical;
 using DomainItemType = VetManagement.Domain.Enums.ItemType;
 using DomainItem = VetManagement.Domain.Inventory.Item;
