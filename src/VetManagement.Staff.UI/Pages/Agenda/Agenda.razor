@@ -5,6 +5,9 @@
 @inject SchedulingApiService SchedulingApi
 @inject IDialogService DialogService
 @inject AuthenticationStateProvider AuthStateProvider
+@inject BillingApiService BillingApi
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
 @attribute [Authorize(Policy = "Scheduling.Read")]
 
 <PageTitle>Agenda</PageTitle>
@@ -90,7 +93,7 @@
             <MudItem xs="12" md="7">
                 <MudPaper Class="pa-3" Elevation="1">
                     <MudText Typo="Typo.h6" Class="mb-2">Appointments · @_date?.ToString("dddd dd MMM yyyy")</MudText>
-                    <AppointmentsTable Items="_dayAppointments" Catalog="_catalog" CanBook="_canBook"
+                    <AppointmentsTable Items="_dayAppointments" Catalog="_catalog" CanBook="_canBook" CanCharge="_canCharge" OnCharge="ChargeAsync"
                                        OnReschedule="OpenRescheduleAsync" OnCancel="OpenCancelAsync" EmptyText="No appointments on this day." />
                 </MudPaper>
             </MudItem>
@@ -121,6 +124,7 @@
     private List<AppointmentDto> _needsReschedule = [];
     private bool _loading;
     private bool _canBook;
+    private bool _canCharge;
 
     private List<CatalogService> EnabledServices => _catalog?.Services.Where(s => s.Enabled).ToList() ?? [];
 
@@ -128,6 +132,7 @@
     {
         var user = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
         _canBook = user.HasClaim("perm", "scheduling.book");
+        _canCharge = user.HasClaim("perm", "billing.charge");
         _catalog = await SchedulingApi.GetCatalogAsync();
         _serviceCode = EnabledServices.FirstOrDefault()?.Code;
         await RefreshAsync();
@@ -161,6 +166,16 @@
         _needsReschedule = await SchedulingApi.GetAppointmentsAsync(DateTime.UtcNow, DateTime.UtcNow.AddDays(180), AppointmentStatus.NeedsReschedule);
 
         _loading = false;
+    }
+
+    /// <summary>Opens the appointment's sale, creating it (service + online deposit) the first time.</summary>
+    private async Task ChargeAsync(AppointmentDto appointment)
+    {
+        var result = await BillingApi.CreateSaleAsync(new VetManagement.Contracts.Billing.CreateSaleRequest { AppointmentId = appointment.Id });
+        if (result.Id is int saleId)
+            Navigation.NavigateTo($"billing/sales/{saleId}");
+        else
+            Snackbar.Add(result.Error ?? "Could not open the sale.", Severity.Error);
     }
 
     private static readonly DialogOptions Options = new() { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };

@@ -8,7 +8,38 @@ using VetManagement.Staff.UI.Constants;
 namespace VetManagement.Staff.UI.Services.Api;
 
 /// <summary>Outcome of a write call: success, or a message the page can show as-is.</summary>
-public sealed record ApiResult(bool Ok, string? Error = null, int? Id = null, JsonElement? Body = null);
+public sealed record ApiResult(bool Ok, string? Error = null, int? Id = null, JsonElement? Body = null)
+{
+    /// <summary>Turns ProblemDetails (title, detail, validation errors) into one readable message.</summary>
+    public static async Task<ApiResult> FromResponseAsync(HttpResponseMessage response)
+    {
+        var text = await response.Content.ReadAsStringAsync();
+        JsonElement? body = string.IsNullOrWhiteSpace(text) ? null : JsonDocument.Parse(text).RootElement.Clone();
+
+        if (response.IsSuccessStatusCode)
+        {
+            int? id = body is { ValueKind: JsonValueKind.Object } b && b.TryGetProperty("id", out var idProp) && idProp.ValueKind == JsonValueKind.Number
+                ? idProp.GetInt32() : null;
+            return new ApiResult(true, Id: id, Body: body);
+        }
+
+        var messages = new List<string>();
+        if (body is { ValueKind: JsonValueKind.Object } problem)
+        {
+            if (problem.TryGetProperty("errors", out var errors) && errors.ValueKind == JsonValueKind.Object)
+                foreach (var field in errors.EnumerateObject())
+                    messages.AddRange(field.Value.EnumerateArray().Select(e => e.GetString() ?? ""));
+            if (messages.Count == 0 && problem.TryGetProperty("title", out var title))
+                messages.Add(title.GetString() ?? "");
+            if (problem.TryGetProperty("detail", out var detail) && detail.GetString() is { Length: > 0 } d)
+                messages.Add(d);
+        }
+        if (messages.Count == 0)
+            messages.Add(response.StatusCode == HttpStatusCode.Forbidden ? "You don't have permission for this action." : $"Request failed ({(int)response.StatusCode}).");
+
+        return new ApiResult(false, string.Join(Environment.NewLine, messages), Body: body);
+    }
+}
 
 public sealed record CatalogService(string Code, string Name, bool Enabled, int DurationMinutes, IReadOnlyList<string> ResourceCodes);
 
@@ -43,7 +74,7 @@ public class SchedulingApiService(HttpClient http)
     }
 
     public async Task<ApiResult> SaveSettingsAsync(SchedulingSettingsDocument document)
-        => await ToResultAsync(await http.PutAsJsonAsync(ApiRouteConstants.SCHEDULING_SETTINGS, document));
+        => await ApiResult.FromResponseAsync(await http.PutAsJsonAsync(ApiRouteConstants.SCHEDULING_SETTINGS, document));
 
     public async Task<List<AvailableSlotDto>> GetAvailabilityAsync(string serviceCode, DateOnly from, DateOnly to)
         => await http.GetFromJsonAsync<List<AvailableSlotDto>>(
@@ -59,41 +90,11 @@ public class SchedulingApiService(HttpClient http)
     }
 
     public async Task<ApiResult> BookAsync(CreateAppointmentRequest request)
-        => await ToResultAsync(await http.PostAsJsonAsync(ApiRouteConstants.SCHEDULING_APPOINTMENTS, request));
+        => await ApiResult.FromResponseAsync(await http.PostAsJsonAsync(ApiRouteConstants.SCHEDULING_APPOINTMENTS, request));
 
     public async Task<ApiResult> RescheduleAsync(int id, RescheduleAppointmentRequest request)
-        => await ToResultAsync(await http.PostAsJsonAsync(string.Format(ApiRouteConstants.SCHEDULING_APPOINTMENT_RESCHEDULE, id), request));
+        => await ApiResult.FromResponseAsync(await http.PostAsJsonAsync(string.Format(ApiRouteConstants.SCHEDULING_APPOINTMENT_RESCHEDULE, id), request));
 
     public async Task<ApiResult> CancelAsync(int id, string? reason)
-        => await ToResultAsync(await http.PostAsJsonAsync(string.Format(ApiRouteConstants.SCHEDULING_APPOINTMENT_CANCEL, id), new CancelAppointmentRequest { Reason = reason }));
-
-    /// <summary>Turns ProblemDetails (title, detail, validation errors) into one readable message.</summary>
-    private static async Task<ApiResult> ToResultAsync(HttpResponseMessage response)
-    {
-        var text = await response.Content.ReadAsStringAsync();
-        JsonElement? body = string.IsNullOrWhiteSpace(text) ? null : JsonDocument.Parse(text).RootElement.Clone();
-
-        if (response.IsSuccessStatusCode)
-        {
-            int? id = body is { ValueKind: JsonValueKind.Object } b && b.TryGetProperty("id", out var idProp) && idProp.ValueKind == JsonValueKind.Number
-                ? idProp.GetInt32() : null;
-            return new ApiResult(true, Id: id, Body: body);
-        }
-
-        var messages = new List<string>();
-        if (body is { ValueKind: JsonValueKind.Object } problem)
-        {
-            if (problem.TryGetProperty("errors", out var errors) && errors.ValueKind == JsonValueKind.Object)
-                foreach (var field in errors.EnumerateObject())
-                    messages.AddRange(field.Value.EnumerateArray().Select(e => e.GetString() ?? ""));
-            if (messages.Count == 0 && problem.TryGetProperty("title", out var title))
-                messages.Add(title.GetString() ?? "");
-            if (problem.TryGetProperty("detail", out var detail) && detail.GetString() is { Length: > 0 } d)
-                messages.Add(d);
-        }
-        if (messages.Count == 0)
-            messages.Add(response.StatusCode == HttpStatusCode.Forbidden ? "You don't have permission for this action." : $"Request failed ({(int)response.StatusCode}).");
-
-        return new ApiResult(false, string.Join(Environment.NewLine, messages), Body: body);
-    }
+        => await ApiResult.FromResponseAsync(await http.PostAsJsonAsync(string.Format(ApiRouteConstants.SCHEDULING_APPOINTMENT_CANCEL, id), new CancelAppointmentRequest { Reason = reason }));
 }

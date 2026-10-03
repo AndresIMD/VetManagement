@@ -61,4 +61,14 @@ public static class ApiRouteConstants
     public const string SCHEDULING_APPOINTMENTS = "api/scheduling/appointments";
     public const string SCHEDULING_APPOINTMENT_RESCHEDULE = "api/scheduling/appointments/{0}/reschedule";
     public const string SCHEDULING_APPOINTMENT_CANCEL = "api/scheduling/appointments/{0}/cancel";
+
+    // Billing
+    public const string BILLING_SALES = "api/billing/sales";
+    public const string BILLING_SALE_BY_ID = "api/billing/sales/{0}";
+    public const string BILLING_SALE_LINES = "api/billing/sales/{0}/lines";
+    public const string BILLING_SALE_PAYMENTS = "api/billing/sales/{0}/payments";
+    public const string BILLING_SALE_VOID = "api/billing/sales/{0}/void";
+    public const string BILLING_CASH_DAY = "api/billing/cash/{0}";
+    public const string BILLING_CASH_CLOSE = "api/billing/cash/close";
+    public const string BILLING_SETTINGS = "api/billing/settings";
 }

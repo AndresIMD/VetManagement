@@ -23,6 +23,7 @@ Guard tests: `ArchitectureTests` (dependency direction), `MigrationsTests` (EF m
 | **F5** | ✅ **COMPLETED** | docs/architecture/ARCHITECTURE.md; historical docs moved to docs/archive |
 | **F6** | ✅ **COMPLETED** | Scheduling: per-clinic settings, availability with progressive release, appointments, staff agenda, emails (docs/architecture/SCHEDULING.md) |
 | **F7** | ✅ **COMPLETED** | Online booking: RUT, payment gateways (WebPay Plus / simulated), public API, hosted portal `Booking.Web`, SPVetClinic link (docs/DEPLOYMENT.md) |
+| **F8** | ✅ **COMPLETED** | Billing (caja): sales from appointments or counter, split payments, discounts, voids, daily cash close, stock deducted on sale (docs/architecture/BILLING.md) |
 
 ---
 
@@ -80,7 +81,7 @@ git log --oneline -10
 
 ---
 
-## What is done (verified: 191 tests + SQL Server concurrency test, CI green, browser end-to-end)
+## What is done (verified: 216 tests + 2 SQL Server concurrency tests, CI green, browser end-to-end)
 
 - Staff CRM modules: inventory (items, movements, alerts), clients and pets, exams (orders, performed, external labs),
   medical visits, audit log, users/roles/permissions, email.
@@ -88,8 +89,10 @@ git log --oneline -10
   absences, overbooking, progressive release / sobrecupo, staff booking/reschedule/cancel, emails and reminders.
 - Online booking (F7): hosted portal `Booking.Web` with clinic branding, RUT validation, auto-created clients/pets,
   deposit via WebPay Plus (sandbox-verified) or simulated gateway, refund modes, cancellation link.
+- Billing (F8): sales (from an appointment with its online deposit, or at the counter), service/product/other lines,
+  split payments with per-clinic payment methods, discount limit, voids, daily cash close, stock deducted on sale.
 - Hardening: ProblemDetails, login lockout + rate limits, health check `/healthz`, JSON logs, guard tests.
-- Docs: `docs/architecture/ARCHITECTURE.md`, `docs/architecture/SCHEDULING.md`, `docs/DEPLOYMENT.md`.
+- Docs: `docs/architecture/ARCHITECTURE.md`, `docs/architecture/SCHEDULING.md`, `docs/architecture/BILLING.md`, `docs/DEPLOYMENT.md`.
 
 ## Blocked on the clinic (not code)
 
@@ -101,14 +104,14 @@ git log --oneline -10
 ## Open product decisions
 
 - `Responsible` on exams/visits is free text; a staff picker would link records to users.
+- Billing: should charging an appointment mark it `Completed`? Refunds of paid sales and reopening a closed day are not built.
 
 ## Roadmap (proposed, not started)
 
 | Phase | Feature | Why |
 |---|---|---|
-| F8 | Billing / caja: charges per visit, exam and product sold; payments (cash, card, transfer, deposits already paid online); daily cash close | Payments module in the product scope; deposits exist but nothing charges the rest |
 | F9 | Clinical record: visit linked to appointment, vaccines and deworming with due dates, automatic reminders | Recurring revenue for clinics; reuses agenda emails |
-| F10 | Inventory consumption from visits/billing (stock goes down when a product or drug is used) | Inventory and visits are separate today |
+| F10 | Inventory consumption from visits (drugs and materials used during a visit) | Products sold already leave stock (F8); clinical use does not yet |
 | F11 | Reports and dashboard: agenda occupancy, no-shows, income, stock value | Admin decisions |
 | F12 | Client web (optional accounts): pet history, vaccines, upcoming appointments | Client web in product scope; today clients use RUT + link |
 | Later | WhatsApp notifications (setting reserved); services needing a vet *and* a room; electronic receipts (SII) | Depend on providers/costs |

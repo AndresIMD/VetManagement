@@ -167,6 +167,18 @@
         },
         new MenuItem
         {
+            Title = "Billing",
+            Icon = Icons.Material.Filled.PointOfSale,
+            RequiredPerms = new[] { "billing.read" },
+            Children = new List<MenuItem>
+            {
+                new MenuItem { Title = "Sales", Href = "billing", RequiredPerms = new[] { "billing.read" } },
+                new MenuItem { Title = "Cash Close", Href = "billing/cash", RequiredPerms = new[] { "billing.read" } },
+                new MenuItem { Title = "Settings", Href = "billing/settings", RequiredPerms = new[] { "billing.manage" } }
+            }
+        },
+        new MenuItem
+        {
             Title = "Administration",
             Icon = Icons.Material.Filled.AdminPanelSettings,
             RequiredPerms = new[] { "users.read", "audit.read" },

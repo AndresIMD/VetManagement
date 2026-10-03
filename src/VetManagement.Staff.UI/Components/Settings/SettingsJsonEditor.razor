@@ -1,0 +1,102 @@
+@using System.Text.Json
+@inject ISnackbar Snackbar
+
+@* Edits a versioned clinic settings document as JSON: lists every validation error and reports stale-version conflicts. *@
+
+@if (_errors.Count > 0)
+{
+    <MudAlert Severity="Severity.Error" Class="mb-3">
+        <MudText Typo="Typo.subtitle2">The settings were not saved:</MudText>
+        <ul class="mb-0">
+            @foreach (var error in _errors)
+            {
+                <li>@error</li>
+            }
+        </ul>
+    </MudAlert>
+}
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <MudStack Row="true" Spacing="2" Class="mb-2" AlignItems="AlignItems.Center">
+        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">Version @_version</MudChip>
+        <MudSpacer />
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="LoadAsync" Disabled="_saving">Reload</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveAsync" Disabled="_saving">
+            @(_saving ? "Saving..." : "Save")
+        </MudButton>
+    </MudStack>
+
+    <MudTextField T="string" @bind-Value="_json" Lines="@Lines" Variant="Variant.Outlined" Immediate="true"
+                  Style="font-family: Consolas, 'Courier New', monospace; font-size: 0.85rem;" spellcheck="false" />
+}
+
+@code {
+    /// <summary>Returns the stored document (version + settings), or null when unavailable.</summary>
+    [Parameter, EditorRequired] public Func<Task<(int Version, JsonElement Settings)?>> Load { get; set; } = default!;
+    [Parameter, EditorRequired] public Func<int, JsonElement, Task<ApiResult>> Save { get; set; } = default!;
+    /// <summary>Runs after a successful save, before reloading (e.g. extra warnings from the response).</summary>
+    [Parameter] public EventCallback<ApiResult> Saved { get; set; }
+    [Parameter] public string SavedMessage { get; set; } = "Settings saved.";
+    [Parameter] public int Lines { get; set; } = 32;
+
+    private string _json = string.Empty;
+    private int _version;
+    private bool _loading = true;
+    private bool _saving;
+    private List<string> _errors = [];
+
+    // Relaxed escaping keeps accented names ("Vacunación") readable instead of \u escapes; the text goes into a text box, never raw HTML.
+    private static readonly JsonSerializerOptions Indented = new() { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _errors = [];
+        var document = await Load();
+        _version = document?.Version ?? 0;
+        _json = document is null ? "{}" : JsonSerializer.Serialize(document.Value.Settings, Indented);
+        _loading = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        _errors = [];
+        JsonElement settings;
+        try
+        {
+            using var parsed = JsonDocument.Parse(_json);
+            settings = parsed.RootElement.Clone();
+        }
+        catch (JsonException ex)
+        {
+            _errors = [$"The text is not valid JSON: {ex.Message}"];
+            return;
+        }
+
+        _saving = true;
+        try
+        {
+            var result = await Save(_version, settings);
+            if (!result.Ok)
+            {
+                _errors = result.Error!.Split(Environment.NewLine).ToList();
+                return;
+            }
+
+            Snackbar.Add(SavedMessage, Severity.Success);
+            await Saved.InvokeAsync(result);
+            await LoadAsync();
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}

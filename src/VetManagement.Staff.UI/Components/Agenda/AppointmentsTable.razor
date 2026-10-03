@@ -14,7 +14,7 @@ else
             <MudTh>Vet / room</MudTh>
             <MudTh>Owner · pet</MudTh>
             <MudTh>Status</MudTh>
-            @if (CanBook)
+            @if (CanBook || CanCharge)
             {
                 <MudTh></MudTh>
             }
@@ -41,16 +41,22 @@ else
                     <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">Online</MudChip>
                 }
             </MudTd>
-            @if (CanBook)
+            @if (CanBook || CanCharge)
             {
                 <MudTd Style="white-space: nowrap;">
-                    @if (context.Status is AppointmentStatus.Confirmed or AppointmentStatus.NeedsReschedule)
+                    @if (CanCharge && context.Status is AppointmentStatus.Confirmed or AppointmentStatus.Completed)
+                    {
+                        <MudTooltip Text="Charge">
+                            <MudIconButton Icon="@Icons.Material.Filled.PointOfSale" Size="Size.Small" Color="Color.Success" OnClick="() => OnCharge.InvokeAsync(context)" />
+                        </MudTooltip>
+                    }
+                    @if (CanBook && context.Status is AppointmentStatus.Confirmed or AppointmentStatus.NeedsReschedule)
                     {
                         <MudTooltip Text="Reschedule">
                             <MudIconButton Icon="@Icons.Material.Filled.EditCalendar" Size="Size.Small" OnClick="() => OnReschedule.InvokeAsync(context)" />
                         </MudTooltip>
                     }
-                    @if (context.Status is AppointmentStatus.Confirmed or AppointmentStatus.NeedsReschedule or AppointmentStatus.PendingPayment)
+                    @if (CanBook && context.Status is AppointmentStatus.Confirmed or AppointmentStatus.NeedsReschedule or AppointmentStatus.PendingPayment)
                     {
                         <MudTooltip Text="Cancel">
                             <MudIconButton Icon="@Icons.Material.Filled.EventBusy" Size="Size.Small" Color="Color.Error" OnClick="() => OnCancel.InvokeAsync(context)" />
@@ -70,6 +76,9 @@ else
     [Parameter] public string EmptyText { get; set; } = "No appointments.";
     [Parameter] public EventCallback<AppointmentDto> OnReschedule { get; set; }
     [Parameter] public EventCallback<AppointmentDto> OnCancel { get; set; }
+    /// <summary>Shows the charge button (opens the appointment's sale).</summary>
+    [Parameter] public bool CanCharge { get; set; }
+    [Parameter] public EventCallback<AppointmentDto> OnCharge { get; set; }
 
     private static Color StatusColor(AppointmentStatus status) => status switch
     {

@@ -1,6 +1,7 @@
 @page "/agenda/settings"
 @using System.Text.Json
 @using VetManagement.Contracts.Scheduling
+@using VetManagement.Staff.UI.Components.Settings
 @inject SchedulingApiService SchedulingApi
 @inject ISnackbar Snackbar
 @attribute [Authorize(Policy = "Scheduling.Manage")]
@@ -17,94 +18,20 @@
         See <code>docs/architecture/SCHEDULING.md</code> for every field.
     </MudAlert>
 
-    @if (_errors.Count > 0)
-    {
-        <MudAlert Severity="Severity.Error" Class="mb-3">
-            <MudText Typo="Typo.subtitle2">The settings were not saved:</MudText>
-            <ul class="mb-0">
-                @foreach (var error in _errors)
-                {
-                    <li>@error</li>
-                }
-            </ul>
-        </MudAlert>
-    }
-
-    @if (_loading)
-    {
-        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
-    }
-    else
-    {
-        <MudStack Row="true" Spacing="2" Class="mb-2" AlignItems="AlignItems.Center">
-            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">Version @_version</MudChip>
-            <MudSpacer />
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="LoadAsync" Disabled="_saving">Reload</MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveAsync" Disabled="_saving">
-                @(_saving ? "Saving..." : "Save")
-            </MudButton>
-        </MudStack>
-
-        <MudTextField T="string" @bind-Value="_json" Lines="32" Variant="Variant.Outlined" Immediate="true"
-                      Style="font-family: Consolas, 'Courier New', monospace; font-size: 0.85rem;" spellcheck="false" />
-    }
+    <SettingsJsonEditor Load="LoadAsync" Save="SaveAsync" Saved="OnSaved" SavedMessage="Agenda settings saved." />
 </MudContainer>
 
 @code {
-    private string _json = string.Empty;
-    private int _version;
-    private bool _loading = true;
-    private bool _saving;
-    private List<string> _errors = [];
+    private async Task<(int Version, JsonElement Settings)?> LoadAsync()
+        => await SchedulingApi.GetSettingsAsync() is { } d ? (d.Version, d.Settings) : null;
 
-    private static readonly JsonSerializerOptions Indented = new() { WriteIndented = true };
+    private Task<ApiResult> SaveAsync(int version, JsonElement settings)
+        => SchedulingApi.SaveSettingsAsync(new SchedulingSettingsDocument { Version = version, Settings = settings });
 
-    protected override Task OnInitializedAsync() => LoadAsync();
-
-    private async Task LoadAsync()
+    private void OnSaved(ApiResult result)
     {
-        _loading = true;
-        _errors = [];
-        var document = await SchedulingApi.GetSettingsAsync();
-        _version = document?.Version ?? 0;
-        _json = document is null ? "{}" : JsonSerializer.Serialize(document.Settings, Indented);
-        _loading = false;
-    }
-
-    private async Task SaveAsync()
-    {
-        _errors = [];
-        JsonElement settings;
-        try
-        {
-            using var parsed = JsonDocument.Parse(_json);
-            settings = parsed.RootElement.Clone();
-        }
-        catch (JsonException ex)
-        {
-            _errors = [$"The text is not valid JSON: {ex.Message}"];
-            return;
-        }
-
-        _saving = true;
-        try
-        {
-            var result = await SchedulingApi.SaveSettingsAsync(new SchedulingSettingsDocument { Version = _version, Settings = settings });
-            if (!result.Ok)
-            {
-                _errors = result.Error!.Split(Environment.NewLine).ToList();
-                return;
-            }
-
-            var needReschedule = result.Body?.TryGetProperty("appointmentsNeedingReschedule", out var n) == true ? n.GetInt32() : 0;
-            Snackbar.Add("Agenda settings saved.", Severity.Success);
-            if (needReschedule > 0)
-                Snackbar.Add($"{needReschedule} appointment(s) fall on a closed day or absence and need rescheduling (see Agenda).", Severity.Warning);
-            await LoadAsync();
-        }
-        finally
-        {
-            _saving = false;
-        }
+        var needReschedule = result.Body?.TryGetProperty("appointmentsNeedingReschedule", out var n) == true ? n.GetInt32() : 0;
+        if (needReschedule > 0)
+            Snackbar.Add($"{needReschedule} appointment(s) fall on a closed day or absence and need rescheduling (see Agenda).", Severity.Warning);
     }
 }

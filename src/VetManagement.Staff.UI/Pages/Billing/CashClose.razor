@@ -1,0 +1,124 @@
+@page "/billing/cash"
+@using VetManagement.Contracts.Billing
+@inject BillingApiService BillingApi
+@inject ISnackbar Snackbar
+@inject AuthenticationStateProvider AuthStateProvider
+@attribute [Authorize(Policy = "Billing.Read")]
+
+<PageTitle>Cash Close</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mx-auto px-2 mt-8">
+    <PageHeader Title="Cash Close" Icon="@Icons.Material.Filled.Calculate" />
+
+    <MudPaper Class="pa-3 mb-3" Elevation="1">
+        <MudDatePicker Label="Day" Date="_date" DateChanged="OnDateChanged" Style="max-width: 180px;" />
+    </MudPaper>
+
+    @if (_day is null)
+    {
+        <MudProgressLinear Indeterminate="true" />
+    }
+    else
+    {
+        <MudPaper Class="pa-3 mb-3" Elevation="1">
+            <MudText Typo="Typo.h6" Class="mb-2">Payments received</MudText>
+            <MudTable Items="_day.Totals" Dense="true" Elevation="0">
+                <HeaderContent>
+                    <MudTh>Method</MudTh>
+                    <MudTh Style="text-align:right">Payments</MudTh>
+                    <MudTh Style="text-align:right">Amount</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>
+                        @context.Name
+                        @if (context.IsCash)
+                        {
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">Drawer</MudChip>
+                        }
+                    </MudTd>
+                    <MudTd Style="text-align:right">@context.Count</MudTd>
+                    <MudTd Style="text-align:right">@Money.Clp(context.Amount)</MudTd>
+                </RowTemplate>
+                <FooterContent>
+                    <MudTd colspan="2"><b>Total</b></MudTd>
+                    <MudTd Style="text-align:right"><b>@Money.Clp(_day.Totals.Sum(t => t.Amount))</b></MudTd>
+                </FooterContent>
+                <NoRecordsContent><MudText Typo="Typo.body2" Color="Color.Secondary">No payments this day.</MudText></NoRecordsContent>
+            </MudTable>
+            <MudText Typo="Typo.subtitle1" Class="mt-3">Expected cash in the drawer: <b>@Money.Clp(_day.ExpectedCash)</b></MudText>
+        </MudPaper>
+
+        @if (_day.IsClosed)
+        {
+            <MudAlert Severity="@(_day.Difference == 0 ? Severity.Success : Severity.Warning)">
+                Closed by @_day.ClosedBy on @_day.ClosedAtUtc?.ToLocalTime().ToString("dd MMM yyyy HH:mm").
+                Counted @Money.Clp(_day.CountedCash ?? 0) · difference @Money.Clp(_day.Difference ?? 0).
+                @if (!string.IsNullOrWhiteSpace(_day.Notes))
+                {
+                    <br />@_day.Notes
+                }
+            </MudAlert>
+        }
+        else if (_canCharge)
+        {
+            <MudPaper Class="pa-3" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">Close the day</MudText>
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.End" Wrap="Wrap.Wrap">
+                    <MudNumericField T="int" @bind-Value="_counted" Label="Cash counted" Min="0" Style="max-width: 180px;" Immediate="true" />
+                    <MudText Typo="Typo.body1" Color="@(_counted == _day.ExpectedCash ? Color.Success : Color.Warning)">
+                        Difference @Money.Clp(_counted - _day.ExpectedCash)
+                    </MudText>
+                </MudStack>
+                <MudTextField T="string" @bind-Value="_notes" Label="Notes (explain any difference)" Lines="2" Class="mt-2" />
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Lock" Class="mt-3"
+                           Disabled="_busy" OnClick="CloseAsync">Close day</MudButton>
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="d-block mt-1">
+                    After closing, this day takes no more payments and its sales can't be voided.
+                </MudText>
+            </MudPaper>
+        }
+    }
+</MudContainer>
+
+@code {
+    private DateTime? _date = DateTime.Today;
+    private DaySummaryDto? _day;
+    private int _counted;
+    private string? _notes;
+    private bool _busy;
+    private bool _canCharge;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _canCharge = (await AuthStateProvider.GetAuthenticationStateAsync()).User.HasClaim("perm", "billing.charge");
+        await LoadAsync();
+    }
+
+    private async Task OnDateChanged(DateTime? date)
+    {
+        _date = date ?? DateTime.Today;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _day = null;
+        _day = await BillingApi.GetDayAsync(DateOnly.FromDateTime(_date ?? DateTime.Today));
+        _counted = _day?.ExpectedCash ?? 0;
+        _notes = null;
+    }
+
+    private async Task CloseAsync()
+    {
+        _busy = true;
+        var result = await BillingApi.CloseDayAsync(new CloseDayRequest { Date = _day!.Date, CountedCash = _counted, Notes = _notes });
+        _busy = false;
+        if (result.Ok)
+        {
+            Snackbar.Add("Day closed.", Severity.Success);
+            await LoadAsync();
+        }
+        else
+            Snackbar.Add(result.Error ?? "Could not close the day.", Severity.Error);
+    }
+}
