@@ -1,0 +1,23 @@
+<MudItem xs="6" sm="4" md="2">
+    <MudPaper Class="pa-3" Elevation="1" Style="@(Href is null ? null : "cursor: pointer;")" @onclick="Open">
+        <MudText Typo="Typo.caption" Color="Color.Secondary">@Label</MudText>
+        <MudText Typo="Typo.h5" Color="@(Warn ? Color.Warning : Color.Default)">@Value</MudText>
+        <MudText Typo="Typo.caption">@Caption</MudText>
+    </MudPaper>
+</MudItem>
+
+@code {
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Parameter] public string Label { get; set; } = string.Empty;
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public string? Caption { get; set; }
+    /// <summary>Highlights a figure that needs attention.</summary>
+    [Parameter] public bool Warn { get; set; }
+    [Parameter] public string? Href { get; set; }
+
+    private void Open()
+    {
+        if (Href is not null)
+            Navigation.NavigateTo(Href);
+    }
+}

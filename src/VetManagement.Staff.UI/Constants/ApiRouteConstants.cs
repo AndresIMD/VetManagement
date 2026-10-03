@@ -80,4 +80,7 @@ public static class ApiRouteConstants
     public const string CLINICAL_SUPPLY = "api/clinical/supplies/{0}";
     public const string CLINICAL_DUE = "api/clinical/due";
     public const string CLINICAL_SETTINGS = "api/clinical/settings";
+
+    // Reports
+    public const string REPORTS_SUMMARY = "api/reports/summary";
 }

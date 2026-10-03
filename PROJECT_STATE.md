@@ -26,6 +26,7 @@ Guard tests: `ArchitectureTests` (dependency direction), `MigrationsTests` (EF m
 | **F8** | ✅ **COMPLETED** | Billing (caja): sales from appointments or counter, split payments, discounts, voids, daily cash close, stock deducted on sale (docs/architecture/BILLING.md) |
 | **F9** | ✅ **COMPLETED** | Clinical record: visit notes linked to appointments, vaccines/deworming with per-clinic protocols, due list, owner reminders (docs/architecture/CLINICAL.md) |
 | **F10** | ✅ **COMPLETED** | Inventory from clinical use: supplies used in visits and vaccines applied leave stock, back on removal; shared stock lock |
+| **F11** | ✅ **COMPLETED** | Reports dashboard: agenda occupancy and no-shows, income by method/day, top sold, stock value, clinical activity (docs/architecture/REPORTS.md) |
 
 ---
 
@@ -83,7 +84,7 @@ git log --oneline -10
 
 ---
 
-## What is done (verified: 240 tests + 2 SQL Server concurrency tests, CI green, browser end-to-end)
+## What is done (verified: 243 tests + 2 SQL Server concurrency tests, CI green, browser end-to-end)
 
 - Staff CRM modules: inventory (items, movements, alerts), clients and pets, exams (orders, performed, external labs),
   medical visits, audit log, users/roles/permissions, email.
@@ -97,8 +98,9 @@ git log --oneline -10
   appointments; vaccines and deworming with per-clinic protocols and next due dates; due list; owner email reminders.
 - Inventory from clinical use (F10): drugs/materials used in a visit and vaccines from inventory leave stock with a
   traceable movement; removing them (or deleting the visit/dose) puts stock back. Configurable per clinic.
+- Reports (F11): management dashboard for any period (Admin, Manager).
 - Hardening: ProblemDetails, login lockout + rate limits, health check `/healthz`, JSON logs, guard tests.
-- Docs: `docs/architecture/ARCHITECTURE.md`, `docs/architecture/SCHEDULING.md`, `docs/architecture/BILLING.md`, `docs/architecture/CLINICAL.md`, `docs/DEPLOYMENT.md`.
+- Docs: `docs/architecture/ARCHITECTURE.md`, `docs/architecture/SCHEDULING.md`, `docs/architecture/BILLING.md`, `docs/architecture/CLINICAL.md`, `docs/architecture/REPORTS.md`, `docs/DEPLOYMENT.md`.
 
 ## Blocked on the clinic (not code)
 
@@ -116,7 +118,6 @@ git log --oneline -10
 
 | Phase | Feature | Why |
 |---|---|---|
-| F11 | Reports and dashboard: agenda occupancy, no-shows, income, stock value | Admin decisions |
 | F12 | Client web (optional accounts): pet history, vaccines, upcoming appointments | Client web in product scope; today clients use RUT + link |
 | Later | WhatsApp notifications (setting reserved); services needing a vet *and* a room; electronic receipts (SII) | Depend on providers/costs |
 

@@ -1,0 +1,180 @@
+@page "/reports"
+@using VetManagement.Contracts.Reports
+@inject ReportsApiService ReportsApi
+@attribute [Authorize(Policy = "Reports.Read")]
+
+<PageTitle>Reports</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mx-auto px-2 mt-8">
+    <PageHeader Title="Reports" Icon="@Icons.Material.Filled.Insights" />
+
+    <MudPaper Class="pa-3 mb-3" Elevation="1">
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+            <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small">
+                <MudButton OnClick="() => SetRangeAsync(Today.AddDays(-6), Today)">Last 7 days</MudButton>
+                <MudButton OnClick="() => SetRangeAsync(new DateTime(Today.Year, Today.Month, 1), Today)">This month</MudButton>
+                <MudButton OnClick="LastMonthAsync">Last month</MudButton>
+                <MudButton OnClick="() => SetRangeAsync(new DateTime(Today.Year, 1, 1), Today)">This year</MudButton>
+            </MudButtonGroup>
+            <MudDatePicker Label="From" @bind-Date="_from" Style="max-width: 150px;" />
+            <MudDatePicker Label="To" @bind-Date="_to" Style="max-width: 150px;" />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Refresh" OnClick="LoadAsync">Apply</MudButton>
+        </MudStack>
+        @if (_error is not null)
+        {
+            <MudAlert Severity="Severity.Error" Dense="true" Class="mt-2">@_error</MudAlert>
+        }
+    </MudPaper>
+
+    @if (_report is null)
+    {
+        <MudProgressLinear Indeterminate="true" />
+    }
+    else
+    {
+        var a = _report.Agenda;
+        var b = _report.Billing;
+        var inv = _report.Inventory;
+        var c = _report.Clinical;
+
+        <MudGrid Class="mb-3">
+            <StatTile Label="Collected" Value="@Money.Clp(b.Collected)" Caption="@($"{b.Sales} sales · avg {Money.Clp(b.AverageTicket)}")" />
+            <StatTile Label="Charged" Value="@Money.Clp(b.Revenue)" Caption="@($"Pending {Money.Clp(b.OpenBalance)} · {b.Voided} voided")" />
+            <StatTile Label="Appointments" Value="@a.Total.ToString()" Caption="@($"{a.Online} online · {a.Upcoming} upcoming")" />
+            <StatTile Label="No-shows" Value="@($"{a.NoShowPercent}%")" Caption="@($"{a.NoShow} no-show · {a.Cancelled} cancelled")" Warn="@(a.NoShowPercent >= 15)" />
+            <StatTile Label="Visits" Value="@c.Visits.ToString()" Caption="@($"{c.DosesApplied} vaccines/deworming applied")" />
+            <StatTile Label="Doses due" Value="@((c.DosesOverdue + c.DosesDueSoon).ToString())" Caption="@($"{c.DosesOverdue} overdue · {c.DosesDueSoon} due soon")" Warn="@(c.DosesOverdue > 0)" Href="clinical/due" />
+        </MudGrid>
+
+        <MudGrid>
+            <MudItem xs="12" md="8">
+                <MudPaper Class="pa-3" Elevation="1">
+                    <MudText Typo="Typo.h6">Collected per day</MudText>
+                    @if (b.Daily.Count > 62)
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Shown per month for long ranges.</MudText>
+                    }
+                    <MudChart T="double" ChartType="ChartType.Bar" ChartSeries="@_dailySeries" XAxisLabels="@_dailyLabels" Width="100%" Height="300px" />
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-3" Elevation="1" Style="height: 100%;">
+                    <MudText Typo="Typo.h6" Class="mb-2">By payment method</MudText>
+                    <MudSimpleTable Dense="true" Elevation="0">
+                        <tbody>
+                            @foreach (var m in b.ByMethod)
+                            {
+                                <tr><td>@m.Name</td><td style="text-align:right">@Money.Clp(m.Amount)</td></tr>
+                            }
+                            @if (b.ByMethod.Count == 0)
+                            {
+                                <tr><td colspan="2"><MudText Typo="Typo.body2" Color="Color.Secondary">No payments.</MudText></td></tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-3" Elevation="1">
+                    <MudText Typo="Typo.h6" Class="mb-2">Agenda occupancy</MudText>
+                    @foreach (var r in a.Resources)
+                    {
+                        <MudText Typo="Typo.body2">@r.Name · @(r.BookedMinutes / 60.0 > 0 ? $"{r.BookedMinutes / 60.0:0.#}" : "0") of @($"{r.ScheduledMinutes / 60.0:0.#}") h</MudText>
+                        <MudProgressLinear Value="@Math.Min(r.OccupancyPercent, 100)" Color="@(r.OccupancyPercent > 100 ? Color.Warning : Color.Primary)" Size="Size.Large" Class="mb-2">
+                            <MudText Typo="Typo.caption">@r.OccupancyPercent%</MudText>
+                        </MudProgressLinear>
+                    }
+                    @if (a.Resources.Count == 0)
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">No vets or rooms configured.</MudText>
+                    }
+                    @if (a.Services.Count > 0)
+                    {
+                        <MudText Typo="Typo.subtitle2" Class="mt-3">Appointments by service</MudText>
+                        <MudSimpleTable Dense="true" Elevation="0">
+                            <tbody>
+                                @foreach (var s in a.Services)
+                                {
+                                    <tr><td>@s.Name</td><td style="text-align:right">@s.Count</td></tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                    }
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-3" Elevation="1">
+                    <MudText Typo="Typo.h6" Class="mb-2">Top sold</MudText>
+                    <MudSimpleTable Dense="true" Elevation="0">
+                        <thead><tr><th>Item</th><th>Kind</th><th style="text-align:right">Qty</th><th style="text-align:right">Amount</th></tr></thead>
+                        <tbody>
+                            @foreach (var i in b.TopItems)
+                            {
+                                <tr><td>@i.Description</td><td>@i.Kind</td><td style="text-align:right">@i.Quantity</td><td style="text-align:right">@Money.Clp(i.Amount)</td></tr>
+                            }
+                            @if (b.TopItems.Count == 0)
+                            {
+                                <tr><td colspan="4"><MudText Typo="Typo.body2" Color="Color.Secondary">No sales.</MudText></td></tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+
+                    <MudText Typo="Typo.h6" Class="mt-4 mb-1">Inventory (today)</MudText>
+                    <MudText Typo="Typo.body2">
+                        @inv.Items items · @inv.Units units in stock ·
+                        cost @Money.Clp((int)Math.Min(inv.CostValue, int.MaxValue)) · sale value @Money.Clp((int)Math.Min(inv.SaleValue, int.MaxValue))
+                    </MudText>
+                    <MudText Typo="Typo.body2" Color="@(inv.OutOfStock > 0 ? Color.Error : Color.Default)">
+                        @inv.LowStock low stock · @inv.OutOfStock out of stock
+                    </MudText>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    private static DateTime Today => DateTime.Today;
+    private DateTime? _from = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+    private DateTime? _to = DateTime.Today;
+    private ReportSummaryDto? _report;
+    private string? _error;
+    private List<ChartSeries<double>> _dailySeries = [];
+    private string[] _dailyLabels = [];
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private Task LastMonthAsync()
+    {
+        var first = new DateTime(Today.Year, Today.Month, 1).AddMonths(-1);
+        return SetRangeAsync(first, first.AddMonths(1).AddDays(-1));
+    }
+
+    private async Task SetRangeAsync(DateTime from, DateTime to)
+    {
+        _from = from;
+        _to = to;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _error = null;
+        var result = await ReportsApi.GetSummaryAsync(DateOnly.FromDateTime(_from ?? Today), DateOnly.FromDateTime(_to ?? Today));
+        if (result.Report is null)
+        {
+            _error = result.Error;
+            return;
+        }
+        _report = result.Report;
+
+        // Long ranges read better per month.
+        var points = _report.Billing.Daily.Count > 62
+            ? _report.Billing.Daily.GroupBy(d => new DateOnly(d.Date.Year, d.Date.Month, 1)).Select(g => (Label: g.Key.ToString("MMM yy"), Amount: g.Sum(x => x.Amount))).ToList()
+            : _report.Billing.Daily.Select(d => (Label: d.Date.ToString("dd/MM"), Amount: d.Amount)).ToList();
+        _dailyLabels = points.Select(p => p.Label).ToArray();
+        _dailySeries = [new ChartSeries<double> { Name = "Collected", Data = points.Select(p => (double)p.Amount).ToArray() }];
+    }
+}
