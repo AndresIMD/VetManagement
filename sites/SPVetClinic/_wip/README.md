@@ -1,5 +1,9 @@
 # _wip — código en espera / huérfano
 
+> **Reemplazado:** la reserva de horas ahora es el portal propio del producto (`src/VetManagement.Booking.Web`),
+> al que el sitio enlaza con `BookingUrl` (ver `docs/DEPLOYMENT.md`). El módulo de booking de esta carpeta ya no
+> se va a reactivar; se puede borrar cuando se quiera (git conserva el historial).
+
 Esta carpeta contiene código que existe en el repositorio pero que **no se usa
 en ninguna página actualmente**. Se movió aquí para sacarlo del árbol activo
 del sitio sin borrarlo, en caso de que se quiera retomar más adelante.

@@ -149,7 +149,8 @@ switch (movementType)
 
 ### 2.2 International Naming (CRITICAL)
 
-**ALWAYS use English + international terms:**
+**ALWAYS use English + international terms** (country-specific *validation* may live in a value type, e.g.
+`Domain/Clients/Rut.cs`, but the stored field is still `TaxId`):
 
 ✅ **DO**:
 ```csharp
@@ -491,18 +492,6 @@ public void Save()
     => dbContext.SaveChanges();  // ❌ Synchronous DB call
 ```
 
-### 5.2 ConfigureAwait(false) in Libraries
-
-```csharp
-// VetManagement.Application (library code)
-public async Task<Item?> GetByIdAsync(int id)
-    => await dbContext.Items.FirstOrDefaultAsync(x => x.Id == id).ConfigureAwait(false);
-```
-
-✅ **DO** in production libraries; ✅ **OK to omit** in API controllers (synchronization context not needed).
-
----
-
 ## 6. Validation & Type Safety
 
 ### 6.1 Model Validation (DTOs)
@@ -631,6 +620,9 @@ VetManagement.Domain/Enums/
 ├─ ExamEnums.cs                        (Sample types/containers, exam item status)
 ├─ PetEnums.cs                         (Sex, species, reproductive status)
 ├─ CommonEnums.cs                      (Payments, audit actions)
+├─ SchedulingEnums.cs                  (Resources, appointments, deposits, refunds)
+├─ BillingEnums.cs                     (Sale status, line kinds)
+├─ ClinicalEnums.cs                    (Preventive dose kind and status)
 ├─ EnumAttributes.cs                   (DisplayString + EnumExtensions)
 └─ InventoryMovementTypeExtensions.cs  (Movement type → audit action)
 ```
@@ -640,7 +632,10 @@ VetManagement.Domain/Enums/
 ```
 VetManagement.Staff.UI/Helpers/
 ├─ AuditActionHelper.cs        (Enum mappings for audit)
+├─ FilterHelpers.cs            (List filtering in pages)
 ├─ InventoryUiHelpers.cs       (UI-specific inventory logic)
+├─ Money.cs                    (Chilean pesos as "$25.000"; the web client runs with invariant globalization)
+├─ ObjectExtensions.cs
 └─ StringExtensions.cs         (String manipulation utilities)
 ```
 
@@ -675,25 +670,31 @@ public async Task<List<Item>> GetItemsAsync(ItemSortField? sortBy, SortDirection
 // FIXME: This needs refactoring
 ```
 
-✅ **DO**: Add the task to "Next Actions" in `PROJECT_STATE.md` and reference it in code only if absolutely necessary:
+✅ **DO**: Put pending work in `PROJECT_STATE.md` (open decisions / later). A **deliberate** simplification with a
+known limit is marked with its ceiling and the upgrade path, so it is searchable and never mistaken for a bug:
 ```csharp
-// See PROJECT_STATE.md (Next Actions): fixed header table component
+// ponytail: one clinic-wide lock; per-item keys if a clinic ever outgrows it.
 ```
 
 ---
 
 ### 9.3 Documentation Policy
 
-✅ **ALLOWED**:
-- XML documentation on public APIs (required)
-- Brief inline comments explaining reasoning (rare)
-- Architecture patterns in `docs/CODING_STANDARDS.md` (this file)
+All documentation is indexed in [`docs/README.md`](README.md).
+
+✅ **WHERE THINGS GO**:
+- XML documentation on public types and members that aren't self-explanatory; brief comments for the *why*
+- `docs/architecture/ARCHITECTURE.md`: structure, rules, shared mechanisms, decisions (small text diagrams are fine)
+- `docs/architecture/<MODULE>.md`: one per business module — rules, per-clinic settings, permissions, limits.
+  Updated in the same commit that changes the module.
+- `docs/DEPLOYMENT.md`: every configuration key
+- `docs/guides/`: step-by-step guides for people using the system (Spanish)
+- `PROJECT_STATE.md`: where things stand (no history: that's `git log`)
 
 ❌ **FORBIDDEN**:
 - README.md inside code folders (Enums, Helpers, Services, etc.)
-- Tutorial-style documentation
-- Architecture diagrams in markdown
-- "How to use" guides for internal code
+- Status reports, reviews or plans that go stale: decide, do, and record the result in the places above
+- Archived documents: delete obsolete docs (git keeps them)
 
 ---
 
@@ -741,6 +742,10 @@ The full layer map, dependency rules, module pattern and guard tests are in
 ## 12. Commit Message Guidelines
 
 ### Format
+
+Feature work is prefixed with its phase or area (`F8.1: billing - sales, payments ...`, `Charge visit: ...`);
+other commits use the types below.
+
 ```
 <type>: <subject>
 
@@ -794,6 +799,6 @@ This document defines the **architectural vision** and **coding philosophy** of 
 
 ---
 
-**Version**: 1.0  
-**Last Updated**: 2025  
+**Version**: 1.1  
+**Last Updated**: 2026-10-03  
 **Maintainer**: VetManagement Core Team

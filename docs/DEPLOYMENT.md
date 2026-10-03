@@ -21,6 +21,7 @@ Environment variable names use `__` for sections, e.g. `Payments__WebPayPlus__Ap
 | `RateLimits:PublicReadPerMinute`, `PublicWritePerMinute` | Public portal limits per IP (defaults 120 / 10). |
 | `SeedAdmin:*` | First admin user; disable after first start. **Password is secret.** |
 | `Security:*` | HTTPS redirection / HSTS (on by default). |
+| `TestData:Enabled` | Sample-data page on a non-production demo/staging server. Ignored in Production (always off there). |
 
 Health check: `GET /healthz` (includes the database).
 
