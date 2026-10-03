@@ -79,7 +79,7 @@ public static class AvailabilityCalculator
     }
 
     /// <summary>The day's blocks: weekly hours, replaced by CustomHours and removed by Closed/Absence.</summary>
-    private static List<TimeBlock> BlocksFor(SchedulingSettings settings, ResourceDefinition resource, DateOnly date)
+    public static List<TimeBlock> BlocksFor(SchedulingSettings settings, ResourceDefinition resource, DateOnly date)
     {
         var exceptions = settings.Exceptions
             .Where(e => date >= e.From && date <= e.To

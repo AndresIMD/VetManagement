@@ -13,6 +13,6 @@ public interface ISaleRepository : IRepository<Sale>
     /// <summary>The appointment's sale that is not voided, if any.</summary>
     Task<Sale?> GetActiveByAppointmentAsync(int appointmentId);
 
-    /// <summary>Payments counted on that business date, excluding voided sales.</summary>
-    Task<List<SalePayment>> GetDayPaymentsAsync(DateOnly date);
+    /// <summary>Payments counted on those business dates (inclusive), excluding voided sales.</summary>
+    Task<List<SalePayment>> GetPaymentsAsync(DateOnly from, DateOnly to);
 }

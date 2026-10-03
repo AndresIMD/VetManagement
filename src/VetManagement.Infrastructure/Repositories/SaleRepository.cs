@@ -21,10 +21,10 @@ public class SaleRepository(AppDbContext context) : Repository<Sale>(context), I
     public async Task<Sale?> GetActiveByAppointmentAsync(int appointmentId)
         => await _context.Sales.AsNoTracking().FirstOrDefaultAsync(s => s.AppointmentId == appointmentId && s.Status != SaleStatus.Voided);
 
-    public async Task<List<SalePayment>> GetDayPaymentsAsync(DateOnly date)
+    public async Task<List<SalePayment>> GetPaymentsAsync(DateOnly from, DateOnly to)
         => await _context.Sales.AsNoTracking()
             .Where(s => s.Status != SaleStatus.Voided)
             .SelectMany(s => s.Payments)
-            .Where(p => p.BusinessDate == date)
+            .Where(p => p.BusinessDate >= from && p.BusinessDate <= to)
             .ToListAsync();
 }

@@ -90,6 +90,12 @@ public static class Permissions
         public const string MANAGE = "billing.manage";
     }
 
+    public static class REPORTS
+    {
+        /// <summary>Management dashboard: agenda use, income, stock value, clinical activity.</summary>
+        public const string READ = "reports.read";
+    }
+
     public static class CLINICAL
     {
         /// <summary>Edit the clinic's preventive protocols and reminders (records use the medical.* permissions).</summary>
@@ -111,7 +117,8 @@ public static class Permissions
             AUDIT.READ,
             SYSTEM.SEND_EMAIL,
             SCHEDULING.READ, SCHEDULING.BOOK,
-            BILLING.READ, BILLING.CHARGE
+            BILLING.READ, BILLING.CHARGE,
+            REPORTS.READ
         ],
         "Employee" =>
         [
@@ -165,5 +172,6 @@ public static class Permissions
         yield return BILLING.CHARGE;
         yield return BILLING.MANAGE;
         yield return CLINICAL.MANAGE;
+        yield return REPORTS.READ;
     }
 }

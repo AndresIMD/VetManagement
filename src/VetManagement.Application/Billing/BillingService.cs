@@ -295,7 +295,7 @@ public class BillingService(
     public async Task<DaySummary> GetDaySummaryAsync(DateOnly date)
     {
         var settings = (await billingSettings.GetAsync()).Settings;
-        var payments = await unitOfWork.Sales.GetDayPaymentsAsync(date);
+        var payments = await unitOfWork.Sales.GetPaymentsAsync(date, date);
         var close = (await unitOfWork.CashCloses.FindAsync(c => c.BusinessDate == date)).FirstOrDefault();
         return Summarize(date, payments, settings, close);
     }
@@ -315,7 +315,7 @@ public class BillingService(
             if (await IsClosedAsync(date))
                 return new BillingResult(BillingStatus.Conflict, Error: $"{date:yyyy-MM-dd} is already closed.");
 
-            var summary = Summarize(date, await unitOfWork.Sales.GetDayPaymentsAsync(date), settings, null);
+            var summary = Summarize(date, await unitOfWork.Sales.GetPaymentsAsync(date, date), settings, null);
             var close = new CashClose
             {
                 BusinessDate = date,
