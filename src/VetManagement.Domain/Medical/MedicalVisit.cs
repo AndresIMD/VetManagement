@@ -30,6 +30,24 @@ public class MedicalVisit : Entity<int>
 
     public int TotalValue { get; set; }
 
+    /// <summary>Appointment this visit attends, when it came from the agenda.</summary>
+    public int? AppointmentId { get; set; }
+
+    // Clinical record (ficha clínica)
+    public string? Reason { get; set; }
+
+    public string? Anamnesis { get; set; }
+
+    public string? Examination { get; set; }
+
+    public string? Diagnosis { get; set; }
+
+    public string? Treatment { get; set; }
+
+    public decimal? WeightKg { get; set; }
+
+    public decimal? TemperatureC { get; set; }
+
     public List<VisitProcedure> Procedures { get; set; } = [];
 }
 

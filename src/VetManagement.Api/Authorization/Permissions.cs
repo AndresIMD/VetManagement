@@ -90,6 +90,12 @@ public static class Permissions
         public const string MANAGE = "billing.manage";
     }
 
+    public static class CLINICAL
+    {
+        /// <summary>Edit the clinic's preventive protocols and reminders (records use the medical.* permissions).</summary>
+        public const string MANAGE = "clinical.manage";
+    }
+
     /// <summary>Single source of the permissions each role grants (seeding and user management both use it).</summary>
     public static IEnumerable<string> ForRole(string role) => role switch
     {
@@ -158,5 +164,6 @@ public static class Permissions
         yield return BILLING.READ;
         yield return BILLING.CHARGE;
         yield return BILLING.MANAGE;
+        yield return CLINICAL.MANAGE;
     }
 }

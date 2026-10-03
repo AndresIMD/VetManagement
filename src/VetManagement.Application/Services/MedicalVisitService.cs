@@ -54,6 +54,10 @@ public class MedicalVisitService(IUnitOfWork unitOfWork, IRealtimeNotificationSe
         if (string.IsNullOrWhiteSpace(visit.Responsible))
             visit.Responsible = userName;
 
+        // The pet's file shows its latest weight.
+        if (visit.WeightKg is { } weight && await unitOfWork.Pets.GetByIdAsync(visit.PatientId) is { } pet)
+            pet.Weight = (float)weight;
+
         await unitOfWork.MedicalVisits.AddAsync(visit);
         await unitOfWork.SaveChangesAsync();
         await LogAuditAsync(visit.Id, AuditActionType.Add, JsonSerializer.Serialize(visit), userName);

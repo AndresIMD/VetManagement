@@ -32,6 +32,29 @@ public class MedicalVisit
     [Range(0, int.MaxValue)]
     public int TotalValue { get; set; }
 
+    public int? AppointmentId { get; set; }
+
+    [MaxLength(500)]
+    public string? Reason { get; set; }
+
+    [MaxLength(4000)]
+    public string? Anamnesis { get; set; }
+
+    [MaxLength(4000)]
+    public string? Examination { get; set; }
+
+    [MaxLength(2000)]
+    public string? Diagnosis { get; set; }
+
+    [MaxLength(4000)]
+    public string? Treatment { get; set; }
+
+    [Range(0.01, 500)]
+    public decimal? WeightKg { get; set; }
+
+    [Range(25, 45)]
+    public decimal? TemperatureC { get; set; }
+
     public List<VisitProcedure> Procedures { get; set; } = new List<VisitProcedure>();
 }
 

@@ -148,6 +148,8 @@ public class WireContractTests
         Id = 5, Date = new DateTime(2026, 1, 2, 9, 30, 0, DateTimeKind.Utc), PatientId = 7, RecordNumber = "R-1",
         PatientName = "Luna", Responsible = "dr.vet", Location = "Box 2", BudgetNumber = "B-9",
         PaymentStatus = PaymentStatus.Partial, PaymentMethod = PaymentMethod.Card, TotalValue = 35000,
+        AppointmentId = 12, Reason = "Vómitos", Anamnesis = "Desde ayer", Examination = "Abdomen sensible",
+        Diagnosis = "Gastritis", Treatment = "Dieta blanda", WeightKg = 12.4m, TemperatureC = 39.1m,
         Procedures =
         [
             new() { Id = 1, ExamId = 4, Name = "Hemograma", Price = 12000, Notes = "fasting" },

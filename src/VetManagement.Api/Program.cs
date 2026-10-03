@@ -143,7 +143,8 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy("Scheduling.Manage", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.SCHEDULING.MANAGE))
     .AddPolicy("Billing.Read", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.BILLING.READ))
     .AddPolicy("Billing.Charge", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.BILLING.CHARGE))
-    .AddPolicy("Billing.Manage", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.BILLING.MANAGE));
+    .AddPolicy("Billing.Manage", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.BILLING.MANAGE))
+    .AddPolicy("Clinical.Manage", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.CLINICAL.MANAGE));
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
@@ -166,6 +167,8 @@ builder.Services.AddSingleton(builder.Configuration.GetSection("BookingPortal").
 builder.Services.AddScoped<VetManagement.Application.Scheduling.AppointmentNotifier>();
 builder.Services.AddScoped<VetManagement.Application.Billing.BillingSettingsService>();
 builder.Services.AddScoped<VetManagement.Application.Billing.BillingService>();
+builder.Services.AddScoped<VetManagement.Application.Clinical.ClinicalSettingsService>();
+builder.Services.AddScoped<VetManagement.Application.Clinical.ClinicalService>();
 builder.Services.AddPaymentGateway(builder.Configuration, builder.Environment);
 builder.Services.AddScoped<VetManagement.Application.Contracts.Services.IEmailSender, SmtpEmailSender>();
 builder.Services.AddSingleton(TimeProvider.System);

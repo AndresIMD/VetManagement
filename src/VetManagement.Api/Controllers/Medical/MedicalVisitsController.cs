@@ -59,7 +59,7 @@ public class MedicalVisitsController(MedicalVisitService service) : ApiControlle
     }
 
     #region Mapping
-    private static MedicalVisitDto MapToDto(MedicalVisit visit) => new()
+    internal static MedicalVisitDto MapToDto(MedicalVisit visit) => new()
     {
         Id = visit.Id,
         Date = visit.Date,
@@ -72,6 +72,14 @@ public class MedicalVisitsController(MedicalVisitService service) : ApiControlle
         PaymentStatus = visit.PaymentStatus,
         PaymentMethod = visit.PaymentMethod,
         TotalValue = visit.TotalValue,
+        AppointmentId = visit.AppointmentId,
+        Reason = visit.Reason,
+        Anamnesis = visit.Anamnesis,
+        Examination = visit.Examination,
+        Diagnosis = visit.Diagnosis,
+        Treatment = visit.Treatment,
+        WeightKg = visit.WeightKg,
+        TemperatureC = visit.TemperatureC,
         Procedures = visit.Procedures.Select(p => new VisitProcedureDto
         {
             Id = p.Id,
@@ -96,6 +104,14 @@ public class MedicalVisitsController(MedicalVisitService service) : ApiControlle
         PaymentStatus = request.PaymentStatus,
         PaymentMethod = request.PaymentMethod,
         TotalValue = request.TotalValue,
+        AppointmentId = request.AppointmentId,
+        Reason = request.Reason,
+        Anamnesis = request.Anamnesis,
+        Examination = request.Examination,
+        Diagnosis = request.Diagnosis,
+        Treatment = request.Treatment,
+        WeightKg = request.WeightKg,
+        TemperatureC = request.TemperatureC,
         Procedures = request.Procedures.Select(p => new VisitProcedure
         {
             Id = p.Id,

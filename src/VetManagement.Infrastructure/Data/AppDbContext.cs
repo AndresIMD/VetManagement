@@ -31,6 +31,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     // New medical visits
     public DbSet<MedicalVisit> MedicalVisits { get; set; }
     public DbSet<VisitProcedure> VisitProcedures { get; set; }
+    public DbSet<VetManagement.Domain.Clinical.PreventiveDose> PreventiveDoses { get; set; }
 
     public DbSet<ClinicSetting> ClinicSettings { get; set; }
     public DbSet<Appointment> Appointments { get; set; }
@@ -169,5 +170,29 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         .HasMany(v => v.Procedures)
         .WithOne()
         .OnDelete(DeleteBehavior.Cascade);
+
+        // Clinical record (F9)
+        builder.Entity<MedicalVisit>(e =>
+        {
+            e.HasIndex(v => v.PatientId);
+            e.Property(v => v.Reason).HasMaxLength(500);
+            e.Property(v => v.Anamnesis).HasMaxLength(4000);
+            e.Property(v => v.Examination).HasMaxLength(4000);
+            e.Property(v => v.Diagnosis).HasMaxLength(2000);
+            e.Property(v => v.Treatment).HasMaxLength(4000);
+            e.Property(v => v.WeightKg).HasPrecision(6, 2);
+            e.Property(v => v.TemperatureC).HasPrecision(4, 1);
+        });
+        builder.Entity<VetManagement.Domain.Clinical.PreventiveDose>(e =>
+        {
+            e.Ignore(d => d.SeriesKey);
+            e.HasIndex(d => d.PetId);
+            e.HasIndex(d => d.NextDueOn);
+            e.Property(d => d.ProtocolCode).HasMaxLength(100);
+            e.Property(d => d.ProductName).HasMaxLength(200);
+            e.Property(d => d.BatchNumber).HasMaxLength(100);
+            e.Property(d => d.Notes).HasMaxLength(1000);
+            e.Property(d => d.AppliedBy).HasMaxLength(256);
+        });
     }
 }

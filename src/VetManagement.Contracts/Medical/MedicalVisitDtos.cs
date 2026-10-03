@@ -29,6 +29,29 @@ public sealed class MedicalVisitRequest
     [Range(0, int.MaxValue)]
     public int TotalValue { get; init; }
 
+    public int? AppointmentId { get; init; }
+
+    [MaxLength(500)]
+    public string? Reason { get; init; }
+
+    [MaxLength(4000)]
+    public string? Anamnesis { get; init; }
+
+    [MaxLength(4000)]
+    public string? Examination { get; init; }
+
+    [MaxLength(2000)]
+    public string? Diagnosis { get; init; }
+
+    [MaxLength(4000)]
+    public string? Treatment { get; init; }
+
+    [Range(0.01, 500)]
+    public decimal? WeightKg { get; init; }
+
+    [Range(25, 45)]
+    public decimal? TemperatureC { get; init; }
+
     public List<VisitProcedureRequest> Procedures { get; init; } = [];
 }
 
@@ -61,6 +84,14 @@ public sealed class MedicalVisitDto
     public PaymentStatus PaymentStatus { get; set; }
     public PaymentMethod PaymentMethod { get; set; }
     public int TotalValue { get; set; }
+    public int? AppointmentId { get; set; }
+    public string? Reason { get; set; }
+    public string? Anamnesis { get; set; }
+    public string? Examination { get; set; }
+    public string? Diagnosis { get; set; }
+    public string? Treatment { get; set; }
+    public decimal? WeightKg { get; set; }
+    public decimal? TemperatureC { get; set; }
     public List<VisitProcedureDto> Procedures { get; set; } = [];
 }
 
