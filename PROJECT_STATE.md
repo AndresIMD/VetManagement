@@ -80,14 +80,38 @@ git log --oneline -10
 
 ---
 
-## Next Actions (Priority Order)
+## What is done (verified: 191 tests + SQL Server concurrency test, CI green, browser end-to-end)
 
-F0–F7 are complete. Remaining items need the clinic or a product decision:
+- Staff CRM modules: inventory (items, movements, alerts), clients and pets, exams (orders, performed, external labs),
+  medical visits, audit log, users/roles/permissions, email.
+- Agenda (F6): per-clinic settings (DB + JSON defaults, versioned, admin-editable), vets/rooms, holidays and
+  absences, overbooking, progressive release / sobrecupo, staff booking/reschedule/cancel, emails and reminders.
+- Online booking (F7): hosted portal `Booking.Web` with clinic branding, RUT validation, auto-created clients/pets,
+  deposit via WebPay Plus (sandbox-verified) or simulated gateway, refund modes, cancellation link.
+- Hardening: ProblemDetails, login lockout + rate limits, health check `/healthz`, JSON logs, guard tests.
+- Docs: `docs/architecture/ARCHITECTURE.md`, `docs/architecture/SCHEDULING.md`, `docs/DEPLOYMENT.md`.
 
-1. **Go-live per clinic**: Transbank production credentials, SMTP account, hosting; follow `docs/DEPLOYMENT.md`.
-   Then switch `sites/SPVetClinic` `BookingUrl` from the external CRM to the portal.
-2. **Product decision**: `Responsible` on exams/visits is free text; consider a staff picker.
-3. **Later**: WhatsApp notifications (setting reserved), services needing a vet *and* a room at once.
+## Blocked on the clinic (not code)
+
+1. Transbank production credentials (commerce code + API key secret) for each clinic.
+2. SMTP account for client emails.
+3. Hosting: API + SQL Server database, staff web, booking portal; follow `docs/DEPLOYMENT.md`.
+4. Switch `sites/SPVetClinic` `BookingUrl` from the external CRM to the portal once live.
+
+## Open product decisions
+
+- `Responsible` on exams/visits is free text; a staff picker would link records to users.
+
+## Roadmap (proposed, not started)
+
+| Phase | Feature | Why |
+|---|---|---|
+| F8 | Billing / caja: charges per visit, exam and product sold; payments (cash, card, transfer, deposits already paid online); daily cash close | Payments module in the product scope; deposits exist but nothing charges the rest |
+| F9 | Clinical record: visit linked to appointment, vaccines and deworming with due dates, automatic reminders | Recurring revenue for clinics; reuses agenda emails |
+| F10 | Inventory consumption from visits/billing (stock goes down when a product or drug is used) | Inventory and visits are separate today |
+| F11 | Reports and dashboard: agenda occupancy, no-shows, income, stock value | Admin decisions |
+| F12 | Client web (optional accounts): pet history, vaccines, upcoming appointments | Client web in product scope; today clients use RUT + link |
+| Later | WhatsApp notifications (setting reserved); services needing a vet *and* a room; electronic receipts (SII) | Depend on providers/costs |
 
 Recorded decisions (UI view models, Contracts → Domain, migrations, one DB per clinic) are in
 `docs/architecture/ARCHITECTURE.md`.
