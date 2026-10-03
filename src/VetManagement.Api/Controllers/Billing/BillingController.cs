@@ -22,12 +22,39 @@ public class BillingController(BillingService service, BillingSettingsService se
         if (end < start || end.DayNumber - start.DayNumber > 92)
             return ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["to"] = ["Use a range of at most 92 days."] }));
 
-        return Ok((await service.ListAsync(start, end, status)).Select(MapToDto).ToList());
+        var rate = await TaxRateAsync();
+        return Ok((await service.ListAsync(start, end, status)).Select(s => MapToDto(s, rate)).ToList());
     }
 
     [HttpGet("sales/{id:int}")]
     public async Task<ActionResult<SaleDto>> GetAsync(int id)
-        => await service.GetAsync(id) is { } sale ? Ok(MapToDto(sale)) : NotFound();
+        => await service.GetAsync(id) is { } sale ? Ok(MapToDto(sale, await TaxRateAsync())) : NotFound();
+
+    /// <summary>What charging the visit would include (appointment service, procedures, supplies), or its existing sales.</summary>
+    [HttpGet("visits/{visitId:int}/charge")]
+    public async Task<ActionResult<VisitChargePreviewDto>> GetVisitChargeAsync(int visitId)
+    {
+        var preview = await service.GetVisitChargePreviewAsync(visitId);
+        return preview is null ? NotFound() : Ok(new VisitChargePreviewDto(preview.VisitId, preview.CustomerName,
+            preview.Lines.Select(l => new VisitChargeLineDto(l.Source, l.Kind, l.Description, l.Quantity, l.UnitPrice, l.TaxExempt)).ToList(),
+            preview.OnlineDeposit, preview.SplitByTaxDefault, preview.TaxRatePercent, preview.ExistingSales.Select(s => s.Id).ToList()));
+    }
+
+    /// <summary>Charges the visit: one sale, or one taxed and one VAT-exempt. 409 with the ids if it was already charged.</summary>
+    [HttpPost("visits/{visitId:int}/charge")]
+    [Authorize(Policy = "Billing.Charge")]
+    public async Task<IActionResult> ChargeVisitAsync(int visitId, [FromBody] ChargeVisitRequest request)
+    {
+        var result = await service.ChargeVisitAsync(visitId,
+            request.Lines.Select(l => new VisitChargeSelection(l.Source, l.UnitPrice, l.TaxExempt)).ToList(), request.SplitByTax, GetUserName());
+        return result.Status switch
+        {
+            BillingStatus.Done => Ok(new ChargeVisitResponse(result.SaleIds)),
+            BillingStatus.NotFound => NotFound(),
+            BillingStatus.Conflict => Conflict(new ProblemDetails { Title = result.Error, Status = StatusCodes.Status409Conflict, Extensions = { ["saleIds"] = result.SaleIds } }),
+            _ => ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["charge"] = [result.Error ?? "Invalid request."] }))
+        };
+    }
 
     [HttpPost("sales")]
     [Authorize(Policy = "Billing.Charge")]
@@ -39,7 +66,7 @@ public class BillingController(BillingService service, BillingSettingsService se
     [Authorize(Policy = "Billing.Charge")]
     public async Task<IActionResult> AddLineAsync(int id, [FromBody] AddSaleLineRequest request)
         => ToActionResult(await service.AddLineAsync(id,
-            new NewSaleLine(request.Kind, request.Description, request.ServiceCode, request.ItemId, request.Quantity, request.UnitPrice, request.Discount),
+            new NewSaleLine(request.Kind, request.Description, request.ServiceCode, request.ItemId, request.Quantity, request.UnitPrice, request.Discount, request.TaxExempt),
             canExceedDiscount: User.HasClaim(Permissions.CLAIM_TYPE, Permissions.BILLING.MANAGE),
             GetUserName()));
 
@@ -127,7 +154,9 @@ public class BillingController(BillingService service, BillingSettingsService se
         _ => ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["sale"] = [result.Error ?? "Invalid request."] }))
     };
 
-    private static SaleDto MapToDto(Sale s) => new()
+    private async Task<int> TaxRateAsync() => (await settingsService.GetAsync()).Settings.Tax.RatePercent;
+
+    private static SaleDto MapToDto(Sale s, int taxRate) => new()
     {
         Id = s.Id,
         Status = s.Status,
@@ -144,10 +173,16 @@ public class BillingController(BillingService service, BillingSettingsService se
         Total = s.Total,
         PaidAmount = s.PaidAmount,
         Balance = s.Balance,
+        VisitId = s.VisitId,
+        ExemptTotal = s.ExemptTotal,
+        TaxableTotal = s.TaxableTotal,
+        TaxableNet = s.TaxBreakdown(taxRate).Net,
+        Vat = s.TaxBreakdown(taxRate).Vat,
+        TaxRatePercent = taxRate,
         Lines = s.Lines.OrderBy(l => l.Id).Select(l => new SaleLineDto
         {
             Id = l.Id, Kind = l.Kind, Description = l.Description, ServiceCode = l.ServiceCode, ItemId = l.ItemId,
-            Quantity = l.Quantity, UnitPrice = l.UnitPrice, Discount = l.Discount, Total = l.Total
+            Quantity = l.Quantity, UnitPrice = l.UnitPrice, Discount = l.Discount, Total = l.Total, TaxExempt = l.TaxExempt
         }).ToList(),
         Payments = s.Payments.OrderBy(p => p.Id).Select(p => new SalePaymentDto
         {

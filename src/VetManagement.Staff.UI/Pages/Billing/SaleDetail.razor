@@ -26,6 +26,19 @@
                 <MudText Typo="Typo.body2" Color="Color.Secondary">@_sale.CreatedAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm") · @_sale.CreatedBy</MudText>
                 <MudSpacer />
                 <MudText Typo="Typo.h6">Total @Money.Clp(_sale.Total)</MudText>
+                @if (_sale.TaxableTotal > 0 || _sale.ExemptTotal > 0)
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                        @if (_sale.TaxableTotal > 0)
+                        {
+                            <span>Taxed @Money.Clp(_sale.TaxableTotal) (net @Money.Clp(_sale.TaxableNet) + VAT @_sale.TaxRatePercent% @Money.Clp(_sale.Vat))</span>
+                        }
+                        @if (_sale.ExemptTotal > 0)
+                        {
+                            <span> · Exempt @Money.Clp(_sale.ExemptTotal)</span>
+                        }
+                    </MudText>
+                }
                 <MudText Typo="Typo.h6" Color="@(_sale.Balance > 0 ? Color.Warning : Color.Success)">Balance @Money.Clp(_sale.Balance)</MudText>
             </MudStack>
             @if (_sale.Status == SaleStatus.Voided)
@@ -55,7 +68,13 @@
                     }
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd>@context.Description</MudTd>
+                    <MudTd>
+                        @context.Description
+                        @if (context.TaxExempt)
+                        {
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">VAT exempt</MudChip>
+                        }
+                    </MudTd>
                     <MudTd>@context.Kind</MudTd>
                     <MudTd Style="text-align:right">@context.Quantity</MudTd>
                     <MudTd Style="text-align:right">@Money.Clp(context.UnitPrice)</MudTd>
@@ -103,6 +122,11 @@
                     <MudNumericField T="int" @bind-Value="_line.Quantity" Label="Qty" Min="1" Style="max-width: 80px;" />
                     <MudNumericField T="int?" @bind-Value="_line.UnitPrice" Label="@(_line.Kind == SaleLineKind.Other ? "Price" : "Price (catalog)")" Min="0" Style="max-width: 140px;" />
                     <MudNumericField T="int" @bind-Value="_line.Discount" Label="Discount $" Min="0" Style="max-width: 120px;" />
+                    <MudSelect T="bool?" @bind-Value="_line.TaxExempt" Label="VAT" Style="max-width: 130px;">
+                        <MudSelectItem T="bool?" Value="null">Default</MudSelectItem>
+                        <MudSelectItem T="bool?" Value="false">Taxed</MudSelectItem>
+                        <MudSelectItem T="bool?" Value="true">Exempt</MudSelectItem>
+                    </MudSelect>
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="AddLineAsync" Disabled="_busy">Add</MudButton>
                 </MudStack>
             }
@@ -182,6 +206,7 @@
         public int Quantity { get; set; } = 1;
         public int? UnitPrice { get; set; }
         public int Discount { get; set; }
+        public bool? TaxExempt { get; set; }
     }
 
     private sealed class PaymentForm
@@ -222,7 +247,8 @@
         Description = _line.Kind == SaleLineKind.Other ? _line.Description : null,
         Quantity = _line.Quantity,
         UnitPrice = _line.UnitPrice,
-        Discount = _line.Discount
+        Discount = _line.Discount,
+        TaxExempt = _line.TaxExempt
     }), () => { _line = new LineForm { Kind = _line.Kind }; _product = null; });
 
     private Task RemoveLineAsync(int lineId) => RunAsync(() => BillingApi.RemoveLineAsync(Id, lineId));

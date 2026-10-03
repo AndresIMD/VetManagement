@@ -1,0 +1,143 @@
+@using VetManagement.Contracts.Billing
+@inject BillingApiService BillingApi
+@inject NavigationManager Navigation
+
+@* "Charge visit": everything done in the visit in one sale, or split into a taxed and a VAT-exempt sale. *@
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6"><MudIcon Icon="@Icons.Material.Filled.PointOfSale" Class="mr-2" />Charge visit</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (_preview is null)
+        {
+            <MudProgressLinear Indeterminate="true" />
+        }
+        else if (_preview.ExistingSaleIds.Count > 0)
+        {
+            <MudAlert Severity="Severity.Info">
+                This visit was already charged:
+                @foreach (var id in _preview.ExistingSaleIds)
+                {
+                    <MudLink Href="@($"billing/sales/{id}")" Class="ml-2">Sale #@id</MudLink>
+                }
+            </MudAlert>
+        }
+        else if (_rows.Count == 0)
+        {
+            <MudAlert Severity="Severity.Warning">
+                Nothing to charge yet: add procedures or supplies to the visit, or link it to an appointment.
+            </MudAlert>
+        }
+        else
+        {
+            <MudText Typo="Typo.body2" Class="mb-2">Customer: <b>@_preview.CustomerName</b></MudText>
+            <MudSimpleTable Dense="true" Elevation="0">
+                <thead>
+                    <tr><th></th><th>Item</th><th style="text-align:right">Qty</th><th style="text-align:right">Unit price</th><th>VAT exempt</th><th style="text-align:right">Total</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in _rows)
+                    {
+                        <tr style="@(row.Include ? null : "opacity: 0.5;")">
+                            <td><MudCheckBox T="bool" @bind-Value="row.Include" Dense="true" /></td>
+                            <td>@row.Line.Description <MudText Typo="Typo.caption" Color="Color.Secondary" Inline="true">@SourceLabel(row.Line)</MudText></td>
+                            <td style="text-align:right">@row.Line.Quantity</td>
+                            <td style="text-align:right; width: 130px;"><MudNumericField T="int" @bind-Value="row.UnitPrice" Min="0" Dense="true" HideSpinButtons="true" /></td>
+                            <td><MudCheckBox T="bool" @bind-Value="row.TaxExempt" Dense="true" Disabled="!row.Include" /></td>
+                            <td style="text-align:right">@Money.Clp(row.Line.Quantity * row.UnitPrice)</td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+
+            <MudStack Class="mt-3" Spacing="0">
+                <MudText Typo="Typo.body2">Taxed (VAT @_preview.TaxRatePercent% included): <b>@Money.Clp(Taxed)</b></MudText>
+                <MudText Typo="Typo.body2">VAT exempt: <b>@Money.Clp(Exempt)</b></MudText>
+                @if (_preview.OnlineDeposit > 0 && _rows.Any(r => r.Include && r.Line.Source == "appointment"))
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Success">Online deposit already paid: -@Money.Clp(_preview.OnlineDeposit)</MudText>
+                }
+            </MudStack>
+
+            <MudSwitch T="bool" @bind-Value="_split" Color="Color.Primary" Class="mt-2"
+                       Label="@(_split ? "Two separate charges: taxed and VAT exempt" : "One charge for everything")" />
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                Which items are VAT exempt depends on your clinic's tax situation (Billing Settings → tax). Confirm it with your accountant.
+            </MudText>
+
+            @if (_error is not null)
+            {
+                <MudAlert Severity="Severity.Error" Dense="true" Class="mt-2">@_error</MudAlert>
+            }
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => MudDialog.Cancel()">Close</MudButton>
+        @if (_preview is { ExistingSaleIds.Count: 0 } && _rows.Count > 0)
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(_busy || !_rows.Any(r => r.Include))" OnClick="ChargeAsync">
+                @(_busy ? "Creating…" : SplitCount > 1 ? "Create 2 charges" : "Create charge")
+            </MudButton>
+        }
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter, EditorRequired] public int VisitId { get; set; }
+
+    private VisitChargePreviewDto? _preview;
+    private List<Row> _rows = [];
+    private bool _split;
+    private bool _busy;
+    private string? _error;
+
+    private sealed class Row(VisitChargeLineDto line)
+    {
+        public VisitChargeLineDto Line { get; } = line;
+        public bool Include { get; set; } = true;
+        public int UnitPrice { get; set; } = line.UnitPrice;
+        public bool TaxExempt { get; set; } = line.TaxExempt;
+    }
+
+    private int Taxed => _rows.Where(r => r.Include && !r.TaxExempt).Sum(r => r.Line.Quantity * r.UnitPrice);
+    private int Exempt => _rows.Where(r => r.Include && r.TaxExempt).Sum(r => r.Line.Quantity * r.UnitPrice);
+    private int SplitCount => _split ? _rows.Where(r => r.Include).Select(r => r.TaxExempt).Distinct().Count() : 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _preview = await BillingApi.GetVisitChargeAsync(VisitId);
+        _rows = _preview?.Lines.Select(l => new Row(l)).ToList() ?? [];
+        _split = _preview?.SplitByTaxDefault ?? false;
+    }
+
+    private static string SourceLabel(VisitChargeLineDto line) => line.Source switch
+    {
+        "appointment" => "appointment",
+        var s when s.StartsWith("supply:") => "supply",
+        _ => "procedure"
+    };
+
+    private async Task ChargeAsync()
+    {
+        _busy = true;
+        _error = null;
+        var result = await BillingApi.ChargeVisitAsync(VisitId, new ChargeVisitRequest
+        {
+            SplitByTax = _split,
+            Lines = _rows.Where(r => r.Include)
+                .Select(r => new VisitChargeSelectionDto { Source = r.Line.Source, UnitPrice = r.UnitPrice, TaxExempt = r.TaxExempt }).ToList()
+        });
+        _busy = false;
+        if (result.SaleIds is not { Count: > 0 } ids)
+        {
+            _error = result.Error;
+            return;
+        }
+
+        MudDialog.Close(DialogResult.Ok(ids));
+        // One charge: go take the payment. Two: the day's sales list shows both.
+        Navigation.NavigateTo(ids.Count == 1 ? $"billing/sales/{ids[0]}" : "billing");
+    }
+}

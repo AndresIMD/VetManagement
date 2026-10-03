@@ -16,6 +16,8 @@ public class Sale : Entity<int>
     public int? PetId { get; set; }
     /// <summary>At most one sale per appointment; it carries the deposit paid online.</summary>
     public int? AppointmentId { get; set; }
+    /// <summary>Medical visit this sale charges (one or two sales: taxed and tax-exempt).</summary>
+    public int? VisitId { get; set; }
     public string CustomerName { get; set; } = string.Empty;
     public string? Notes { get; set; }
 
@@ -36,6 +38,15 @@ public class Sale : Entity<int>
     public int Total => Lines.Sum(l => l.Total);
     public int PaidAmount => Payments.Sum(p => p.Amount);
     public int Balance => Total - PaidAmount;
+    public int ExemptTotal => Lines.Where(l => l.TaxExempt).Sum(l => l.Total);
+    public int TaxableTotal => Total - ExemptTotal;
+
+    /// <summary>Chilean prices include VAT: the net and VAT inside the taxed lines at <paramref name="ratePercent"/>.</summary>
+    public (int Net, int Vat) TaxBreakdown(int ratePercent)
+    {
+        var net = (int)Math.Round(TaxableTotal * 100m / (100 + ratePercent), MidpointRounding.AwayFromZero);
+        return (net, TaxableTotal - net);
+    }
 
     public string? AddLine(SaleLine line)
     {
@@ -104,6 +115,10 @@ public class SaleLine
     public int UnitPrice { get; set; }
     /// <summary>Discount in pesos on the whole line.</summary>
     public int Discount { get; set; }
+    /// <summary>Exempt from VAT (e.g. professional services, per the clinic's tax setup); otherwise the price includes VAT.</summary>
+    public bool TaxExempt { get; set; }
+    /// <summary>The product already left stock elsewhere (a supply used in a visit), so paying the sale doesn't move it again.</summary>
+    public bool SkipStock { get; set; }
 
     public int Gross => Quantity * UnitPrice;
     public int Total => Gross - Discount;

@@ -39,6 +39,9 @@ public sealed class AddSaleLineRequest
 
     [Range(0, 100_000_000)]
     public int Discount { get; init; }
+
+    /// <summary>VAT-exempt line; empty uses the clinic's default (its list of exempt services).</summary>
+    public bool? TaxExempt { get; init; }
 }
 
 public sealed class AddSalePaymentRequest
@@ -81,6 +84,7 @@ public sealed class SaleLineDto
     public int UnitPrice { get; set; }
     public int Discount { get; set; }
     public int Total { get; set; }
+    public bool TaxExempt { get; set; }
 }
 
 public sealed class SalePaymentDto
@@ -111,9 +115,46 @@ public sealed class SaleDto
     public int Total { get; set; }
     public int PaidAmount { get; set; }
     public int Balance { get; set; }
+    public int? VisitId { get; set; }
+    /// <summary>Total of VAT-exempt lines.</summary>
+    public int ExemptTotal { get; set; }
+    /// <summary>Total of taxed lines (VAT included), split into net and VAT.</summary>
+    public int TaxableTotal { get; set; }
+    public int TaxableNet { get; set; }
+    public int Vat { get; set; }
+    public int TaxRatePercent { get; set; }
     public List<SaleLineDto> Lines { get; set; } = [];
     public List<SalePaymentDto> Payments { get; set; } = [];
 }
+
+/// <summary>One chargeable item of a visit; <see cref="Source"/> is "appointment", "procedure:{id}" or "supply:{id}".</summary>
+public sealed record VisitChargeLineDto(string Source, SaleLineKind Kind, string Description, int Quantity, int UnitPrice, bool TaxExempt);
+
+/// <summary>What "charge visit" proposes, or the sales the visit already has.</summary>
+public sealed record VisitChargePreviewDto(int VisitId, string CustomerName, List<VisitChargeLineDto> Lines, int OnlineDeposit,
+    bool SplitByTaxDefault, int TaxRatePercent, List<int> ExistingSaleIds);
+
+public sealed class VisitChargeSelectionDto
+{
+    [Required, MaxLength(50)]
+    public string Source { get; init; } = string.Empty;
+
+    [Range(0, 100_000_000)]
+    public int? UnitPrice { get; init; }
+
+    public bool TaxExempt { get; init; }
+}
+
+public sealed class ChargeVisitRequest
+{
+    [MinLength(1)]
+    public List<VisitChargeSelectionDto> Lines { get; init; } = [];
+
+    /// <summary>Two sales: one for taxed items and one for VAT-exempt items.</summary>
+    public bool SplitByTax { get; init; }
+}
+
+public sealed record ChargeVisitResponse(List<int> SaleIds);
 
 public sealed record MethodTotalDto(string Method, string Name, bool IsCash, int Amount, int Count);
 

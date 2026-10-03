@@ -24,14 +24,6 @@
                 <MudNumericField T="int?" Label="Pet ID" @bind-Value="FilterPetId" Variant="Variant.Outlined" />
             </MudItem>
             <MudItem xs="12" sm="6" md="3">
-                <MudSelect T="PaymentStatus ?" @bind-Value="FilterPaymentStatus" Label="Payment Status"
-                    Variant="Variant.Outlined">
-                    <MudSelectItem Value="@((PaymentStatus?)null)">All</MudSelectItem>
-                    <MudSelectItem Value="PaymentStatus.Pending">Pending</MudSelectItem>
-                    <MudSelectItem Value="PaymentStatus.Paid">Paid</MudSelectItem>
-                </MudSelect>
-            </MudItem>
-            <MudItem xs="12" sm="6" md="3">
                 <MudDateRangePicker @bind-DateRange="FilterRange" Label="Date range" Variant="Variant.Outlined" />
             </MudItem>
         </MudGrid>
@@ -55,8 +47,7 @@
             <MudTh style="width:12%">Date</MudTh>
             <MudTh style="width:16%">Patient</MudTh>
             <MudTh style="width:10%">Record</MudTh>
-            <MudTh style="width:12%">Payment</MudTh>
-            <MudTh style="width:12%">Method</MudTh>
+            <MudTh style="width:24%">Reason</MudTh>
             <MudTh style="width:12%">Total</MudTh>
             <MudTh style="width:16%">Location</MudTh>
             <MudTh style="width:10%; text-align:right">Actions</MudTh>
@@ -66,9 +57,8 @@
             <MudTd DataLabel="Date">@v.Date.ToLocalTime().ToString("g")</MudTd>
             <MudTd DataLabel="Patient">@v.PatientName (@v.PatientId)</MudTd>
             <MudTd DataLabel="Record">@v.RecordNumber</MudTd>
-            <MudTd DataLabel="Payment">@v.PaymentStatus</MudTd>
-            <MudTd DataLabel="Method">@v.PaymentMethod</MudTd>
-            <MudTd DataLabel="Total">@v.TotalValue.ToString("C0")</MudTd>
+            <MudTd DataLabel="Reason"><MudLink Href="@($"clinical/pets/{v.PatientId}")">@(v.Reason ?? "—")</MudLink></MudTd>
+            <MudTd DataLabel="Total">@Money.Clp(v.TotalValue)</MudTd>
             <MudTd DataLabel="Location">@v.Location</MudTd>
             <MudTd DataLabel="Actions" Class="text-end">
                 <MudStack Row="true" Spacing="1" Justify="Justify.FlexEnd">

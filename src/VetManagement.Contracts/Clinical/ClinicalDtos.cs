@@ -45,6 +45,8 @@ public sealed class AddVisitSupplyRequest
     public string? Notes { get; init; }
 }
 
+public sealed record VisitChargeDto(int VisitId, int SaleId, int Total, int Balance, SaleStatus Status, bool TaxExempt);
+
 public sealed class VisitSupplyDto
 {
     public int Id { get; set; }
@@ -91,6 +93,8 @@ public sealed class PetHistoryDto
     public List<PreventiveDoseDto> Doses { get; set; } = [];
     /// <summary>Supplies used in the visits above (match them by VisitId).</summary>
     public List<VisitSupplyDto> Supplies { get; set; } = [];
+    /// <summary>Sales that charged the visits above (match them by VisitId).</summary>
+    public List<VisitChargeDto> Charges { get; set; } = [];
 }
 
 /// <summary>A pet whose next preventive dose is due, with the owner's contact for a call or message.</summary>

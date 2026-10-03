@@ -100,6 +100,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         builder.Entity<VetManagement.Domain.Billing.Sale>(e =>
         {
             e.Ignore(s => s.Total); e.Ignore(s => s.PaidAmount); e.Ignore(s => s.Balance);
+            e.Ignore(s => s.ExemptTotal); e.Ignore(s => s.TaxableTotal);
+            e.HasIndex(s => s.VisitId);
             e.HasIndex(s => new { s.BusinessDate, s.Status });
             // One live sale per appointment (2 = SaleStatus.Voided: a voided sale can be replaced).
             e.HasIndex(s => s.AppointmentId).IsUnique().HasFilter("[AppointmentId] IS NOT NULL AND [Status] <> 2");

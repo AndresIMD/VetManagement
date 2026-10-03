@@ -19,10 +19,14 @@ public class BillingSettings
     /// <summary>Paying a sale takes its product lines out of inventory (and a void puts them back).</summary>
     public bool DeductStockOnSale { get; set; } = true;
 
+    /// <summary>VAT setup. Which items are exempt depends on each clinic's tax situation: confirm with its accountant.</summary>
+    public TaxSettings Tax { get; set; } = new();
+
     public List<string> Validate()
     {
         var errors = new List<string>();
         if (MaxDiscountPercent is < 0 or > 100) errors.Add("MaxDiscountPercent must be between 0 and 100.");
+        if (Tax.RatePercent is < 0 or > 100) errors.Add("Tax.RatePercent must be between 0 and 100.");
         if (PaymentMethods.Count(m => m.Enabled) == 0) errors.Add("Enable at least one payment method.");
 
         foreach (var m in PaymentMethods)
@@ -40,6 +44,21 @@ public class BillingSettings
 
     public PaymentMethodDefinition? FindMethod(string code)
         => PaymentMethods.FirstOrDefault(m => string.Equals(m.Code, code, StringComparison.OrdinalIgnoreCase));
+}
+
+public class TaxSettings
+{
+    /// <summary>VAT rate included in prices (Chile: 19).</summary>
+    public int RatePercent { get; set; } = 19;
+    /// <summary>Agenda services charged as VAT-exempt by default (e.g. the vet's professional consultation).</summary>
+    public List<string> ExemptServiceCodes { get; set; } = [];
+    /// <summary>Visit procedures (exams, treatments) are VAT-exempt by default.</summary>
+    public bool ProceduresExempt { get; set; }
+    /// <summary>Charging a visit makes two sales by default: one for taxed items and one for exempt items.</summary>
+    public bool SplitVisitChargeByTax { get; set; } = true;
+
+    public bool IsServiceExempt(string? code)
+        => code is not null && ExemptServiceCodes.Contains(code, StringComparer.OrdinalIgnoreCase);
 }
 
 public class PaymentMethodDefinition

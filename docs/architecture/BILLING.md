@@ -11,6 +11,14 @@ Principle: the clinic's billing **policy** is per-clinic configuration (admin-ed
 | `PaymentMethods` | Efectivo (cash), Débito, Crédito, Transferencia | Stable `Code`, display `Name`, `Enabled`, `IsCash` (counted in the drawer) |
 | `MaxDiscountPercent` | `10` | Largest discount per line without `billing.manage` |
 | `DeductStockOnSale` | `true` | Paying a sale takes its products out of inventory; a void puts them back |
+| `Tax.RatePercent` | `19` | VAT included in prices; taxed sales show net + VAT |
+| `Tax.ExemptServiceCodes` | `[]` | Agenda services charged as VAT-exempt by default (e.g. the vet's professional consultation) |
+| `Tax.ProceduresExempt` | `false` | Visit procedures (exams, treatments) VAT-exempt by default |
+| `Tax.SplitVisitChargeByTax` | `true` | "Charge visit" proposes two sales: taxed and VAT-exempt |
+
+**VAT**: every line is taxed or VAT-exempt (defaults above, changeable per line). Which items are exempt depends
+on each clinic's tax situation (e.g. professional services vs. products since Ley 21.420) — the clinic's accountant
+decides; the product never hard-codes it. Electronic documents (boleta/factura SII) are not issued yet.
 
 Staff web → Billing → Settings. Never change a method's `Code` once used (payments store it).
 `OnlineDeposit` is reserved for deposits paid when booking online.
@@ -25,6 +33,16 @@ Staff web → Billing → Settings. Never change a method's `Code` once used (pa
 - From an appointment (Agenda → Charge): one live sale per appointment; it starts with the service at the
   booked price and the online deposit as a payment (`OnlineDeposit`), so only the balance is charged.
 - All amounts are whole CLP; totals are computed, never stored.
+
+## Charge visit (from the clinical record)
+
+One button per visit builds the charge from what was done: the appointment's service (when it wasn't charged from
+the agenda; its online deposit comes along as a payment), the procedures and the supplies used, each with its default
+tax type. Staff can untick items, change prices and the tax type, and choose one charge or two (taxed / exempt).
+The sales keep `VisitId`, so the record shows "Charged: Sale #…" and a visit can't be charged twice. Supplies already
+left stock at the visit (F10), so their sale lines are marked `SkipStock` and paying doesn't move stock again.
+
+The visit form no longer edits the legacy payment status/method fields (kept in the data); billing is the source of truth.
 
 ## Daily cash close
 

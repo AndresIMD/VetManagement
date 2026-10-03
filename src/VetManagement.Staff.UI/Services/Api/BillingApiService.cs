@@ -30,6 +30,18 @@ public class BillingApiService(HttpClient http)
         return result;
     }
 
+    public Task<VisitChargePreviewDto?> GetVisitChargeAsync(int visitId)
+        => http.GetFromJsonAsync<VisitChargePreviewDto>(string.Format(ApiRouteConstants.BILLING_VISIT_CHARGE, visitId));
+
+    /// <summary>The created sale ids, or the error to show.</summary>
+    public async Task<(List<int>? SaleIds, string? Error)> ChargeVisitAsync(int visitId, ChargeVisitRequest request)
+    {
+        var response = await http.PostAsJsonAsync(string.Format(ApiRouteConstants.BILLING_VISIT_CHARGE, visitId), request);
+        if (response.IsSuccessStatusCode)
+            return ((await response.Content.ReadFromJsonAsync<ChargeVisitResponse>())?.SaleIds, null);
+        return (null, (await ApiResult.FromResponseAsync(response)).Error);
+    }
+
     public async Task<ApiResult> AddLineAsync(int saleId, AddSaleLineRequest request)
         => await ApiResult.FromResponseAsync(await http.PostAsJsonAsync(string.Format(ApiRouteConstants.BILLING_SALE_LINES, saleId), request));
 

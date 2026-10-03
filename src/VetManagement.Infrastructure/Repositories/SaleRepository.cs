@@ -18,6 +18,12 @@ public class SaleRepository(AppDbContext context) : Repository<Sale>(context), I
             .OrderByDescending(s => s.Id)
             .ToListAsync();
 
+    public async Task<List<Sale>> GetActiveByVisitsAsync(IReadOnlyCollection<int> visitIds)
+        => await _context.Sales.AsNoTracking().Include(s => s.Lines).Include(s => s.Payments)
+            .Where(s => s.VisitId != null && visitIds.Contains(s.VisitId.Value) && s.Status != SaleStatus.Voided)
+            .OrderBy(s => s.Id)
+            .ToListAsync();
+
     public async Task<Sale?> GetActiveByAppointmentAsync(int appointmentId)
         => await _context.Sales.AsNoTracking().FirstOrDefaultAsync(s => s.AppointmentId == appointmentId && s.Status != SaleStatus.Voided);
 

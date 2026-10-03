@@ -39,7 +39,9 @@ public class ClinicalController(ClinicalService service, ClinicalSettingsService
             {
                 Id = s.Id, VisitId = s.VisitId, ItemId = s.ItemId, ItemName = s.ItemName, Quantity = s.Quantity,
                 Notes = s.Notes, StockDeducted = s.StockDeducted, CreatedBy = s.CreatedBy
-            }).ToList()
+            }).ToList(),
+            Charges = history.Charges.Select(s => new VisitChargeDto(s.VisitId!.Value, s.Id, s.Total, s.Balance, s.Status,
+                s.Lines.Count > 0 && s.Lines.All(l => l.TaxExempt))).ToList()
         });
     }
 

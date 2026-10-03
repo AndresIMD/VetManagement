@@ -10,6 +10,9 @@ public interface ISaleRepository : IRepository<Sale>
 
     Task<List<Sale>> ListAsync(DateOnly from, DateOnly to, SaleStatus? status);
 
+    /// <summary>The visit's sales that are not voided.</summary>
+    Task<List<Sale>> GetActiveByVisitsAsync(IReadOnlyCollection<int> visitIds);
+
     /// <summary>The appointment's sale that is not voided, if any.</summary>
     Task<Sale?> GetActiveByAppointmentAsync(int appointmentId);
 

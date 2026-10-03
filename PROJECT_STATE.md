@@ -85,7 +85,7 @@ git log --oneline -10
 
 ---
 
-## What is done (verified: 246 tests + 2 SQL Server concurrency tests, CI green, browser end-to-end)
+## What is done (verified: 250 tests + 2 SQL Server concurrency tests, CI green, browser end-to-end)
 
 - Staff CRM modules: inventory (items, movements, alerts), clients and pets, exams (orders, performed, external labs),
   medical visits, audit log, users/roles/permissions, email.
@@ -101,6 +101,8 @@ git log --oneline -10
   traceable movement; removing them (or deleting the visit/dose) puts stock back. Configurable per clinic.
 - Reports (F11): management dashboard for any period (Admin, Manager).
 - Client portal (F12): owners see their pets' vaccines, visits and upcoming appointments via an emailed link (no account).
+- Charge visit: one button in the clinical record charges the appointment, procedures and supplies, in one sale or split
+  taxed / VAT-exempt (per-clinic tax defaults, editable per line); VAT breakdown on sales; legacy visit payment fields retired.
 - Hardening: ProblemDetails, login lockout + rate limits, health check `/healthz`, JSON logs, guard tests.
 - Docs: `docs/architecture/ARCHITECTURE.md`, `docs/architecture/SCHEDULING.md`, `docs/architecture/BILLING.md`, `docs/architecture/CLINICAL.md`, `docs/architecture/REPORTS.md`, `docs/architecture/CLIENT_PORTAL.md`, `docs/DEPLOYMENT.md`.
 
@@ -115,8 +117,6 @@ git log --oneline -10
 
 - `Responsible` on exams/visits is free text; a staff picker would link records to users.
 - Billing: should charging an appointment mark it `Completed`? Refunds of paid sales and reopening a closed day are not built.
-- Medical visits still carry legacy payment status/method fields that overlap billing (F8); hide them?
-- Charge a visit's supplies in billing ("Charge visit" building the sale from the record)?
 - Prescriptions as printable documents; attachments (images, lab PDFs) in the clinical record.
 
 ## Roadmap (proposed, not started)

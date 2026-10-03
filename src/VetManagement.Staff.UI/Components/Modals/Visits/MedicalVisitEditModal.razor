@@ -34,22 +34,6 @@
                 <MudItem xs="12" sm="6"><MudTextField Label="Record Number" @bind-Value="Model.RecordNumber" /></MudItem>
                 <MudItem xs="12" sm="6"><MudTextField Label="Location" @bind-Value="Model.Location" /></MudItem>
                 <MudItem xs="12" sm="6"><MudTextField Label="Budget Number" @bind-Value="Model.BudgetNumber" /></MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudSelect T="PaymentStatus" @bind-Value="Model.PaymentStatus" Label="Payment Status">
-                        @foreach (var st in Enum.GetValues<PaymentStatus>())
-                        {
-                            <MudSelectItem Value="@st">@st.ToString()</MudSelectItem>
-                        }
-                    </MudSelect>
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudSelect T="PaymentMethod" @bind-Value="Model.PaymentMethod" Label="Payment Method">
-                        @foreach (var m in Enum.GetValues<PaymentMethod>())
-                        {
-                            <MudSelectItem Value="@m">@m.ToString()</MudSelectItem>
-                        }
-                    </MudSelect>
-                </MudItem>
             </MudGrid>
 
             <MudText Typo="Typo.subtitle1">Clinical record</MudText>
@@ -69,11 +53,11 @@
                         <MudSelectItem Value="0">Select...</MudSelectItem>
                         @foreach (var ex in _catalog)
                         {
-                            <MudSelectItem Value="@ex.Id">@ex.Name (@ex.Brand - @ex.Machine) - @ex.SellPrice.ToString("C0")</MudSelectItem>
+                            <MudSelectItem Value="@ex.Id">@ex.Name (@ex.Brand - @ex.Machine) - @Money.Clp(ex.SellPrice)</MudSelectItem>
                         }
                     </MudSelect>
                     <MudText Color="Color.Secondary">Procedures: @Model.Procedures.Count</MudText>
-                    <MudText Color="Color.Secondary">Total: @Model.TotalValue.ToString("C0")</MudText>
+                    <MudText Color="Color.Secondary">Total: @Money.Clp(Model.TotalValue) · charged from the clinical record ("Charge visit")</MudText>
                 </MudStack>
             </MudPaper>
 

@@ -33,7 +33,23 @@ public sealed record BillingResult(BillingStatus Status, int? Id = null, string?
 public sealed record NewSale(int? ClientId, int? PetId, int? AppointmentId, string? CustomerName, string? Notes);
 
 /// <summary>Description and unit price may be left empty for services and products: the catalog fills them.</summary>
-public sealed record NewSaleLine(SaleLineKind Kind, string? Description, string? ServiceCode, int? ItemId, int Quantity, int? UnitPrice, int Discount);
+public sealed record NewSaleLine(SaleLineKind Kind, string? Description, string? ServiceCode, int? ItemId, int Quantity, int? UnitPrice, int Discount,
+    bool? TaxExempt = null);
+
+/// <summary>
+/// One chargeable thing of a visit. <see cref="Source"/> identifies it: "appointment", "procedure:{id}" or "supply:{id}".
+/// </summary>
+public sealed record VisitChargeLine(string Source, SaleLineKind Kind, string Description, string? ServiceCode, int? ItemId,
+    int Quantity, int UnitPrice, bool TaxExempt);
+
+/// <summary>What charging a visit would include, or the sales it already has.</summary>
+public sealed record VisitChargePreview(int VisitId, string CustomerName, List<VisitChargeLine> Lines, int OnlineDeposit,
+    bool SplitByTaxDefault, int TaxRatePercent, List<Sale> ExistingSales);
+
+/// <summary>A line picked in the charge dialog, with the price and tax type the staff confirmed.</summary>
+public sealed record VisitChargeSelection(string Source, int? UnitPrice, bool TaxExempt);
+
+public sealed record VisitChargeResult(BillingStatus Status, List<int> SaleIds, string? Error = null);
 
 public sealed record MethodTotal(string Method, string Name, bool IsCash, int Amount, int Count);
 
@@ -108,7 +124,8 @@ public class BillingService(
                     ServiceCode = appointment.ServiceCode,
                     Description = service?.Name ?? appointment.ServiceCode,
                     Quantity = 1,
-                    UnitPrice = appointment.Price
+                    UnitPrice = appointment.Price,
+                    TaxExempt = settings.Tax.IsServiceExempt(appointment.ServiceCode)
                 });
                 if (appointment.DepositStatus == DepositStatus.Paid && appointment.PaidAmount > 0)
                     sale.AddPayment(new SalePayment
@@ -134,6 +151,143 @@ public class BillingService(
 
         if (result.Status == BillingStatus.Done)
             await audit.LogAsync(EntityName, result.Id!.Value, AuditActionType.Add, JsonSerializer.Serialize(request), userName);
+        return result;
+    }
+
+    /// <summary>
+    /// What charging a visit includes: the appointment's service (if it wasn't charged from the agenda), the visit's
+    /// procedures and the supplies used, each with the clinic's default tax type. Null if the visit doesn't exist.
+    /// </summary>
+    public async Task<VisitChargePreview?> GetVisitChargePreviewAsync(int visitId)
+    {
+        var settings = (await billingSettings.GetAsync()).Settings;
+        var agenda = (await schedulingSettings.GetAsync()).Settings;
+        var visit = await unitOfWork.MedicalVisits.GetByIdWithProceduresAsync(visitId);
+        if (visit is null)
+            return null;
+
+        var lines = new List<VisitChargeLine>();
+        var deposit = 0;
+        if (visit.AppointmentId is int appointmentId
+            && await unitOfWork.Appointments.GetByIdAsNoTrackingAsync(appointmentId) is { } appointment
+            && await unitOfWork.Sales.GetActiveByAppointmentAsync(appointmentId) is null)
+        {
+            var service = agenda.Services.FirstOrDefault(s => string.Equals(s.Code, appointment.ServiceCode, StringComparison.OrdinalIgnoreCase));
+            lines.Add(new VisitChargeLine("appointment", SaleLineKind.Service, service?.Name ?? appointment.ServiceCode, appointment.ServiceCode,
+                null, 1, appointment.Price, settings.Tax.IsServiceExempt(appointment.ServiceCode)));
+            if (appointment.DepositStatus == DepositStatus.Paid)
+                deposit = appointment.PaidAmount;
+        }
+
+        lines.AddRange(visit.Procedures.Select(p => new VisitChargeLine($"procedure:{p.Id}", SaleLineKind.Other, p.Name, null, null, 1, p.Price,
+            settings.Tax.ProceduresExempt)));
+
+        foreach (var supply in await unitOfWork.VisitSupplies.FindAsync(s => s.VisitId == visitId))
+        {
+            var price = (await unitOfWork.Items.GetByIdAsNoTrackingAsync(supply.ItemId))?.SellPrice ?? 0;
+            lines.Add(new VisitChargeLine($"supply:{supply.Id}", SaleLineKind.Product, supply.ItemName, null, supply.ItemId, supply.Quantity, price, false));
+        }
+
+        var pet = await unitOfWork.Pets.GetByIdAsNoTrackingAsync(visit.PatientId);
+        var owner = pet is null ? null : await unitOfWork.Clients.GetByIdAsNoTrackingAsync(pet.OwnerId);
+        var customer = owner is null ? visit.PatientName : $"{owner.Name} {owner.LastName}".Trim();
+
+        return new VisitChargePreview(visitId, customer, lines, deposit, settings.Tax.SplitVisitChargeByTax, settings.Tax.RatePercent,
+            await unitOfWork.Sales.GetActiveByVisitsAsync([visitId]));
+    }
+
+    /// <summary>
+    /// Charges a visit: one sale, or two (taxed / VAT-exempt) when <paramref name="splitByTax"/>. Supplies already left
+    /// stock at the visit, so paying doesn't move them again. The online deposit goes to the sale with the appointment.
+    /// </summary>
+    public async Task<VisitChargeResult> ChargeVisitAsync(int visitId, IReadOnlyList<VisitChargeSelection> selections, bool splitByTax, string userName)
+    {
+        var settings = (await billingSettings.GetAsync()).Settings;
+        if (!settings.Enabled)
+            return new VisitChargeResult(BillingStatus.Invalid, [], "Billing is disabled for this clinic.");
+        if (selections.Count == 0)
+            return new VisitChargeResult(BillingStatus.Invalid, [], "Pick at least one item to charge.");
+
+        var now = clock.GetUtcNow().UtcDateTime;
+        var today = await BusinessDateAsync(now);
+
+        var result = await unitOfWork.ExecuteExclusiveAsync(LockKey, async () =>
+        {
+            var preview = await GetVisitChargePreviewAsync(visitId);
+            if (preview is null)
+                return new VisitChargeResult(BillingStatus.NotFound, []);
+            if (preview.ExistingSales.Count > 0)
+                return new VisitChargeResult(BillingStatus.Conflict, preview.ExistingSales.Select(s => s.Id).ToList(), "This visit was already charged.");
+
+            var chosen = new List<VisitChargeLine>();
+            foreach (var selection in selections)
+            {
+                var line = preview.Lines.FirstOrDefault(l => l.Source == selection.Source);
+                if (line is null)
+                    return new VisitChargeResult(BillingStatus.Invalid, [], $"'{selection.Source}' is not part of this visit.");
+                chosen.Add(line with { UnitPrice = selection.UnitPrice ?? line.UnitPrice, TaxExempt = selection.TaxExempt });
+            }
+
+            var visit = (await unitOfWork.MedicalVisits.GetByIdAsNoTrackingAsync(visitId))!;
+            var pet = await unitOfWork.Pets.GetByIdAsNoTrackingAsync(visit.PatientId);
+            var groups = splitByTax ? chosen.GroupBy(l => l.TaxExempt).OrderBy(g => g.Key).Select(g => g.ToList()).ToList() : [chosen];
+
+            var sales = new List<Sale>();
+            foreach (var group in groups)
+            {
+                var sale = new Sale
+                {
+                    VisitId = visitId,
+                    PetId = visit.PatientId,
+                    ClientId = pet?.OwnerId,
+                    CustomerName = preview.CustomerName,
+                    Notes = groups.Count > 1 ? (group[0].TaxExempt ? "Exento de IVA" : "Afecto a IVA") : null,
+                    BusinessDate = today,
+                    CreatedAtUtc = now,
+                    CreatedBy = userName
+                };
+                foreach (var line in group)
+                {
+                    var error = sale.AddLine(new SaleLine
+                    {
+                        Kind = line.Kind,
+                        Description = line.Description,
+                        ServiceCode = line.ServiceCode,
+                        ItemId = line.ItemId,
+                        Quantity = line.Quantity,
+                        UnitPrice = line.UnitPrice,
+                        TaxExempt = line.TaxExempt,
+                        SkipStock = line.Kind == SaleLineKind.Product
+                    });
+                    if (error is not null)
+                        return new VisitChargeResult(BillingStatus.Invalid, [], $"{line.Description}: {error}");
+                }
+
+                if (group.Any(l => l.Source == "appointment"))
+                {
+                    sale.AppointmentId = visit.AppointmentId;
+                    if (preview.OnlineDeposit > 0 && sale.Balance > 0)
+                        sale.AddPayment(new SalePayment
+                        {
+                            Method = SalePayment.OnlineDepositMethod,
+                            Amount = Math.Min(preview.OnlineDeposit, sale.Balance),
+                            ReceivedAtUtc = now,
+                            BusinessDate = today,
+                            ReceivedBy = userName
+                        });
+                }
+
+                await unitOfWork.Sales.AddAsync(sale);
+                sales.Add(sale);
+            }
+
+            await unitOfWork.SaveChangesAsync();
+            return new VisitChargeResult(BillingStatus.Done, sales.Select(s => s.Id).ToList());
+        });
+
+        if (result.Status == BillingStatus.Done)
+            foreach (var id in result.SaleIds)
+                await audit.LogAsync(EntityName, id, AuditActionType.Add, $"Charged visit #{visitId} ({selections.Count} items, split: {splitByTax})", userName);
         return result;
     }
 
@@ -176,7 +330,7 @@ public class BillingService(
                     line.ItemId = item.Id;
                     if (line.Description.Length == 0) line.Description = item.Name;
                     line.UnitPrice = request.UnitPrice ?? item.SellPrice;
-                    var alreadyInSale = sale.Lines.Where(l => l.ItemId == item.Id).Sum(l => l.Quantity);
+                    var alreadyInSale = sale.Lines.Where(l => l.ItemId == item.Id && !l.SkipStock).Sum(l => l.Quantity);
                     if (settings.DeductStockOnSale && alreadyInSale + line.Quantity > item.Stock)
                         return new BillingResult(BillingStatus.Invalid, Error: $"Only {item.Stock - alreadyInSale} of '{item.Name}' left in stock.");
                     break;
@@ -186,6 +340,8 @@ public class BillingService(
                         return new BillingResult(BillingStatus.Invalid, Error: "Enter the price.");
                     break;
             }
+
+            line.TaxExempt = request.TaxExempt ?? (line.Kind == SaleLineKind.Service && settings.Tax.IsServiceExempt(line.ServiceCode));
 
             if (!canExceedDiscount && line.Discount * 100L > line.Gross * (long)settings.MaxDiscountPercent)
                 return new BillingResult(BillingStatus.Invalid,
@@ -357,7 +513,7 @@ public class BillingService(
     private async Task MoveStockAsync(Sale sale, InventoryMovementType type, string userName, DateTime nowUtc)
     {
         // An item deleted from the catalog since has nothing to move.
-        foreach (var line in sale.Lines.Where(l => l.Kind == SaleLineKind.Product && l.ItemId is not null))
+        foreach (var line in sale.Lines.Where(l => l.Kind == SaleLineKind.Product && l.ItemId is not null && !l.SkipStock))
             await Stock.MoveAsync(unitOfWork, line.ItemId!.Value, line.Quantity, type,
                 type == InventoryMovementType.Egress ? $"Sale #{sale.Id}" : $"Sale #{sale.Id} voided", userName, nowUtc);
         sale.StockDeducted = type == InventoryMovementType.Egress;

@@ -28,7 +28,8 @@ public sealed record NewDose(string? ProtocolCode, string? ProductName, Preventi
 
 public sealed record DoseView(PreventiveDose Dose, PreventiveStatus Status);
 
-public sealed record PetHistory(Pet Pet, Client? Owner, List<MedicalVisit> Visits, List<DoseView> Doses, List<VisitSupply> Supplies);
+public sealed record PetHistory(Pet Pet, Client? Owner, List<MedicalVisit> Visits, List<DoseView> Doses, List<VisitSupply> Supplies,
+    List<VetManagement.Domain.Billing.Sale> Charges);
 
 /// <summary>A dose whose next application is due, with whom to contact.</summary>
 public sealed record DueDose(PreventiveDose Dose, PreventiveStatus Status, Pet Pet, Client? Owner);
@@ -78,7 +79,8 @@ public class ClinicalService(
             .OrderByDescending(d => d.AppliedOn).ThenByDescending(d => d.Id)
             .Select(d => new DoseView(d, d.StatusOn(today, settings.Reminders.DaysBefore, IsSuperseded(d, doses))))
             .ToList();
-        return new PetHistory(pet, owner, visits, views, supplies);
+        var charges = visitIds.Count == 0 ? [] : await unitOfWork.Sales.GetActiveByVisitsAsync(visitIds);
+        return new PetHistory(pet, owner, visits, views, supplies, charges);
     }
 
     /// <summary>Records a dose; with a protocol, its name, kind and next due date come from the clinic's settings.</summary>
