@@ -27,6 +27,7 @@ Guard tests: `ArchitectureTests` (dependency direction), `MigrationsTests` (EF m
 | **F9** | ✅ **COMPLETED** | Clinical record: visit notes linked to appointments, vaccines/deworming with per-clinic protocols, due list, owner reminders (docs/architecture/CLINICAL.md) |
 | **F10** | ✅ **COMPLETED** | Inventory from clinical use: supplies used in visits and vaccines applied leave stock, back on removal; shared stock lock |
 | **F11** | ✅ **COMPLETED** | Reports dashboard: agenda occupancy and no-shows, income by method/day, top sold, stock value, clinical activity (docs/architecture/REPORTS.md) |
+| **F12** | ✅ **COMPLETED** | Client portal "Mis mascotas": emailed access link by RUT, vaccines, visits, upcoming appointments (docs/architecture/CLIENT_PORTAL.md) |
 
 ---
 
@@ -84,7 +85,7 @@ git log --oneline -10
 
 ---
 
-## What is done (verified: 243 tests + 2 SQL Server concurrency tests, CI green, browser end-to-end)
+## What is done (verified: 246 tests + 2 SQL Server concurrency tests, CI green, browser end-to-end)
 
 - Staff CRM modules: inventory (items, movements, alerts), clients and pets, exams (orders, performed, external labs),
   medical visits, audit log, users/roles/permissions, email.
@@ -99,8 +100,9 @@ git log --oneline -10
 - Inventory from clinical use (F10): drugs/materials used in a visit and vaccines from inventory leave stock with a
   traceable movement; removing them (or deleting the visit/dose) puts stock back. Configurable per clinic.
 - Reports (F11): management dashboard for any period (Admin, Manager).
+- Client portal (F12): owners see their pets' vaccines, visits and upcoming appointments via an emailed link (no account).
 - Hardening: ProblemDetails, login lockout + rate limits, health check `/healthz`, JSON logs, guard tests.
-- Docs: `docs/architecture/ARCHITECTURE.md`, `docs/architecture/SCHEDULING.md`, `docs/architecture/BILLING.md`, `docs/architecture/CLINICAL.md`, `docs/architecture/REPORTS.md`, `docs/DEPLOYMENT.md`.
+- Docs: `docs/architecture/ARCHITECTURE.md`, `docs/architecture/SCHEDULING.md`, `docs/architecture/BILLING.md`, `docs/architecture/CLINICAL.md`, `docs/architecture/REPORTS.md`, `docs/architecture/CLIENT_PORTAL.md`, `docs/DEPLOYMENT.md`.
 
 ## Blocked on the clinic (not code)
 
@@ -113,12 +115,15 @@ git log --oneline -10
 
 - `Responsible` on exams/visits is free text; a staff picker would link records to users.
 - Billing: should charging an appointment mark it `Completed`? Refunds of paid sales and reopening a closed day are not built.
+- Medical visits still carry legacy payment status/method fields that overlap billing (F8); hide them?
+- Charge a visit's supplies in billing ("Charge visit" building the sale from the record)?
+- Manual stock adjustments in the inventory screens don't take the shared stock lock yet (low risk).
+- Prescriptions as printable documents; attachments (images, lab PDFs) in the clinical record.
 
 ## Roadmap (proposed, not started)
 
 | Phase | Feature | Why |
 |---|---|---|
-| F12 | Client web (optional accounts): pet history, vaccines, upcoming appointments | Client web in product scope; today clients use RUT + link |
 | Later | WhatsApp notifications (setting reserved); services needing a vet *and* a room; electronic receipts (SII) | Depend on providers/costs |
 
 Recorded decisions (UI view models, Contracts → Domain, migrations, one DB per clinic) are in

@@ -11,6 +11,8 @@ public sealed class PublicBookingInfoDto
     /// <summary>IANA id; the portal shows every time in the clinic's zone.</summary>
     public string TimeZone { get; set; } = "America/Santiago";
     public string? ClinicPhone { get; set; }
+    /// <summary>The client portal ("Mis mascotas") is offered.</summary>
+    public bool ClientPortalEnabled { get; set; }
     public string PrimaryColor { get; set; } = "#1565C0";
     public string? LogoUrl { get; set; }
     public int CancellationDeadlineHours { get; set; }

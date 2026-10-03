@@ -1,0 +1,144 @@
+@page "/mis-mascotas/{Token}"
+@using VetManagement.Contracts.ClientPortal
+@inject ClientPortalApi Api
+@inject PortalState Portal
+
+<PageTitle>Mis mascotas</PageTitle>
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (_portal is null)
+{
+    <MudAlert Severity="Severity.Warning">
+        Este enlace ya no es válido o expiró. <MudLink Href="mis-mascotas">Pide uno nuevo</MudLink>.
+    </MudAlert>
+}
+else
+{
+    <MudText Typo="Typo.h4">Hola, @_portal.ClientName</MudText>
+    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-4 d-block">
+        Este acceso vence a las @Local(_portal.ExpiresAtUtc).ToString("HH:mm").
+    </MudText>
+
+    @if (_portal.Upcoming.Count > 0)
+    {
+        <MudPaper Class="pa-4 mb-4" Elevation="1">
+            <MudText Typo="Typo.h6" Class="mb-2">Próximas horas</MudText>
+            @foreach (var a in _portal.Upcoming)
+            {
+                <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mb-1">
+                    <MudText>
+                        <b>@Local(a.StartUtc).ToString("dddd d 'de' MMMM, HH:mm")</b> · @a.ServiceName · @a.ResourceName
+                        @(string.IsNullOrWhiteSpace(a.PetName) ? "" : $" · {a.PetName}")
+                    </MudText>
+                    @if (a.PublicToken is not null)
+                    {
+                        <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Primary" Href="@($"booking/{a.PublicToken}")">Ver o cancelar</MudButton>
+                    }
+                </MudStack>
+            }
+        </MudPaper>
+    }
+
+    @foreach (var pet in _portal.Pets)
+    {
+        <MudPaper Class="pa-4 mb-4" Elevation="1">
+            <MudText Typo="Typo.h5">@pet.Name</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
+                @SpeciesName(pet.Species)@(string.IsNullOrWhiteSpace(pet.Breed) ? "" : $" · {pet.Breed}")@(pet.Weight > 0 ? $" · {pet.Weight:0.#} kg" : "")
+            </MudText>
+
+            <MudText Typo="Typo.subtitle1">Vacunas y desparasitaciones</MudText>
+            @if (pet.Doses.Count == 0)
+            {
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Sin registros.</MudText>
+            }
+            else
+            {
+                <MudSimpleTable Dense="true" Elevation="0" Class="mb-3">
+                    <thead><tr><th>Producto</th><th>Aplicada</th><th>Próxima dosis</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var d in pet.Doses)
+                        {
+                            <tr>
+                                <td>@d.ProductName</td>
+                                <td>@d.AppliedOn.ToString("dd-MM-yyyy")</td>
+                                <td>@(d.NextDueOn?.ToString("dd-MM-yyyy") ?? "—")</td>
+                                <td>
+                                    @switch (d.Status)
+                                    {
+                                        case PreventiveStatus.Overdue:
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Error">Vencida</MudChip>
+                                            break;
+                                        case PreventiveStatus.DueSoon:
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Warning">Pronto</MudChip>
+                                            break;
+                                        case PreventiveStatus.UpToDate:
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Success">Al día</MudChip>
+                                            break;
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            }
+
+            <MudText Typo="Typo.subtitle1">Atenciones</MudText>
+            @if (pet.Visits.Count == 0)
+            {
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Sin atenciones registradas.</MudText>
+            }
+            @foreach (var v in pet.Visits)
+            {
+                <MudText Typo="Typo.body2" Class="mt-1">
+                    <b>@Local(v.Date).ToString("dd-MM-yyyy")</b> — @(v.Reason ?? "Atención")
+                    @(v.WeightKg is null ? "" : $" · {v.WeightKg:0.#} kg")
+                </MudText>
+                @if (!string.IsNullOrWhiteSpace(v.Diagnosis))
+                {
+                    <MudText Typo="Typo.body2" Class="ml-3">Diagnóstico: @v.Diagnosis</MudText>
+                }
+                @if (!string.IsNullOrWhiteSpace(v.Treatment))
+                {
+                    <MudText Typo="Typo.body2" Class="ml-3" Style="white-space: pre-line;">Indicaciones: @v.Treatment</MudText>
+                }
+            }
+        </MudPaper>
+    }
+
+    @if (_portal.Pets.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info">No tenemos mascotas registradas a tu nombre. Contacta a la clínica para actualizarlo.</MudAlert>
+    }
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="">Reservar una hora</MudButton>
+}
+
+@code {
+    [Parameter] public string Token { get; set; } = string.Empty;
+
+    private ClientPortalDto? _portal;
+    private bool _loading = true;
+    private TimeZoneInfo _zone = TimeZoneInfo.Utc;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _zone = await Portal.GetClinicTimeZoneAsync();
+        _portal = await Api.GetAsync(Token);
+        _loading = false;
+    }
+
+    private DateTime Local(DateTime utc) => TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), _zone);
+
+    private static string SpeciesName(Species species) => species switch
+    {
+        Species.Dog => "Perro",
+        Species.Cat => "Gato",
+        Species.Bird => "Ave",
+        Species.Fish => "Pez",
+        _ => "Mascota"
+    };
+}

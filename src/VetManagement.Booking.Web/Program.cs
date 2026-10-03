@@ -16,6 +16,7 @@ CultureInfo.DefaultThreadCurrentCulture = CultureInfo.DefaultThreadCurrentUICult
 var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? throw new InvalidOperationException("ApiBaseUrl is not configured.");
 builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(apiBaseUrl) });
 builder.Services.AddScoped<BookingApi>();
+builder.Services.AddScoped<ClientPortalApi>();
 builder.Services.AddScoped<PortalState>();
 builder.Services.AddMudServices();
 

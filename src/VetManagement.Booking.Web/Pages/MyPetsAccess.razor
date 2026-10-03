@@ -1,0 +1,51 @@
+@page "/mis-mascotas"
+@inject ClientPortalApi Api
+
+<PageTitle>Mis mascotas</PageTitle>
+
+<MudPaper Class="pa-5" Elevation="1">
+    <MudText Typo="Typo.h4" Class="mb-1">Mis mascotas</MudText>
+    <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">
+        Revisa las vacunas, atenciones y próximas horas de tus mascotas. Ingresa tu RUT y te enviaremos un enlace de acceso
+        al correo que tienes registrado en la clínica.
+    </MudText>
+
+    @if (_sent)
+    {
+        <MudAlert Severity="Severity.Success">
+            Si tu RUT está registrado con un correo, te enviamos el enlace de acceso. Revisa tu bandeja de entrada (y la carpeta de spam).
+        </MudAlert>
+        <MudButton Variant="Variant.Text" Color="Color.Primary" Class="mt-3" OnClick="() => _sent = false">Enviar de nuevo</MudButton>
+    }
+    else
+    {
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.End" Wrap="Wrap.Wrap">
+            <MudTextField T="string" @bind-Value="_rut" Label="RUT" Placeholder="12.345.678-5" Immediate="true" Style="max-width: 220px;"
+                          OnKeyUp="@(e => e.Key == "Enter" ? SendAsync() : Task.CompletedTask)" />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(string.IsNullOrWhiteSpace(_rut) || _busy)" OnClick="SendAsync">
+                @(_busy ? "Enviando…" : "Enviarme el enlace")
+            </MudButton>
+        </MudStack>
+        @if (_error is not null)
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-3">@_error</MudAlert>
+        }
+    }
+</MudPaper>
+
+@code {
+    private string? _rut;
+    private string? _error;
+    private bool _busy;
+    private bool _sent;
+
+    private async Task SendAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_rut) || _busy)
+            return;
+        _busy = true;
+        _error = await Api.RequestLinkAsync(_rut);
+        _sent = _error is null;
+        _busy = false;
+    }
+}

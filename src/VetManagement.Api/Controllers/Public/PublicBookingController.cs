@@ -26,6 +26,7 @@ public sealed class BookingPortalOptions
 [EnableRateLimiting("public-read")]
 public class PublicBookingController(
     SchedulingSettingsService settingsService,
+    VetManagement.Application.Clinical.ClinicalSettingsService clinicalSettings,
     AppointmentService appointments,
     OnlineBookingService online,
     BookingPortalOptions portal,
@@ -41,6 +42,7 @@ public class PublicBookingController(
             ClinicName = settings.ClinicName,
             TimeZone = settings.TimeZone,
             ClinicPhone = settings.ClinicPhone,
+            ClientPortalEnabled = (await clinicalSettings.GetAsync()).Settings.ClientPortal.Enabled,
             PrimaryColor = settings.Branding.PrimaryColor,
             LogoUrl = settings.Branding.LogoUrl,
             CancellationDeadlineHours = settings.Cancellation.ClientDeadlineHours,
