@@ -30,8 +30,8 @@ Health check: `GET /healthz` (includes the database).
 Everything business-related is edited by the clinic admin in the staff web, no deploy needed:
 Agenda settings (hours, services, deposit %, refund mode, notifications, branding; starts disabled),
 Billing settings (payment methods, discount limit, stock on sale) and Clinical settings (vaccine and
-deworming protocols, reminders). See [architecture/SCHEDULING.md](architecture/SCHEDULING.md),
-[BILLING.md](architecture/BILLING.md) and [CLINICAL.md](architecture/CLINICAL.md).
+deworming protocols, reminders). See [modules/SCHEDULING.md](modules/SCHEDULING.md),
+[BILLING.md](modules/BILLING.md) and [CLINICAL.md](modules/CLINICAL.md).
 
 Permissions are stored in the login token: after an update that adds permissions, users log out and
 in again to see the new screens.

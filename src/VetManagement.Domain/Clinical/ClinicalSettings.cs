@@ -2,7 +2,7 @@ using VetManagement.Domain.Enums;
 
 namespace VetManagement.Domain.Clinical;
 
-/// <summary>Per-clinic clinical policy: preventive protocols and owner reminders (see docs/architecture/CLINICAL.md).</summary>
+/// <summary>Per-clinic clinical policy: preventive protocols and owner reminders (see docs/modules/CLINICAL.md).</summary>
 public class ClinicalSettings
 {
     /// <summary>Starting protocols; placeholders each clinic's vets adjust to their own schedule.</summary>

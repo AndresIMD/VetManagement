@@ -17,7 +17,7 @@ public record AvailableSlot(string ResourceCode, DateTime StartUtc, DateTime End
 
 /// <summary>
 /// Computes bookable slots for a service from the clinic's settings and existing bookings. Pure: no I/O,
-/// the current time is passed in. See docs/architecture/SCHEDULING.md.
+/// the current time is passed in. See docs/modules/SCHEDULING.md.
 /// </summary>
 public static class AvailabilityCalculator
 {

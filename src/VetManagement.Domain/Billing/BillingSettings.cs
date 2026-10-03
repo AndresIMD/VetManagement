@@ -1,6 +1,6 @@
 namespace VetManagement.Domain.Billing;
 
-/// <summary>Per-clinic billing policy, edited by the admin (see docs/architecture/BILLING.md).</summary>
+/// <summary>Per-clinic billing policy, edited by the admin (see docs/modules/BILLING.md).</summary>
 public class BillingSettings
 {
     public bool Enabled { get; set; } = true;

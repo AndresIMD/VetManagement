@@ -13,11 +13,11 @@ One document per business module: rules, per-clinic settings, permissions and kn
 
 | Module | Document |
 |---|---|
-| Agenda and online booking | [`architecture/SCHEDULING.md`](architecture/SCHEDULING.md) |
-| Billing (caja), VAT, "Charge visit", cash close | [`architecture/BILLING.md`](architecture/BILLING.md) |
-| Clinical record, vaccines, supplies used in visits | [`architecture/CLINICAL.md`](architecture/CLINICAL.md) |
-| Reports dashboard | [`architecture/REPORTS.md`](architecture/REPORTS.md) |
-| Client portal "Mis mascotas" | [`architecture/CLIENT_PORTAL.md`](architecture/CLIENT_PORTAL.md) |
+| Agenda and online booking | [`modules/SCHEDULING.md`](modules/SCHEDULING.md) |
+| Billing (caja), VAT, "Charge visit", cash close | [`modules/BILLING.md`](modules/BILLING.md) |
+| Clinical record, vaccines, supplies used in visits | [`modules/CLINICAL.md`](modules/CLINICAL.md) |
+| Reports dashboard | [`modules/REPORTS.md`](modules/REPORTS.md) |
+| Client portal "Mis mascotas" | [`modules/CLIENT_PORTAL.md`](modules/CLIENT_PORTAL.md) |
 
 Inventory, clients/pets, exams and users follow the general module pattern in `ARCHITECTURE.md`; they have no
 separate document.

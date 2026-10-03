@@ -12,14 +12,14 @@ How the code is organised: [`docs/architecture/ARCHITECTURE.md`](docs/architectu
 | Phase | Status | What |
 |---|---|---|
 | F0–F5 | ✅ | Restructure into Clean Architecture, CI, inventory/clients/exams/medical/audit moved to Domain + Contracts, staff UI split out, hardening (errors, login protection, health check, logs), architecture docs |
-| F6 | ✅ | Agenda: per-clinic settings, availability with progressive release, appointments, staff agenda, emails — [SCHEDULING.md](docs/architecture/SCHEDULING.md) |
-| F7 | ✅ | Online booking: RUT, WebPay Plus / simulated payments, public API, hosted portal, link from SPVetClinic — [SCHEDULING.md](docs/architecture/SCHEDULING.md), [DEPLOYMENT.md](docs/DEPLOYMENT.md) |
-| F8 | ✅ | Billing: sales, split payments, discounts, voids, daily cash close, stock on sale — [BILLING.md](docs/architecture/BILLING.md) |
-| F9 | ✅ | Clinical record: visit notes, vaccines/deworming with protocols, due list, owner reminders — [CLINICAL.md](docs/architecture/CLINICAL.md) |
-| F10 | ✅ | Inventory from clinical use: visit supplies and vaccines leave stock; shared stock lock — [CLINICAL.md](docs/architecture/CLINICAL.md) |
-| F11 | ✅ | Reports dashboard — [REPORTS.md](docs/architecture/REPORTS.md) |
-| F12 | ✅ | Client portal "Mis mascotas" — [CLIENT_PORTAL.md](docs/architecture/CLIENT_PORTAL.md) |
-| — | ✅ | "Charge visit": appointment + procedures + supplies, one sale or split taxed / VAT-exempt; legacy visit payment fields retired — [BILLING.md](docs/architecture/BILLING.md) |
+| F6 | ✅ | Agenda: per-clinic settings, availability with progressive release, appointments, staff agenda, emails — [SCHEDULING.md](docs/modules/SCHEDULING.md) |
+| F7 | ✅ | Online booking: RUT, WebPay Plus / simulated payments, public API, hosted portal, link from SPVetClinic — [SCHEDULING.md](docs/modules/SCHEDULING.md), [DEPLOYMENT.md](docs/DEPLOYMENT.md) |
+| F8 | ✅ | Billing: sales, split payments, discounts, voids, daily cash close, stock on sale — [BILLING.md](docs/modules/BILLING.md) |
+| F9 | ✅ | Clinical record: visit notes, vaccines/deworming with protocols, due list, owner reminders — [CLINICAL.md](docs/modules/CLINICAL.md) |
+| F10 | ✅ | Inventory from clinical use: visit supplies and vaccines leave stock; shared stock lock — [CLINICAL.md](docs/modules/CLINICAL.md) |
+| F11 | ✅ | Reports dashboard — [REPORTS.md](docs/modules/REPORTS.md) |
+| F12 | ✅ | Client portal "Mis mascotas" — [CLIENT_PORTAL.md](docs/modules/CLIENT_PORTAL.md) |
+| — | ✅ | "Charge visit": appointment + procedures + supplies, one sale or split taxed / VAT-exempt; legacy visit payment fields retired — [BILLING.md](docs/modules/BILLING.md) |
 | — | ✅ | Test data page for development (Administration → Test Data) — [guide](docs/guides/DATOS_DE_PRUEBA.md) |
 
 ## Blocked on the clinic (not code)
@@ -35,6 +35,8 @@ How the code is organised: [`docs/architecture/ARCHITECTURE.md`](docs/architectu
 - Should charging an appointment mark it `Completed`? Refunds of paid sales and reopening a closed day are not built.
 - `Responsible` on exams/visits is free text; a staff picker would link records to users.
 - Printable prescriptions; attachments (images, lab PDFs) in the clinical record.
+- Settings screens (agenda, billing, clinical) are JSON editors that point admins to repo docs they can't open;
+  guided forms with in-screen explanations would suit clinic admins.
 
 ## Later (depend on providers or costs)
 

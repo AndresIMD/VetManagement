@@ -4,7 +4,7 @@ namespace VetManagement.Domain.Scheduling;
 
 /// <summary>
 /// Per-clinic agenda configuration. Every business policy lives here so each clinic can set its own;
-/// see docs/architecture/SCHEDULING.md.
+/// see docs/modules/SCHEDULING.md.
 /// </summary>
 public class SchedulingSettings
 {

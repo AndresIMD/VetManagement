@@ -685,7 +685,7 @@ All documentation is indexed in [`docs/README.md`](README.md).
 ✅ **WHERE THINGS GO**:
 - XML documentation on public types and members that aren't self-explanatory; brief comments for the *why*
 - `docs/architecture/ARCHITECTURE.md`: structure, rules, shared mechanisms, decisions (small text diagrams are fine)
-- `docs/architecture/<MODULE>.md`: one per business module — rules, per-clinic settings, permissions, limits.
+- `docs/modules/<MODULE>.md`: one per business module — rules, per-clinic settings, permissions, limits.
   Updated in the same commit that changes the module.
 - `docs/DEPLOYMENT.md`: every configuration key
 - `docs/guides/`: step-by-step guides for people using the system (Spanish)
