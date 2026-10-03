@@ -42,8 +42,9 @@ payments and its sales can't be voided. One close per day.
 
 ## Concurrency
 
-Every billing write runs under one clinic-wide `sp_getapplock` (`billing`), so two desks can't overpay a
-sale and no payment slips past a day being closed (`ConcurrentPaymentTests`, real SQL Server).
+Every billing write runs under one clinic-wide `sp_getapplock` (`stock`, shared with every automatic stock
+change), so two desks can't overpay a sale, no payment slips past a day being closed, and a sale and a
+visit never overwrite each other's stock count (`ConcurrentPaymentTests`, real SQL Server).
 
 ## Not yet
 

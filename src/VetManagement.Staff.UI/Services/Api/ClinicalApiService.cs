@@ -19,6 +19,12 @@ public class ClinicalApiService(HttpClient http)
     public async Task<ApiResult> DeleteDoseAsync(int id)
         => await ApiResult.FromResponseAsync(await http.DeleteAsync(string.Format(ApiRouteConstants.CLINICAL_DOSE, id)));
 
+    public async Task<ApiResult> AddSupplyAsync(int visitId, AddVisitSupplyRequest request)
+        => await ApiResult.FromResponseAsync(await http.PostAsJsonAsync(string.Format(ApiRouteConstants.CLINICAL_VISIT_SUPPLIES, visitId), request));
+
+    public async Task<ApiResult> RemoveSupplyAsync(int supplyId)
+        => await ApiResult.FromResponseAsync(await http.DeleteAsync(string.Format(ApiRouteConstants.CLINICAL_SUPPLY, supplyId)));
+
     public async Task<List<DueDoseDto>> GetDueAsync(int days)
         => await http.GetFromJsonAsync<List<DueDoseDto>>($"{ApiRouteConstants.CLINICAL_DUE}?days={days}") ?? [];
 

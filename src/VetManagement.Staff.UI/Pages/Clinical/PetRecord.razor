@@ -4,6 +4,7 @@
 @using VetManagement.Staff.UI.Models.Medical
 @using VetManagement.Staff.UI.Components.Modals.Visits
 @inject ClinicalApiService ClinicalApi
+@inject ItemsApiService ItemsApi
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 @inject AuthenticationStateProvider AuthStateProvider
@@ -110,6 +111,9 @@
                     <MudDatePicker Label="Next dose (optional)" @bind-Date="_dose.NextDueOn" Style="max-width: 170px;" Clearable="true"
                                    HelperText="@(string.IsNullOrEmpty(_dose.ProtocolCode) ? null : "Empty: protocol interval")" />
                     <MudTextField T="string" @bind-Value="_dose.BatchNumber" Label="Batch" Style="max-width: 120px;" />
+                    <MudAutocomplete T="InventoryItemDTO" @bind-Value="_dose.Item" Label="From inventory (optional)" SearchFunc="SearchItemsAsync"
+                                     ToStringFunc="@(i => i is null ? "" : $"{i.Name} ({i.Stock})")" Clearable="true"
+                                     DebounceInterval="300" MinCharacters="2" Style="min-width: 220px;" />
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Vaccines" OnClick="RecordDoseAsync" Disabled="_busy">Record</MudButton>
                 </MudStack>
             }
@@ -150,6 +154,8 @@
                         {
                             <MudText Typo="Typo.body2"><b>Procedures:</b> @string.Join(", ", visit.Procedures.Select(p => p.Name))</MudText>
                         }
+                        <VisitSupplies VisitId="visit.Id" Supplies="@_history.Supplies.Where(s => s.VisitId == visit.Id).ToList()"
+                                       CanAdd="_canCreate" CanRemove="_canDelete" Changed="LoadAsync" />
                         @if (_canUpdate)
                         {
                             <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Edit" OnClick="() => EditVisitAsync(visit)">Edit</MudButton>
@@ -186,6 +192,7 @@
         public DateTime? AppliedOn { get; set; } = DateTime.Today;
         public DateTime? NextDueOn { get; set; }
         public string? BatchNumber { get; set; }
+        public InventoryItemDTO? Item { get; set; }
     }
 
     private IEnumerable<PreventiveDoseDto> Current
@@ -216,6 +223,9 @@
         }
     }
 
+    private async Task<IEnumerable<InventoryItemDTO>> SearchItemsAsync(string text, CancellationToken ct)
+        => (await ItemsApi.GetItemsPagedAsync(text, ItemType.None, 0, 15, ct))?.Items ?? [];
+
     private static string Age(DateTime birthdate)
     {
         var months = (DateTime.Today.Year - birthdate.Year) * 12 + DateTime.Today.Month - birthdate.Month;
@@ -233,7 +243,8 @@
             Kind = string.IsNullOrEmpty(_dose.ProtocolCode) ? _dose.Kind : null,
             AppliedOn = DateOnly.FromDateTime(_dose.AppliedOn ?? DateTime.Today),
             NextDueOn = _dose.NextDueOn is { } next ? DateOnly.FromDateTime(next) : null,
-            BatchNumber = _dose.BatchNumber
+            BatchNumber = _dose.BatchNumber,
+            ItemId = _dose.Item?.Id
         });
         _busy = false;
         if (!result.Ok)

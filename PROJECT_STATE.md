@@ -25,6 +25,7 @@ Guard tests: `ArchitectureTests` (dependency direction), `MigrationsTests` (EF m
 | **F7** | ✅ **COMPLETED** | Online booking: RUT, payment gateways (WebPay Plus / simulated), public API, hosted portal `Booking.Web`, SPVetClinic link (docs/DEPLOYMENT.md) |
 | **F8** | ✅ **COMPLETED** | Billing (caja): sales from appointments or counter, split payments, discounts, voids, daily cash close, stock deducted on sale (docs/architecture/BILLING.md) |
 | **F9** | ✅ **COMPLETED** | Clinical record: visit notes linked to appointments, vaccines/deworming with per-clinic protocols, due list, owner reminders (docs/architecture/CLINICAL.md) |
+| **F10** | ✅ **COMPLETED** | Inventory from clinical use: supplies used in visits and vaccines applied leave stock, back on removal; shared stock lock |
 
 ---
 
@@ -82,7 +83,7 @@ git log --oneline -10
 
 ---
 
-## What is done (verified: 233 tests + 2 SQL Server concurrency tests, CI green, browser end-to-end)
+## What is done (verified: 240 tests + 2 SQL Server concurrency tests, CI green, browser end-to-end)
 
 - Staff CRM modules: inventory (items, movements, alerts), clients and pets, exams (orders, performed, external labs),
   medical visits, audit log, users/roles/permissions, email.
@@ -94,6 +95,8 @@ git log --oneline -10
   split payments with per-clinic payment methods, discount limit, voids, daily cash close, stock deducted on sale.
 - Clinical record (F9): visit notes (reason, anamnesis, exam, diagnosis, treatment, weight, temperature) linked to
   appointments; vaccines and deworming with per-clinic protocols and next due dates; due list; owner email reminders.
+- Inventory from clinical use (F10): drugs/materials used in a visit and vaccines from inventory leave stock with a
+  traceable movement; removing them (or deleting the visit/dose) puts stock back. Configurable per clinic.
 - Hardening: ProblemDetails, login lockout + rate limits, health check `/healthz`, JSON logs, guard tests.
 - Docs: `docs/architecture/ARCHITECTURE.md`, `docs/architecture/SCHEDULING.md`, `docs/architecture/BILLING.md`, `docs/architecture/CLINICAL.md`, `docs/DEPLOYMENT.md`.
 
@@ -113,7 +116,6 @@ git log --oneline -10
 
 | Phase | Feature | Why |
 |---|---|---|
-| F10 | Inventory consumption from visits (drugs and materials used during a visit) | Products sold already leave stock (F8); clinical use does not yet |
 | F11 | Reports and dashboard: agenda occupancy, no-shows, income, stock value | Admin decisions |
 | F12 | Client web (optional accounts): pet history, vaccines, upcoming appointments | Client web in product scope; today clients use RUT + link |
 | Later | WhatsApp notifications (setting reserved); services needing a vet *and* a room; electronic receipts (SII) | Depend on providers/costs |

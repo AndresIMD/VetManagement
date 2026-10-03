@@ -1,0 +1,83 @@
+@using VetManagement.Contracts.Clinical
+@inject ClinicalApiService ClinicalApi
+@inject ItemsApiService ItemsApi
+
+@* Drugs and materials used in one visit: list, add from inventory, remove a mistake (stock goes back). *@
+
+@if (Supplies.Count > 0)
+{
+    <MudText Typo="Typo.body2">
+        <b>Supplies used:</b>
+        @foreach (var supply in Supplies)
+        {
+            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined"
+                     OnClose="@(CanRemove ? () => RemoveAsync(supply.Id) : null)">
+                @supply.ItemName × @supply.Quantity
+            </MudChip>
+        }
+    </MudText>
+}
+
+@if (CanAdd)
+{
+    @if (_open)
+    {
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.End" Wrap="Wrap.Wrap" Class="mb-1">
+            <MudAutocomplete T="InventoryItemDTO" @bind-Value="_item" Label="Drug or material" SearchFunc="SearchAsync"
+                             ToStringFunc="@(i => i is null ? "" : $"{i.Name} ({i.Stock} in stock)")"
+                             DebounceInterval="300" MinCharacters="2" Style="min-width: 280px;" Dense="true" />
+            <MudNumericField T="int" @bind-Value="_quantity" Label="Qty" Min="1" Style="max-width: 80px;" />
+            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="AddAsync" Disabled="@(_item is null || _busy)">Add</MudButton>
+            <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="() => _open = false">Close</MudButton>
+        </MudStack>
+    }
+    else
+    {
+        <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Medication" OnClick="() => _open = true">Add supply</MudButton>
+    }
+}
+@if (_error is not null)
+{
+    <MudAlert Severity="Severity.Error" Dense="true" ShowCloseIcon="true" CloseIconClicked="() => _error = null">@_error</MudAlert>
+}
+
+@code {
+    [Parameter, EditorRequired] public int VisitId { get; set; }
+    [Parameter] public List<VisitSupplyDto> Supplies { get; set; } = [];
+    [Parameter] public bool CanAdd { get; set; }
+    [Parameter] public bool CanRemove { get; set; }
+    /// <summary>Reload the record after a change.</summary>
+    [Parameter] public EventCallback Changed { get; set; }
+
+    private bool _open;
+    private bool _busy;
+    private int _quantity = 1;
+    private InventoryItemDTO? _item;
+    private string? _error;
+
+    private async Task<IEnumerable<InventoryItemDTO>> SearchAsync(string text, CancellationToken ct)
+        => (await ItemsApi.GetItemsPagedAsync(text, ItemType.None, 0, 15, ct))?.Items ?? [];
+
+    private async Task AddAsync()
+    {
+        _busy = true;
+        var result = await ClinicalApi.AddSupplyAsync(VisitId, new AddVisitSupplyRequest { ItemId = _item!.Id, Quantity = _quantity });
+        _busy = false;
+        if (!result.Ok)
+        {
+            _error = result.Error;
+            return;
+        }
+        _item = null;
+        _quantity = 1;
+        await Changed.InvokeAsync();
+    }
+
+    private async Task RemoveAsync(int supplyId)
+    {
+        var result = await ClinicalApi.RemoveSupplyAsync(supplyId);
+        if (!result.Ok)
+            _error = result.Error;
+        await Changed.InvokeAsync();
+    }
+}
