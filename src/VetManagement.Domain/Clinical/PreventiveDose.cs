@@ -18,6 +18,10 @@ public class PreventiveDose : Entity<int>
     /// <summary>When the next dose is due; null when no repeat is needed.</summary>
     public DateOnly? NextDueOn { get; set; }
     public int? VisitId { get; set; }
+    /// <summary>Inventory item applied (one unit), when the clinic tracks its vaccines in stock.</summary>
+    public int? ItemId { get; set; }
+    /// <summary>Set when the unit was taken out of stock, so deleting the dose puts it back.</summary>
+    public bool StockDeducted { get; set; }
     public string? Notes { get; set; }
     public string? AppliedBy { get; set; }
     public DateTime CreatedAtUtc { get; set; }

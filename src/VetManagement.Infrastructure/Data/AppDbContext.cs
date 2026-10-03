@@ -32,6 +32,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<MedicalVisit> MedicalVisits { get; set; }
     public DbSet<VisitProcedure> VisitProcedures { get; set; }
     public DbSet<VetManagement.Domain.Clinical.PreventiveDose> PreventiveDoses { get; set; }
+    public DbSet<VetManagement.Domain.Clinical.VisitSupply> VisitSupplies { get; set; }
 
     public DbSet<ClinicSetting> ClinicSettings { get; set; }
     public DbSet<Appointment> Appointments { get; set; }
@@ -193,6 +194,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             e.Property(d => d.BatchNumber).HasMaxLength(100);
             e.Property(d => d.Notes).HasMaxLength(1000);
             e.Property(d => d.AppliedBy).HasMaxLength(256);
+        });
+        builder.Entity<VetManagement.Domain.Clinical.VisitSupply>(e =>
+        {
+            // Deleting a visit removes its supplies (MedicalVisitService puts their stock back first).
+            e.HasOne<MedicalVisit>().WithMany().HasForeignKey(s => s.VisitId).OnDelete(DeleteBehavior.Cascade);
+            e.Property(s => s.ItemName).HasMaxLength(200);
+            e.Property(s => s.Notes).HasMaxLength(500);
+            e.Property(s => s.CreatedBy).HasMaxLength(256);
         });
     }
 }

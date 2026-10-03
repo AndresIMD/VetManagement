@@ -1,5 +1,6 @@
 using System.Text.Json;
 using VetManagement.Application.Configuration;
+using VetManagement.Application.Inventory;
 using VetManagement.Application.Contracts.Persistence;
 using VetManagement.Application.Scheduling;
 using VetManagement.Application.Services;
@@ -50,8 +51,8 @@ public class BillingService(
     TimeProvider clock)
 {
     private const string EntityName = "Sale";
-    // ponytail: one lock for all billing writes; a clinic takes a few payments a minute. Per-sale keys if that changes.
-    private const string LockKey = "billing";
+    // Same lock as every automatic stock change: paying a sale moves stock, and no payment slips past a day being closed.
+    private const string LockKey = Stock.LockKey;
 
     public async Task<DateOnly> TodayAsync() => await BusinessDateAsync(clock.GetUtcNow().UtcDateTime);
 
@@ -355,22 +356,10 @@ public class BillingService(
 
     private async Task MoveStockAsync(Sale sale, InventoryMovementType type, string userName, DateTime nowUtc)
     {
+        // An item deleted from the catalog since has nothing to move.
         foreach (var line in sale.Lines.Where(l => l.Kind == SaleLineKind.Product && l.ItemId is not null))
-        {
-            var item = await unitOfWork.Items.GetByIdAsync(line.ItemId!.Value);
-            if (item is null)
-                continue; // deleted from the catalog since; nothing to move
-            item.Stock += type == InventoryMovementType.Egress ? -line.Quantity : line.Quantity;
-            await unitOfWork.InventoryMovements.AddAsync(new InventoryMovement
-            {
-                ItemId = item.Id,
-                Type = type,
-                Quantity = line.Quantity,
-                Date = nowUtc,
-                Reason = type == InventoryMovementType.Egress ? $"Sale #{sale.Id}" : $"Sale #{sale.Id} voided",
-                Responsible = userName
-            });
-        }
+            await Stock.MoveAsync(unitOfWork, line.ItemId!.Value, line.Quantity, type,
+                type == InventoryMovementType.Egress ? $"Sale #{sale.Id}" : $"Sale #{sale.Id} voided", userName, nowUtc);
         sale.StockDeducted = type == InventoryMovementType.Egress;
     }
 

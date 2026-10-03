@@ -34,7 +34,12 @@ public class ClinicalController(ClinicalService service, ClinicalSettingsService
             OwnerEmail = history.Owner?.Email,
             OwnerPhone = history.Owner is { PhoneNumber: > 0 } o ? o.PhoneNumber.ToString() : null,
             Visits = history.Visits.Select(MedicalVisitsController.MapToDto).ToList(),
-            Doses = history.Doses.Select(d => MapDose(d.Dose, d.Status)).ToList()
+            Doses = history.Doses.Select(d => MapDose(d.Dose, d.Status)).ToList(),
+            Supplies = history.Supplies.Select(s => new VisitSupplyDto
+            {
+                Id = s.Id, VisitId = s.VisitId, ItemId = s.ItemId, ItemName = s.ItemName, Quantity = s.Quantity,
+                Notes = s.Notes, StockDeducted = s.StockDeducted, CreatedBy = s.CreatedBy
+            }).ToList()
         });
     }
 
@@ -43,12 +48,24 @@ public class ClinicalController(ClinicalService service, ClinicalSettingsService
     public async Task<IActionResult> RecordDoseAsync(int petId, [FromBody] RecordDoseRequest request)
         => ToActionResult(await service.RecordDoseAsync(petId, new NewDose(
             request.ProtocolCode, request.ProductName, request.Kind, request.AppliedOn, request.NextDueOn,
-            request.BatchNumber, request.VisitId, request.Notes), GetUserName()));
+            request.BatchNumber, request.VisitId, request.Notes, request.ItemId), GetUserName()));
 
     [HttpDelete("doses/{id:int}")]
     [Authorize(Policy = "Medical.Delete")]
     public async Task<IActionResult> DeleteDoseAsync(int id)
         => ToActionResult(await service.DeleteDoseAsync(id, GetUserName()));
+
+    /// <summary>Records a drug or material used in the visit (leaves stock when the clinic enables it).</summary>
+    [HttpPost("visits/{visitId:int}/supplies")]
+    [Authorize(Policy = "Medical.Create")]
+    public async Task<IActionResult> AddSupplyAsync(int visitId, [FromBody] AddVisitSupplyRequest request)
+        => ToActionResult(await service.AddSupplyAsync(visitId, request.ItemId, request.Quantity, request.Notes, GetUserName()));
+
+    /// <summary>Removes a supply recorded by mistake; its quantity goes back to stock.</summary>
+    [HttpDelete("supplies/{id:int}")]
+    [Authorize(Policy = "Medical.Delete")]
+    public async Task<IActionResult> RemoveSupplyAsync(int id)
+        => ToActionResult(await service.RemoveSupplyAsync(id, GetUserName()));
 
     /// <summary>Pets whose next dose is due within <paramref name="days"/> days, overdue ones first.</summary>
     [HttpGet("due")]
@@ -125,6 +142,7 @@ public class ClinicalController(ClinicalService service, ClinicalSettingsService
         Status = status,
         AppliedBy = d.AppliedBy,
         Notes = d.Notes,
-        ReminderSentAtUtc = d.ReminderSentAtUtc
+        ReminderSentAtUtc = d.ReminderSentAtUtc,
+        ItemId = d.ItemId
     };
 }

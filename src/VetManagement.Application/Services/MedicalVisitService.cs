@@ -1,6 +1,7 @@
 using System.Text.Json;
 using VetManagement.Application.Contracts.Persistence;
 using VetManagement.Application.Contracts.Services;
+using VetManagement.Application.Inventory;
 using VetManagement.Domain.Enums;
 using VetManagement.Domain.Medical;
 
@@ -83,14 +84,29 @@ public class MedicalVisitService(IUnitOfWork unitOfWork, IRealtimeNotificationSe
 
     public async Task<bool> DeleteAsync(int id, string userName)
     {
-        var visit = await unitOfWork.MedicalVisits.GetByIdAsync(id);
-        if (visit == null)
-            return false;
+        string? snapshot = null;
+        var deleted = await unitOfWork.ExecuteExclusiveAsync(Stock.LockKey, async () =>
+        {
+            var visit = await unitOfWork.MedicalVisits.GetByIdAsync(id);
+            if (visit == null)
+                return false;
 
-        var snapshot = JsonSerializer.Serialize(visit);
-        unitOfWork.MedicalVisits.Remove(visit);
-        await unitOfWork.SaveChangesAsync();
-        await LogAuditAsync(id, AuditActionType.Delete, snapshot, userName);
+            // The visit's supplies go with it; what they took from stock goes back.
+            foreach (var supply in await unitOfWork.VisitSupplies.FindAsync(s => s.VisitId == id))
+            {
+                if (supply.StockDeducted)
+                    await Stock.MoveAsync(unitOfWork, supply.ItemId, supply.Quantity, InventoryMovementType.Ingress, $"Visit #{id} deleted", userName, DateTime.UtcNow);
+                unitOfWork.VisitSupplies.Remove(supply);
+            }
+
+            snapshot = JsonSerializer.Serialize(visit);
+            unitOfWork.MedicalVisits.Remove(visit);
+            await unitOfWork.SaveChangesAsync();
+            return true;
+        });
+        if (!deleted)
+            return false;
+        await LogAuditAsync(id, AuditActionType.Delete, snapshot!, userName);
 
         if (notificationService is not null)
         {

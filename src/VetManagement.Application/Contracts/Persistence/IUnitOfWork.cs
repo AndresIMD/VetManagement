@@ -23,6 +23,7 @@ public interface IUnitOfWork : IDisposable
     IAppointmentRepository Appointments { get; }
     ISaleRepository Sales { get; }
     IRepository<VetManagement.Domain.Clinical.PreventiveDose> PreventiveDoses { get; }
+    IRepository<VetManagement.Domain.Clinical.VisitSupply> VisitSupplies { get; }
     IRepository<VetManagement.Domain.Billing.CashClose> CashCloses { get; }
 
     Task<int> SaveChangesAsync();

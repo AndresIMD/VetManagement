@@ -22,6 +22,7 @@ public class UnitOfWork(AppDbContext context) : IUnitOfWork
     private IAppointmentRepository? _appointments;
     private ISaleRepository? _sales;
     private IRepository<VetManagement.Domain.Clinical.PreventiveDose>? _preventiveDoses;
+    private IRepository<VetManagement.Domain.Clinical.VisitSupply>? _visitSupplies;
     private IRepository<VetManagement.Domain.Billing.CashClose>? _cashCloses;
 
     public IItemRepository Items => _items ??= new ItemRepository(context);
@@ -49,6 +50,8 @@ public class UnitOfWork(AppDbContext context) : IUnitOfWork
     public ISaleRepository Sales => _sales ??= new SaleRepository(context);
 
     public IRepository<VetManagement.Domain.Clinical.PreventiveDose> PreventiveDoses => _preventiveDoses ??= new Repository<VetManagement.Domain.Clinical.PreventiveDose>(context);
+
+    public IRepository<VetManagement.Domain.Clinical.VisitSupply> VisitSupplies => _visitSupplies ??= new Repository<VetManagement.Domain.Clinical.VisitSupply>(context);
 
     public IRepository<VetManagement.Domain.Billing.CashClose> CashCloses => _cashCloses ??= new Repository<VetManagement.Domain.Billing.CashClose>(context);
 

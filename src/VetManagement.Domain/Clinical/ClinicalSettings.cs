@@ -17,6 +17,9 @@ public class ClinicalSettings
 
     public PreventiveReminderSettings Reminders { get; set; } = new();
 
+    /// <summary>Supplies used in visits and inventory products of applied doses leave stock (and go back when removed).</summary>
+    public bool DeductStockOnUse { get; set; } = true;
+
     public List<string> Validate()
     {
         var errors = new List<string>();

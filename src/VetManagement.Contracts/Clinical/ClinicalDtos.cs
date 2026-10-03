@@ -28,6 +28,33 @@ public sealed class RecordDoseRequest
 
     [MaxLength(1000)]
     public string? Notes { get; init; }
+
+    /// <summary>Inventory product applied; one unit leaves stock when the clinic enables it.</summary>
+    public int? ItemId { get; init; }
+}
+
+/// <summary>A drug or material from inventory used during a visit.</summary>
+public sealed class AddVisitSupplyRequest
+{
+    public int ItemId { get; init; }
+
+    [Range(1, 10_000)]
+    public int Quantity { get; init; } = 1;
+
+    [MaxLength(500)]
+    public string? Notes { get; init; }
+}
+
+public sealed class VisitSupplyDto
+{
+    public int Id { get; set; }
+    public int VisitId { get; set; }
+    public int ItemId { get; set; }
+    public string ItemName { get; set; } = string.Empty;
+    public int Quantity { get; set; }
+    public string? Notes { get; set; }
+    public bool StockDeducted { get; set; }
+    public string? CreatedBy { get; set; }
 }
 
 public sealed class PreventiveDoseDto
@@ -44,6 +71,7 @@ public sealed class PreventiveDoseDto
     public string? AppliedBy { get; set; }
     public string? Notes { get; set; }
     public DateTime? ReminderSentAtUtc { get; set; }
+    public int? ItemId { get; set; }
 }
 
 public sealed class PetHistoryDto
@@ -61,6 +89,8 @@ public sealed class PetHistoryDto
     public string? OwnerPhone { get; set; }
     public List<MedicalVisitDto> Visits { get; set; } = [];
     public List<PreventiveDoseDto> Doses { get; set; } = [];
+    /// <summary>Supplies used in the visits above (match them by VisitId).</summary>
+    public List<VisitSupplyDto> Supplies { get; set; } = [];
 }
 
 /// <summary>A pet whose next preventive dose is due, with the owner's contact for a call or message.</summary>

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using VetManagement.Application.Configuration;
 using VetManagement.Application.Contracts.Persistence;
 using VetManagement.Application.Contracts.Services;
+using VetManagement.Application.Inventory;
 using VetManagement.Application.Scheduling;
 using VetManagement.Application.Services;
 using VetManagement.Domain.Clients;
@@ -23,11 +24,11 @@ public class ClinicalSettingsService(IUnitOfWork unitOfWork, AuditService audit)
 }
 
 public sealed record NewDose(string? ProtocolCode, string? ProductName, PreventiveKind? Kind, DateOnly AppliedOn,
-    DateOnly? NextDueOn, string? BatchNumber, int? VisitId, string? Notes);
+    DateOnly? NextDueOn, string? BatchNumber, int? VisitId, string? Notes, int? ItemId = null);
 
 public sealed record DoseView(PreventiveDose Dose, PreventiveStatus Status);
 
-public sealed record PetHistory(Pet Pet, Client? Owner, List<MedicalVisit> Visits, List<DoseView> Doses);
+public sealed record PetHistory(Pet Pet, Client? Owner, List<MedicalVisit> Visits, List<DoseView> Doses, List<VisitSupply> Supplies);
 
 /// <summary>A dose whose next application is due, with whom to contact.</summary>
 public sealed record DueDose(PreventiveDose Dose, PreventiveStatus Status, Pet Pet, Client? Owner);
@@ -67,6 +68,8 @@ public class ClinicalService(
 
         var owner = await unitOfWork.Clients.GetByIdAsNoTrackingAsync(pet.OwnerId);
         var visits = (await unitOfWork.MedicalVisits.GetFilteredAsync(patientId: petId)).ToList();
+        var visitIds = visits.Select(v => v.Id).ToList();
+        var supplies = (await unitOfWork.VisitSupplies.FindAsync(s => visitIds.Contains(s.VisitId))).OrderBy(s => s.Id).ToList();
         var doses = (await unitOfWork.PreventiveDoses.FindAsync(d => d.PetId == petId)).ToList();
         var settings = (await clinicalSettings.GetAsync()).Settings;
         var today = await TodayAsync();
@@ -75,7 +78,7 @@ public class ClinicalService(
             .OrderByDescending(d => d.AppliedOn).ThenByDescending(d => d.Id)
             .Select(d => new DoseView(d, d.StatusOn(today, settings.Reminders.DaysBefore, IsSuperseded(d, doses))))
             .ToList();
-        return new PetHistory(pet, owner, visits, views);
+        return new PetHistory(pet, owner, visits, views, supplies);
     }
 
     /// <summary>Records a dose; with a protocol, its name, kind and next due date come from the clinic's settings.</summary>
@@ -89,9 +92,14 @@ public class ClinicalService(
         if (request.AppliedOn > today)
             return new ClinicalResult(ClinicalStatus.Invalid, Error: "The application date can't be in the future.");
 
+        var item = request.ItemId is int itemId ? await unitOfWork.Items.GetByIdAsNoTrackingAsync(itemId) : null;
+        if (request.ItemId is not null && item is null)
+            return new ClinicalResult(ClinicalStatus.Invalid, Error: "The inventory item doesn't exist.");
+
         var dose = new PreventiveDose
         {
             PetId = petId,
+            ItemId = item?.Id,
             AppliedOn = request.AppliedOn,
             BatchNumber = request.BatchNumber,
             VisitId = request.VisitId,
@@ -112,9 +120,10 @@ public class ClinicalService(
         }
         else
         {
-            if (string.IsNullOrWhiteSpace(request.ProductName))
+            var name = string.IsNullOrWhiteSpace(request.ProductName) ? item?.Name : request.ProductName.Trim();
+            if (name is null)
                 return new ClinicalResult(ClinicalStatus.Invalid, Error: "Pick a protocol or enter the product name.");
-            dose.ProductName = request.ProductName.Trim();
+            dose.ProductName = name;
             dose.Kind = request.Kind ?? PreventiveKind.Other;
             dose.NextDueOn = request.NextDueOn;
         }
@@ -122,23 +131,107 @@ public class ClinicalService(
         if (dose.NextDueOn <= dose.AppliedOn)
             return new ClinicalResult(ClinicalStatus.Invalid, Error: "The next dose must be after the application date.");
 
-        await unitOfWork.PreventiveDoses.AddAsync(dose);
-        await unitOfWork.SaveChangesAsync();
+        var result = await unitOfWork.ExecuteExclusiveAsync(Stock.LockKey, async () =>
+        {
+            if (item is not null && settings.DeductStockOnUse)
+            {
+                var stock = (await unitOfWork.Items.GetByIdAsync(item.Id))?.Stock ?? 0;
+                if (stock < 1)
+                    return new ClinicalResult(ClinicalStatus.Invalid, Error: $"'{item.Name}' is out of stock.");
+                await Stock.MoveAsync(unitOfWork, item.Id, 1, InventoryMovementType.Egress, $"Dose for pet #{petId}", userName, dose.CreatedAtUtc);
+                dose.StockDeducted = true;
+            }
+            await unitOfWork.PreventiveDoses.AddAsync(dose);
+            await unitOfWork.SaveChangesAsync();
+            return new ClinicalResult(ClinicalStatus.Done, dose.Id);
+        });
+        if (result.Status != ClinicalStatus.Done)
+            return result;
+
         await audit.LogAsync(nameof(PreventiveDose), dose.Id, AuditActionType.Add, JsonSerializer.Serialize(request), userName);
         return new ClinicalResult(ClinicalStatus.Done, dose.Id);
     }
 
+    /// <summary>Deletes a dose recorded by mistake; its inventory unit goes back to stock.</summary>
     public async Task<ClinicalResult> DeleteDoseAsync(int id, string userName)
     {
-        var dose = await unitOfWork.PreventiveDoses.GetByIdAsync(id);
-        if (dose is null)
-            return new ClinicalResult(ClinicalStatus.NotFound);
+        string? snapshot = null;
+        var result = await unitOfWork.ExecuteExclusiveAsync(Stock.LockKey, async () =>
+        {
+            var dose = await unitOfWork.PreventiveDoses.GetByIdAsync(id);
+            if (dose is null)
+                return new ClinicalResult(ClinicalStatus.NotFound);
 
-        var snapshot = JsonSerializer.Serialize(dose);
-        unitOfWork.PreventiveDoses.Remove(dose);
-        await unitOfWork.SaveChangesAsync();
-        await audit.LogAsync(nameof(PreventiveDose), id, AuditActionType.Delete, snapshot, userName);
-        return new ClinicalResult(ClinicalStatus.Done, id);
+            snapshot = JsonSerializer.Serialize(dose);
+            if (dose.StockDeducted && dose.ItemId is int itemId)
+                await Stock.MoveAsync(unitOfWork, itemId, 1, InventoryMovementType.Ingress, $"Dose #{id} deleted", userName, clock.GetUtcNow().UtcDateTime);
+            unitOfWork.PreventiveDoses.Remove(dose);
+            await unitOfWork.SaveChangesAsync();
+            return new ClinicalResult(ClinicalStatus.Done, id);
+        });
+
+        if (result.Status == ClinicalStatus.Done)
+            await audit.LogAsync(nameof(PreventiveDose), id, AuditActionType.Delete, snapshot!, userName);
+        return result;
+    }
+
+    /// <summary>Records a drug or material used in a visit; it leaves stock when the clinic enables it.</summary>
+    public async Task<ClinicalResult> AddSupplyAsync(int visitId, int itemId, int quantity, string? notes, string userName)
+    {
+        if (quantity < 1)
+            return new ClinicalResult(ClinicalStatus.Invalid, Error: "Quantity must be at least 1.");
+        var settings = (await clinicalSettings.GetAsync()).Settings;
+        var now = clock.GetUtcNow().UtcDateTime;
+
+        var result = await unitOfWork.ExecuteExclusiveAsync(Stock.LockKey, async () =>
+        {
+            if (await unitOfWork.MedicalVisits.GetByIdAsNoTrackingAsync(visitId) is null)
+                return new ClinicalResult(ClinicalStatus.NotFound);
+            var item = await unitOfWork.Items.GetByIdAsNoTrackingAsync(itemId);
+            if (item is null)
+                return new ClinicalResult(ClinicalStatus.Invalid, Error: "The inventory item doesn't exist.");
+            if (settings.DeductStockOnUse && quantity > item.Stock)
+                return new ClinicalResult(ClinicalStatus.Invalid, Error: $"Only {item.Stock} of '{item.Name}' left in stock.");
+
+            var supply = new VisitSupply
+            {
+                VisitId = visitId, ItemId = item.Id, ItemName = item.Name, Quantity = quantity, Notes = notes,
+                CreatedAtUtc = now, CreatedBy = userName
+            };
+            if (settings.DeductStockOnUse)
+            {
+                await Stock.MoveAsync(unitOfWork, item.Id, quantity, InventoryMovementType.Egress, $"Visit #{visitId}", userName, now);
+                supply.StockDeducted = true;
+            }
+            await unitOfWork.VisitSupplies.AddAsync(supply);
+            await unitOfWork.SaveChangesAsync();
+            return new ClinicalResult(ClinicalStatus.Done, supply.Id);
+        });
+
+        if (result.Status == ClinicalStatus.Done)
+            await audit.LogAsync(nameof(VisitSupply), result.Id!.Value, AuditActionType.Add, $"Visit #{visitId}: item {itemId} x{quantity}", userName);
+        return result;
+    }
+
+    /// <summary>Removes a supply recorded by mistake; its quantity goes back to stock.</summary>
+    public async Task<ClinicalResult> RemoveSupplyAsync(int supplyId, string userName)
+    {
+        var result = await unitOfWork.ExecuteExclusiveAsync(Stock.LockKey, async () =>
+        {
+            var supply = await unitOfWork.VisitSupplies.GetByIdAsync(supplyId);
+            if (supply is null)
+                return new ClinicalResult(ClinicalStatus.NotFound);
+            if (supply.StockDeducted)
+                await Stock.MoveAsync(unitOfWork, supply.ItemId, supply.Quantity, InventoryMovementType.Ingress,
+                    $"Visit #{supply.VisitId} supply removed", userName, clock.GetUtcNow().UtcDateTime);
+            unitOfWork.VisitSupplies.Remove(supply);
+            await unitOfWork.SaveChangesAsync();
+            return new ClinicalResult(ClinicalStatus.Done, supplyId);
+        });
+
+        if (result.Status == ClinicalStatus.Done)
+            await audit.LogAsync(nameof(VisitSupply), supplyId, AuditActionType.Delete, "Removed", userName);
+        return result;
     }
 
     /// <summary>Latest doses whose next application is due up to <paramref name="days"/> from today, overdue ones included.</summary>
