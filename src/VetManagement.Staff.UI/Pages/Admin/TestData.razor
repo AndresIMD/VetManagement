@@ -1,0 +1,109 @@
+@page "/admin/test-data"
+@using VetManagement.Contracts.TestData
+@inject TestDataApiService TestDataApi
+@inject ISnackbar Snackbar
+@attribute [Authorize(Policy = "System.TestData")]
+
+<PageTitle>Test Data</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
+    <PageHeader Title="Test Data" Icon="@Icons.Material.Filled.Science" />
+
+    @if (_unavailable)
+    {
+        <MudAlert Severity="Severity.Info">
+            Sample data is only available in development and test environments. This server doesn't offer it, so a clinic's
+            real database can never be filled with fake records.
+        </MudAlert>
+    }
+    else if (_items is null)
+    {
+        <MudProgressLinear Indeterminate="true" />
+    }
+    else
+    {
+        <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-3">
+            Development only: creates realistic fake records in this database (no emails are sent). Some kinds need others first,
+            e.g. exam requests need exams and pets, and pets need clients. Create them top to bottom.
+        </MudAlert>
+
+        <MudPaper Class="pa-3" Elevation="1">
+            <MudTable Items="_items" Dense="true" Elevation="0" Hover="true">
+                <HeaderContent>
+                    <MudTh>Data</MudTh>
+                    <MudTh>Needs</MudTh>
+                    <MudTh Style="text-align:right">In database</MudTh>
+                    <MudTh Style="width: 260px;"></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>
+                        <MudText Typo="Typo.subtitle2">@context.Name</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@context.Description</MudText>
+                    </MudTd>
+                    <MudTd>
+                        @if (context.DependsOn.Count == 0)
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">—</MudText>
+                        }
+                        @foreach (var dependency in context.DependsOn)
+                        {
+                            var ok = !context.Missing.Contains(dependency);
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(ok ? Color.Success : Color.Error)"
+                                     Icon="@(ok ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)">@NameOf(dependency)</MudChip>
+                        }
+                    </MudTd>
+                    <MudTd Style="text-align:right">@context.Existing</MudTd>
+                    <MudTd>
+                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                            <MudNumericField T="int" Value="CountOf(context.Key)" ValueChanged="v => _counts[context.Key] = v" Min="1" Max="1000"
+                                             Dense="true" Style="max-width: 90px;" HideSpinButtons="true" />
+                            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="@(context.CanCreate ? Color.Primary : Color.Default)"
+                                       Disabled="_busy" OnClick="() => CreateAsync(context)">Create</MudButton>
+                        </MudStack>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+
+        @if (_message is not null)
+        {
+            <MudAlert Severity="@(_messageIsError ? Severity.Error : Severity.Success)" Class="mt-3" ShowCloseIcon="true" CloseIconClicked="() => _message = null">
+                @_message
+            </MudAlert>
+        }
+    }
+</MudContainer>
+
+@code {
+    private List<TestDataStatusDto>? _items;
+    private readonly Dictionary<string, int> _counts = [];
+    private bool _unavailable;
+    private bool _busy;
+    private string? _message;
+    private bool _messageIsError;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _items = await TestDataApi.GetStatusAsync();
+        _unavailable = _items is null;
+    }
+
+    private int CountOf(string key) => _counts.TryGetValue(key, out var count) ? count : 100;
+
+    private string NameOf(string key) => _items?.FirstOrDefault(i => i.Key == key)?.Name ?? key;
+
+    // Even when prerequisites are missing the button stays enabled: the answer explains what to create first.
+    private async Task CreateAsync(TestDataStatusDto item)
+    {
+        _busy = true;
+        var (created, error) = await TestDataApi.CreateAsync(item.Key, CountOf(item.Key));
+        _busy = false;
+        _messageIsError = error is not null;
+        _message = error ?? $"Created {created} × {item.Name.ToLowerInvariant()}.";
+        if (error is null)
+            Snackbar.Add(_message, Severity.Success);
+        await LoadAsync();
+    }
+}

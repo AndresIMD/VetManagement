@@ -26,7 +26,8 @@ public static class StaffAuthorization
         ["Billing.Manage"] = "billing.manage",
         ["Medical.Read"] = "medical.read",
         ["Clinical.Manage"] = "clinical.manage",
-        ["Reports.Read"] = "reports.read"
+        ["Reports.Read"] = "reports.read",
+        ["System.TestData"] = "system.test-data"
     };
 
     public static IServiceCollection AddStaffAuthorization(this IServiceCollection services)

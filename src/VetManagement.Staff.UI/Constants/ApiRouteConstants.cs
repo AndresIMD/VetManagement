@@ -82,6 +82,9 @@ public static class ApiRouteConstants
     public const string CLINICAL_DUE = "api/clinical/due";
     public const string CLINICAL_SETTINGS = "api/clinical/settings";
 
+    // Sample data (development only)
+    public const string TEST_DATA = "api/dev/test-data";
+
     // Reports
     public const string REPORTS_SUMMARY = "api/reports/summary";
 }

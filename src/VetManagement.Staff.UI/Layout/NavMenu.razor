@@ -184,10 +184,11 @@
         {
             Title = "Administration",
             Icon = Icons.Material.Filled.AdminPanelSettings,
-            RequiredPerms = new[] { "users.read", "audit.read" },
+            RequiredPerms = new[] { "users.read", "audit.read", "system.test-data" },
             Children = new List<MenuItem>
             {
-                new MenuItem { Title = "Users", Href = "admin/users", Icon = Icons.Material.Filled.People, RequiredPerms = new[] { "users.read" } }
+                new MenuItem { Title = "Users", Href = "admin/users", Icon = Icons.Material.Filled.People, RequiredPerms = new[] { "users.read" } },
+                new MenuItem { Title = "Test Data", Href = "admin/test-data", RequiredPerms = new[] { "system.test-data" } }
             }
         }
     };

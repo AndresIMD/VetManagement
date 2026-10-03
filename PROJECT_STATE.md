@@ -85,7 +85,7 @@ git log --oneline -10
 
 ---
 
-## What is done (verified: 250 tests + 2 SQL Server concurrency tests, CI green, browser end-to-end)
+## What is done (verified: 253 tests + 2 SQL Server concurrency tests, CI green, browser end-to-end)
 
 - Staff CRM modules: inventory (items, movements, alerts), clients and pets, exams (orders, performed, external labs),
   medical visits, audit log, users/roles/permissions, email.
@@ -103,6 +103,8 @@ git log --oneline -10
 - Client portal (F12): owners see their pets' vaccines, visits and upcoming appointments via an emailed link (no account).
 - Charge visit: one button in the clinical record charges the appointment, procedures and supplies, in one sale or split
   taxed / VAT-exempt (per-clinic tax defaults, editable per line); VAT breakdown on sales; legacy visit payment fields retired.
+- Test data: Administration → Test Data creates realistic sample data per kind, in dependency order (development only;
+  guide `docs/guides/DATOS_DE_PRUEBA.md`).
 - Hardening: ProblemDetails, login lockout + rate limits, health check `/healthz`, JSON logs, guard tests.
 - Docs: `docs/architecture/ARCHITECTURE.md`, `docs/architecture/SCHEDULING.md`, `docs/architecture/BILLING.md`, `docs/architecture/CLINICAL.md`, `docs/architecture/REPORTS.md`, `docs/architecture/CLIENT_PORTAL.md`, `docs/DEPLOYMENT.md`.
 

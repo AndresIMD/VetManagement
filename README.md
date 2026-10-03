@@ -47,6 +47,9 @@ VetManagement.sln
 **Why this structure?**  
 Separating business logic (Application) from data access (Infrastructure) makes the code easier to test and maintain. The API layer only handles HTTP concerns and talks to every client through `Contracts`. `Staff.UI` is the UI layer only — the backend never references it, and `ArchitectureTests` enforces that.
 
+Sample data for development: staff web → Administration → Test Data (guide in Spanish:
+[`docs/guides/DATOS_DE_PRUEBA.md`](docs/guides/DATOS_DE_PRUEBA.md)).
+
 See [`docs/architecture/ARCHITECTURE.md`](docs/architecture/ARCHITECTURE.md) for the dependency rules, the module pattern and the guard tests, and [`PROJECT_STATE.md`](PROJECT_STATE.md) for the current roadmap.
 
 ## Key Features

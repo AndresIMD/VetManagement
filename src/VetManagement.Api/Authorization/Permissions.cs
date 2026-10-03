@@ -70,6 +70,8 @@ public static class Permissions
     public static class SYSTEM
     {
         public const string SEND_EMAIL = "system.send-email";
+        /// <summary>Create sample data (development/test environments only).</summary>
+        public const string TEST_DATA = "system.test-data";
     }
 
     public static class SCHEDULING
@@ -173,5 +175,6 @@ public static class Permissions
         yield return BILLING.MANAGE;
         yield return CLINICAL.MANAGE;
         yield return REPORTS.READ;
+        yield return SYSTEM.TEST_DATA;
     }
 }

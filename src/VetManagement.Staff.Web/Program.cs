@@ -140,6 +140,7 @@ ConfigureHttpClient<SchedulingApiService>();
 ConfigureHttpClient<BillingApiService>();
 ConfigureHttpClient<ClinicalApiService>();
 ConfigureHttpClient<ReportsApiService>();
+ConfigureHttpClient<TestDataApiService>();
 ConfigureHttpClient<UserManagementApiService>();
 ConfigureHttpClient<MedicalVisitApiService>();
 ConfigureHttpClient<ItemsApiService>();
