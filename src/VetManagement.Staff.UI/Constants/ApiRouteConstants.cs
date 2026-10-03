@@ -71,4 +71,11 @@ public static class ApiRouteConstants
     public const string BILLING_CASH_DAY = "api/billing/cash/{0}";
     public const string BILLING_CASH_CLOSE = "api/billing/cash/close";
     public const string BILLING_SETTINGS = "api/billing/settings";
+
+    // Clinical record
+    public const string CLINICAL_PET_HISTORY = "api/clinical/pets/{0}/history";
+    public const string CLINICAL_PET_DOSES = "api/clinical/pets/{0}/doses";
+    public const string CLINICAL_DOSE = "api/clinical/doses/{0}";
+    public const string CLINICAL_DUE = "api/clinical/due";
+    public const string CLINICAL_SETTINGS = "api/clinical/settings";
 }

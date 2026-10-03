@@ -1,0 +1,9 @@
+@if (!string.IsNullOrWhiteSpace(Text))
+{
+    <MudText Typo="Typo.body2" Style="white-space: pre-line;"><b>@Label:</b> @Text</MudText>
+}
+
+@code {
+    [Parameter] public string Label { get; set; } = string.Empty;
+    [Parameter] public string? Text { get; set; }
+}

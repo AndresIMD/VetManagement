@@ -148,10 +148,12 @@
         {
             Title = "Clients",
             Icon = Icons.Material.Filled.Assignment,
-            RequiredPerms = new[] { "clientspets.read" },
+            RequiredPerms = new[] { "clientspets.read", "medical.read" },
             Children = new List<MenuItem>
             {
-                new MenuItem { Title = "Search", Href = "client-search", Icon = Icons.Material.Filled.Search, RequiredPerms = new[] { "clientspets.read" } }
+                new MenuItem { Title = "Search", Href = "client-search", Icon = Icons.Material.Filled.Search, RequiredPerms = new[] { "clientspets.read" } },
+                new MenuItem { Title = "Vaccines Due", Href = "clinical/due", RequiredPerms = new[] { "medical.read" } },
+                new MenuItem { Title = "Clinical Settings", Href = "clinical/settings", RequiredPerms = new[] { "clinical.manage" } }
             }
         },
         new MenuItem

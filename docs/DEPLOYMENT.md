@@ -26,9 +26,14 @@ Health check: `GET /healthz` (includes the database).
 
 ## Business configuration (no deploy needed)
 
-Everything business-related (hours, services, deposit %, refund mode, notifications, branding, clinic
-name) is edited by the clinic admin in the staff web → Agenda settings. See
-[architecture/SCHEDULING.md](architecture/SCHEDULING.md). The agenda starts disabled.
+Everything business-related is edited by the clinic admin in the staff web, no deploy needed:
+Agenda settings (hours, services, deposit %, refund mode, notifications, branding; starts disabled),
+Billing settings (payment methods, discount limit, stock on sale) and Clinical settings (vaccine and
+deworming protocols, reminders). See [architecture/SCHEDULING.md](architecture/SCHEDULING.md),
+[BILLING.md](architecture/BILLING.md) and [CLINICAL.md](architecture/CLINICAL.md).
+
+Permissions are stored in the login token: after an update that adds permissions, users log out and
+in again to see the new screens.
 
 ## Booking portal (`src/VetManagement.Booking.Web`)
 

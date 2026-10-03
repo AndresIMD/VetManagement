@@ -52,6 +52,17 @@
                 </MudItem>
             </MudGrid>
 
+            <MudText Typo="Typo.subtitle1">Clinical record</MudText>
+            <MudGrid Class="mb-2">
+                <MudItem xs="12"><MudTextField Label="Reason for visit" @bind-Value="Model.Reason" MaxLength="500" /></MudItem>
+                <MudItem xs="6" sm="3"><MudNumericField T="decimal?" Label="Weight (kg)" @bind-Value="Model.WeightKg" Min="0" Step="0.1m" /></MudItem>
+                <MudItem xs="6" sm="3"><MudNumericField T="decimal?" Label="Temperature (°C)" @bind-Value="Model.TemperatureC" Min="25" Max="45" Step="0.1m" /></MudItem>
+                <MudItem xs="12" sm="6"><MudTextField Label="Diagnosis" @bind-Value="Model.Diagnosis" MaxLength="2000" /></MudItem>
+                <MudItem xs="12" sm="6"><MudTextField Label="Anamnesis" @bind-Value="Model.Anamnesis" Lines="3" MaxLength="4000" /></MudItem>
+                <MudItem xs="12" sm="6"><MudTextField Label="Physical examination" @bind-Value="Model.Examination" Lines="3" MaxLength="4000" /></MudItem>
+                <MudItem xs="12"><MudTextField Label="Treatment / indications" @bind-Value="Model.Treatment" Lines="3" MaxLength="4000" /></MudItem>
+            </MudGrid>
+
             <MudPaper Class="pa-3">
                 <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
                     <MudSelect T="int" Label="Add exam" ValueChanged="AddProcedureFromExam">
@@ -114,6 +125,14 @@
             PaymentStatus = Visit.PaymentStatus,
             PaymentMethod = Visit.PaymentMethod,
             TotalValue = Visit.TotalValue,
+            AppointmentId = Visit.AppointmentId,
+            Reason = Visit.Reason,
+            Anamnesis = Visit.Anamnesis,
+            Examination = Visit.Examination,
+            Diagnosis = Visit.Diagnosis,
+            Treatment = Visit.Treatment,
+            WeightKg = Visit.WeightKg,
+            TemperatureC = Visit.TemperatureC,
             Procedures = Visit.Procedures?.Select(x => new VisitProcedure
             {
                 Id = x.Id,

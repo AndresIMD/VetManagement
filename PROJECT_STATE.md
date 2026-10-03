@@ -24,6 +24,7 @@ Guard tests: `ArchitectureTests` (dependency direction), `MigrationsTests` (EF m
 | **F6** | ✅ **COMPLETED** | Scheduling: per-clinic settings, availability with progressive release, appointments, staff agenda, emails (docs/architecture/SCHEDULING.md) |
 | **F7** | ✅ **COMPLETED** | Online booking: RUT, payment gateways (WebPay Plus / simulated), public API, hosted portal `Booking.Web`, SPVetClinic link (docs/DEPLOYMENT.md) |
 | **F8** | ✅ **COMPLETED** | Billing (caja): sales from appointments or counter, split payments, discounts, voids, daily cash close, stock deducted on sale (docs/architecture/BILLING.md) |
+| **F9** | ✅ **COMPLETED** | Clinical record: visit notes linked to appointments, vaccines/deworming with per-clinic protocols, due list, owner reminders (docs/architecture/CLINICAL.md) |
 
 ---
 
@@ -81,7 +82,7 @@ git log --oneline -10
 
 ---
 
-## What is done (verified: 216 tests + 2 SQL Server concurrency tests, CI green, browser end-to-end)
+## What is done (verified: 233 tests + 2 SQL Server concurrency tests, CI green, browser end-to-end)
 
 - Staff CRM modules: inventory (items, movements, alerts), clients and pets, exams (orders, performed, external labs),
   medical visits, audit log, users/roles/permissions, email.
@@ -91,8 +92,10 @@ git log --oneline -10
   deposit via WebPay Plus (sandbox-verified) or simulated gateway, refund modes, cancellation link.
 - Billing (F8): sales (from an appointment with its online deposit, or at the counter), service/product/other lines,
   split payments with per-clinic payment methods, discount limit, voids, daily cash close, stock deducted on sale.
+- Clinical record (F9): visit notes (reason, anamnesis, exam, diagnosis, treatment, weight, temperature) linked to
+  appointments; vaccines and deworming with per-clinic protocols and next due dates; due list; owner email reminders.
 - Hardening: ProblemDetails, login lockout + rate limits, health check `/healthz`, JSON logs, guard tests.
-- Docs: `docs/architecture/ARCHITECTURE.md`, `docs/architecture/SCHEDULING.md`, `docs/architecture/BILLING.md`, `docs/DEPLOYMENT.md`.
+- Docs: `docs/architecture/ARCHITECTURE.md`, `docs/architecture/SCHEDULING.md`, `docs/architecture/BILLING.md`, `docs/architecture/CLINICAL.md`, `docs/DEPLOYMENT.md`.
 
 ## Blocked on the clinic (not code)
 
@@ -110,7 +113,6 @@ git log --oneline -10
 
 | Phase | Feature | Why |
 |---|---|---|
-| F9 | Clinical record: visit linked to appointment, vaccines and deworming with due dates, automatic reminders | Recurring revenue for clinics; reuses agenda emails |
 | F10 | Inventory consumption from visits (drugs and materials used during a visit) | Products sold already leave stock (F8); clinical use does not yet |
 | F11 | Reports and dashboard: agenda occupancy, no-shows, income, stock value | Admin decisions |
 | F12 | Client web (optional accounts): pet history, vaccines, upcoming appointments | Client web in product scope; today clients use RUT + link |

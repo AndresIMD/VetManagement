@@ -1,0 +1,299 @@
+@page "/clinical/pets/{PetId:int}"
+@using VetManagement.Contracts.Clinical
+@using VetManagement.Contracts.Medical
+@using VetManagement.Staff.UI.Models.Medical
+@using VetManagement.Staff.UI.Components.Modals.Visits
+@inject ClinicalApiService ClinicalApi
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject AuthenticationStateProvider AuthStateProvider
+@attribute [Authorize(Policy = "Medical.Read")]
+
+<PageTitle>Clinical Record</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
+    <PageHeader Title="Clinical Record" Icon="@Icons.Material.Filled.MedicalInformation" />
+
+    @if (_notFound)
+    {
+        <MudAlert Severity="Severity.Warning">Pet #@PetId was not found.</MudAlert>
+    }
+    else if (_history is null)
+    {
+        <MudProgressLinear Indeterminate="true" />
+    }
+    else
+    {
+        <MudPaper Class="pa-3 mb-3" Elevation="1">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="3">
+                <MudText Typo="Typo.h5">@_history.PetName</MudText>
+                <MudText>@_history.Species · @_history.Breed · @_history.Sex</MudText>
+                @if (_history.Birthdate > DateTime.MinValue.AddYears(1))
+                {
+                    <MudText>@Age(_history.Birthdate)</MudText>
+                }
+                @if (_history.Weight > 0)
+                {
+                    <MudText>@_history.Weight.ToString("0.##") kg</MudText>
+                }
+                <MudSpacer />
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Owner: @_history.OwnerName @(_history.OwnerPhone is null ? "" : $"· {_history.OwnerPhone}") @(_history.OwnerEmail is null ? "" : $"· {_history.OwnerEmail}")
+                </MudText>
+            </MudStack>
+        </MudPaper>
+
+        @if (_error is not null)
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-3" ShowCloseIcon="true" CloseIconClicked="() => _error = null">@_error</MudAlert>
+        }
+
+        <MudPaper Class="pa-3 mb-3" Elevation="1">
+            <MudText Typo="Typo.h6" Class="mb-2">Vaccines and deworming</MudText>
+            <MudTable Items="Current" Dense="true" Elevation="0">
+                <HeaderContent>
+                    <MudTh>Product</MudTh>
+                    <MudTh>Kind</MudTh>
+                    <MudTh>Applied</MudTh>
+                    <MudTh>Next dose</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh>Batch</MudTh>
+                    @if (_canDelete)
+                    {
+                        <MudTh />
+                    }
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.ProductName</MudTd>
+                    <MudTd>@context.Kind</MudTd>
+                    <MudTd>@context.AppliedOn.ToString("dd MMM yyyy") · @context.AppliedBy</MudTd>
+                    <MudTd>@(context.NextDueOn?.ToString("dd MMM yyyy") ?? "—")</MudTd>
+                    <MudTd><DoseStatusChip Status="context.Status" /></MudTd>
+                    <MudTd>@context.BatchNumber</MudTd>
+                    @if (_canDelete)
+                    {
+                        <MudTd>
+                            <MudTooltip Text="Delete (recorded by mistake)">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => DeleteDoseAsync(context.Id)" />
+                            </MudTooltip>
+                        </MudTd>
+                    }
+                </RowTemplate>
+                <NoRecordsContent><MudText Typo="Typo.body2" Color="Color.Secondary">No doses recorded yet.</MudText></NoRecordsContent>
+            </MudTable>
+            @if (_history.Doses.Any(d => d.Status == PreventiveStatus.Superseded))
+            {
+                <MudSwitch T="bool" @bind-Value="_showReplaced" Label="Show earlier doses" Color="Color.Primary" Class="mt-1" />
+            }
+
+            @if (_canCreate)
+            {
+                <MudDivider Class="my-3" />
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.End" Wrap="Wrap.Wrap">
+                    <MudSelect T="string" @bind-Value="_dose.ProtocolCode" Label="Protocol" Clearable="true" Style="min-width: 220px;">
+                        @foreach (var p in ProtocolsForPet)
+                        {
+                            <MudSelectItem Value="@p.Code">@p.Name@(p.IntervalDays > 0 ? $" (every {p.IntervalDays} d)" : "")</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudTextField T="string" @bind-Value="_dose.ProductName" Label="@(string.IsNullOrEmpty(_dose.ProtocolCode) ? "Product" : "Brand / product (optional)")" Style="max-width: 200px;" />
+                    @if (string.IsNullOrEmpty(_dose.ProtocolCode))
+                    {
+                        <MudSelect T="PreventiveKind" @bind-Value="_dose.Kind" Label="Kind" Style="max-width: 140px;">
+                            @foreach (var kind in Enum.GetValues<PreventiveKind>())
+                            {
+                                <MudSelectItem Value="kind">@kind</MudSelectItem>
+                            }
+                        </MudSelect>
+                    }
+                    <MudDatePicker Label="Applied on" @bind-Date="_dose.AppliedOn" MaxDate="DateTime.Today" Style="max-width: 150px;" />
+                    <MudDatePicker Label="Next dose (optional)" @bind-Date="_dose.NextDueOn" Style="max-width: 170px;" Clearable="true"
+                                   HelperText="@(string.IsNullOrEmpty(_dose.ProtocolCode) ? null : "Empty: protocol interval")" />
+                    <MudTextField T="string" @bind-Value="_dose.BatchNumber" Label="Batch" Style="max-width: 120px;" />
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Vaccines" OnClick="RecordDoseAsync" Disabled="_busy">Record</MudButton>
+                </MudStack>
+            }
+        </MudPaper>
+
+        <MudPaper Class="pa-3" Elevation="1">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+                <MudText Typo="Typo.h6">Visits</MudText>
+                <MudSpacer />
+                @if (_canCreate)
+                {
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="NewVisitAsync">New visit</MudButton>
+                }
+            </MudStack>
+            @if (_history.Visits.Count == 0)
+            {
+                <MudText Typo="Typo.body2" Color="Color.Secondary">No visits yet.</MudText>
+            }
+            <MudTimeline TimelinePosition="TimelinePosition.Start">
+                @foreach (var visit in _history.Visits)
+                {
+                    <MudTimelineItem Size="Size.Small" Color="Color.Primary">
+                        <MudText Typo="Typo.subtitle1">
+                            @visit.Date.ToLocalTime().ToString("dd MMM yyyy HH:mm") — @(visit.Reason ?? "Visit")
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Inline="true"> · @visit.Responsible</MudText>
+                        </MudText>
+                        @if (visit.WeightKg is not null || visit.TemperatureC is not null)
+                        {
+                            <MudText Typo="Typo.body2">
+                                @(visit.WeightKg is null ? "" : $"Weight {visit.WeightKg:0.##} kg  ")@(visit.TemperatureC is null ? "" : $"Temp. {visit.TemperatureC:0.0} °C")
+                            </MudText>
+                        }
+                        <VisitField Label="Anamnesis" Text="@visit.Anamnesis" />
+                        <VisitField Label="Examination" Text="@visit.Examination" />
+                        <VisitField Label="Diagnosis" Text="@visit.Diagnosis" />
+                        <VisitField Label="Treatment" Text="@visit.Treatment" />
+                        @if (visit.Procedures.Count > 0)
+                        {
+                            <MudText Typo="Typo.body2"><b>Procedures:</b> @string.Join(", ", visit.Procedures.Select(p => p.Name))</MudText>
+                        }
+                        @if (_canUpdate)
+                        {
+                            <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Edit" OnClick="() => EditVisitAsync(visit)">Edit</MudButton>
+                        }
+                    </MudTimelineItem>
+                }
+            </MudTimeline>
+        </MudPaper>
+    }
+</MudContainer>
+
+@code {
+    [Parameter] public int PetId { get; set; }
+    /// <summary>When opened from the agenda: the appointment the new visit attends and its service as the reason.</summary>
+    [SupplyParameterFromQuery(Name = "appointment")] public int? AppointmentId { get; set; }
+    [SupplyParameterFromQuery(Name = "reason")] public string? Reason { get; set; }
+
+    private PetHistoryDto? _history;
+    private List<ProtocolOption> _protocols = [];
+    private bool _notFound;
+    private bool _busy;
+    private bool _showReplaced;
+    private bool _canCreate;
+    private bool _canUpdate;
+    private bool _canDelete;
+    private string? _error;
+    private DoseForm _dose = new();
+
+    private sealed class DoseForm
+    {
+        public string? ProtocolCode { get; set; }
+        public string? ProductName { get; set; }
+        public PreventiveKind Kind { get; set; } = PreventiveKind.Vaccine;
+        public DateTime? AppliedOn { get; set; } = DateTime.Today;
+        public DateTime? NextDueOn { get; set; }
+        public string? BatchNumber { get; set; }
+    }
+
+    private IEnumerable<PreventiveDoseDto> Current
+        => _history!.Doses.Where(d => _showReplaced || d.Status != PreventiveStatus.Superseded);
+
+    private IEnumerable<ProtocolOption> ProtocolsForPet
+        => _protocols.Where(p => p.Enabled && (p.Species is null || p.Species == _history?.Species));
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
+        _canCreate = user.HasClaim("perm", "medical.create");
+        _canUpdate = user.HasClaim("perm", "medical.update");
+        _canDelete = user.HasClaim("perm", "medical.delete");
+        _protocols = await ClinicalApi.GetProtocolsAsync();
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            _history = await ClinicalApi.GetHistoryAsync(PetId);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            _notFound = true;
+        }
+    }
+
+    private static string Age(DateTime birthdate)
+    {
+        var months = (DateTime.Today.Year - birthdate.Year) * 12 + DateTime.Today.Month - birthdate.Month;
+        return months >= 12 ? $"{months / 12} y {months % 12} m" : $"{Math.Max(months, 0)} months";
+    }
+
+    private async Task RecordDoseAsync()
+    {
+        _busy = true;
+        _error = null;
+        var result = await ClinicalApi.RecordDoseAsync(PetId, new RecordDoseRequest
+        {
+            ProtocolCode = _dose.ProtocolCode,
+            ProductName = _dose.ProductName,
+            Kind = string.IsNullOrEmpty(_dose.ProtocolCode) ? _dose.Kind : null,
+            AppliedOn = DateOnly.FromDateTime(_dose.AppliedOn ?? DateTime.Today),
+            NextDueOn = _dose.NextDueOn is { } next ? DateOnly.FromDateTime(next) : null,
+            BatchNumber = _dose.BatchNumber
+        });
+        _busy = false;
+        if (!result.Ok)
+        {
+            _error = result.Error;
+            return;
+        }
+        Snackbar.Add("Dose recorded.", Severity.Success);
+        _dose = new DoseForm();
+        await LoadAsync();
+    }
+
+    private async Task DeleteDoseAsync(int id)
+    {
+        var result = await ClinicalApi.DeleteDoseAsync(id);
+        if (!result.Ok)
+            _error = result.Error;
+        await LoadAsync();
+    }
+
+    private Task NewVisitAsync() => OpenVisitAsync("New visit", new MedicalVisit
+    {
+        Date = DateTime.UtcNow,
+        PatientId = PetId,
+        PatientName = _history!.PetName,
+        AppointmentId = AppointmentId,
+        Reason = Reason,
+        Procedures = []
+    });
+
+    private Task EditVisitAsync(MedicalVisitDto dto) => OpenVisitAsync("Edit visit", new MedicalVisit
+    {
+        Id = dto.Id,
+        Date = dto.Date,
+        PatientId = dto.PatientId,
+        PatientName = dto.PatientName,
+        RecordNumber = dto.RecordNumber,
+        Responsible = dto.Responsible,
+        Location = dto.Location,
+        BudgetNumber = dto.BudgetNumber,
+        PaymentStatus = dto.PaymentStatus,
+        PaymentMethod = dto.PaymentMethod,
+        TotalValue = dto.TotalValue,
+        AppointmentId = dto.AppointmentId,
+        Reason = dto.Reason,
+        Anamnesis = dto.Anamnesis,
+        Examination = dto.Examination,
+        Diagnosis = dto.Diagnosis,
+        Treatment = dto.Treatment,
+        WeightKg = dto.WeightKg,
+        TemperatureC = dto.TemperatureC,
+        Procedures = dto.Procedures.Select(p => new VisitProcedure { Id = p.Id, ExamId = p.ExamId, Name = p.Name, Price = p.Price, Notes = p.Notes }).ToList()
+    });
+
+    private async Task OpenVisitAsync(string title, MedicalVisit visit)
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var parameters = new DialogParameters<MedicalVisitEditModal> { { x => x.Visit, visit } };
+        var dialog = await DialogService.ShowAsync<MedicalVisitEditModal>(title, parameters, options);
+        if (await dialog.Result is { Canceled: false })
+            await LoadAsync();
+    }
+}

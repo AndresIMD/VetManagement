@@ -71,6 +71,10 @@
                             {
                                 <li>
                                     <b>@pet.Name</b> (ID: @pet.Id, @pet.Species, @pet.Breed, Chip: @pet.ChipId)
+                                    <MudTooltip Text="Clinical record">
+                                        <MudIconButton Icon="@Icons.Material.Filled.MedicalInformation" Color="Color.Primary"
+                                                       Size="Size.Small" Class="ml-1" Href="@($"clinical/pets/{pet.Id}")" />
+                                    </MudTooltip>
                                     <MudTooltip Text="Register exams">
                                         <MudIconButton Icon="@Icons.Material.Filled.Biotech" Color="Color.Info"
                                                        Size="Size.Small" Class="ml-1" OnClick="@(() => GoToExamRequest(pet.Id))" />

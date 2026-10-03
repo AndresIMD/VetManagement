@@ -1,0 +1,22 @@
+<MudChip T="string" Size="Size.Small" Color="@Color" Variant="@(Status == PreventiveStatus.Superseded ? Variant.Outlined : Variant.Filled)">@Label</MudChip>
+
+@code {
+    [Parameter] public PreventiveStatus Status { get; set; }
+
+    private Color Color => Status switch
+    {
+        PreventiveStatus.Overdue => Color.Error,
+        PreventiveStatus.DueSoon => Color.Warning,
+        PreventiveStatus.UpToDate => Color.Success,
+        _ => Color.Default
+    };
+
+    private string Label => Status switch
+    {
+        PreventiveStatus.DueSoon => "Due soon",
+        PreventiveStatus.UpToDate => "Up to date",
+        PreventiveStatus.NoRepeat => "Single dose",
+        PreventiveStatus.Superseded => "Replaced",
+        _ => Status.ToString()
+    };
+}

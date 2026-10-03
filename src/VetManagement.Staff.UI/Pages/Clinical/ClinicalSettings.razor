@@ -1,0 +1,30 @@
+@page "/clinical/settings"
+@using System.Text.Json
+@using VetManagement.Contracts.Clinical
+@using VetManagement.Staff.UI.Components.Settings
+@inject ClinicalApiService ClinicalApi
+@attribute [Authorize(Policy = "Clinical.Manage")]
+
+<PageTitle>Clinical Settings</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
+    <PageHeader Title="Clinical Settings" Icon="@Icons.Material.Filled.Vaccines" />
+
+    <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3">
+        Preventive protocols (vaccines and deworming): name, kind (<code>Vaccine</code>, <code>Deworming</code>, <code>Other</code>),
+        species (<code>Dog</code>, <code>Cat</code>, ... or <code>null</code> for any), days until the next dose (<code>0</code> = single dose)
+        and whether it is offered. Reminders: email owners this many days before a dose is due.
+        The starting protocols are placeholders: adjust them to your clinic's schedule. Never change a protocol's
+        <code>code</code> once used. See <code>docs/architecture/CLINICAL.md</code>.
+    </MudAlert>
+
+    <SettingsJsonEditor Load="LoadAsync" Save="SaveAsync" SavedMessage="Clinical settings saved." Lines="28" />
+</MudContainer>
+
+@code {
+    private async Task<(int Version, JsonElement Settings)?> LoadAsync()
+        => await ClinicalApi.GetSettingsAsync() is { } d ? (d.Version, d.Settings) : null;
+
+    private Task<ApiResult> SaveAsync(int version, JsonElement settings)
+        => ClinicalApi.SaveSettingsAsync(new ClinicalSettingsDocument { Version = version, Settings = settings });
+}
