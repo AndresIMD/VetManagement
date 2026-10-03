@@ -20,10 +20,14 @@ public class ClinicalSettings
     /// <summary>Supplies used in visits and inventory products of applied doses leave stock (and go back when removed).</summary>
     public bool DeductStockOnUse { get; set; } = true;
 
+    /// <summary>Clients see their pets' file (vaccines, visits, upcoming appointments) through an emailed link.</summary>
+    public ClientPortalSettings ClientPortal { get; set; } = new();
+
     public List<string> Validate()
     {
         var errors = new List<string>();
         if (Reminders.DaysBefore is < 0 or > 90) errors.Add("Reminders.DaysBefore must be between 0 and 90.");
+        if (ClientPortal.LinkValidMinutes is < 5 or > 1440) errors.Add("ClientPortal.LinkValidMinutes must be between 5 and 1440.");
         foreach (var p in Protocols)
         {
             if (string.IsNullOrWhiteSpace(p.Code) || string.IsNullOrWhiteSpace(p.Name))
@@ -51,6 +55,16 @@ public class PreventiveProtocol
     /// <summary>Days until the next dose; 0 = single dose.</summary>
     public int IntervalDays { get; set; }
     public bool Enabled { get; set; } = true;
+}
+
+public class ClientPortalSettings
+{
+    /// <summary>Off until the clinic decides to offer it.</summary>
+    public bool Enabled { get; set; }
+    /// <summary>How long an emailed access link works.</summary>
+    public int LinkValidMinutes { get; set; } = 60;
+    /// <summary>Show diagnosis and treatment of past visits (otherwise only date and reason).</summary>
+    public bool ShowVisitDetails { get; set; } = true;
 }
 
 public class PreventiveReminderSettings

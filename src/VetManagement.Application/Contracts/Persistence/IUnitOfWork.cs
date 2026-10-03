@@ -24,6 +24,7 @@ public interface IUnitOfWork : IDisposable
     ISaleRepository Sales { get; }
     IRepository<VetManagement.Domain.Clinical.PreventiveDose> PreventiveDoses { get; }
     IRepository<VetManagement.Domain.Clinical.VisitSupply> VisitSupplies { get; }
+    IRepository<VetManagement.Domain.Clients.ClientAccessToken> ClientAccessTokens { get; }
     IRepository<VetManagement.Domain.Billing.CashClose> CashCloses { get; }
 
     Task<int> SaveChangesAsync();

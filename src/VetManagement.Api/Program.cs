@@ -171,6 +171,7 @@ builder.Services.AddScoped<VetManagement.Application.Billing.BillingService>();
 builder.Services.AddScoped<VetManagement.Application.Clinical.ClinicalSettingsService>();
 builder.Services.AddScoped<VetManagement.Application.Clinical.ClinicalService>();
 builder.Services.AddScoped<VetManagement.Application.Reports.ReportsService>();
+builder.Services.AddScoped<VetManagement.Application.ClientPortal.ClientPortalService>();
 builder.Services.AddPaymentGateway(builder.Configuration, builder.Environment);
 builder.Services.AddScoped<VetManagement.Application.Contracts.Services.IEmailSender, SmtpEmailSender>();
 builder.Services.AddSingleton(TimeProvider.System);

@@ -33,6 +33,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<VisitProcedure> VisitProcedures { get; set; }
     public DbSet<VetManagement.Domain.Clinical.PreventiveDose> PreventiveDoses { get; set; }
     public DbSet<VetManagement.Domain.Clinical.VisitSupply> VisitSupplies { get; set; }
+    public DbSet<VetManagement.Domain.Clients.ClientAccessToken> ClientAccessTokens { get; set; }
 
     public DbSet<ClinicSetting> ClinicSettings { get; set; }
     public DbSet<Appointment> Appointments { get; set; }
@@ -194,6 +195,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             e.Property(d => d.BatchNumber).HasMaxLength(100);
             e.Property(d => d.Notes).HasMaxLength(1000);
             e.Property(d => d.AppliedBy).HasMaxLength(256);
+        });
+        builder.Entity<VetManagement.Domain.Clients.ClientAccessToken>(e =>
+        {
+            e.HasIndex(t => t.TokenHash).IsUnique();
+            e.HasIndex(t => new { t.ClientId, t.CreatedAtUtc });
+            e.Property(t => t.TokenHash).HasMaxLength(64);
         });
         builder.Entity<VetManagement.Domain.Clinical.VisitSupply>(e =>
         {
