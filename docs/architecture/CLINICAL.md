@@ -20,8 +20,7 @@ the current stock is rejected. The item name is copied, so the record stays read
 A dose can also name the inventory product applied: one unit leaves stock, and deleting the dose returns it.
 
 Every automatic stock change (sales, supplies, doses) runs under one `sp_getapplock` key (`stock`), so two
-of them never overwrite each other's stock count. Manual adjustments in the inventory screens don't take
-that lock yet.
+of them never overwrite each other's stock count; manual adjustments in the inventory screens take it too.
 
 ## Preventive care (vaccines, deworming)
 

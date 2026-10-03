@@ -10,7 +10,7 @@ public static class Stock
     /// <summary>
     /// Lock held by every automatic stock change and by billing, so two of them never read the same stock and
     /// overwrite each other. ponytail: one clinic-wide key; per-item keys if a clinic ever outgrows it.
-    /// Manual adjustments in the inventory screens don't take it yet.
+    /// Manual adjustments in the inventory screens take it too.
     /// </summary>
     public const string LockKey = "stock";
 

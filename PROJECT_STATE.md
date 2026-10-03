@@ -117,7 +117,6 @@ git log --oneline -10
 - Billing: should charging an appointment mark it `Completed`? Refunds of paid sales and reopening a closed day are not built.
 - Medical visits still carry legacy payment status/method fields that overlap billing (F8); hide them?
 - Charge a visit's supplies in billing ("Charge visit" building the sale from the record)?
-- Manual stock adjustments in the inventory screens don't take the shared stock lock yet (low risk).
 - Prescriptions as printable documents; attachments (images, lab PDFs) in the clinical record.
 
 ## Roadmap (proposed, not started)

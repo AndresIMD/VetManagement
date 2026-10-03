@@ -1,6 +1,7 @@
 using System.Text.Json;
 using VetManagement.Application.Contracts.Persistence;
 using VetManagement.Application.Contracts.Services;
+using VetManagement.Application.Inventory;
 using VetManagement.Domain.Enums;
 using VetManagement.Domain.Inventory;
 using VetManagement.Application.Common;
@@ -98,34 +99,41 @@ public class InventoryMovementService(IUnitOfWork unitOfWork, IRealtimeNotificat
         if (amount == 0)
             return false;
 
-        var item = await unitOfWork.Items.GetByIdAsync(itemId);
-        if (item == null)
-            return false;
-
-        int oldStock = item.Stock;
-        item.Stock += amount;
-        var moveType = amount > 0 ? DomainInventoryMovementType.Ingress : DomainInventoryMovementType.Egress;
-
-        unitOfWork.Items.Update(item);
-
-        await unitOfWork.InventoryMovements.AddAsync(new()
+        // Same lock as sales and clinical use, so a manual adjustment never overwrites their stock change.
+        var newStock = await unitOfWork.ExecuteExclusiveAsync(Stock.LockKey, async () =>
         {
-            ItemId = item.Id,
-            Type = moveType,
-            Quantity = Math.Abs(amount),
-            Date = DateTime.UtcNow,
-            Reason = string.IsNullOrWhiteSpace(reason) ? InventoryReasons.QUICK_ADJUSTMENT : reason,
-            Responsible = userName
-        });
+            var item = await unitOfWork.Items.GetByIdAsync(itemId);
+            if (item == null)
+                return (int?)null;
 
-        await unitOfWork.SaveChangesAsync();
-        await LogAuditAsync(nameof(Item), item.Id, AuditActionType.Adjustment,
-            $"Stock before: {oldStock}, Stock after: {item.Stock}, Amount: {amount}, Reason: {reason}", userName);
+            int oldStock = item.Stock;
+            item.Stock += amount;
+            var moveType = amount > 0 ? DomainInventoryMovementType.Ingress : DomainInventoryMovementType.Egress;
+
+            unitOfWork.Items.Update(item);
+
+            await unitOfWork.InventoryMovements.AddAsync(new()
+            {
+                ItemId = item.Id,
+                Type = moveType,
+                Quantity = Math.Abs(amount),
+                Date = DateTime.UtcNow,
+                Reason = string.IsNullOrWhiteSpace(reason) ? InventoryReasons.QUICK_ADJUSTMENT : reason,
+                Responsible = userName
+            });
+
+            await unitOfWork.SaveChangesAsync();
+            await LogAuditAsync(nameof(Item), item.Id, AuditActionType.Adjustment,
+                $"Stock before: {oldStock}, Stock after: {item.Stock}, Amount: {amount}, Reason: {reason}", userName);
+            return item.Stock;
+        });
+        if (newStock is null)
+            return false;
 
         if (notificationService is not null)
         {
-            await notificationService.NotifyPropertyChangedAsync<Item>(item.Id, nameof(Item.Stock), item.Stock);
-            await notificationService.NotifyEntityChangedAsync<InventoryMovement>(item.Id, "Add", new { itemId, amount, reason });
+            await notificationService.NotifyPropertyChangedAsync<Item>(itemId, nameof(Item.Stock), newStock.Value);
+            await notificationService.NotifyEntityChangedAsync<InventoryMovement>(itemId, "Add", new { itemId, amount, reason });
         }
 
         return true;
@@ -133,56 +141,64 @@ public class InventoryMovementService(IUnitOfWork unitOfWork, IRealtimeNotificat
 
     public async Task<int> MassStockUpdateAsync(IEnumerable<MassStockUpdateRequest> items, bool isIngress, string userName)
     {
-        int updatedCount = 0;
+        var requests = items.ToList();
         List<(int ItemId, int NewStock)> changedItems = [];
 
-        foreach (var dto in items)
+        // Same lock as sales and clinical use, so a bulk update never overwrites their stock changes.
+        var updatedCount = await unitOfWork.ExecuteExclusiveAsync(Stock.LockKey, async () =>
         {
-            Item? item = dto.ItemId > 0
-                ? await unitOfWork.Items.GetByIdAsync(dto.ItemId)
-                : await unitOfWork.Items.GetByBarcodeAsync(dto.Barcode ?? string.Empty);
+            int count = 0;
+            changedItems.Clear();
 
-            if (item == null || dto.Quantity <= 0)
-                continue;
-
-            int oldStock = item.Stock;
-            int appliedQuantity;
-
-            if (isIngress)
+            foreach (var dto in requests)
             {
-                appliedQuantity = dto.Quantity;
-                item.Stock += appliedQuantity;
-            }
-            else
-            {
-                if (oldStock == 0)
+                Item? item = dto.ItemId > 0
+                    ? await unitOfWork.Items.GetByIdAsync(dto.ItemId)
+                    : await unitOfWork.Items.GetByBarcodeAsync(dto.Barcode ?? string.Empty);
+
+                if (item == null || dto.Quantity <= 0)
                     continue;
-                appliedQuantity = Math.Min(oldStock, dto.Quantity);
-                item.Stock -= appliedQuantity;
+
+                int oldStock = item.Stock;
+                int appliedQuantity;
+
+                if (isIngress)
+                {
+                    appliedQuantity = dto.Quantity;
+                    item.Stock += appliedQuantity;
+                }
+                else
+                {
+                    if (oldStock == 0)
+                        continue;
+                    appliedQuantity = Math.Min(oldStock, dto.Quantity);
+                    item.Stock -= appliedQuantity;
+                }
+
+                unitOfWork.Items.Update(item);
+
+                await unitOfWork.InventoryMovements.AddAsync(new()
+                {
+                    ItemId = item.Id,
+                    Type = isIngress ? DomainInventoryMovementType.MassiveStockIngress : DomainInventoryMovementType.MassiveStockEgress,
+                    Quantity = appliedQuantity,
+                    Date = DateTime.UtcNow,
+                    Reason = isIngress ? InventoryReasons.MASSIVE_INGRESS : InventoryReasons.MASSIVE_EGRESS,
+                    Responsible = userName
+                });
+
+                var movementType = isIngress ? DomainInventoryMovementType.MassiveStockIngress : DomainInventoryMovementType.MassiveStockEgress;
+                await LogAuditAsync(nameof(Item), item.Id,
+                    movementType.ToAuditActionType(),
+                    $"Stock before: {oldStock}, Stock after: {item.Stock}, Applied quantity: {appliedQuantity}, ID: {item.Id}, Barcode: {item.Barcode}", userName);
+
+                changedItems.Add((item.Id, item.Stock));
+                count++;
             }
 
-            unitOfWork.Items.Update(item);
-
-            await unitOfWork.InventoryMovements.AddAsync(new()
-            {
-                ItemId = item.Id,
-                Type = isIngress ? DomainInventoryMovementType.MassiveStockIngress : DomainInventoryMovementType.MassiveStockEgress,
-                Quantity = appliedQuantity,
-                Date = DateTime.UtcNow,
-                Reason = isIngress ? InventoryReasons.MASSIVE_INGRESS : InventoryReasons.MASSIVE_EGRESS,
-                Responsible = userName
-            });
-
-            var movementType = isIngress ? DomainInventoryMovementType.MassiveStockIngress : DomainInventoryMovementType.MassiveStockEgress;
-            await LogAuditAsync(nameof(Item), item.Id,
-                movementType.ToAuditActionType(),
-                $"Stock before: {oldStock}, Stock after: {item.Stock}, Applied quantity: {appliedQuantity}, ID: {item.Id}, Barcode: {item.Barcode}", userName);
-
-            changedItems.Add((item.Id, item.Stock));
-            updatedCount++;
-        }
-
-        await unitOfWork.SaveChangesAsync();
+            await unitOfWork.SaveChangesAsync();
+            return count;
+        });
 
         if (changedItems.Count > 0 && notificationService is not null)
         {

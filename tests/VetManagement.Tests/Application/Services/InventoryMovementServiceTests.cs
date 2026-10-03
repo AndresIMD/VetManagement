@@ -33,6 +33,11 @@ public class InventoryMovementServiceTests
         _mockUnitOfWork.Setup(u => u.InventoryMovements).Returns(_mockMovementRepo.Object);
         _mockUnitOfWork.Setup(u => u.Items).Returns(_mockItemRepo.Object);
         _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(_mockAuditRepo.Object);
+        // Stock changes run under the shared stock lock; here the work simply runs.
+        _mockUnitOfWork.Setup(u => u.ExecuteExclusiveAsync(It.IsAny<string>(), It.IsAny<Func<Task<int?>>>()))
+            .Returns((string _, Func<Task<int?>> work) => work());
+        _mockUnitOfWork.Setup(u => u.ExecuteExclusiveAsync(It.IsAny<string>(), It.IsAny<Func<Task<int>>>()))
+            .Returns((string _, Func<Task<int>> work) => work());
 
         _service = new InventoryMovementService(_mockUnitOfWork.Object, _mockNotificationService.Object);
     }
