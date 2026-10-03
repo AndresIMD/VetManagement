@@ -20,7 +20,10 @@ public static class StaffAuthorization
         ["ExternalLabs.Read"] = "externallabs.read",
         ["Scheduling.Read"] = "scheduling.read",
         ["Scheduling.Book"] = "scheduling.book",
-        ["Scheduling.Manage"] = "scheduling.manage"
+        ["Scheduling.Manage"] = "scheduling.manage",
+        ["Billing.Read"] = "billing.read",
+        ["Billing.Charge"] = "billing.charge",
+        ["Billing.Manage"] = "billing.manage"
     };
 
     public static IServiceCollection AddStaffAuthorization(this IServiceCollection services)

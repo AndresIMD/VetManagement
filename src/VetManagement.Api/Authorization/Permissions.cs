@@ -81,6 +81,15 @@ public static class Permissions
         public const string MANAGE = "scheduling.manage";
     }
 
+    public static class BILLING
+    {
+        public const string READ = "billing.read";
+        /// <summary>Open sales, add lines and payments, close the day's cash.</summary>
+        public const string CHARGE = "billing.charge";
+        /// <summary>Void sales, discounts above the clinic's limit, billing settings.</summary>
+        public const string MANAGE = "billing.manage";
+    }
+
     /// <summary>Single source of the permissions each role grants (seeding and user management both use it).</summary>
     public static IEnumerable<string> ForRole(string role) => role switch
     {
@@ -95,7 +104,8 @@ public static class Permissions
             CLIENTS_PETS.READ, CLIENTS_PETS.CREATE, CLIENTS_PETS.UPDATE,
             AUDIT.READ,
             SYSTEM.SEND_EMAIL,
-            SCHEDULING.READ, SCHEDULING.BOOK
+            SCHEDULING.READ, SCHEDULING.BOOK,
+            BILLING.READ, BILLING.CHARGE
         ],
         "Employee" =>
         [
@@ -105,7 +115,8 @@ public static class Permissions
             EXAMS_PERFORMED.READ, EXAMS_PERFORMED.CREATE,
             MEDICAL.READ, MEDICAL.CREATE,
             CLIENTS_PETS.READ, CLIENTS_PETS.CREATE,
-            SCHEDULING.READ, SCHEDULING.BOOK
+            SCHEDULING.READ, SCHEDULING.BOOK,
+            BILLING.READ, BILLING.CHARGE
         ],
         _ => []
     };
@@ -144,5 +155,8 @@ public static class Permissions
         yield return SCHEDULING.READ;
         yield return SCHEDULING.BOOK;
         yield return SCHEDULING.MANAGE;
+        yield return BILLING.READ;
+        yield return BILLING.CHARGE;
+        yield return BILLING.MANAGE;
     }
 }

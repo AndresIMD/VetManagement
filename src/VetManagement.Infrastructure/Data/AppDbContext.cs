@@ -34,6 +34,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
 
     public DbSet<ClinicSetting> ClinicSettings { get; set; }
     public DbSet<Appointment> Appointments { get; set; }
+    public DbSet<VetManagement.Domain.Billing.Sale> Sales { get; set; }
+    public DbSet<VetManagement.Domain.Billing.SaleLine> SaleLines { get; set; }
+    public DbSet<VetManagement.Domain.Billing.SalePayment> SalePayments { get; set; }
+    public DbSet<VetManagement.Domain.Billing.CashClose> CashCloses { get; set; }
 
     private static readonly JsonSerializerOptions _jsonOptions = new();
     private static string SerializeDict(Dictionary<string, string>? v)
@@ -88,6 +92,42 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         builder.Entity<Appointment>().Property(a => a.PaymentProvider).HasMaxLength(50);
         builder.Entity<Appointment>().Property(a => a.PaymentToken).HasMaxLength(100);
         builder.Entity<Appointment>().HasIndex(a => a.PaymentToken);
+
+        // Billing: computed totals (Total, Balance, Gross...) are never stored.
+        builder.Entity<VetManagement.Domain.Billing.Sale>(e =>
+        {
+            e.Ignore(s => s.Total); e.Ignore(s => s.PaidAmount); e.Ignore(s => s.Balance);
+            e.HasIndex(s => new { s.BusinessDate, s.Status });
+            // One live sale per appointment (2 = SaleStatus.Voided: a voided sale can be replaced).
+            e.HasIndex(s => s.AppointmentId).IsUnique().HasFilter("[AppointmentId] IS NOT NULL AND [Status] <> 2");
+            e.Property(s => s.CustomerName).HasMaxLength(200);
+            e.Property(s => s.Notes).HasMaxLength(1000);
+            e.Property(s => s.CreatedBy).HasMaxLength(256);
+            e.Property(s => s.VoidedBy).HasMaxLength(256);
+            e.Property(s => s.VoidReason).HasMaxLength(500);
+            e.HasMany(s => s.Lines).WithOne().HasForeignKey(l => l.SaleId).OnDelete(DeleteBehavior.Cascade);
+            e.HasMany(s => s.Payments).WithOne().HasForeignKey(p => p.SaleId).OnDelete(DeleteBehavior.Cascade);
+        });
+        builder.Entity<VetManagement.Domain.Billing.SaleLine>(e =>
+        {
+            e.Ignore(l => l.Gross); e.Ignore(l => l.Total);
+            e.Property(l => l.Description).HasMaxLength(200);
+            e.Property(l => l.ServiceCode).HasMaxLength(100);
+        });
+        builder.Entity<VetManagement.Domain.Billing.SalePayment>(e =>
+        {
+            e.HasIndex(p => p.BusinessDate);
+            e.Property(p => p.Method).HasMaxLength(50);
+            e.Property(p => p.Reference).HasMaxLength(100);
+            e.Property(p => p.ReceivedBy).HasMaxLength(256);
+        });
+        builder.Entity<VetManagement.Domain.Billing.CashClose>(e =>
+        {
+            e.Ignore(c => c.Difference);
+            e.HasIndex(c => c.BusinessDate).IsUnique();
+            e.Property(c => c.Notes).HasMaxLength(1000);
+            e.Property(c => c.ClosedBy).HasMaxLength(256);
+        });
 
         // Configure DosageRange as owned type for Drug
         builder.Entity<Drug>().OwnsOne(d => d.DosageDog);

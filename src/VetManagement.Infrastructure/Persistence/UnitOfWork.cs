@@ -20,6 +20,8 @@ public class UnitOfWork(AppDbContext context) : IUnitOfWork
     private IMedicalVisitRepository? _medicalVisits;
     private IClinicSettingRepository? _clinicSettings;
     private IAppointmentRepository? _appointments;
+    private ISaleRepository? _sales;
+    private IRepository<VetManagement.Domain.Billing.CashClose>? _cashCloses;
 
     public IItemRepository Items => _items ??= new ItemRepository(context);
 
@@ -42,6 +44,10 @@ public class UnitOfWork(AppDbContext context) : IUnitOfWork
     public IClinicSettingRepository ClinicSettings => _clinicSettings ??= new ClinicSettingRepository(context);
 
     public IAppointmentRepository Appointments => _appointments ??= new AppointmentRepository(context);
+
+    public ISaleRepository Sales => _sales ??= new SaleRepository(context);
+
+    public IRepository<VetManagement.Domain.Billing.CashClose> CashCloses => _cashCloses ??= new Repository<VetManagement.Domain.Billing.CashClose>(context);
 
     public async Task<int> SaveChangesAsync()
     {

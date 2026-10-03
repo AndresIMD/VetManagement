@@ -1,24 +1,15 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
+using VetManagement.Application.Configuration;
 using VetManagement.Domain.Scheduling;
 
 namespace VetManagement.Application.Scheduling;
 
-/// <summary>
-/// JSON format of <see cref="SchedulingSettings"/>, shared by the defaults file, the database and the admin API.
-/// Enums are written as names ("Vet", "ManualApproval") so the document stays readable for admins.
-/// </summary>
+/// <summary>JSON format of <see cref="SchedulingSettings"/> (see <see cref="SettingsJson"/>).</summary>
 public static class SchedulingJson
 {
-    public static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web)
-    {
-        WriteIndented = true,
-        Converters = { new JsonStringEnumConverter() }
-    };
+    public static JsonSerializerOptions Options => SettingsJson.Options;
 
-    public static SchedulingSettings Deserialize(string json) =>
-        JsonSerializer.Deserialize<SchedulingSettings>(json, Options)
-        ?? throw new JsonException("Scheduling settings document is empty.");
+    public static SchedulingSettings Deserialize(string json) => SettingsJson.Deserialize<SchedulingSettings>(json);
 
-    public static string Serialize(SchedulingSettings settings) => JsonSerializer.Serialize(settings, Options);
+    public static string Serialize(SchedulingSettings settings) => SettingsJson.Serialize(settings);
 }

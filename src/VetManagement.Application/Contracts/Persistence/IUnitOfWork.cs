@@ -21,6 +21,8 @@ public interface IUnitOfWork : IDisposable
     IMedicalVisitRepository MedicalVisits { get; }
     IClinicSettingRepository ClinicSettings { get; }
     IAppointmentRepository Appointments { get; }
+    ISaleRepository Sales { get; }
+    IRepository<VetManagement.Domain.Billing.CashClose> CashCloses { get; }
 
     Task<int> SaveChangesAsync();
 
