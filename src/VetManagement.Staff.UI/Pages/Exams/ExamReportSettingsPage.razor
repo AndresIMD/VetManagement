@@ -1,0 +1,228 @@
+@page "/exam-reports/settings"
+@using VetManagement.Contracts.Exams
+@using VetManagement.Domain.Exams
+@inject ExamReportsApiService ReportsApi
+@inject ISnackbar Snackbar
+@attribute [Authorize(Policy = "Exams.Update")]
+
+<PageTitle>Report Design</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mx-auto px-2 mt-8">
+    <PageHeader Title="Report Design"
+                Subtitle="How every exam report looks. What each report contains is set per exam in the exam catalog."
+                Icon="@Icons.Material.Filled.DesignServices" />
+
+    @if (_settings is null)
+    {
+        <MudProgressLinear Indeterminate="true" />
+    }
+    else
+    {
+        @if (_error is not null)
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-3" ShowCloseIcon="true" CloseIconClicked="() => _error = null"
+                      Style="white-space:pre-line">@_error</MudAlert>
+        }
+
+        <MudGrid>
+            <MudItem xs="12" lg="5">
+                <MudPaper Class="pa-4 mb-3" Elevation="1">
+                    <MudText Typo="Typo.h6" Class="mb-2">Images</MudText>
+                    <MudStack Spacing="3">
+                        <div>
+                            <MudText Typo="Typo.subtitle2">Logo</MudText>
+                            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                                <label
+                                    class="mud-button-root mud-button mud-button-outlined mud-button-outlined-primary mud-button-outlined-size-small mud-ripple"
+                                    style="cursor:pointer">
+                                    Upload
+                                    <InputFile OnChange="e => UploadAsync(e, ClinicImageKind.ReportLogo)"
+                                               accept="image/png,image/jpeg,image/webp" style="display:none" />
+                                </label>
+                                @if (_logo is not null)
+                                {
+                                    <MudButton Size="Size.Small" Color="Color.Error"
+                                               OnClick="() => RemoveAsync(ClinicImageKind.ReportLogo)">Remove</MudButton>
+                                }
+                            </MudStack>
+                        </div>
+                        <div>
+                            <MudText Typo="Typo.subtitle2">Background / frame</MudText>
+                            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                                <label
+                                    class="mud-button-root mud-button mud-button-outlined mud-button-outlined-primary mud-button-outlined-size-small mud-ripple"
+                                    style="cursor:pointer">
+                                    Upload
+                                    <InputFile OnChange="e => UploadAsync(e, ClinicImageKind.ReportBackground)"
+                                               accept="image/png,image/jpeg,image/webp" style="display:none" />
+                                </label>
+                                @if (_background is not null)
+                                {
+                                    <MudButton Size="Size.Small" Color="Color.Error"
+                                               OnClick="() => RemoveAsync(ClinicImageKind.ReportBackground)">Remove</MudButton>
+                                }
+                            </MudStack>
+                            <MudSlider T="double" @bind-Value="_settings.BackgroundOpacity" Min="0.05" Max="1" Step="0.05"
+                                       Class="mt-2">
+                                Background strength: @((_settings.BackgroundOpacity * 100).ToString("0"))% (lower it to turn
+                                the image into a watermark)
+                            </MudSlider>
+                        </div>
+                        <MudAlert Severity="Severity.Info" Dense="true" NoIcon="true">
+                            <b>For your designer</b> (images up to 3 MB, PNG, JPEG or WebP):
+                            <ul class="mt-1 mb-0">
+                                <li><b>Logo:</b> PNG with a transparent background, about 1200 × 400 px. Printed up to 80 ×
+                                    30 mm, top left.</li>
+                                    <li><b>Background:</b> a full page, portrait, @BackgroundPixels px (300 dpi; half that is
+                                        fine for a lighter file).
+                                        It is stretched to the whole sheet. Keep text and strong colours out of the content
+                                        area:
+                                        @_settings.MarginsMm.Top mm from the top, @_settings.MarginsMm.Bottom mm from the
+                                        bottom,
+                                        @_settings.MarginsMm.Left mm left and @_settings.MarginsMm.Right mm right are free for
+                                        frames or artwork.
+                                        A watermark should be light: results are printed on top of it.</li>
+                                        <li><b>Colours:</b> the two bars below use your brand colours as #RRGGBB.</li>
+                                    </ul>
+                                </MudAlert>
+                            </MudStack>
+                        </MudPaper>
+
+                        <MudPaper Class="pa-4 mb-3" Elevation="1">
+                            <MudText Typo="Typo.h6" Class="mb-2">Page</MudText>
+                            <MudGrid>
+                                <MudItem xs="12" sm="6">
+                                    <MudSelect T="PaperSize" Label="Paper" @bind-Value="_settings.Paper">
+                                        <MudSelectItem Value="PaperSize.Letter">Letter (21.6 × 27.9 cm)</MudSelectItem>
+                                        <MudSelectItem Value="PaperSize.A4">A4 (21 × 29.7 cm)</MudSelectItem>
+                                    </MudSelect>
+                                </MudItem>
+                                <MudItem xs="6" sm="3">
+                                    <MudText Typo="Typo.caption">Patient bar</MudText>
+                                    <input type="color" @bind="_settings.HeaderColor"
+                                           style="width:100%;height:36px;border:0;background:none" />
+                                </MudItem>
+                                <MudItem xs="6" sm="3">
+                                    <MudText Typo="Typo.caption">Result bar</MudText>
+                                    <input type="color" @bind="_settings.AccentColor"
+                                           style="width:100%;height:36px;border:0;background:none" />
+                                </MudItem>
+                                <MudItem xs="3">
+                                    <MudNumericField T="int" Label="Top (mm)" @bind-Value="_settings.MarginsMm.Top" Min="0"
+                                                     Max="60" />
+                                </MudItem>
+                                <MudItem xs="3">
+                                    <MudNumericField T="int" Label="Right" @bind-Value="_settings.MarginsMm.Right" Min="0"
+                                                     Max="60" />
+                                </MudItem>
+                                <MudItem xs="3">
+                                    <MudNumericField T="int" Label="Bottom" @bind-Value="_settings.MarginsMm.Bottom" Min="0"
+                                                     Max="60" />
+                                </MudItem>
+                                <MudItem xs="3">
+                                    <MudNumericField T="int" Label="Left" @bind-Value="_settings.MarginsMm.Left" Min="0" Max="60" />
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <MudTextField T="string" Label="Header lines (next to the logo, one per line)" Lines="2"
+                                                  Value="@string.Join("\n", _settings.HeaderLines)"
+                                                  ValueChanged="v => _settings.HeaderLines = Lines(v)" />
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <MudTextField T="string" Label="Footer lines (clinic name, tax id, address, phone...)" Lines="4"
+                                                  Value="@string.Join("\n", _settings.FooterLines)"
+                                                  ValueChanged="v => _settings.FooterLines = Lines(v)" />
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <MudTextField Label="Note under the footer" @bind-Value="_settings.Disclaimer" Lines="2" />
+                                </MudItem>
+                            </MudGrid>
+                            <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-3">
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_saving" OnClick="SaveAsync">
+                                    Save</MudButton>
+                                </MudStack>
+                            </MudPaper>
+                        </MudItem>
+
+                        <MudItem xs="12" lg="7">
+                            <div style="overflow-x:auto">
+                                <div style="box-shadow:0 2px 12px rgba(0,0,0,.25);width:fit-content;margin:auto">
+                                    <ExamReportSheet Settings="_settings" Report="ExamReportSheet.PlaceholderReport()"
+                                                     Placeholder="true" LogoUrl="@_logo" BackgroundUrl="@_background" />
+                                </div>
+                            </div>
+                        </MudItem>
+                    </MudGrid>
+                }
+            </MudContainer>
+
+@code {
+    private const long MAX_IMAGE_BYTES = 3 * 1024 * 1024;
+
+    private ExamReportSettings? _settings;
+    private int _version;
+    private string? _logo;
+    private string? _background;
+    private string? _error;
+    private bool _saving;
+
+    private string BackgroundPixels => _settings?.Paper == PaperSize.A4 ? "2480 × 3508" : "2550 × 3300";
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        (_settings, _version) = await ReportsApi.GetSettingsAsync();
+        _logo = await ReportsApi.GetImageDataUrlAsync(ClinicImageKind.ReportLogo);
+        _background = await ReportsApi.GetImageDataUrlAsync(ClinicImageKind.ReportBackground);
+    }
+
+    private static List<string> Lines(string? text)
+        => (text ?? string.Empty).Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList();
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        var result = await ReportsApi.SaveSettingsAsync(_settings!, _version);
+        _saving = false;
+        if (!result.Ok)
+        {
+            _error = result.Error;
+            return;
+        }
+        _error = null;
+        _version = result.Body?.GetProperty("version").GetInt32() ?? _version + 1;
+        Snackbar.Add("Report design saved.", Severity.Success);
+    }
+
+    private async Task UploadAsync(InputFileChangeEventArgs e, ClinicImageKind kind)
+    {
+        if (e.File.Size > MAX_IMAGE_BYTES)
+        {
+            _error = "The image must be 3 MB or smaller.";
+            return;
+        }
+        using var buffer = new MemoryStream();
+        await e.File.OpenReadStream(MAX_IMAGE_BYTES).CopyToAsync(buffer);
+        var result = await ReportsApi.SetImageAsync(kind, e.File.ContentType, buffer.ToArray());
+        if (!result.Ok)
+        {
+            _error = result.Error;
+            return;
+        }
+        await ReloadImageAsync(kind);
+        Snackbar.Add("Image saved.", Severity.Success);
+    }
+
+    private async Task RemoveAsync(ClinicImageKind kind)
+    {
+        var result = await ReportsApi.DeleteImageAsync(kind);
+        if (!result.Ok)
+            _error = result.Error;
+        await ReloadImageAsync(kind);
+    }
+
+    private async Task ReloadImageAsync(ClinicImageKind kind)
+    {
+        var url = await ReportsApi.GetImageDataUrlAsync(kind);
+        if (kind == ClinicImageKind.ReportLogo) _logo = url; else _background = url;
+    }
+}

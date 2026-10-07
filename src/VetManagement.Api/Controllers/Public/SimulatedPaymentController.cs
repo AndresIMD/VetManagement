@@ -1,3 +1,5 @@
+using VetManagement.Domain.Enums;
+using VetManagement.Api.Authorization;
 using System.Net;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,6 +13,7 @@ namespace VetManagement.Api.Controllers.Public;
 /// </summary>
 [ApiExplorerSettings(IgnoreApi = true)]
 [AllowAnonymous]
+[RequiresModule(AppModule.Scheduling)]
 [Route("api/public/payments/simulated/{token}")]
 public class SimulatedPaymentController(IServiceProvider services) : ControllerBase
 {

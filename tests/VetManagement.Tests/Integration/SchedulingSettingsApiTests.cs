@@ -16,7 +16,7 @@ public class SchedulingSettingsApiTests : IClassFixture<CustomWebAppFactory>
     public SchedulingSettingsApiTests(CustomWebAppFactory factory)
     {
         _admin = factory.CreateClientWithPermissions([.. Permissions.ForRole("Admin")]);
-        _employee = factory.CreateClientWithPermissions([.. Permissions.ForRole("Employee")]);
+        _employee = factory.CreateClientWithPermissions([.. Permissions.ForRole(Permissions.ROLES.RECEPTION)]);
     }
 
     private async Task<JsonObject> GetDocumentAsync(HttpClient client)

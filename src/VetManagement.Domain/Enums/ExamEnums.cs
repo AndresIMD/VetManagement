@@ -58,3 +58,30 @@ public enum ExamItemStatus
     [DisplayString("Cancelled")]
     Cancelled
 }
+
+/// <summary>Paper the exam reports are printed on.</summary>
+public enum PaperSize
+{
+    [DisplayString("Letter")]
+    Letter,
+    [DisplayString("A4")]
+    A4
+}
+
+/// <summary>What a report parameter holds: a measured number (evaluated against bands) or free text.</summary>
+public enum ReportParameterKind
+{
+    [DisplayString("Number")]
+    Number,
+    [DisplayString("Text")]
+    Text
+}
+
+/// <summary>Images the clinic uploads for its printed documents.</summary>
+public enum ClinicImageKind
+{
+    [DisplayString("Report logo")]
+    ReportLogo = 1,
+    [DisplayString("Report background")]
+    ReportBackground = 2
+}

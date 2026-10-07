@@ -17,6 +17,7 @@ One document per business module: rules, per-clinic settings, permissions and kn
 | Billing (caja), VAT, "Charge visit", cash close | [`modules/BILLING.md`](modules/BILLING.md) |
 | Clinical record, vaccines, supplies used in visits | [`modules/CLINICAL.md`](modules/CLINICAL.md) |
 | Reports dashboard | [`modules/REPORTS.md`](modules/REPORTS.md) |
+| Exam reports (printable lab results, templates, branding) | [`modules/EXAM_REPORTS.md`](modules/EXAM_REPORTS.md) |
 | Client portal "Mis mascotas" | [`modules/CLIENT_PORTAL.md`](modules/CLIENT_PORTAL.md) |
 
 Inventory, clients/pets, exams and users follow the general module pattern in `ARCHITECTURE.md`; they have no

@@ -2,7 +2,7 @@
 @inject InventoryMovementApiService InventoryService
 @inject AuditApiService AuditService
 @inject ItemsApiService ItemService
-@attribute [Authorize(Roles = "Admin,Manager")]
+@attribute [Authorize(Policy = "Audit.Read")]
 
 @using VetManagement.Staff.UI.Components.Filters
 @using VetManagement.Staff.UI.Components.Audit

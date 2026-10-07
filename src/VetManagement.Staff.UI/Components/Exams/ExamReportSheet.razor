@@ -1,0 +1,205 @@
+@using System.Globalization
+@using VetManagement.Contracts.Exams
+@using VetManagement.Domain.Exams
+@* One printable page. Styles are inline (not app.css) so the element prints the same on its own (print.js). *@
+
+<div id="@ElementId" class="xr-page" style="width:@(PageWidth)mm;height:@(PageHeight)mm">
+    <style>
+        @@page { size: @(Settings.Paper == PaperSize.A4 ? "A4" : "letter"); margin: 0; }
+        .xr-page { position: relative; overflow: hidden; background: #fff; color: #222; font-family: 'Segoe UI', Arial, sans-serif; font-size: 10.5pt; line-height: 1.35; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .xr-page * { box-sizing: border-box; }
+        .xr-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; z-index: 0; }
+        .xr-content { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; gap: 5mm; }
+        .xr-header { display: flex; align-items: center; gap: 6mm; min-height: 18mm; }
+        .xr-logo { max-height: 30mm; max-width: 80mm; object-fit: contain; }
+        .xr-header-lines div:first-child { font-size: 15pt; font-weight: 700; letter-spacing: .5px; }
+        .xr-box { border: 0.6mm solid; border-radius: 1mm; background: rgba(255,255,255,.82); }
+        .xr-bar { color: #fff; font-weight: 700; text-align: center; padding: 1.6mm; font-size: 11.5pt; letter-spacing: .4px; }
+        .xr-patient { display: grid; grid-template-columns: 1fr 1fr; gap: 1mm 8mm; padding: 3mm 8mm; }
+        .xr-patient b { margin-right: 1.5mm; }
+        .xr-results { padding: 3mm 6mm 5mm; flex: 1; display: flex; flex-direction: column; }
+        .xr-table { width: 100%; align-self: stretch; table-layout: fixed; border-collapse: collapse; }
+        .xr-table td { overflow-wrap: anywhere; }
+        .xr-table th { text-align: left; font-size: 9.5pt; text-transform: uppercase; padding: 2mm 1.5mm; border-bottom: 0.4mm solid #ccc; }
+        .xr-table td { padding: 1.6mm 1.5mm; vertical-align: top; border-bottom: 0.2mm solid #eee; }
+        .xr-flag { font-weight: 700; }
+        .xr-interpretation { margin-top: 5mm; white-space: pre-line; }
+        .xr-interpretation b { margin-right: 2.5mm; }
+        .xr-method { align-self: center; margin-top: auto; padding: 1.4mm 6mm; border-radius: 3mm; color: #fff; font-weight: 700; }
+        .xr-signed { margin-top: 4mm; text-align: right; font-size: 9.5pt; }
+        .xr-footer { text-align: center; font-size: 9.5pt; }
+        .xr-footer div:first-child { font-weight: 700; }
+        .xr-disclaimer { margin-top: 1.5mm; }
+        .xr-note { font-size: 8pt; color: #666; }
+    </style>
+
+    @if (BackgroundUrl is not null)
+    {
+        <img class="xr-bg" src="@BackgroundUrl" alt="" style="opacity:@Settings.BackgroundOpacity.ToString(CultureInfo.InvariantCulture)" />
+    }
+
+    <div class="xr-content" style="padding:@(Settings.MarginsMm.Top)mm @(Settings.MarginsMm.Right)mm @(Settings.MarginsMm.Bottom)mm @(Settings.MarginsMm.Left)mm">
+        @if (LogoUrl is not null || Settings.HeaderLines.Count > 0)
+        {
+            <div class="xr-header">
+                @if (LogoUrl is not null)
+                {
+                    <img class="xr-logo" src="@LogoUrl" alt="Logo" />
+                }
+                <div class="xr-header-lines">
+                    @foreach (var line in Settings.HeaderLines)
+                    {
+                        <div>@line</div>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (Report.Sections.PatientData)
+        {
+            <div class="xr-box" style="border-color:@Settings.HeaderColor">
+                <div class="xr-bar" style="background:@Settings.HeaderColor">DATOS DE LA MASCOTA Y TUTOR</div>
+                <div class="xr-patient">
+                    <div><b>PACIENTE:</b> @Report.PetName</div>
+                    <div><b>TUTOR:</b> @Report.OwnerName</div>
+                    <div><b>ESPECIE:</b> @(Placeholder ? "ESPECIE – RAZA" : SpeciesAndBreed)</div>
+                    <div><b>MÉDICO TRATANTE:</b> @Report.ReferringVet</div>
+                    <div><b>EDAD:</b> @(Placeholder ? "EDAD" : Age)</div>
+                    <div><b>FECHA RECEPCIÓN:</b> @(Placeholder ? "DD/MM/AAAA" : Report.ReceivedOn.ToString("dd/MM/yyyy"))</div>
+                    <div><b>SEXO:</b> @(Placeholder ? "SEXO" : SexName)</div>
+                </div>
+            </div>
+        }
+
+        <div class="xr-box xr-results-box" style="border-color:@Settings.AccentColor;flex:1;display:flex;flex-direction:column">
+            <div class="xr-bar" style="background:@Settings.AccentColor">@Report.Title</div>
+            <div class="xr-results">
+                <table class="xr-table">
+                    <colgroup><col style="width:28%" /><col style="width:18%" /><col style="width:14%" /><col style="width:40%" /></colgroup>
+                    <thead>
+                        <tr><th>Parámetro</th><th>Resultado</th><th>Unidad</th><th>Valor referencial</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var line in Report.Results)
+                        {
+                            <tr>
+                                <td>@line.Name</td>
+                                <td class="@(line.Abnormal ? "xr-flag" : null)">@line.Value@(line.Abnormal ? " *" : null)</td>
+                                <td>@line.Unit</td>
+                                <td>@line.Reference</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                @if (Report.Results.Any(r => r.Abnormal))
+                {
+                    <div class="xr-note">* Fuera del rango de referencia.</div>
+                }
+
+                @if (Report.Sections.Interpretation && !string.IsNullOrWhiteSpace(Report.Interpretation))
+                {
+                    <div class="xr-interpretation"><b>INTERPRETACIÓN:</b> @Report.Interpretation</div>
+                }
+                @if (Report.Sections.ReportedBy)
+                {
+                    <div class="xr-signed">Informado por: @Report.CreatedBy</div>
+                }
+                @if (Report.Sections.Method && !string.IsNullOrWhiteSpace(Report.Method))
+                {
+                    <div class="xr-method" style="background:@Settings.HeaderColor">@Report.Method</div>
+                }
+            </div>
+        </div>
+
+        @if (Settings.FooterLines.Count > 0 || !string.IsNullOrWhiteSpace(Settings.Disclaimer))
+        {
+            <div class="xr-footer">
+                @foreach (var line in Settings.FooterLines)
+                {
+                    <div>@line</div>
+                }
+                @if (!string.IsNullOrWhiteSpace(Settings.Disclaimer))
+                {
+                    <div class="xr-disclaimer">@Settings.Disclaimer</div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    public const string ElementId = "exam-report-sheet";
+
+    [Parameter, EditorRequired] public ExamReportSettings Settings { get; set; } = new();
+    [Parameter, EditorRequired] public ExamReportDto Report { get; set; } = new();
+    /// <summary>Patient block shows field names instead of data (design previews).</summary>
+    [Parameter] public bool Placeholder { get; set; }
+    [Parameter] public string? LogoUrl { get; set; }
+    [Parameter] public string? BackgroundUrl { get; set; }
+
+    /// <summary>A report made of field names, for previews: pass results to show a real template's lines.</summary>
+    public static ExamReportDto PlaceholderReport(string? title = null, string? method = null, List<ExamReportResultDto>? results = null,
+        string? interpretation = null, ExamReportSectionsDto? sections = null) => new()
+    {
+        Title = string.IsNullOrWhiteSpace(title) ? "TÍTULO DEL EXAMEN" : title,
+        Method = method ?? "Marca - Equipo",
+        PetName = "Nombre del paciente",
+        OwnerName = "Nombre del tutor",
+        ReferringVet = "Médico tratante",
+        CreatedBy = "Responsable",
+        Interpretation = interpretation ?? (results is null ? "Interpretación del resultado." : null),
+        Sections = sections ?? new ExamReportSectionsDto { PatientData = true, Method = true, Interpretation = true },
+        Results = results ?? [new ExamReportResultDto { Name = "Parámetro", Value = "Resultado", Unit = "Unidad", Reference = "Valor de referencia" }]
+    };
+
+    private double PageWidth => Settings.Paper == PaperSize.A4 ? 210 : 215.9;
+    private double PageHeight => Settings.Paper == PaperSize.A4 ? 297 : 279.4;
+
+    private string SpeciesAndBreed
+    {
+        get
+        {
+            var species = Report.Species switch
+            {
+                Species.Dog => "Canino",
+                Species.Cat => "Felino",
+                Species.Bird => "Ave",
+                Species.Fish => "Pez",
+                Species.Reptile => "Reptil",
+                Species.Unknown => null,
+                _ => Report.Species.ToString()
+            };
+            return string.Join(" – ", new[] { species, Report.Breed }.Where(s => !string.IsNullOrWhiteSpace(s))).ToUpperInvariant();
+        }
+    }
+
+    private string? SexName => Report.Sex switch
+    {
+        Sex.Female => "HEMBRA",
+        Sex.Male => "MACHO",
+        _ => null
+    };
+
+    /// <summary>Age on the reception date: "4 AÑOS Y 11 MESES", "10 MESES".</summary>
+    private string? Age
+    {
+        get
+        {
+            if (Report.Birthdate is not { } born)
+                return null;
+            var on = Report.ReceivedOn.ToDateTime(TimeOnly.MinValue);
+            var months = (on.Year - born.Year) * 12 + on.Month - born.Month - (on.Day < born.Day ? 1 : 0);
+            if (months < 0)
+                return null;
+            var (years, rest) = (months / 12, months % 12);
+            var yearsText = years == 1 ? "1 AÑO" : $"{years} AÑOS";
+            var monthsText = rest == 1 ? "1 MES" : $"{rest} MESES";
+            return (years, rest) switch
+            {
+                (0, _) => monthsText,
+                (_, 0) => yearsText,
+                _ => $"{yearsText} Y {monthsText}"
+            };
+        }
+    }
+}

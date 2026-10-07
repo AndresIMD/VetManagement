@@ -678,6 +678,41 @@ namespace VetManagement.Api.Migrations
                     b.ToTable("VisitSupplies");
                 });
 
+            modelBuilder.Entity("VetManagement.Domain.Configuration.ClinicImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<byte[]>("Data")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Kind")
+                        .IsUnique();
+
+                    b.ToTable("ClinicImages");
+                });
+
             modelBuilder.Entity("VetManagement.Domain.Configuration.ClinicSetting", b =>
                 {
                     b.Property<int>("Id")
@@ -772,6 +807,62 @@ namespace VetManagement.Api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ExamsPerformed");
+                });
+
+            modelBuilder.Entity("VetManagement.Domain.Exams.ExamReport", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<int>("ExamId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Interpretation")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("Method")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("PetId")
+                        .HasColumnType("int");
+
+                    b.Property<DateOnly>("ReceivedOn")
+                        .HasColumnType("date");
+
+                    b.Property<string>("ReferringVet")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PetId");
+
+                    b.ToTable("ExamReports");
                 });
 
             modelBuilder.Entity("VetManagement.Domain.Exams.ExamRequestItem", b =>
@@ -1277,6 +1368,75 @@ namespace VetManagement.Api.Migrations
                         .WithMany()
                         .HasForeignKey("VisitId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("VetManagement.Domain.Exams.ExamReport", b =>
+                {
+                    b.OwnsMany("VetManagement.Domain.Exams.ExamReportResult", "Results", b1 =>
+                        {
+                            b1.Property<int>("ExamReportId");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAddOrUpdate();
+
+                            b1.Property<bool>("Abnormal");
+
+                            b1.Property<string>("Band");
+
+                            b1.Property<string>("Code")
+                                .IsRequired();
+
+                            b1.Property<string>("Name")
+                                .IsRequired();
+
+                            b1.Property<string>("Reference");
+
+                            b1.Property<string>("Unit");
+
+                            b1.Property<string>("Value")
+                                .IsRequired();
+
+                            b1.HasKey("ExamReportId", "__synthesizedOrdinal");
+
+                            b1.ToTable("ExamReports");
+
+                            b1
+                                .ToJson("Results")
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ExamReportId");
+                        });
+
+                    b.OwnsOne("VetManagement.Domain.Exams.ExamReportSections", "Sections", b1 =>
+                        {
+                            b1.Property<int>("ExamReportId")
+                                .HasColumnType("int");
+
+                            b1.Property<bool>("Interpretation")
+                                .HasColumnType("bit");
+
+                            b1.Property<bool>("Method")
+                                .HasColumnType("bit");
+
+                            b1.Property<bool>("PatientData")
+                                .HasColumnType("bit");
+
+                            b1.Property<bool>("ReportedBy")
+                                .HasColumnType("bit");
+
+                            b1.HasKey("ExamReportId");
+
+                            b1.ToTable("ExamReports");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ExamReportId");
+                        });
+
+                    b.Navigation("Results");
+
+                    b.Navigation("Sections")
                         .IsRequired();
                 });
 

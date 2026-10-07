@@ -1,0 +1,262 @@
+@page "/exams/{ExamId:int}/report-template"
+@using VetManagement.Contracts.Exams
+@using VetManagement.Domain.Exams
+@inject ExamReportsApiService ReportsApi
+@inject ExamApiService ExamsApi
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+@attribute [Authorize(Policy = "Exams.Update")]
+
+<PageTitle>Report Template</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mx-auto px-2 mt-8">
+    <PageHeader Title="Report Template" Subtitle="@_examName" Icon="@Icons.Material.Filled.Tune" />
+
+    @if (_template is null)
+    {
+        <MudProgressLinear Indeterminate="true" />
+    }
+    else
+    {
+        @if (_error is not null)
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-3" ShowCloseIcon="true" CloseIconClicked="() => _error = null" Style="white-space:pre-line">@_error</MudAlert>
+        }
+
+        <MudGrid>
+            <MudItem xs="12" lg="6">
+                <MudPaper Class="pa-4 mb-3" Elevation="1">
+                    <MudTextField Label="Title printed on the result bar" @bind-Value="_template.Title" Placeholder="PRUEBA cPL" />
+                    <MudText Typo="Typo.subtitle2" Class="mt-3">Print on this report</MudText>
+                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="0">
+                        <MudCheckBox T="bool" @bind-Value="_template.Sections.PatientData" Label="Patient and owner data" />
+                        <MudCheckBox T="bool" @bind-Value="_template.Sections.Interpretation" Label="Interpretation" />
+                        <MudCheckBox T="bool" @bind-Value="_template.Sections.Method" Label="Method (brand - machine)" />
+                        <MudCheckBox T="bool" @bind-Value="_template.Sections.ReportedBy" Label="Issued by (staff member)" />
+                    </MudStack>
+                </MudPaper>
+
+                @foreach (var parameter in _template.Parameters)
+                {
+                    var p = parameter;
+                    <MudPaper Class="pa-4 mb-3" Elevation="1">
+                        <MudGrid Spacing="2">
+                            <MudItem xs="12" sm="5">
+                                <MudTextField Label="Parameter" @bind-Value="p.Name" Placeholder="cPL" OnBlur="_ => FillCode(p)" />
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudSelect T="ReportParameterKind" Label="Type" @bind-Value="p.Kind">
+                                    <MudSelectItem Value="ReportParameterKind.Number">Number</MudSelectItem>
+                                    <MudSelectItem Value="ReportParameterKind.Text">Text</MudSelectItem>
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="6" sm="3">
+                                <MudTextField Label="Unit" @bind-Value="p.Unit" Placeholder="ng/mL" />
+                            </MudItem>
+                            <MudItem xs="12" sm="1" Class="d-flex align-center justify-end">
+                                <MudTooltip Text="Remove parameter">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => _template.Parameters.Remove(p)" />
+                                </MudTooltip>
+                            </MudItem>
+                            <MudItem xs="12" sm="8">
+                                <MudTextField Label="Reference column (optional)" @bind-Value="p.ReferenceText"
+                                              HelperText="Empty: built from the bands below." />
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudTextField Label="Code" @bind-Value="p.Code" HelperText="Internal key; don't change it once used." />
+                            </MudItem>
+                            @if (p.Kind == ReportParameterKind.Text)
+                            {
+                                <MudItem xs="12">
+                                    <MudTextField T="string" Label="Options (optional, separated by ;)" Placeholder="DEA 1.1 Positivo; DEA 1.1 Negativo"
+                                                  Value="@string.Join("; ", p.Options)"
+                                                  ValueChanged="v => p.Options = (v ?? string.Empty).Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList()" />
+                                </MudItem>
+                            }
+                            else
+                            {
+                                <MudItem xs="12">
+                                    <MudText Typo="Typo.subtitle2">Interpretation bands</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        Limits included; the first band that contains the value is used. A value outside every band is flagged (*).
+                                        Leave the label empty for a plain normal range (e.g. blood gases).
+                                    </MudText>
+                                    @foreach (var band in p.Bands)
+                                    {
+                                        var b = band;
+                                        <MudGrid Spacing="1" Class="mt-1">
+                                            <MudItem xs="6" sm="2">
+                                                <MudSelect T="Species?" Label="Species" @bind-Value="b.Species" Dense="true">
+                                                    <MudSelectItem T="Species?" Value="null">Any</MudSelectItem>
+                                                    @foreach (var species in SpeciesOptions)
+                                                    {
+                                                        <MudSelectItem T="Species?" Value="species">@species</MudSelectItem>
+                                                    }
+                                                </MudSelect>
+                                            </MudItem>
+                                            <MudItem xs="3" sm="2"><MudNumericField T="decimal?" Label="From" @bind-Value="b.Min" HideSpinButtons="true" /></MudItem>
+                                            <MudItem xs="3" sm="2"><MudNumericField T="decimal?" Label="To" @bind-Value="b.Max" HideSpinButtons="true" /></MudItem>
+                                            <MudItem xs="8" sm="4"><MudTextField Label="Label" @bind-Value="b.Label" Placeholder="Normal" /></MudItem>
+                                            <MudItem xs="3" sm="1" Class="d-flex align-center">
+                                                <MudTooltip Text="Flag values in this band (*)"><MudCheckBox T="bool" @bind-Value="b.Abnormal" Color="Color.Warning" /></MudTooltip>
+                                            </MudItem>
+                                            <MudItem xs="1" Class="d-flex align-center">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="() => p.Bands.Remove(b)" />
+                                            </MudItem>
+                                        </MudGrid>
+                                    }
+                                    <MudButton Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" Class="mt-1" OnClick="() => p.Bands.Add(new InterpretationBand())">Add band</MudButton>
+                                </MudItem>
+                            }
+                            <MudItem xs="12" sm="5">
+                                <MudTextField T="string" Label="Try a value" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                                              Value="@_samples.GetValueOrDefault(p)" ValueChanged="v => _samples[p] = v"
+                                              HelperText="Not saved: shows the result in the preview." />
+                            </MudItem>
+                            <MudItem xs="12" sm="3">
+                                <MudSelect T="Species" Label="As species" @bind-Value="_sampleSpecies" Margin="Margin.Dense" Variant="Variant.Outlined">
+                                    @foreach (var species in SpeciesOptions)
+                                    {
+                                        <MudSelectItem Value="species">@species</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
+                }
+
+                <MudStack Row="true" Spacing="2" Class="mb-8">
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="() => _template.Parameters.Add(new ReportParameter())">Add parameter</MudButton>
+                    <MudSpacer />
+                    @if (_exists)
+                    {
+                        <MudButton Color="Color.Error" OnClick="RemoveTemplateAsync">Remove template</MudButton>
+                    }
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_saving" OnClick="SaveAsync">Save template</MudButton>
+                </MudStack>
+            </MudItem>
+
+            <MudItem xs="12" lg="6">
+                <MudText Typo="Typo.subtitle2" Class="mb-2">Preview (logo, colours and footer from Report Design)</MudText>
+                <div style="overflow-x:auto">
+                    <div style="box-shadow:0 2px 12px rgba(0,0,0,.25);width:fit-content;margin:auto">
+                        <ExamReportSheet Settings="_settings!" Report="Preview" Placeholder="true" LogoUrl="@_logo" BackgroundUrl="@_background" />
+                    </div>
+                </div>
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    [Parameter] public int ExamId { get; set; }
+
+    private static readonly Species[] SpeciesOptions = Enum.GetValues<Species>().Where(s => s != Species.Unknown).ToArray();
+
+    private ExamReportSettings? _settings;
+    private int _version;
+    private ExamReportTemplate? _template;
+    private bool _exists;
+    private string? _examName;
+    private string? _method;
+    private string? _logo;
+    private string? _background;
+    private readonly Dictionary<ReportParameter, string?> _samples = [];
+    private Species _sampleSpecies = Species.Dog;
+    private string? _error;
+    private bool _saving;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var exam = (await ExamsApi.GetAllExamsAsync() ?? []).FirstOrDefault(e => e.Id == ExamId);
+        if (exam is null)
+        {
+            _error = $"Exam #{ExamId} was not found.";
+            return;
+        }
+        _examName = exam.Name;
+        _method = string.Join(" - ", new[] { exam.Brand, exam.Machine }.Where(s => !string.IsNullOrWhiteSpace(s)));
+
+        (_settings, _version) = await ReportsApi.GetSettingsAsync();
+        _exists = _settings.FindTemplate(ExamId) is not null;
+        _template = _settings.FindTemplate(ExamId) ?? new ExamReportTemplate
+        {
+            ExamId = ExamId,
+            Title = $"PRUEBA {exam.Name}",
+            Parameters = [new ReportParameter { Name = exam.Name }]
+        };
+        foreach (var p in _template.Parameters)
+            FillCode(p);
+        _logo = await ReportsApi.GetImageDataUrlAsync(ClinicImageKind.ReportLogo);
+        _background = await ReportsApi.GetImageDataUrlAsync(ClinicImageKind.ReportBackground);
+    }
+
+    /// <summary>A code from the name ("Na+" → "na"), so nobody has to think about codes.</summary>
+    private void FillCode(ReportParameter p)
+    {
+        if (!string.IsNullOrWhiteSpace(p.Code) || string.IsNullOrWhiteSpace(p.Name))
+            return;
+        var code = new string(p.Name.ToLowerInvariant().Select(c => char.IsLetterOrDigit(c) ? c : '-').ToArray()).Trim('-');
+        p.Code = _template!.Parameters.Any(o => o != p && o.Code == code) ? $"{code}-{_template.Parameters.IndexOf(p) + 1}" : code;
+    }
+
+    private ExamReportDto Preview
+    {
+        get
+        {
+            var results = _template!.Parameters.Select(p =>
+            {
+                var value = _samples.GetValueOrDefault(p);
+                var evaluation = p.Evaluate(value, _sampleSpecies);
+                return new ExamReportResult
+                {
+                    Name = p.Name, Unit = p.Unit, Value = string.IsNullOrWhiteSpace(value) ? "—" : value,
+                    Reference = p.ReferenceFor(_sampleSpecies), Band = evaluation.Band?.Label, Abnormal = evaluation.Abnormal
+                };
+            }).ToList();
+            return ExamReportSheet.PlaceholderReport(_template.Title, _method,
+                results.Select(r => new ExamReportResultDto { Name = r.Name, Unit = r.Unit, Value = r.Value, Reference = r.Reference, Band = r.Band, Abnormal = r.Abnormal }).ToList(),
+                ExamReport.InterpretationFrom(results),
+                new ExamReportSectionsDto
+                {
+                    PatientData = _template.Sections.PatientData,
+                    Method = _template.Sections.Method,
+                    Interpretation = _template.Sections.Interpretation,
+                    ReportedBy = _template.Sections.ReportedBy
+                });
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        foreach (var p in _template!.Parameters)
+            FillCode(p);
+        _settings!.Templates.RemoveAll(t => t.ExamId == ExamId);
+        _settings.Templates.Add(_template);
+        await SaveSettingsAsync("Template saved.");
+        _exists = _error is null;
+    }
+
+    private async Task RemoveTemplateAsync()
+    {
+        _settings!.Templates.RemoveAll(t => t.ExamId == ExamId);
+        await SaveSettingsAsync("Template removed.");
+        if (_error is null)
+            Navigation.NavigateTo("exams");
+    }
+
+    private async Task SaveSettingsAsync(string message)
+    {
+        _saving = true;
+        var result = await ReportsApi.SaveSettingsAsync(_settings!, _version);
+        _saving = false;
+        if (!result.Ok)
+        {
+            _error = result.Error;
+            return;
+        }
+        _error = null;
+        _version = result.Body?.GetProperty("version").GetInt32() ?? _version + 1;
+        Snackbar.Add(message, Severity.Success);
+    }
+}

@@ -4,7 +4,7 @@
 @using VetManagement.Staff.UI.Models.Medical
 @using VetManagement.Staff.UI.Services.Api
 @using VetManagement.Staff.UI.Helpers
-@attribute [Authorize(Roles = "Admin,Manager,Employee")]
+@attribute [Authorize(Policy = "Medical.Read")]
 @inject MedicalVisitApiService VisitsService
 @inject ExamApiService ExamService
 @inject ISnackbar Snackbar

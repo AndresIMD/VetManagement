@@ -5,7 +5,7 @@
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
-@attribute [Authorize(Roles = "Admin")]
+@attribute [Authorize(Policy = "ClientsPets.Read")]
 
 <PageTitle>Client and Pet Search</PageTitle>
 

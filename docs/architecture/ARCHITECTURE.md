@@ -36,7 +36,7 @@ The backend never references `Staff.UI`. `ArchitectureTests` fails the build if 
 
 ## Module pattern
 
-Modules: Inventory, Clients/Pets, Exams, Medical/Clinical, Audit, Accounts, Scheduling, Billing, Reports,
+Modules: Inventory, Clients/Pets, Exams (with exam reports), Medical/Clinical, Audit, Accounts, Scheduling, Billing, Reports,
 Client portal. Each follows the same shape:
 
 | Layer | Example (Billing) |
@@ -64,8 +64,16 @@ Rules:
 
 ## Shared mechanisms
 
+**Modules and roles.** Two layers. `Modules:Enabled` (per deployment, set by the vendor) says which parts of the CRM
+exist for the clinic; a module that is off grants no permissions, so its menus, pages and endpoints are gone for
+everyone, and `[RequiresModule]` hides its anonymous endpoints. Roles say who sees what inside: `Admin` (all), area
+roles `Inventory`, `Laboratory`, `Reception`, `Clinical`, `Cashier` (daily work of the area), and `Supervisor`, which
+adds deleting and settings in the user's own areas plus audit and the reports dashboard. A user's permissions are the
+union of their roles (`Permissions.ForRoles`), filtered by the enabled modules and stored as claims at login. Pages and
+endpoints always check permissions, never role names.
+
 **Per-clinic settings.** Each module with policies has one versioned JSON document in `ClinicSettings`
-(`scheduling`, `billing`, `clinical`), served by a `ClinicSettingsService<T>`: created from defaults on
+(`scheduling`, `billing`, `clinical`, `exam-reports`), served by a `ClinicSettingsService<T>`: created from defaults on
 first read, validated on save (every error listed), optimistic concurrency (409 on a stale version),
 audited. Admins edit them as JSON in the staff web (Agenda / Billing / Clinical settings).
 
@@ -94,6 +102,7 @@ Client secrets (booking tokens, portal links) are random; portal links are store
 | Scheduling: `AvailabilityCalculatorTests`, `SchedulingSettings*Tests`, `AppointmentsApiTests`, `AppointmentNotificationsTests`, `OnlineBookingTests`, `PaymentGatewayTests`, `RutTests` | agenda, booking, payment or RUT rules regress |
 | Billing: `SaleTests`, `BillingApiTests`, `CashCloseTests`, `VisitChargeTests` | sale, payment, VAT, cash close or visit-charge rules regress |
 | Clinical: `ClinicalApiTests`, `ClinicalStockTests`, `ClientPortalTests` | clinical record, stock from clinical use or portal access rules regress |
+| `ExamReportsApiTests` | exam report interpretation, snapshots or clinic images regress |
 | `ReportsApiTests`, `TestDataTests` | report figures or sample-data generators break |
 | SQL Server (opt-in, always in CI): `ConcurrentBookingTests`, `ConcurrentPaymentTests`, `TestDataSqlServerTests` | locks fail under parallel requests, or data doesn't fit the real schema |
 

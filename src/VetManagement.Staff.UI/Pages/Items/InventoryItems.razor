@@ -8,7 +8,7 @@
 @inject InventoryMovementApiService InventoryMovementService
 @inject ISnackbar Snackbar
 @inject RealtimeService RealtimeService
-@attribute [Authorize(Roles = "Admin,Manager,Employee")]
+@attribute [Authorize(Policy = "Inventory.Read")]
 @implements IDisposable
 
 
@@ -113,7 +113,7 @@
                         <MudIconButton Icon="@Icons.Material.Filled.Edit" Variant="Variant.Filled"
                             Color="Color.Secondary" Size="Size.Small" OnClick="@(() => ShowAdjustStockModal(item))" />
                     </MudTooltip>
-                    <AuthorizeView Roles="Admin,Manager">
+                    <AuthorizeView Policy="Inventory.Delete">
                         <Authorized>
                             <MudTooltip Text="Edit">
                                 <MudIconButton Icon="@Icons.Material.Filled.EditNote" Variant="Variant.Filled"

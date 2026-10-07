@@ -1,6 +1,6 @@
 # VetManagement — Project State
 
-**Last updated:** 2026-10-03 · **Branch:** main · **Tests:** 253 (+3 on SQL Server) · CI green
+**Last updated:** 2026-10-06 · **Branch:** main · **Tests:** 271 (+3 on SQL Server) · CI green
 
 Product model: one generic staff CRM sold to many clinics; each clinic has its own deployment and database, its
 own branded public site, and configures every business policy itself (admin-editable settings).
@@ -20,6 +20,8 @@ How the code is organised: [`docs/architecture/ARCHITECTURE.md`](docs/architectu
 | F11 | ✅ | Reports dashboard — [REPORTS.md](docs/modules/REPORTS.md) |
 | F12 | ✅ | Client portal "Mis mascotas" — [CLIENT_PORTAL.md](docs/modules/CLIENT_PORTAL.md) |
 | — | ✅ | "Charge visit": appointment + procedures + supplies, one sale or split taxed / VAT-exempt; legacy visit payment fields retired — [BILLING.md](docs/modules/BILLING.md) |
+| — | ✅ | Modules per clinic (`Modules:Enabled`) and area roles (Inventory, Laboratory, Reception, Clinical, Cashier + Supervisor) — [ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) |
+| — | ✅ | Exam reports: per-exam templates with interpretation bands, clinic branding (logo, background, footer), print / save PDF — [EXAM_REPORTS.md](docs/modules/EXAM_REPORTS.md) |
 | — | ✅ | Test data page for development (Administration → Test Data) — [guide](docs/guides/DATOS_DE_PRUEBA.md) |
 
 ## Blocked on the clinic (not code)
@@ -34,12 +36,17 @@ How the code is organised: [`docs/architecture/ARCHITECTURE.md`](docs/architectu
 
 - Should charging an appointment mark it `Completed`? Refunds of paid sales and reopening a closed day are not built.
 - `Responsible` on exams/visits is free text; a staff picker would link records to users.
+- Exam reports: matrix interpretations (cortisol 3 samples), emailing the PDF from the server, and starting a
+  report from an exam request item are not built.
 - Printable prescriptions; attachments (images, lab PDFs) in the clinical record.
 - Settings screens (agenda, billing, clinical) are JSON editors that point admins to repo docs they can't open;
   guided forms with in-screen explanations would suit clinic admins.
 
 ## Later (depend on providers or costs)
 
+Enforcing paid modules once there is a second clinic: `Modules:Enabled` is configuration the clinic could edit on its
+own server. Either host the CRM (vendor-run, subdomain per clinic) or read the modules from a license signed by the
+vendor; `EnabledModules` is the single place to change. ·
 WhatsApp notifications (setting reserved) · electronic receipts (boleta/factura SII) · services needing a vet *and*
 a room at once · offline mode for the desktop app.
 

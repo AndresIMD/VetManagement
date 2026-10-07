@@ -25,7 +25,7 @@ public class BillingApiTests : IClassFixture<CustomWebAppFactory>
     {
         _factory = factory;
         _admin = factory.CreateClientWithPermissions([.. Permissions.ForRole("Admin")]);
-        _employee = factory.CreateClientWithPermissions([.. Permissions.ForRole("Employee")]);
+        _employee = factory.CreateClientWithPermissions([.. Permissions.ForRole(Permissions.ROLES.CASHIER)]);
     }
 
     internal static async Task<int> IdOf(HttpResponseMessage response)

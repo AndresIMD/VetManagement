@@ -25,7 +25,7 @@ public class ClinicalStockTests : IClassFixture<CustomWebAppFactory>
     {
         _factory = factory;
         _admin = factory.CreateClientWithPermissions([.. Permissions.ForRole("Admin")]);
-        _employee = factory.CreateClientWithPermissions([.. Permissions.ForRole("Employee")]);
+        _employee = factory.CreateClientWithPermissions([.. Permissions.ForRole(Permissions.ROLES.CLINICAL)]);
     }
 
     private async Task<T> WithDbAsync<T>(Func<AppDbContext, Task<T>> work)

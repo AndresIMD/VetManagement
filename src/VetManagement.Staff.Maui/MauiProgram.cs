@@ -92,6 +92,8 @@ public static class MauiProgram
             .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
         builder.Services.AddHttpClient<ReportsApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
             .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
+        builder.Services.AddHttpClient<ExamReportsApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
+            .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
         builder.Services.AddHttpClient<TestDataApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
             .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
 

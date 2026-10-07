@@ -82,6 +82,12 @@ public static class ApiRouteConstants
     public const string CLINICAL_DUE = "api/clinical/due";
     public const string CLINICAL_SETTINGS = "api/clinical/settings";
 
+    // Exam reports
+    public const string EXAM_REPORTS = "api/exam-reports";
+    public const string EXAM_REPORT_BY_ID = "api/exam-reports/{0}";
+    public const string EXAM_REPORT_SETTINGS = "api/exam-reports/settings";
+    public const string EXAM_REPORT_IMAGE = "api/exam-reports/images/{0}";
+
     // Sample data (development only)
     public const string TEST_DATA = "api/dev/test-data";
 

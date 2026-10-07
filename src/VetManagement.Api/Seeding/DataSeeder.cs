@@ -37,9 +37,24 @@ public class DataSeeder(
         await EnsureAuditLogsAsync(ct);
     }
 
+    // Every work area, for the test users and for converting the old catch-all roles.
+    private static readonly string[] AllAreas =
+        [Permissions.ROLES.INVENTORY, Permissions.ROLES.LABORATORY, Permissions.ROLES.RECEPTION, Permissions.ROLES.CLINICAL, Permissions.ROLES.CASHIER];
+
+    /// <summary>
+    /// Roles of earlier versions and what their users get instead: the same access as before, which the admin then
+    /// narrows per person. "Laboratorio" comes from the legacy SPLabHybrid app.
+    /// </summary>
+    private static readonly Dictionary<string, string[]> LegacyRoles = new()
+    {
+        ["Manager"] = [.. AllAreas, Permissions.ROLES.SUPERVISOR],
+        ["Employee"] = AllAreas,
+        ["Laboratorio"] = [Permissions.ROLES.LABORATORY]
+    };
+
     private async Task EnsureRolesAsync(CancellationToken ct)
     {
-        foreach (var role in new[] { "Admin", "Manager", "Employee" })
+        foreach (var role in Permissions.ROLES.ALL)
             if (!await roles.RoleExistsAsync(role))
             {
                 var res = await roles.CreateAsync(new IdentityRole(role));
@@ -48,6 +63,21 @@ public class DataSeeder(
                 else
                     logger.LogWarning("Role {Role} creation failed: {Errors}", role, string.Join(",", res.Errors.Select(e => e.Code)));
             }
+
+        foreach (var (legacy, replacements) in LegacyRoles)
+        {
+            var role = await roles.FindByNameAsync(legacy);
+            if (role is null)
+                continue;
+            foreach (var user in await users.GetUsersInRoleAsync(legacy))
+            {
+                var current = await users.GetRolesAsync(user);
+                await users.AddToRolesAsync(user, replacements.Except(current, StringComparer.OrdinalIgnoreCase));
+                await users.RemoveFromRoleAsync(user, legacy);
+                logger.LogInformation("User {User}: role {Legacy} replaced by {Roles}", user.UserName, legacy, string.Join(", ", replacements));
+            }
+            await roles.DeleteAsync(role);
+        }
     }
 
     private async Task EnsureAdminAsync(CancellationToken ct)
@@ -69,10 +99,9 @@ public class DataSeeder(
             var createRes = await users.CreateAsync(user, password);
             if (!createRes.Succeeded)
             { logger.LogError("Failed to create admin user: {Errors}", string.Join(",", createRes.Errors.Select(e => e.Code))); return; }
-            await users.AddToRoleAsync(user, "Admin");
+            await users.AddToRoleAsync(user, Permissions.ROLES.ADMIN);
             logger.LogInformation("Admin user {User} created and role assigned.", userName);
         }
-        await EnsureAllPermissionsAsync(user);
     }
 
     private async Task EnsureDevTestUsersAsync(CancellationToken ct)
@@ -84,24 +113,23 @@ public class DataSeeder(
 
         var defs = new[]
         {
-            new { UserName = config["SeedTest:Manager:UserName"], Email = config["SeedTest:Manager:Email"], Password = config["SeedTest:Manager:Password"], Role = "Manager" },
-            new { UserName = config["SeedTest:Employee:UserName"], Email = config["SeedTest:Employee:Email"], Password = config["SeedTest:Employee:Password"], Role = "Employee" }
+            new { UserName = config["SeedTest:Manager:UserName"], Email = config["SeedTest:Manager:Email"], Password = config["SeedTest:Manager:Password"], Roles = (string[])[.. AllAreas, Permissions.ROLES.SUPERVISOR] },
+            new { UserName = config["SeedTest:Employee:UserName"], Email = config["SeedTest:Employee:Email"], Password = config["SeedTest:Employee:Password"], Roles = AllAreas }
         };
         foreach (var d in defs)
         {
             if (string.IsNullOrWhiteSpace(d.UserName) || string.IsNullOrWhiteSpace(d.Email) || string.IsNullOrWhiteSpace(d.Password))
-            { logger.LogWarning("SeedTest user missing configuration for role {Role}", d.Role); continue; }
+            { logger.LogWarning("SeedTest user missing configuration for roles {Roles}", string.Join(", ", d.Roles)); continue; }
             var user = await users.FindByNameAsync(d.UserName);
             if (user == null)
             {
                 user = new IdentityUser { UserName = d.UserName, Email = d.Email, EmailConfirmed = true };
                 var res = await users.CreateAsync(user, d.Password);
                 if (res.Succeeded)
-                { await users.AddToRoleAsync(user, d.Role); logger.LogInformation("Test user {User} created with role {Role}", d.UserName, d.Role); }
+                { await users.AddToRolesAsync(user, d.Roles); logger.LogInformation("Test user {User} created with roles {Roles}", d.UserName, string.Join(", ", d.Roles)); }
                 else
                 { logger.LogWarning("Failed to create test user {User}: {Errors}", d.UserName, string.Join(",", res.Errors.Select(e => e.Code))); }
             }
-            await EnsureRolePermissionsAsync(user, d.Role);
         }
     }
 
@@ -561,24 +589,5 @@ public class DataSeeder(
 
         await unitOfWork.SaveChangesAsync();
         logger.LogInformation("Audit logs seeded successfully.");
-    }
-
-    private async Task EnsureAllPermissionsAsync(IdentityUser user)
-    {
-        var claims = await users.GetClaimsAsync(user);
-        var has = claims.Where(c => c.Type == Permissions.CLAIM_TYPE).Select(c => c.Value).ToHashSet();
-        foreach (var perm in Permissions.ALL())
-            if (!has.Contains(perm))
-                await users.AddClaimAsync(user, new System.Security.Claims.Claim(Permissions.CLAIM_TYPE, perm));
-    }
-
-    private async Task EnsureRolePermissionsAsync(IdentityUser user, string role)
-    {
-        var claims = await users.GetClaimsAsync(user);
-        var has = claims.Where(c => c.Type == Permissions.CLAIM_TYPE).Select(c => c.Value).ToHashSet();
-        var target = Permissions.ForRole(role);
-        foreach (var perm in target)
-            if (!has.Contains(perm))
-                await users.AddClaimAsync(user, new System.Security.Claims.Claim(Permissions.CLAIM_TYPE, perm));
     }
 }
