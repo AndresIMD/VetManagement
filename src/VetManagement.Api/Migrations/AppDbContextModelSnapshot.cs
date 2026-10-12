@@ -1384,8 +1384,14 @@ namespace VetManagement.Api.Migrations
 
                             b1.Property<string>("Band");
 
+                            b1.Property<decimal?>("BarMax");
+
+                            b1.Property<decimal?>("BarMin");
+
                             b1.Property<string>("Code")
                                 .IsRequired();
+
+                            b1.Property<int>("Direction");
 
                             b1.Property<string>("Name")
                                 .IsRequired();

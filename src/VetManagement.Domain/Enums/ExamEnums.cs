@@ -85,3 +85,25 @@ public enum ClinicImageKind
     [DisplayString("Report background")]
     ReportBackground = 2
 }
+
+/// <summary>What the reference column of a report parameter shows.</summary>
+public enum ReferenceDisplay
+{
+    [DisplayString("Normal range")]
+    Range,
+    [DisplayString("Written text")]
+    Text,
+    [DisplayString("Nothing")]
+    None
+}
+
+/// <summary>Where a result falls against its normal range.</summary>
+public enum ResultDirection
+{
+    [DisplayString("Within range")]
+    None,
+    [DisplayString("Low")]
+    Low,
+    [DisplayString("High")]
+    High
+}

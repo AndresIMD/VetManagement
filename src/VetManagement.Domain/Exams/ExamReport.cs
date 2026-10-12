@@ -1,3 +1,4 @@
+using VetManagement.Domain.Enums;
 using VetManagement.Domain.Primitives;
 
 namespace VetManagement.Domain.Exams;
@@ -62,4 +63,8 @@ public class ExamReportResult
     /// <summary>Label of the band the value fell in, if any.</summary>
     public string? Band { get; set; }
     public bool Abnormal { get; set; }
+    public ResultDirection Direction { get; set; }
+    /// <summary>Normal range drawn as a bar; set only when the parameter shows one and the range has both limits.</summary>
+    public decimal? BarMin { get; set; }
+    public decimal? BarMax { get; set; }
 }

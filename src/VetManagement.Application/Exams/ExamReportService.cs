@@ -20,7 +20,7 @@ public class ExamReportSettingsService(IUnitOfWork unitOfWork, AuditService audi
 public sealed record ExamReportInput(int PetId, int ExamId, DateOnly ReceivedOn, string? ReferringVet,
     IReadOnlyDictionary<string, string> Values, string? Interpretation);
 
-public sealed record ExamReportView(ExamReport Report, Pet Pet, Client? Owner);
+public sealed record ExamReportView(ExamReport Report, Pet Pet, Client? Owner, string? ExamName = null);
 
 public enum ExamReportStatus
 {
@@ -45,7 +45,8 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
         var pet = await unitOfWork.Pets.GetByIdAsNoTrackingAsync(report.PetId);
         if (pet is null)
             return null;
-        return new ExamReportView(report, pet, await unitOfWork.Clients.GetByIdAsNoTrackingAsync(pet.OwnerId));
+        var exam = await unitOfWork.Exams.GetByIdAsNoTrackingAsync(report.ExamId);
+        return new ExamReportView(report, pet, await unitOfWork.Clients.GetByIdAsNoTrackingAsync(pet.OwnerId), exam?.Name);
     }
 
     /// <summary>Reports of a pet, or the latest 200 of the clinic; newest first.</summary>
@@ -181,21 +182,7 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
         };
         report.Results = template.Parameters
             .Where(p => values.ContainsKey(p.Code))
-            .Select(p =>
-            {
-                var value = values[p.Code];
-                var evaluation = p.Evaluate(value, pet.Species);
-                return new ExamReportResult
-                {
-                    Code = p.Code,
-                    Name = p.Name,
-                    Unit = p.Unit,
-                    Value = value,
-                    Reference = p.ReferenceFor(pet.Species),
-                    Band = string.IsNullOrWhiteSpace(evaluation.Band?.Label) ? null : evaluation.Band.Label,
-                    Abnormal = evaluation.Abnormal
-                };
-            })
+            .Select(p => p.ToResult(values[p.Code], pet.Species))
             .ToList();
         report.Interpretation = string.IsNullOrWhiteSpace(input.Interpretation)
             ? ExamReport.InterpretationFrom(report.Results)

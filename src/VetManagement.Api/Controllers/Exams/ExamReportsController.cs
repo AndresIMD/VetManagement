@@ -110,6 +110,7 @@ public class ExamReportsController(ExamReportService service, ExamReportSettings
         Id = view.Report.Id,
         PetId = view.Report.PetId,
         ExamId = view.Report.ExamId,
+        ExamName = view.ExamName,
         Title = view.Report.Title,
         Method = view.Report.Method,
         ReceivedOn = view.Report.ReceivedOn,
@@ -124,7 +125,8 @@ public class ExamReportsController(ExamReportService service, ExamReportSettings
         },
         Results = view.Report.Results.Select(r => new ExamReportResultDto
         {
-            Code = r.Code, Name = r.Name, Unit = r.Unit, Value = r.Value, Reference = r.Reference, Band = r.Band, Abnormal = r.Abnormal
+            Code = r.Code, Name = r.Name, Unit = r.Unit, Value = r.Value, Reference = r.Reference, Band = r.Band, Abnormal = r.Abnormal,
+            Direction = r.Direction, BarMin = r.BarMin, BarMax = r.BarMax
         }).ToList(),
         CreatedAtUtc = view.Report.CreatedAtUtc,
         CreatedBy = view.Report.CreatedBy,
@@ -133,6 +135,7 @@ public class ExamReportsController(ExamReportService service, ExamReportSettings
         Breed = view.Pet.Breed,
         Sex = view.Pet.Sex,
         Birthdate = view.Pet.Birthdate > DateTime.MinValue.AddYears(1) ? view.Pet.Birthdate : null,
-        OwnerName = view.Owner is null ? null : $"{view.Owner.Name} {view.Owner.LastName}".Trim()
+        OwnerName = view.Owner is null ? null : $"{view.Owner.Name} {view.Owner.LastName}".Trim(),
+        OwnerLastName = view.Owner?.LastName
     };
 }

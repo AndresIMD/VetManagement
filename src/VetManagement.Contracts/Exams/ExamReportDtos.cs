@@ -33,6 +33,8 @@ public sealed class ExamReportDto
     public int Id { get; set; }
     public int PetId { get; set; }
     public int ExamId { get; set; }
+    /// <summary>Catalog name of the exam (for the PDF file name); filled when one report is read.</summary>
+    public string? ExamName { get; set; }
     public string Title { get; set; } = string.Empty;
     public string? Method { get; set; }
     public DateOnly ReceivedOn { get; set; }
@@ -49,6 +51,7 @@ public sealed class ExamReportDto
     public Sex Sex { get; set; }
     public DateTime? Birthdate { get; set; }
     public string? OwnerName { get; set; }
+    public string? OwnerLastName { get; set; }
 }
 
 public sealed class ExamReportSectionsDto
@@ -68,6 +71,9 @@ public sealed class ExamReportResultDto
     public string? Reference { get; set; }
     public string? Band { get; set; }
     public bool Abnormal { get; set; }
+    public ResultDirection Direction { get; set; }
+    public decimal? BarMin { get; set; }
+    public decimal? BarMax { get; set; }
 }
 
 /// <summary>The clinic's exam report settings (branding and templates) with the version they were read at.</summary>

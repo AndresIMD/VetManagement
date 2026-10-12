@@ -31,7 +31,7 @@
         </MudStack>
 
         <div class="d-flex justify-center pb-8" style="overflow-x:auto">
-            <div style="box-shadow:0 2px 12px rgba(0,0,0,.25)">
+            <div>
                 <ExamReportSheet Settings="_settings" Report="_report" LogoUrl="@_logo" BackgroundUrl="@_background" />
             </div>
         </div>
@@ -59,6 +59,5 @@
     }
 
     private async Task PrintAsync()
-        => await Js.InvokeVoidAsync("appPrint.element", ExamReportSheet.ElementId,
-            $"{_report!.Title} - {_report.PetName} - {_report.ReceivedOn:yyyy-MM-dd}");
+        => await Js.InvokeVoidAsync("appPrint.element", ExamReportSheet.ElementId, ExamReportSheet.FileName(_report!));
 }

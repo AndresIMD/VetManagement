@@ -51,20 +51,15 @@
                                 </MudSelect>
                             </MudItem>
                             <MudItem xs="6" sm="3">
-                                <MudTextField Label="Unit" @bind-Value="p.Unit" Placeholder="ng/mL" />
+                                <MudAutocomplete T="string" Label="Unit" @bind-Value="p.Unit" SearchFunc="SearchUnitsAsync"
+                                                 CoerceValue="true" CoerceText="false" Clearable="true" Placeholder="ng/mL" />
                             </MudItem>
                             <MudItem xs="12" sm="1" Class="d-flex align-center justify-end">
                                 <MudTooltip Text="Remove parameter">
                                     <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => _template.Parameters.Remove(p)" />
                                 </MudTooltip>
                             </MudItem>
-                            <MudItem xs="12" sm="8">
-                                <MudTextField Label="Reference column (optional)" @bind-Value="p.ReferenceText"
-                                              HelperText="Empty: built from the bands below." />
-                            </MudItem>
-                            <MudItem xs="12" sm="4">
-                                <MudTextField Label="Code" @bind-Value="p.Code" HelperText="Internal key; don't change it once used." />
-                            </MudItem>
+
                             @if (p.Kind == ReportParameterKind.Text)
                             {
                                 <MudItem xs="12">
@@ -75,11 +70,59 @@
                             }
                             else
                             {
+                                <MudItem xs="12" sm="4">
+                                    <MudSelect T="ReferenceDisplay" Label="Reference column" @bind-Value="p.Reference">
+                                        <MudSelectItem Value="ReferenceDisplay.Range">Normal range</MudSelectItem>
+                                        <MudSelectItem Value="ReferenceDisplay.Text">Written text</MudSelectItem>
+                                        <MudSelectItem Value="ReferenceDisplay.None">Nothing</MudSelectItem>
+                                    </MudSelect>
+                                </MudItem>
+                                <MudItem xs="12" sm="8" Class="d-flex align-center">
+                                    @if (p.Reference == ReferenceDisplay.Text)
+                                    {
+                                        <MudTextField Label="Text printed as reference" @bind-Value="p.ReferenceText" Placeholder="Sin rango de referencia" />
+                                    }
+                                    else
+                                    {
+                                        <MudCheckBox T="bool" @bind-Value="p.ShowBar" Label="Show bar (value drawn against the normal range)" />
+                                    }
+                                </MudItem>
+
                                 <MudItem xs="12">
-                                    <MudText Typo="Typo.subtitle2">Interpretation bands</MudText>
+                                    <MudText Typo="Typo.subtitle2">Normal range</MudText>
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        Limits included; the first band that contains the value is used. A value outside every band is flagged (*).
-                                        Leave the label empty for a plain normal range (e.g. blood gases).
+                                        Values outside it print with ↑ or ↓. Leave it empty if the parameter has no range. A range for one species replaces the one for all.
+                                    </MudText>
+                                    @foreach (var range in p.Ranges)
+                                    {
+                                        var r = range;
+                                        <MudGrid Spacing="1" Class="mt-1">
+                                            <MudItem xs="6" sm="3">
+                                                <MudSelect T="Species?" Label="Species" @bind-Value="r.Species" Dense="true">
+                                                    <MudSelectItem T="Species?" Value="null">All</MudSelectItem>
+                                                    @foreach (var species in SpeciesOptions)
+                                                    {
+                                                        <MudSelectItem T="Species?" Value="species">@species</MudSelectItem>
+                                                    }
+                                                </MudSelect>
+                                            </MudItem>
+                                            <MudItem xs="3" sm="3"><MudNumericField T="decimal?" Label="Min" @bind-Value="r.Min" HideSpinButtons="true" /></MudItem>
+                                            <MudItem xs="3" sm="3"><MudNumericField T="decimal?" Label="Max" @bind-Value="r.Max" HideSpinButtons="true" /></MudItem>
+                                            <MudItem xs="12" sm="3" Class="d-flex align-center">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="() => p.Ranges.Remove(r)" />
+                                            </MudItem>
+                                        </MudGrid>
+                                    }
+                                    <MudButton Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" Class="mt-1" OnClick="() => p.Ranges.Add(new ReferenceRange())">
+                                        @(p.Ranges.Count == 0 ? "Add normal range" : "Add range for a species")
+                                    </MudButton>
+                                </MudItem>
+
+                                <MudItem xs="12">
+                                    <MudText Typo="Typo.subtitle2">Interpretation (optional)</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        Name what a value means, e.g. ≤ 200 "Normal", 200 – 399.9 "Zona gris". Limits included; the first band
+                                        that contains the value is used. Tick the box to flag values in that band (*).
                                     </MudText>
                                     @foreach (var band in p.Bands)
                                     {
@@ -87,7 +130,7 @@
                                         <MudGrid Spacing="1" Class="mt-1">
                                             <MudItem xs="6" sm="2">
                                                 <MudSelect T="Species?" Label="Species" @bind-Value="b.Species" Dense="true">
-                                                    <MudSelectItem T="Species?" Value="null">Any</MudSelectItem>
+                                                    <MudSelectItem T="Species?" Value="null">All</MudSelectItem>
                                                     @foreach (var species in SpeciesOptions)
                                                     {
                                                         <MudSelectItem T="Species?" Value="species">@species</MudSelectItem>
@@ -96,7 +139,7 @@
                                             </MudItem>
                                             <MudItem xs="3" sm="2"><MudNumericField T="decimal?" Label="From" @bind-Value="b.Min" HideSpinButtons="true" /></MudItem>
                                             <MudItem xs="3" sm="2"><MudNumericField T="decimal?" Label="To" @bind-Value="b.Max" HideSpinButtons="true" /></MudItem>
-                                            <MudItem xs="8" sm="4"><MudTextField Label="Label" @bind-Value="b.Label" Placeholder="Normal" /></MudItem>
+                                            <MudItem xs="8" sm="4"><MudTextField Label="Meaning" @bind-Value="b.Label" Placeholder="Zona gris" /></MudItem>
                                             <MudItem xs="3" sm="1" Class="d-flex align-center">
                                                 <MudTooltip Text="Flag values in this band (*)"><MudCheckBox T="bool" @bind-Value="b.Abnormal" Color="Color.Warning" /></MudTooltip>
                                             </MudItem>
@@ -126,7 +169,7 @@
                 }
 
                 <MudStack Row="true" Spacing="2" Class="mb-8">
-                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="() => _template.Parameters.Add(new ReportParameter())">Add parameter</MudButton>
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="() => _template.Parameters.Add(NewParameter())">Add parameter</MudButton>
                     <MudSpacer />
                     @if (_exists)
                     {
@@ -139,7 +182,7 @@
             <MudItem xs="12" lg="6">
                 <MudText Typo="Typo.subtitle2" Class="mb-2">Preview (logo, colours and footer from Report Design)</MudText>
                 <div style="overflow-x:auto">
-                    <div style="box-shadow:0 2px 12px rgba(0,0,0,.25);width:fit-content;margin:auto">
+                    <div style="width:fit-content;margin:auto">
                         <ExamReportSheet Settings="_settings!" Report="Preview" Placeholder="true" LogoUrl="@_logo" BackgroundUrl="@_background" />
                     </div>
                 </div>
@@ -183,13 +226,31 @@
         {
             ExamId = ExamId,
             Title = $"PRUEBA {exam.Name}",
-            Parameters = [new ReportParameter { Name = exam.Name }]
+            Parameters = [NewParameter(exam.Name)]
         };
         foreach (var p in _template.Parameters)
             FillCode(p);
         _logo = await ReportsApi.GetImageDataUrlAsync(ClinicImageKind.ReportLogo);
         _background = await ReportsApi.GetImageDataUrlAsync(ClinicImageKind.ReportBackground);
     }
+
+    /// <summary>Units offered while typing; any other unit can be written too.</summary>
+    private static readonly string[] CommonUnits =
+    [
+        "ng/mL", "ng/dL", "pg/mL", "µg/dL", "µg/mL", "mg/dL", "mg/L", "g/dL", "g/L", "mmol/L", "µmol/L", "nmol/L", "pmol/L",
+        "mEq/L", "U/L", "UI/L", "%", "fL", "pg", "K/µL", "M/µL", "x10³/µL", "x10⁶/µL", "mmHg", "mOsm/kg", "Ery/µL", "seg", "min"
+    ];
+
+    /// <summary>Common units plus the ones this clinic already uses in other templates.</summary>
+    private Task<IEnumerable<string>> SearchUnitsAsync(string? text, CancellationToken _)
+    {
+        var used = _settings!.Templates.SelectMany(t => t.Parameters).Select(p => p.Unit).OfType<string>().Where(u => u.Length > 0);
+        var all = CommonUnits.Concat(used).Distinct();
+        return Task.FromResult(string.IsNullOrWhiteSpace(text) ? all : all.Where(u => u.Contains(text.Trim(), StringComparison.OrdinalIgnoreCase)));
+    }
+
+    /// <summary>A number parameter with an empty normal range ready to fill.</summary>
+    private static ReportParameter NewParameter(string name = "") => new() { Name = name, Ranges = [new ReferenceRange()] };
 
     /// <summary>A code from the name ("Na+" → "na"), so nobody has to think about codes.</summary>
     private void FillCode(ReportParameter p)
@@ -204,18 +265,15 @@
     {
         get
         {
-            var results = _template!.Parameters.Select(p =>
-            {
-                var value = _samples.GetValueOrDefault(p);
-                var evaluation = p.Evaluate(value, _sampleSpecies);
-                return new ExamReportResult
-                {
-                    Name = p.Name, Unit = p.Unit, Value = string.IsNullOrWhiteSpace(value) ? "—" : value,
-                    Reference = p.ReferenceFor(_sampleSpecies), Band = evaluation.Band?.Label, Abnormal = evaluation.Abnormal
-                };
-            }).ToList();
+            var results = _template!.Parameters
+                .Select(p => p.ToResult(_samples.GetValueOrDefault(p) is { Length: > 0 } value ? value : "—", _sampleSpecies))
+                .ToList();
             return ExamReportSheet.PlaceholderReport(_template.Title, _method,
-                results.Select(r => new ExamReportResultDto { Name = r.Name, Unit = r.Unit, Value = r.Value, Reference = r.Reference, Band = r.Band, Abnormal = r.Abnormal }).ToList(),
+                results.Select(r => new ExamReportResultDto
+                {
+                    Name = r.Name, Unit = r.Unit, Value = r.Value, Reference = r.Reference, Band = r.Band, Abnormal = r.Abnormal,
+                    Direction = r.Direction, BarMin = r.BarMin, BarMax = r.BarMax
+                }).ToList(),
                 ExamReport.InterpretationFrom(results),
                 new ExamReportSectionsDto
                 {
@@ -230,7 +288,10 @@
     private async Task SaveAsync()
     {
         foreach (var p in _template!.Parameters)
+        {
             FillCode(p);
+            p.Ranges.RemoveAll(r => r.Min is null && r.Max is null);
+        }
         _settings!.Templates.RemoveAll(t => t.ExamId == ExamId);
         _settings.Templates.Add(_template);
         await SaveSettingsAsync("Template saved.");

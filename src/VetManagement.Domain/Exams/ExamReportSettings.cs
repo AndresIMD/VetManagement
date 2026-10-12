@@ -30,6 +30,12 @@ public class ExamReportSettings
 
     public string Disclaimer { get; set; } = "El resultado de este examen no constituye diagnóstico, por favor consulte con su médico tratante.";
 
+    /// <summary>Font of the whole report; one of <see cref="Fonts"/>, which every Windows PC has.</summary>
+    public string FontFamily { get; set; } = "Segoe UI";
+
+    public static readonly string[] Fonts =
+        ["Segoe UI", "Arial", "Calibri", "Verdana", "Tahoma", "Trebuchet MS", "Century Gothic", "Georgia", "Cambria", "Times New Roman"];
+
     /// <summary>1 = background image as uploaded; lower values fade it into a watermark.</summary>
     public double BackgroundOpacity { get; set; } = 1;
 
@@ -46,6 +52,8 @@ public class ExamReportSettings
             errors.Add("BackgroundOpacity must be between 0.05 and 1.");
         if (!IsColor(AccentColor) || !IsColor(HeaderColor))
             errors.Add("Colours must be written as #RRGGBB.");
+        if (!Fonts.Contains(FontFamily))
+            errors.Add($"FontFamily must be one of: {string.Join(", ", Fonts)}.");
         if (HeaderLines.Count > 6 || FooterLines.Count > 8)
             errors.Add("Use at most 6 header lines and 8 footer lines.");
 
@@ -102,6 +110,10 @@ public class ExamReportTemplate
                 if (band.Min is null && band.Max is null)
                     errors.Add($"Template '{name}', parameter '{p.Code}': a band needs a Min, a Max or both.");
             }
+            if (p.Ranges.Any(r => r.Min is { } min && r.Max is { } max && min > max))
+                errors.Add($"Template '{name}', parameter '{p.Code}': a normal range's Min is greater than its Max.");
+            if (p.Reference == ReferenceDisplay.Text && string.IsNullOrWhiteSpace(p.ReferenceText))
+                errors.Add($"Template '{name}', parameter '{p.Code}': write the reference text, or show the range instead.");
             if (p.Kind == ReportParameterKind.Text && p.Bands.Count > 0)
                 errors.Add($"Template '{name}', parameter '{p.Code}': text parameters have no bands.");
         }
@@ -124,47 +136,88 @@ public class ExamReportSections
 /// <summary>One measured value of an exam, e.g. cPL in ng/mL.</summary>
 public class ReportParameter
 {
-    /// <summary>Stable key of the stored values; rename <see cref="Name"/> freely, never the code.</summary>
+    /// <summary>Stable key of the stored values, made from the first name; renaming the parameter keeps it.</summary>
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public ReportParameterKind Kind { get; set; } = ReportParameterKind.Number;
     public string? Unit { get; set; }
-    /// <summary>Reference column as printed; when empty it is built from the normal (non-abnormal) bands.</summary>
+    /// <summary>What the reference column shows: the normal range (default), a written text, or nothing.</summary>
+    public ReferenceDisplay Reference { get; set; } = ReferenceDisplay.Range;
+    /// <summary>Printed in the reference column when <see cref="Reference"/> is Text.</summary>
     public string? ReferenceText { get; set; }
+    /// <summary>Normal range, per species or for all; values outside it are marked low or high.</summary>
+    public List<ReferenceRange> Ranges { get; set; } = [];
+    /// <summary>Draw the value on a bar against the normal range (needs a range with both limits).</summary>
+    public bool ShowBar { get; set; }
     /// <summary>Text parameters: values offered in a list (e.g. blood types); empty = free text.</summary>
     public List<string> Options { get; set; } = [];
-    /// <summary>Number parameters: ranges that name the result; the first one that contains the value wins.</summary>
+    /// <summary>Optional meanings by range (e.g. "Zona gris"); the first band that contains the value wins.</summary>
     public List<InterpretationBand> Bands { get; set; } = [];
 
+    /// <summary>The normal range for the species: its own one wins over one for all species; empty rows are ignored.</summary>
+    public ReferenceRange? RangeFor(Species species)
+    {
+        var ranges = Ranges.Where(r => r.Min is not null || r.Max is not null).ToList();
+        return ranges.FirstOrDefault(r => r.Species == species) ?? ranges.FirstOrDefault(r => r.Species is null);
+    }
+
     /// <summary>
-    /// The band a value falls in for the species (bands without species apply to all) and whether it is flagged:
-    /// it falls in an abnormal band, or bands exist and none contains it. Text and unparsable values are never flagged.
+    /// How a value reads for the species: below or above the normal range, the band it falls in, and whether it is
+    /// flagged (outside the range, in an abnormal band, or outside every band when there is no range).
+    /// Text and unparsable values are never flagged.
     /// </summary>
     public BandResult Evaluate(string? value, Species species)
     {
         if (Kind != ReportParameterKind.Number || ParseNumber(value) is not { } number)
             return new BandResult(null, false);
 
+        var range = RangeFor(species);
+        var direction = range switch
+        {
+            { Min: { } min } when number < min => ResultDirection.Low,
+            { Max: { } max } when number > max => ResultDirection.High,
+            _ => ResultDirection.None
+        };
         var bands = BandsFor(species);
         var band = bands.FirstOrDefault(b => (b.Min is null || number >= b.Min) && (b.Max is null || number <= b.Max));
-        return new BandResult(band, band?.Abnormal ?? bands.Count > 0);
+        var outsideEveryBand = range is null && bands.Count > 0 && band is null;
+        return new BandResult(band, direction != ResultDirection.None || band?.Abnormal == true || outsideEveryBand, direction);
     }
 
     public List<InterpretationBand> BandsFor(Species species)
         => Bands.Where(b => b.Species is null || b.Species == species).ToList();
 
-    /// <summary>
-    /// The reference column for the species: <see cref="ReferenceText"/>; otherwise every band when they are
-    /// labelled ("≤ 200 Normal / 200 - 400 Zona gris / ..."), or just the normal range ("2.9 - 4.2").
-    /// </summary>
-    public string ReferenceFor(Species species)
+    /// <summary>The printed line for a value: name, unit, reference, band, flag and the bar's range.</summary>
+    public ExamReportResult ToResult(string value, Species species)
     {
-        if (!string.IsNullOrWhiteSpace(ReferenceText))
-            return ReferenceText;
-        var bands = BandsFor(species);
-        var shown = bands.Any(b => !string.IsNullOrWhiteSpace(b.Label)) ? bands : bands.Where(b => !b.Abnormal);
-        return string.Join(" / ", shown.Select(b => b.RangeText()));
+        var evaluation = Evaluate(value, species);
+        var barRange = ShowBar && RangeFor(species) is { Min: not null, Max: not null } range ? range : null;
+        return new ExamReportResult
+        {
+            Code = Code,
+            Name = Name,
+            Unit = Unit,
+            Value = value,
+            Reference = ReferenceFor(species),
+            Band = string.IsNullOrWhiteSpace(evaluation.Band?.Label) ? null : evaluation.Band.Label,
+            Abnormal = evaluation.Abnormal,
+            Direction = evaluation.Direction,
+            BarMin = barRange?.Min,
+            BarMax = barRange?.Max
+        };
     }
+
+    /// <summary>
+    /// The reference column for the species: the written text; or the normal range ("3.5 - 5.8"), and without one the
+    /// labelled bands ("≤ 200 Normal / 200 - 400 Zona gris / ...").
+    /// </summary>
+    public string ReferenceFor(Species species) => Reference switch
+    {
+        ReferenceDisplay.Text => ReferenceText ?? string.Empty,
+        ReferenceDisplay.None => string.Empty,
+        _ => RangeFor(species)?.RangeText()
+             ?? string.Join(" / ", BandsFor(species).Where(b => !string.IsNullOrWhiteSpace(b.Label)).Select(b => b.RangeText()))
+    };
 
     /// <summary>
     /// Reads "86.6", "86,6" or an analyser's bound such as "&lt; 1.0" / "&gt;99" (evaluated as the bound).
@@ -203,4 +256,21 @@ public class InterpretationBand
     }
 }
 
-public sealed record BandResult(InterpretationBand? Band, bool Abnormal);
+/// <summary>Normal range of a parameter; both limits included, either may be open.</summary>
+public class ReferenceRange
+{
+    /// <summary>Only for this species; null = any.</summary>
+    public Species? Species { get; set; }
+    public decimal? Min { get; set; }
+    public decimal? Max { get; set; }
+
+    public string RangeText() => (Min, Max) switch
+    {
+        ({ } min, { } max) => $"{min.ToString(CultureInfo.InvariantCulture)} - {max.ToString(CultureInfo.InvariantCulture)}",
+        ({ } min, null) => $"≥ {min.ToString(CultureInfo.InvariantCulture)}",
+        (null, { } max) => $"≤ {max.ToString(CultureInfo.InvariantCulture)}",
+        _ => string.Empty
+    };
+}
+
+public sealed record BandResult(InterpretationBand? Band, bool Abnormal, ResultDirection Direction = ResultDirection.None);

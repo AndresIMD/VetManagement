@@ -127,7 +127,7 @@ public class ExamReportsApiTests : IClassFixture<CustomWebAppFactory>
     }
 
     [Fact]
-    public async Task SpeciesBands_FlagValuesOutsideThePatientsRange()
+    public async Task SpeciesRanges_MarkHighAndLow_FeedTheBar_AndAWrittenReferenceIsKept()
     {
         var (petId, examId) = await AddPetAndExamAsync(Species.Cat);
         await AddTemplateAsync(new ExamReportTemplate
@@ -138,17 +138,27 @@ public class ExamReportsApiTests : IClassFixture<CustomWebAppFactory>
             [
                 new ReportParameter
                 {
-                    Code = "k", Name = "K+", Unit = "mmol/L",
-                    Bands = [new InterpretationBand { Species = Species.Cat, Min = 2.9m, Max = 4.2m }, new InterpretationBand { Species = Species.Dog, Min = 3.4m, Max = 4.9m }]
+                    Code = "k", Name = "K+", Unit = "mmol/L", ShowBar = true,
+                    Ranges = [new ReferenceRange { Min = 3.4m, Max = 4.9m }, new ReferenceRange { Species = Species.Cat, Min = 2.9m, Max = 4.2m }]
                 },
+                new ReportParameter { Code = "na", Name = "Na+", Unit = "mmol/L", Ranges = [new ReferenceRange { Species = Species.Cat, Min = 147, Max = 162 }] },
+                new ReportParameter { Code = "nak", Name = "Na/K", Reference = ReferenceDisplay.Text, ReferenceText = "Sin rango de referencia" },
                 new ReportParameter { Code = "sample", Name = "Muestra", Kind = ReportParameterKind.Text }
             ]
         });
 
-        var report = await CreateAsync(_employee, new { PetId = petId, ExamId = examId, ReceivedOn = new DateOnly(2026, 10, 5), Values = new Dictionary<string, string> { ["k"] = "4,4", ["sample"] = "Sangre venosa" } });
+        var report = await CreateAsync(_employee, new
+        {
+            PetId = petId, ExamId = examId, ReceivedOn = new DateOnly(2026, 10, 5),
+            Values = new Dictionary<string, string> { ["k"] = "4,4", ["na"] = "140", ["nak"] = "38", ["sample"] = "Sangre venosa" }
+        });
 
-        report.Results[0].Should().BeEquivalentTo(new { Reference = "2.9 - 4.2", Abnormal = true, Band = (string?)null });
-        report.Results[1].Should().BeEquivalentTo(new { Value = "Sangre venosa", Abnormal = false });
+        report.Results[0].Should().BeEquivalentTo(new { Reference = "2.9 - 4.2", Abnormal = true, Direction = ResultDirection.High, BarMin = 2.9m, BarMax = 4.2m },
+            "the cat's own range replaces the one for all species");
+        report.Results[1].Should().BeEquivalentTo(new { Reference = "147 - 162", Abnormal = true, Direction = ResultDirection.Low, BarMin = (decimal?)null },
+            "no bar unless the parameter asks for one");
+        report.Results[2].Should().BeEquivalentTo(new { Reference = "Sin rango de referencia", Abnormal = false, Direction = ResultDirection.None });
+        report.Results[3].Should().BeEquivalentTo(new { Value = "Sangre venosa", Abnormal = false });
         report.Interpretation.Should().BeNull();
     }
 
