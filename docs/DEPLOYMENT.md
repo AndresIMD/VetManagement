@@ -30,9 +30,10 @@ Health check: `GET /healthz` (includes the database).
 
 Everything business-related is edited by the clinic admin in the staff web, no deploy needed:
 Agenda settings (hours, services, deposit %, refund mode, notifications, branding; starts disabled),
-Billing settings (payment methods, discount limit, stock on sale) and Clinical settings (vaccine and
-deworming protocols, reminders). See [modules/SCHEDULING.md](modules/SCHEDULING.md),
-[BILLING.md](modules/BILLING.md) and [CLINICAL.md](modules/CLINICAL.md).
+Billing settings (payment methods, discount limit, stock on sale, VAT), Clinical settings (vaccine and
+deworming protocols, reminders, client portal) and Exams → Report Design (branding and templates of lab reports).
+See [SCHEDULING.md](modules/SCHEDULING.md), [BILLING.md](modules/BILLING.md), [CLINICAL.md](modules/CLINICAL.md)
+and [EXAM_REPORTS.md](modules/EXAM_REPORTS.md).
 
 Permissions are stored in the login token: after an update that adds permissions, users log out and
 in again to see the new screens.

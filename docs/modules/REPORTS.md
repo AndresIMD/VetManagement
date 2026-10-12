@@ -2,7 +2,7 @@
 
 `GET api/reports/summary?from=&to=` (clinic-local dates, inclusive, at most 366 days), staff web → Reports.
 Read-only: every figure comes from records the other modules already keep. Permission `reports.read`
-(Admin, Manager).
+(Admin, or Supervisor together with any area role).
 
 | Area | Figures |
 |---|---|

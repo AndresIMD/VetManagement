@@ -15,7 +15,7 @@ creating an account.
 The token is 32 random bytes (base64url); only its SHA-256 is stored (`ClientAccessTokens`), so a database
 leak doesn't give usable links.
 
-## Settings (clinical settings → `ClientPortal`, admin)
+## Settings (clinical settings → `ClientPortal`, `clinical.manage`)
 
 | Setting | Default | Meaning |
 |---|---|---|

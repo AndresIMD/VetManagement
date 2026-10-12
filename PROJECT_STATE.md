@@ -1,6 +1,6 @@
 # VetManagement — Project State
 
-**Last updated:** 2026-10-06 · **Branch:** main · **Tests:** 271 (+3 on SQL Server) · CI green
+**Last updated:** 2026-10-12 · **Branch:** feature/lab-reports-modules-roles · **Tests:** 271 (+3 on SQL Server)
 
 Product model: one generic staff CRM sold to many clinics; each clinic has its own deployment and database, its
 own branded public site, and configures every business policy itself (admin-editable settings).
@@ -21,15 +21,16 @@ How the code is organised: [`docs/architecture/ARCHITECTURE.md`](docs/architectu
 | F12 | ✅ | Client portal "Mis mascotas" — [CLIENT_PORTAL.md](docs/modules/CLIENT_PORTAL.md) |
 | — | ✅ | "Charge visit": appointment + procedures + supplies, one sale or split taxed / VAT-exempt; legacy visit payment fields retired — [BILLING.md](docs/modules/BILLING.md) |
 | — | ✅ | Modules per clinic (`Modules:Enabled`) and area roles (Inventory, Laboratory, Reception, Clinical, Cashier + Supervisor) — [ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) |
-| — | ✅ | Exam reports: per-exam templates with interpretation bands, clinic branding (logo, background, footer), print / save PDF — [EXAM_REPORTS.md](docs/modules/EXAM_REPORTS.md) |
-| — | ✅ | Test data page for development (Administration → Test Data) — [guide](docs/guides/DATOS_DE_PRUEBA.md) |
+| — | ✅ | Exam reports: per-exam templates with normal ranges (↓/↑), interpretation bands, reference column and IDEXX-style bars; clinic branding (logo, background, font, footer); multi-page print / save PDF — [EXAM_REPORTS.md](docs/modules/EXAM_REPORTS.md) |
+| — | ✅ | Legacy SPLabHybrid data migration script — [DEPLOYMENT.md](docs/DEPLOYMENT.md#moving-a-clinic-from-the-legacy-splabhybrid-app-san-pablo) |
+| — | ✅ | Test data page for development (Administration → Test Data) — [guide](docs/guides/TEST_DATA.md) |
 
 ## Blocked on the clinic (not code)
 
 1. Transbank production credentials (commerce code + API key secret) for each clinic.
 2. SMTP account for client emails (confirmations, reminders, client-portal links).
 3. Hosting: API + SQL Server database, staff web, booking portal — follow [DEPLOYMENT.md](docs/DEPLOYMENT.md).
-4. Which items are VAT-exempt (clinic's accountant), then set it in Billing settings → `tax`.
+4. Which items are VAT-exempt (clinic's accountant), then set it in Billing settings → `Tax`.
 5. Switch `sites/SPVetClinic` `BookingUrl` from the external CRM to the portal once live.
 
 ## Open product decisions
@@ -44,11 +45,13 @@ How the code is organised: [`docs/architecture/ARCHITECTURE.md`](docs/architectu
 
 ## Later (depend on providers or costs)
 
-Enforcing paid modules once there is a second clinic: `Modules:Enabled` is configuration the clinic could edit on its
-own server. Either host the CRM (vendor-run, subdomain per clinic) or read the modules from a license signed by the
-vendor; `EnabledModules` is the single place to change. ·
-WhatsApp notifications (setting reserved) · electronic receipts (boleta/factura SII) · services needing a vet *and*
-a room at once · offline mode for the desktop app.
+- Enforcing paid modules once there is a second clinic: `Modules:Enabled` is configuration the clinic could edit on
+  its own server. Either host the CRM (vendor-run, subdomain per clinic) or read the modules from a license signed by
+  the vendor; `EnabledModules` is the single place to change.
+- WhatsApp notifications (setting reserved).
+- Electronic receipts (boleta/factura SII).
+- Services needing a vet *and* a room at once.
+- Offline mode for the desktop app.
 
 ## Quick checks
 

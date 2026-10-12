@@ -19,8 +19,9 @@ the current stock is rejected. The item name is copied, so the record stays read
 
 A dose can also name the inventory product applied: one unit leaves stock, and deleting the dose returns it.
 
-Every automatic stock change (sales, supplies, doses) runs under one `sp_getapplock` key (`stock`), so two
-of them never overwrite each other's stock count; manual adjustments in the inventory screens take it too.
+Every stock change takes the clinic-wide `stock` lock
+([exclusive work](../architecture/ARCHITECTURE.md#shared-mechanisms)), so sales, supplies and doses never overwrite
+each other's stock count.
 
 ## Preventive care (vaccines, deworming)
 
@@ -29,7 +30,7 @@ due. Doses of the same series (same protocol, or same product name for one-off p
 other: only the latest one counts as due. Status: `UpToDate`, `DueSoon` (within the reminder window),
 `Overdue`, `Superseded`, `NoRepeat`.
 
-## Settings (key `clinical`, versioned, admin only: `clinical.manage`)
+## Settings (key `clinical`, versioned, `clinical.manage`)
 
 | Setting | Default | Meaning |
 |---|---|---|
@@ -50,10 +51,11 @@ contact for a call.
 
 ## Permissions
 
-Records use the existing `medical.read/create/update/delete` permissions; only the settings need
-`clinical.manage` (Admin).
+Records use the `medical.read/create/update/delete` permissions: the Clinical role reads, creates and updates;
+deleting and the settings (`clinical.manage`) need Clinical + Supervisor, or Admin.
+
+Supplies of a visit are charged with "Charge visit" ([BILLING.md](BILLING.md#charge-visit-from-the-clinical-record)).
 
 ## Not yet
 
-Prescriptions as a printable document, attachments (images, lab PDFs), charging the supplies of a visit
-in billing, WhatsApp reminders.
+Prescriptions as a printable document, attachments (images, lab PDFs), WhatsApp reminders.

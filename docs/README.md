@@ -23,14 +23,15 @@ One document per business module: rules, per-clinic settings, permissions and kn
 Inventory, clients/pets, exams and users follow the general module pattern in `ARCHITECTURE.md`; they have no
 separate document.
 
-## Guides (Spanish, for clinic staff and testers)
+## Guides (for clinic staff and testers)
 
 | Guide | |
 |---|---|
-| [`guides/DATOS_DE_PRUEBA.md`](guides/DATOS_DE_PRUEBA.md) | Start the system and fill a development database with sample data |
+| [`guides/TEST_DATA.md`](guides/TEST_DATA.md) | Start the system and fill a development database with sample data |
 
 ## Keeping the docs current
 
 - A change to a module's rules or settings updates its design document in the same commit.
 - `PROJECT_STATE.md` changes when a phase finishes or a decision is made; history lives in `git log`, not in docs.
+- Docs are written in English; only client-facing text in the product is Spanish.
 - Obsolete documents are deleted, not archived: git keeps them (`git log --diff-filter=D --name-only -- docs`).
