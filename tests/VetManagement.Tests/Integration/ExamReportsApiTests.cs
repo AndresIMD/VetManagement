@@ -257,6 +257,82 @@ public class ExamReportsApiTests : IClassFixture<CustomWebAppFactory>
     }
 
     [Fact]
+    public async Task TypedPatient_IsKeptInTheReport_EvaluatedForItsSpecies_AndListed()
+    {
+        var (_, examId) = await AddPetAndExamAsync(Species.Dog);
+        await AddTemplateAsync(new ExamReportTemplate
+        {
+            ExamId = examId,
+            Title = "POTASIO",
+            Sections = new ExamReportSections { PreviousResult = true },
+            Parameters = [new ReportParameter { Code = "k", Name = "K+", Ranges = [new ReferenceRange { Species = Species.Cat, Min = 2.9m, Max = 4.2m }] }]
+        });
+
+        var report = await CreateAsync(_employee, new
+        {
+            ExamId = examId, ReceivedOn = new DateOnly(2026, 10, 13), Values = new Dictionary<string, string> { ["k"] = "4.5" },
+            Patient = new { Name = " Michi ", Species = Species.Cat, Sex = Sex.Female, Birthdate = new DateOnly(2022, 1, 5), OwnerName = "Ana", OwnerLastName = "Pérez" }
+        });
+
+        report.PetId.Should().BeNull();
+        report.Should().BeEquivalentTo(new { PetName = "Michi", Species = Species.Cat, Sex = Sex.Female, OwnerName = "Ana Pérez", OwnerLastName = "Pérez" });
+        report.Birthdate.Should().Be(new DateTime(2022, 1, 5));
+        report.Results.Single().Direction.Should().Be(ResultDirection.High, "the typed species picks the cat's range");
+        report.PreviousReceivedOn.Should().BeNull("a typed patient has no history");
+        (await _admin.GetFromJsonAsync<List<ExamReportDto>>("/api/exam-reports"))!.Should().Contain(r => r.Id == report.Id);
+    }
+
+    [Fact]
+    public async Task ReportWithoutPetOrTypedPatient_IsRejected()
+    {
+        var (_, examId) = await AddPetAndExamAsync(Species.Dog);
+        await AddTemplateAsync(LipaseTemplate(examId));
+
+        var response = await _employee.PostAsJsonAsync("/api/exam-reports", new { ExamId = examId, ReceivedOn = new DateOnly(2026, 10, 13), Values = new Dictionary<string, string> { ["cpl"] = "1" } });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync()).Should().Contain("type the patient's name");
+    }
+
+    [Fact]
+    public async Task TextResults_AreFlaggedOnlyWhenTheOptionIsMarkedAbnormal()
+    {
+        var (petId, examId) = await AddPetAndExamAsync(Species.Dog);
+        string[] options = ["Positivo", "Negativo"];
+        await AddTemplateAsync(new ExamReportTemplate
+        {
+            ExamId = examId,
+            Title = "SNAP 4Dx",
+            Parameters =
+            [
+                new ReportParameter { Code = "ehr", Name = "Ehrlichia", Kind = ReportParameterKind.Text, Options = [.. options], AbnormalOptions = ["Positivo"] },
+                new ReportParameter { Code = "diro", Name = "Dirofilaria", Kind = ReportParameterKind.Text, Options = [.. options], AbnormalOptions = ["Positivo"] },
+                new ReportParameter { Code = "dea", Name = "DEA 1", Kind = ReportParameterKind.Text, Options = ["DEA 1 Positivo", "DEA 1 Negativo"] }
+            ]
+        });
+
+        var report = await CreateAsync(_employee, new
+        {
+            PetId = petId, ExamId = examId, ReceivedOn = new DateOnly(2026, 10, 13),
+            Values = new Dictionary<string, string> { ["ehr"] = "positivo", ["diro"] = "Negativo", ["dea"] = "DEA 1 Positivo" }
+        });
+
+        report.Results.Should().AllSatisfy(r => r.Kind.Should().Be(ReportParameterKind.Text));
+        report.Results.Select(r => r.Abnormal).Should().Equal(true, false, false);
+    }
+
+    [Theory]
+    [InlineData(30, 80, true)]
+    [InlineData(9, 80, false)]
+    [InlineData(30, 151, false)]
+    public void LogoSize_MustStayWithinThePrintableLimits(int heightMm, int widthMm, bool valid)
+    {
+        var settings = new ExamReportSettings { LogoHeightMm = heightMm, LogoWidthMm = widthMm };
+
+        settings.Validate().Should().HaveCount(valid ? 0 : 1);
+    }
+
+    [Fact]
     public async Task ExamWithoutTemplate_OrUnknownParameter_IsRejected()
     {
         var (petId, examId) = await AddPetAndExamAsync(Species.Dog);

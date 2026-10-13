@@ -17,10 +17,12 @@ public class ExamReportSettingsService(IUnitOfWork unitOfWork, AuditService audi
     protected override List<string> Validate(ExamReportSettings settings) => settings.Validate();
 }
 
-public sealed record ExamReportInput(int PetId, int ExamId, DateOnly ReceivedOn, string? ReferringVet,
+/// <summary>Either a registered pet (<paramref name="PetId"/>) or a patient typed into the report.</summary>
+public sealed record ExamReportInput(int? PetId, ReportPatient? Patient, int ExamId, DateOnly ReceivedOn, string? ReferringVet,
     IReadOnlyDictionary<string, string> Values, string? Interpretation);
 
-public sealed record ExamReportView(ExamReport Report, Pet Pet, Client? Owner, string? ExamName = null);
+/// <summary>A report with its registered pet and owner; both null when the patient was typed into the report.</summary>
+public sealed record ExamReportView(ExamReport Report, Pet? Pet, Client? Owner, string? ExamName = null);
 
 public enum ExamReportStatus
 {
@@ -42,10 +44,12 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
         var report = await unitOfWork.ExamReports.GetByIdAsNoTrackingAsync(id);
         if (report is null)
             return null;
-        var pet = await unitOfWork.Pets.GetByIdAsNoTrackingAsync(report.PetId);
+        var exam = await unitOfWork.Exams.GetByIdAsNoTrackingAsync(report.ExamId);
+        if (report.PetId is not int petId)
+            return new ExamReportView(report, null, null, exam?.Name);
+        var pet = await unitOfWork.Pets.GetByIdAsNoTrackingAsync(petId);
         if (pet is null)
             return null;
-        var exam = await unitOfWork.Exams.GetByIdAsNoTrackingAsync(report.ExamId);
         return new ExamReportView(report, pet, await unitOfWork.Clients.GetByIdAsNoTrackingAsync(pet.OwnerId), exam?.Name);
     }
 
@@ -58,13 +62,16 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
             : await unitOfWork.ExamReports.GetAllAsync();
         var latest = reports.OrderByDescending(r => r.ReceivedOn).ThenByDescending(r => r.Id).Take(200).ToList();
 
-        var petIds = latest.Select(r => r.PetId).Distinct().ToList();
+        var petIds = latest.Select(r => r.PetId).OfType<int>().Distinct().ToList();
         var pets = (await unitOfWork.Pets.FindAsync(p => petIds.Contains(p.Id))).ToDictionary(p => p.Id);
         var ownerIds = pets.Values.Select(p => p.OwnerId).Distinct().ToList();
         var owners = (await unitOfWork.Clients.FindAsync(c => ownerIds.Contains(c.Id))).ToDictionary(c => c.Id);
 
-        return latest.Where(r => pets.ContainsKey(r.PetId))
-            .Select(r => new ExamReportView(r, pets[r.PetId], owners.GetValueOrDefault(pets[r.PetId].OwnerId)))
+        // A registered pet that was deleted drops its reports from the list; typed patients are always listed.
+        return latest.Where(r => r.PetId is null || pets.ContainsKey(r.PetId.Value))
+            .Select(r => r.PetId is int id
+                ? new ExamReportView(r, pets[id], owners.GetValueOrDefault(pets[id].OwnerId))
+                : new ExamReportView(r, null, null))
             .ToList();
     }
 
@@ -145,9 +152,34 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
 
     private async Task<ExamReportResultStatus?> FillAsync(ExamReport report, ExamReportInput input)
     {
-        var pet = await unitOfWork.Pets.GetByIdAsNoTrackingAsync(input.PetId);
-        if (pet is null)
-            return Invalid("The pet doesn't exist.");
+        Species species;
+        if (input.PetId is int petId)
+        {
+            var pet = await unitOfWork.Pets.GetByIdAsNoTrackingAsync(petId);
+            if (pet is null)
+                return Invalid("The pet doesn't exist.");
+            report.PetId = pet.Id;
+            report.Patient = null;
+            species = pet.Species;
+        }
+        else if (input.Patient is { } patient && !string.IsNullOrWhiteSpace(patient.Name))
+        {
+            report.PetId = null;
+            report.Patient = new ReportPatient
+            {
+                Name = patient.Name.Trim(),
+                Species = patient.Species,
+                Breed = Clean(patient.Breed),
+                Sex = patient.Sex,
+                Birthdate = patient.Birthdate,
+                OwnerName = Clean(patient.OwnerName),
+                OwnerLastName = Clean(patient.OwnerLastName)
+            };
+            species = patient.Species;
+        }
+        else
+            return Invalid("Choose a registered pet or type the patient's name.");
+
         var exam = await unitOfWork.Exams.GetByIdAsNoTrackingAsync(input.ExamId);
         if (exam is null)
             return Invalid("The exam doesn't exist.");
@@ -167,12 +199,11 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
         if (values.Values.Any(v => v.Length > 200))
             return Invalid("A result can't be longer than 200 characters.");
 
-        report.PetId = pet.Id;
         report.ExamId = exam.Id;
         report.Title = template.Title;
         report.Method = string.Join(" - ", new[] { exam.Brand, exam.Machine }.Where(s => !string.IsNullOrWhiteSpace(s)));
         report.ReceivedOn = input.ReceivedOn;
-        report.ReferringVet = string.IsNullOrWhiteSpace(input.ReferringVet) ? null : input.ReferringVet.Trim();
+        report.ReferringVet = Clean(input.ReferringVet);
         report.Sections = new ExamReportSections
         {
             PatientData = template.Sections.PatientData,
@@ -184,7 +215,7 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
         };
         report.Results = template.Parameters
             .Where(p => values.ContainsKey(p.Code))
-            .Select(p => p.ToResult(values[p.Code], pet.Species))
+            .Select(p => p.ToResult(values[p.Code], species))
             .ToList();
         report.Interpretation = string.IsNullOrWhiteSpace(input.Interpretation)
             ? template.Interpret(report.Results)
@@ -195,11 +226,11 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
 
     /// <summary>
     /// Copies the values of the pet's latest earlier report of the same exam, so a reprint never changes when that
-    /// report is corrected later.
+    /// report is corrected later. Typed patients have no history to compare with.
     /// </summary>
     private async Task CopyPreviousAsync(ExamReport report)
     {
-        var previous = report.Sections.PreviousResult
+        var previous = report.Sections.PreviousResult && report.PetId is not null
             ? (await unitOfWork.ExamReports.FindAsync(r => r.PetId == report.PetId && r.ExamId == report.ExamId
                                                           && r.ReceivedOn < report.ReceivedOn && r.Id != report.Id))
                 .OrderByDescending(r => r.ReceivedOn).ThenByDescending(r => r.Id).FirstOrDefault()
@@ -210,4 +241,6 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
     }
 
     private static ExamReportResultStatus Invalid(string error) => new(ExamReportStatus.Invalid, Error: error);
+
+    private static string? Clean(string? text) => string.IsNullOrWhiteSpace(text) ? null : text.Trim();
 }

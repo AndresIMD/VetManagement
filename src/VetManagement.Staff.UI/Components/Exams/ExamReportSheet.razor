@@ -10,12 +10,14 @@
         .xr-page:last-child { break-after: auto; }
         @@media screen { .xr-page { box-shadow: 0 2px 12px rgba(0,0,0,.25); margin-bottom: 8mm; } }
         .xr-page * { box-sizing: border-box; }
-        .xr-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; z-index: 0; }
+        .xr-bg { position: absolute; z-index: 0; max-width: none; }
         .xr-content { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; gap: 5mm; }
         .xr-header { display: flex; align-items: center; gap: 6mm; min-height: 18mm; }
-        .xr-logo { max-height: 30mm; max-width: 80mm; object-fit: contain; }
+        .xr-logo { flex-shrink: 0; }
         .xr-header-lines div:first-child { font-size: 15pt; font-weight: 700; letter-spacing: .5px; }
         .xr-box { border: 0.6mm solid; border-radius: 1mm; background: rgba(255,255,255,.82); }
+        .xr-results-box { position: relative; overflow: hidden; flex: 1; display: flex; flex-direction: column; }
+        .xr-results-box > .xr-bar, .xr-results-box > .xr-results { position: relative; z-index: 1; }
         .xr-bar { color: #fff; font-weight: 700; text-align: center; padding: 1.6mm; font-size: 11.5pt; letter-spacing: .4px; }
         .xr-patient { display: grid; grid-template-columns: 1fr 1fr; gap: 1mm 8mm; padding: 3mm 8mm; }
         .xr-patient b { margin-right: 1.5mm; }
@@ -25,12 +27,20 @@
         .xr-table td { padding: 1.6mm 1.5mm; vertical-align: top; border-bottom: 0.2mm solid #eee; overflow-wrap: anywhere; }
         .xr-flag { font-weight: 700; color: #C62828; }
         .xr-previous { color: #555; }
+        .xr-table th.xr-previous { white-space: nowrap; }
+        .xr-qual-row { display: flex; align-items: center; gap: 4mm; padding: 2mm 1.5mm; border-bottom: 0.2mm solid #eee; }
+        .xr-qual-name { flex: 1; font-weight: 600; }
+        .xr-qual-previous { font-size: 9pt; }
+        .xr-pill { min-width: 34mm; padding: 1.2mm 4mm; border: 0.5mm solid; border-radius: 3mm; text-align: center; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
         .xr-gauge { display: flex; align-items: center; height: 4mm; margin-top: 0.8mm; max-width: 55mm; }
         .xr-gauge-box { position: relative; flex: 1; height: 3.2mm; border: 0.25mm solid #333; }
         .xr-gauge-tick { position: absolute; top: 0; bottom: 0; width: 0.25mm; background: #333; }
         .xr-gauge-mark { position: absolute; top: -0.2mm; bottom: -0.2mm; width: 0.9mm; margin-left: -0.45mm; background: #111; }
         .xr-gauge-mark.out { background: #C62828; }
-        .xr-gauge-edge { position: absolute; top: -1.1mm; font-size: 8pt; color: #C62828; }
+        /* Arrows drawn as CSS triangles so they sit exactly in the middle of the bar, whatever the font. */
+        .xr-gauge-edge { position: absolute; top: 50%; width: 0; height: 0; transform: translateY(-50%); border-top: 1.1mm solid transparent; border-bottom: 1.1mm solid transparent; }
+        .xr-gauge-edge.low { left: 0.4mm; border-right: 1.6mm solid #C62828; }
+        .xr-gauge-edge.high { right: 0.4mm; border-left: 1.6mm solid #C62828; }
         .xr-interpretation { margin-top: 5mm; white-space: pre-line; }
         .xr-interpretation b { margin-right: 2.5mm; }
         .xr-method { align-self: center; margin-top: auto; padding: 1.4mm 6mm; border-radius: 3mm; color: #fff; font-weight: 700; }
@@ -49,9 +59,9 @@
         var first = i == 0;
         var last = i == pages.Count - 1;
         <div class="xr-page" style="width:@(Mm(PageWidth))mm;height:@(Mm(PageHeight))mm">
-            @if (BackgroundUrl is not null)
+            @if (Settings.BackgroundArea == BackgroundArea.Page)
             {
-                <img class="xr-bg" src="@BackgroundUrl" alt="" style="opacity:@Settings.BackgroundOpacity.ToString(CultureInfo.InvariantCulture)" />
+                @Background
             }
 
             <div class="xr-content" style="padding:@(Settings.MarginsMm.Top)mm @(Settings.MarginsMm.Right)mm @(Settings.MarginsMm.Bottom)mm @(Settings.MarginsMm.Left)mm">
@@ -60,7 +70,7 @@
                     <div class="xr-header">
                         @if (LogoUrl is not null)
                         {
-                            <img class="xr-logo" src="@LogoUrl" alt="Logo" />
+                            <img class="xr-logo" src="@LogoUrl" alt="Logo" style="@LogoStyle" />
                         }
                         <div class="xr-header-lines">
                             @foreach (var line in Settings.HeaderLines)
@@ -91,10 +101,30 @@
                     <div style="font-size:9.5pt"><b>@Report.PetName</b> · @Report.OwnerName · @Report.ReceivedOn.ToString("dd/MM/yyyy")</div>
                 }
 
-                <div class="xr-box" style="border-color:@Settings.AccentColor;flex:1;display:flex;flex-direction:column">
+                <div class="xr-box xr-results-box" style="border-color:@Settings.AccentColor">
+                    @if (Settings.BackgroundArea == BackgroundArea.ResultsBox)
+                    {
+                        @Background
+                    }
                     <div class="xr-bar" style="background:@Settings.AccentColor">@Report.Title@(first ? null : " (continuación)")</div>
                     <div class="xr-results">
-                        @if (rows.Count > 0)
+                        @if (rows.Count > 0 && Qualitative)
+                        {
+                            <div>
+                                @foreach (var line in rows)
+                                {
+                                    <div class="xr-qual-row">
+                                        <span class="xr-qual-name">@line.Name</span>
+                                        @if (HasPrevious && !string.IsNullOrEmpty(line.PreviousValue))
+                                        {
+                                            <span class="xr-previous xr-qual-previous">@PreviousHeader: @line.PreviousValue</span>
+                                        }
+                                        <span class="xr-pill" style="@PillStyle(line)">@line.Value</span>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else if (rows.Count > 0)
                         {
                             <table class="xr-table">
                                 <colgroup>
@@ -105,12 +135,11 @@
                                 </colgroup>
                                 <thead>
                                     <tr>
-                                        <th>Parámetro</th><th>Resultado</th>
+                                        <th>Parámetro</th><th>Resultado</th><th>Unidad</th><th>Valor referencial</th>
                                         @if (HasPrevious)
                                         {
                                             <th class="xr-previous">@PreviousHeader</th>
                                         }
-                                        <th>Unidad</th><th>Valor referencial</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -119,12 +148,12 @@
                                         <tr>
                                             <td>@line.Name</td>
                                             <td class="@(line.Abnormal ? "xr-flag" : null)">@line.Value @Mark(line)</td>
+                                            <td>@line.Unit</td>
+                                            <td>@line.Reference @Gauge(line)</td>
                                             @if (HasPrevious)
                                             {
                                                 <td class="xr-previous">@line.PreviousValue</td>
                                             }
-                                            <td>@line.Unit</td>
-                                            <td>@line.Reference @Gauge(line)</td>
                                         </tr>
                                     }
                                 </tbody>
@@ -216,8 +245,55 @@
     private static bool HasBar(ExamReportResultDto line) => line is { BarMin: { } min, BarMax: { } max } && max > min;
     private bool HasPrevious => Report.Sections.PreviousResult && (Report.PreviousReceivedOn is not null || Placeholder);
     private string PreviousHeader => Report.PreviousReceivedOn?.ToString("dd/MM/yyyy") ?? "DD/MM/AAAA";
-    // Parameter, result, [previous result], unit, reference (with the bar under it).
-    private int[] ColumnWidths => HasPrevious ? [26, 15, 14, 12, 33] : [30, 18, 14, 38];
+    // Parameter, result, unit, reference (with the bar under it), [previous result].
+    private int[] ColumnWidths => HasPrevious ? [26, 15, 12, 31, 16] : [30, 18, 14, 38];
+
+    /// <summary>Only text results (Positivo / Negativo, blood types): each prints as a highlighted result, no table.</summary>
+    private bool Qualitative => Report.Results.Count > 0 && Report.Results.All(r => r.Kind == ReportParameterKind.Text);
+
+    /// <summary>Abnormal results in solid red; the others outlined in the clinic's result colour.</summary>
+    private string PillStyle(ExamReportResultDto line) => line.Abnormal
+        ? "background:#C62828;border-color:#C62828;color:#fff"
+        : $"border-color:{Settings.AccentColor};color:{Settings.AccentColor}";
+
+    private RenderFragment Background => __builder =>
+    {
+        if (BackgroundUrl is null)
+            return;
+        <img class="xr-bg" src="@BackgroundUrl" alt="" style="@BackgroundStyle" />
+    };
+
+    /// <summary>
+    /// Stretched over the whole area, or keeping its proportions: filling the width (aligned top / centre / bottom) or the
+    /// height (aligned left / centre / right); the area clips what overflows.
+    /// </summary>
+    private string BackgroundStyle
+    {
+        get
+        {
+            var opacity = $"opacity:{Settings.BackgroundOpacity.ToString(CultureInfo.InvariantCulture)};";
+            if (!Settings.BackgroundKeepRatio)
+                return opacity + "inset:0;width:100%;height:100%;object-fit:fill";
+            var (side, across, size) = Settings.BackgroundFit == ImageFit.Width
+                ? ("left:0;", "top", "width:100%;height:auto;")
+                : ("top:0;", "left", "height:100%;width:auto;");
+            var place = Settings.BackgroundAlign switch
+            {
+                ImageAlign.Start => $"{across}:0;",
+                ImageAlign.End => $"{(across == "top" ? "bottom" : "right")}:0;",
+                _ => $"{across}:50%;transform:translate{(across == "top" ? "Y" : "X")}(-50%);"
+            };
+            return opacity + side + size + place;
+        }
+    }
+
+    /// <summary>The chosen height; the width follows the proportions, or is the chosen width when they aren't kept.</summary>
+    private string LogoStyle => Settings.LogoKeepRatio
+        ? $"height:{Settings.LogoHeightMm}mm;width:auto;max-width:150mm"
+        : $"height:{Settings.LogoHeightMm}mm;width:{Settings.LogoWidthMm}mm;object-fit:fill";
+
+    /// <summary>Height of the header row: the logo or the header lines, whichever is taller.</summary>
+    private double HeaderMm => Math.Max(LogoUrl is null ? 0 : Settings.LogoHeightMm, Math.Max(18, Settings.HeaderLines.Count * 6));
 
     /// <summary>↑ / ↓ when the template prints arrows; "*" marks the other flagged values (abnormal band, outside every band).</summary>
     private string? Mark(ExamReportResultDto line) => line switch
@@ -233,6 +309,8 @@
     {
         get
         {
+            if (Qualitative)
+                return null; // the red result speaks for itself
             var marks = Report.Results.Select(Mark).ToHashSet();
             var parts = new[]
             {
@@ -262,11 +340,11 @@
                 <div class="xr-gauge-tick" style="left:66.67%"></div>
                 @if (position is < 0)
                 {
-                    <span class="xr-gauge-edge" style="left:0.3mm">◀</span>
+                    <span class="xr-gauge-edge low"></span>
                 }
                 else if (position is > 1)
                 {
-                    <span class="xr-gauge-edge" style="right:0.3mm">▶</span>
+                    <span class="xr-gauge-edge high"></span>
                 }
                 else if (position is { } p)
                 {
@@ -286,7 +364,7 @@
     {
         var footerMm = Settings.FooterLines.Count * LINE_MM + Lines(Settings.Disclaimer, ContentWidth) * LINE_MM + 8;
         var frameMm = PageHeight - Settings.MarginsMm.Top - Settings.MarginsMm.Bottom
-            - (HasHeader ? 32 + GAP_MM : 0) - footerMm - GAP_MM
+            - (HasHeader ? HeaderMm + 2 + GAP_MM : 0) - footerMm - GAP_MM
             - 26; // result bar, table header and box padding
         var firstMm = frameMm - (Report.Sections.PatientData ? 38 + GAP_MM : 0);
         var nextMm = frameMm - 6 - GAP_MM; // continuation line with the patient's name
@@ -321,9 +399,11 @@
     private double RowMm(ExamReportResultDto line)
     {
         var widths = ColumnWidths.Select(w => ContentWidth * w / 100 - 3).ToArray();
-        var reference = (string.IsNullOrEmpty(line.Reference) ? 0 : Lines(line.Reference, widths[^1])) + (HasBar(line) ? 1 : 0);
-        var previous = HasPrevious ? Lines(line.PreviousValue, widths[2]) : 1;
-        var lines = new[] { Lines(line.Name, widths[0]), Lines($"{line.Value} *", widths[1]), previous, Lines(line.Unit, widths[^2]), reference }.Max();
+        if (Qualitative)
+            return Math.Max(1, Lines(line.Name, ContentWidth - 80)) * LINE_MM + 6;
+        var reference = (string.IsNullOrEmpty(line.Reference) ? 0 : Lines(line.Reference, widths[3])) + (HasBar(line) ? 1 : 0);
+        var previous = HasPrevious ? Lines(line.PreviousValue, widths[4]) : 1;
+        var lines = new[] { Lines(line.Name, widths[0]), Lines($"{line.Value} *", widths[1]), Lines(line.Unit, widths[2]), reference, previous }.Max();
         return lines * LINE_MM + 3.6;
     }
 

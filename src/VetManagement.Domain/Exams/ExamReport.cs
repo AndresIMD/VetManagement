@@ -12,7 +12,11 @@ public class ExamReport : Entity<int>
 {
     public ExamReport() : base(0) { }
 
-    public int PetId { get; set; }
+    /// <summary>The registered pet; null when the patient was typed into the report (<see cref="Patient"/>).</summary>
+    public int? PetId { get; set; }
+
+    /// <summary>Patient and owner of a report for an animal that isn't registered (e.g. referred by another clinic).</summary>
+    public ReportPatient? Patient { get; set; }
 
     public int ExamId { get; set; }
 
@@ -55,11 +59,25 @@ public class ExamReport : Entity<int>
     }
 }
 
+/// <summary>The patient of a report typed by hand, kept only in the report.</summary>
+public class ReportPatient
+{
+    public string Name { get; set; } = string.Empty;
+    public Species Species { get; set; }
+    public string? Breed { get; set; }
+    public Sex Sex { get; set; }
+    public DateOnly? Birthdate { get; set; }
+    public string? OwnerName { get; set; }
+    public string? OwnerLastName { get; set; }
+}
+
 /// <summary>One printed line: the parameter as it was configured when the report was saved, and its value.</summary>
 public class ExamReportResult
 {
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
+    /// <summary>Text results (Positivo / Negativo, blood types) print as highlighted results when a report has only those.</summary>
+    public ReportParameterKind Kind { get; set; }
     public string? Unit { get; set; }
     public string Value { get; set; } = string.Empty;
     public string? Reference { get; set; }

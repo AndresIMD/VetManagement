@@ -39,6 +39,26 @@ public class ExamReportSettings
     /// <summary>1 = background image as uploaded; lower values fade it into a watermark.</summary>
     public double BackgroundOpacity { get; set; } = 1;
 
+    /// <summary>The background fills the whole sheet, or only the results box (behind the table).</summary>
+    public BackgroundArea BackgroundArea { get; set; } = BackgroundArea.Page;
+
+    /// <summary>Keep the background's proportions; false stretches it over the whole area.</summary>
+    public bool BackgroundKeepRatio { get; set; }
+
+    /// <summary>With the proportions kept: the side the background fills.</summary>
+    public ImageFit BackgroundFit { get; set; } = ImageFit.Width;
+
+    /// <summary>With the proportions kept: top/centre/bottom when filling the width, left/centre/right when filling the height.</summary>
+    public ImageAlign BackgroundAlign { get; set; } = ImageAlign.Start;
+
+    /// <summary>Logo height in mm; with the proportions kept its width follows.</summary>
+    public int LogoHeightMm { get; set; } = 30;
+
+    /// <summary>Logo width in mm, used only when its proportions aren't kept.</summary>
+    public int LogoWidthMm { get; set; } = 80;
+
+    public bool LogoKeepRatio { get; set; } = true;
+
     public List<ExamReportTemplate> Templates { get; set; } = [];
 
     public ExamReportTemplate? FindTemplate(int examId) => Templates.FirstOrDefault(t => t.ExamId == examId);
@@ -50,6 +70,8 @@ public class ExamReportSettings
             errors.Add("Margins must be between 0 and 60 mm.");
         if (BackgroundOpacity is < 0.05 or > 1)
             errors.Add("BackgroundOpacity must be between 0.05 and 1.");
+        if (LogoHeightMm is < 10 or > 60 || LogoWidthMm is < 10 or > 150)
+            errors.Add("The logo must be 10–60 mm high and 10–150 mm wide.");
         if (!IsColor(AccentColor) || !IsColor(HeaderColor))
             errors.Add("Colours must be written as #RRGGBB.");
         if (!Fonts.Contains(FontFamily))
@@ -127,6 +149,8 @@ public class ExamReportTemplate
                 errors.Add($"Template '{name}', parameter '{p.Code}': write the reference text, or show the range instead.");
             if (p.Kind == ReportParameterKind.Text && p.Bands.Count > 0)
                 errors.Add($"Template '{name}', parameter '{p.Code}': text parameters have no bands.");
+            if (p.AbnormalOptions.Any(a => !p.Options.Contains(a, StringComparer.OrdinalIgnoreCase)))
+                errors.Add($"Template '{name}', parameter '{p.Code}': abnormal results must be among its options.");
         }
 
         bool IsNumber(string? code) => FindParameter(code ?? string.Empty) is { Kind: ReportParameterKind.Number };
@@ -177,6 +201,8 @@ public class ReportParameter
     public bool ShowBar { get; set; }
     /// <summary>Text parameters: values offered in a list (e.g. blood types); empty = free text.</summary>
     public List<string> Options { get; set; } = [];
+    /// <summary>Text parameters: options that are not a normal result (e.g. "Positivo"); they print in red.</summary>
+    public List<string> AbnormalOptions { get; set; } = [];
     /// <summary>Optional meanings by range (e.g. "Zona gris"); the first band that contains the value wins.</summary>
     public List<InterpretationBand> Bands { get; set; } = [];
 
@@ -190,11 +216,13 @@ public class ReportParameter
     /// <summary>
     /// How a value reads for the species: below or above the normal range, the band it falls in, and whether it is
     /// flagged (outside the range, in an abnormal band, or outside every band when there is no range).
-    /// Text and unparsable values are never flagged.
+    /// A text value is flagged when it is one of the <see cref="AbnormalOptions"/>; unparsable numbers never are.
     /// </summary>
     public BandResult Evaluate(string? value, Species species)
     {
-        if (Kind != ReportParameterKind.Number || ParseNumber(value) is not { } number)
+        if (Kind == ReportParameterKind.Text)
+            return new BandResult(null, value is not null && AbnormalOptions.Contains(value.Trim(), StringComparer.OrdinalIgnoreCase));
+        if (ParseNumber(value) is not { } number)
             return new BandResult(null, false);
 
         var range = RangeFor(species);
@@ -222,6 +250,7 @@ public class ReportParameter
         {
             Code = Code,
             Name = Name,
+            Kind = Kind,
             Unit = Unit,
             Value = value,
             Reference = ReferenceFor(species),

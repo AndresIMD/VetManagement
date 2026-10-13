@@ -96,7 +96,14 @@ public class ExamReportsController(ExamReportService service, ExamReportSettings
         => await service.DeleteImageAsync(kind, GetUserName()) ? Ok() : NotFound();
 
     private static ExamReportInput ToInput(ExamReportRequest r)
-        => new(r.PetId, r.ExamId, r.ReceivedOn, r.ReferringVet, r.Values, r.Interpretation);
+        => new(r.PetId, r.Patient is { } p
+                ? new ReportPatient
+                {
+                    Name = p.Name, Species = p.Species, Breed = p.Breed, Sex = p.Sex, Birthdate = p.Birthdate,
+                    OwnerName = p.OwnerName, OwnerLastName = p.OwnerLastName
+                }
+                : null,
+            r.ExamId, r.ReceivedOn, r.ReferringVet, r.Values, r.Interpretation);
 
     private IActionResult ToActionResult(ExamReportResultStatus result) => result.Status switch
     {
@@ -127,18 +134,31 @@ public class ExamReportsController(ExamReportService service, ExamReportSettings
         },
         Results = view.Report.Results.Select(r => new ExamReportResultDto
         {
-            Code = r.Code, Name = r.Name, Unit = r.Unit, Value = r.Value, Reference = r.Reference, Band = r.Band, Abnormal = r.Abnormal,
+            Code = r.Code, Name = r.Name, Kind = r.Kind, Unit = r.Unit, Value = r.Value, Reference = r.Reference, Band = r.Band, Abnormal = r.Abnormal,
             Direction = r.Direction, BarMin = r.BarMin, BarMax = r.BarMax, PreviousValue = r.PreviousValue
         }).ToList(),
         PreviousReceivedOn = view.Report.PreviousReceivedOn,
         CreatedAtUtc = view.Report.CreatedAtUtc,
         CreatedBy = view.Report.CreatedBy,
-        PetName = view.Pet.Name,
-        Species = view.Pet.Species,
-        Breed = view.Pet.Breed,
-        Sex = view.Pet.Sex,
-        Birthdate = view.Pet.Birthdate > DateTime.MinValue.AddYears(1) ? view.Pet.Birthdate : null,
-        OwnerName = view.Owner is null ? null : $"{view.Owner.Name} {view.Owner.LastName}".Trim(),
-        OwnerLastName = view.Owner?.LastName
+        Patient = view.Report.Patient is { } p
+            ? new ExamReportPatientDto
+            {
+                Name = p.Name, Species = p.Species, Breed = p.Breed, Sex = p.Sex, Birthdate = p.Birthdate,
+                OwnerName = p.OwnerName, OwnerLastName = p.OwnerLastName
+            }
+            : null,
+        PetName = view.Pet?.Name ?? view.Report.Patient?.Name ?? string.Empty,
+        Species = view.Pet?.Species ?? view.Report.Patient?.Species ?? Species.Unknown,
+        Breed = view.Pet is null ? view.Report.Patient?.Breed : view.Pet.Breed,
+        Sex = view.Pet?.Sex ?? view.Report.Patient?.Sex ?? default,
+        Birthdate = view.Pet is { } pet
+            ? (pet.Birthdate > DateTime.MinValue.AddYears(1) ? pet.Birthdate : null)
+            : view.Report.Patient?.Birthdate?.ToDateTime(TimeOnly.MinValue),
+        OwnerName = view.Owner is { } owner
+            ? $"{owner.Name} {owner.LastName}".Trim()
+            : NullIfEmpty($"{view.Report.Patient?.OwnerName} {view.Report.Patient?.OwnerLastName}".Trim()),
+        OwnerLastName = view.Owner?.LastName ?? view.Report.Patient?.OwnerLastName
     };
+
+    private static string? NullIfEmpty(string text) => text.Length == 0 ? null : text;
 }

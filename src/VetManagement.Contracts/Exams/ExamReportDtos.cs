@@ -10,8 +10,11 @@ namespace VetManagement.Contracts.Exams;
 /// </summary>
 public sealed class ExamReportRequest
 {
+    /// <summary>A registered pet; leave empty and fill <see cref="Patient"/> for an animal that isn't registered.</summary>
     [Range(1, int.MaxValue)]
-    public int PetId { get; init; }
+    public int? PetId { get; init; }
+
+    public ExamReportPatientDto? Patient { get; init; }
 
     [Range(1, int.MaxValue)]
     public int ExamId { get; init; }
@@ -28,10 +31,28 @@ public sealed class ExamReportRequest
     public string? Interpretation { get; init; }
 }
 
+/// <summary>Patient and owner typed into a report; kept only in that report.</summary>
+public sealed class ExamReportPatientDto
+{
+    [Required, MaxLength(100)]
+    public string Name { get; set; } = string.Empty;
+    public Species Species { get; set; }
+    [MaxLength(100)]
+    public string? Breed { get; set; }
+    public Sex Sex { get; set; }
+    public DateOnly? Birthdate { get; set; }
+    [MaxLength(100)]
+    public string? OwnerName { get; set; }
+    [MaxLength(100)]
+    public string? OwnerLastName { get; set; }
+}
+
 public sealed class ExamReportDto
 {
     public int Id { get; set; }
-    public int PetId { get; set; }
+    /// <summary>Null when the patient was typed into the report (see <see cref="Patient"/>).</summary>
+    public int? PetId { get; set; }
+    public ExamReportPatientDto? Patient { get; set; }
     public int ExamId { get; set; }
     /// <summary>Catalog name of the exam (for the PDF file name); filled when one report is read.</summary>
     public string? ExamName { get; set; }
@@ -70,6 +91,7 @@ public sealed class ExamReportResultDto
 {
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
+    public ReportParameterKind Kind { get; set; }
     public string? Unit { get; set; }
     public string Value { get; set; } = string.Empty;
     public string? Reference { get; set; }

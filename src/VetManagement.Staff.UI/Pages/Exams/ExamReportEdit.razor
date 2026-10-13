@@ -33,19 +33,56 @@
 
         <MudPaper Class="pa-4 mb-3" Elevation="1">
             <MudGrid>
-                <MudItem xs="12" sm="4">
-                    <MudNumericField T="int?" Label="Pet ID" Value="_petId" ValueChanged="OnPetChangedAsync" Min="1" HideSpinButtons="true" />
+                <MudItem xs="12">
+                    <MudRadioGroup T="bool" @bind-Value="_registered">
+                        <MudRadio T="bool" Value="false">Patient not registered (typed here, kept only in this report)</MudRadio>
+                        <MudRadio T="bool" Value="true">Registered pet</MudRadio>
+                    </MudRadioGroup>
                 </MudItem>
-                <MudItem xs="12" sm="8" Class="d-flex align-center">
-                    @if (_pet is not null)
-                    {
-                        <MudText><b>@_pet.Name</b> · @_pet.Species · @_pet.Breed · Owner: @_pet.OwnerName</MudText>
-                    }
-                    else if (_petId is not null)
-                    {
-                        <MudText Color="Color.Warning">Pet #@_petId was not found.</MudText>
-                    }
-                </MudItem>
+                @if (_registered)
+                {
+                    <MudItem xs="12" sm="4">
+                        <MudNumericField T="int?" Label="Pet ID" Value="_petId" ValueChanged="OnPetChangedAsync" Min="1" HideSpinButtons="true" />
+                    </MudItem>
+                    <MudItem xs="12" sm="8" Class="d-flex align-center">
+                        @if (_pet is not null)
+                        {
+                            <MudText><b>@_pet.Name</b> · @_pet.Species · @_pet.Breed · Owner: @_pet.OwnerName</MudText>
+                        }
+                        else if (_petId is not null)
+                        {
+                            <MudText Color="Color.Warning">Pet #@_petId was not found.</MudText>
+                        }
+                    </MudItem>
+                }
+                else
+                {
+                    <MudItem xs="12" sm="4"><MudTextField Label="Patient name" @bind-Value="_patient.Name" MaxLength="100" Required="true" /></MudItem>
+                    <MudItem xs="6" sm="4">
+                        <MudSelect T="Species" Label="Species" @bind-Value="_patient.Species">
+                            @foreach (var species in Enum.GetValues<Species>())
+                            {
+                                <MudSelectItem Value="species">@species.GetDisplayString()</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="6" sm="4"><MudTextField Label="Breed" @bind-Value="_patient.Breed" MaxLength="100" /></MudItem>
+                    <MudItem xs="6" sm="4">
+                        <MudSelect T="Sex" Label="Sex" @bind-Value="_patient.Sex">
+                            @foreach (var sex in Enum.GetValues<Sex>())
+                            {
+                                <MudSelectItem Value="sex">@sex.GetDisplayString()</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="6" sm="4">
+                        <MudDatePicker Label="Birth date (for the age)" @bind-Date="_birthdate" Editable="true" DateFormat="dd/MM/yyyy"
+                                       Placeholder="dd/mm/yyyy" Clearable="true" />
+                    </MudItem>
+                    <MudItem xs="12" sm="4" />
+                    <MudItem xs="6" sm="4"><MudTextField Label="Owner first name" @bind-Value="_patient.OwnerName" MaxLength="100" /></MudItem>
+                    <MudItem xs="6" sm="4"><MudTextField Label="Owner last name" @bind-Value="_patient.OwnerLastName" MaxLength="100" /></MudItem>
+                }
                 <MudItem xs="12" sm="6">
                     <MudSelect T="int" Label="Exam" Value="_examId" ValueChanged="OnExamChanged">
                         @foreach (var exam in _exams)
@@ -115,7 +152,7 @@
 
             <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mb-8">
                 <MudButton Variant="Variant.Outlined" Href="@CancelHref">Cancel</MudButton>
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_saving || _pet is null" OnClick="SaveAsync">Save and view</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_saving || !HasPatient" OnClick="SaveAsync">Save and view</MudButton>
             </MudStack>
         }
     }
@@ -130,8 +167,12 @@
 
     private ExamReportSettings? _settings;
     private List<ExamModel> _exams = [];
+    // Patients aren't registered yet, so a typed patient is the default.
+    private bool _registered;
     private int? _petId;
     private PetInfo? _pet;
+    private ExamReportPatientDto _patient = new();
+    private DateTime? _birthdate;
     private int _examId;
     private DateTime? _receivedOn = DateTime.Today;
     private string? _referringVet;
@@ -141,7 +182,8 @@
     private bool _saving;
 
     private ExamReportTemplate? Template => _settings?.FindTemplate(_examId);
-    private Species Species => _pet?.Species ?? Species.Unknown;
+    private Species Species => _registered ? _pet?.Species ?? Species.Unknown : _patient.Species;
+    private bool HasPatient => _registered ? _pet is not null : !string.IsNullOrWhiteSpace(_patient.Name);
     private string? Value(string code) => _values.GetValueOrDefault(code);
 
     private string CancelHref => Id is null ? "exam-reports" : string.Format(ReportRoute, Id);
@@ -172,7 +214,16 @@
             _receivedOn = report.ReceivedOn.ToDateTime(TimeOnly.MinValue);
             _referringVet = report.ReferringVet;
             _values = report.Results.ToDictionary(r => r.Code, r => (string?)r.Value, StringComparer.OrdinalIgnoreCase);
-            await OnPetChangedAsync(report.PetId);
+            if (report.Patient is { } patient)
+            {
+                _patient = patient;
+                _birthdate = patient.Birthdate?.ToDateTime(TimeOnly.MinValue);
+            }
+            else
+            {
+                _registered = true;
+                await OnPetChangedAsync(report.PetId);
+            }
             // A stored interpretation equal to the automatic one stays automatic, so a correction recomputes it.
             _interpretation = report.Interpretation == AutomaticInterpretation ? null : report.Interpretation;
         }
@@ -180,7 +231,10 @@
         {
             _examId = QueryExamId is int examId && _exams.Any(e => e.Id == examId) ? examId : _exams.FirstOrDefault()?.Id ?? 0;
             if (QueryPetId is int petId)
+            {
+                _registered = true;
                 await OnPetChangedAsync(petId);
+            }
         }
     }
 
@@ -216,16 +270,17 @@
 
     private async Task SaveAsync()
     {
-        if (_pet is null || _receivedOn is null)
+        if (!HasPatient || _receivedOn is null)
         {
-            _error = "Choose the pet and the reception date.";
+            _error = _registered ? "Choose the pet and the reception date." : "Type the patient's name and the reception date.";
             return;
         }
         _saving = true;
         _error = null;
         var request = new ExamReportRequest
         {
-            PetId = _pet.Id,
+            PetId = _registered ? _pet!.Id : null,
+            Patient = _registered ? null : WithBirthdate(_patient),
             ExamId = _examId,
             ReceivedOn = DateOnly.FromDateTime(_receivedOn.Value),
             ReferringVet = _referringVet,
@@ -240,5 +295,11 @@
             return;
         }
         Navigation.NavigateTo(string.Format(ReportRoute, Id ?? result.Id));
+    }
+
+    private ExamReportPatientDto WithBirthdate(ExamReportPatientDto patient)
+    {
+        patient.Birthdate = _birthdate is { } born ? DateOnly.FromDateTime(born) : null;
+        return patient;
     }
 }

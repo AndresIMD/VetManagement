@@ -45,6 +45,16 @@
                                                OnClick="() => RemoveAsync(ClinicImageKind.ReportLogo)">Remove</MudButton>
                                 }
                             </MudStack>
+                            <MudCheckBox T="bool" @bind-Value="_settings.LogoKeepRatio" Label="Keep the logo's proportions" Dense="true" />
+                            <MudSlider T="int" @bind-Value="_settings.LogoHeightMm" Min="10" Max="60" Step="1">
+                                Logo height: @_settings.LogoHeightMm mm
+                            </MudSlider>
+                            @if (!_settings.LogoKeepRatio)
+                            {
+                                <MudSlider T="int" @bind-Value="_settings.LogoWidthMm" Min="10" Max="150" Step="1">
+                                    Logo width: @_settings.LogoWidthMm mm
+                                </MudSlider>
+                            }
                         </div>
                         <div>
                             <MudText Typo="Typo.subtitle2">Background / frame</MudText>
@@ -62,6 +72,26 @@
                                                OnClick="() => RemoveAsync(ClinicImageKind.ReportBackground)">Remove</MudButton>
                                 }
                             </MudStack>
+                            <MudSelect T="BackgroundArea" Label="Background covers" @bind-Value="_settings.BackgroundArea" Class="mt-2" Dense="true">
+                                <MudSelectItem Value="BackgroundArea.Page">The whole page (frame, letterhead)</MudSelectItem>
+                                <MudSelectItem Value="BackgroundArea.ResultsBox">Only the results box (watermark behind the results)</MudSelectItem>
+                            </MudSelect>
+                            <MudCheckBox T="bool" @bind-Value="_settings.BackgroundKeepRatio" Dense="true"
+                                         Label="Keep the image's proportions (otherwise it is stretched to fill the area)" />
+                            @if (_settings.BackgroundKeepRatio)
+                            {
+                                <MudStack Row="true" Spacing="2">
+                                    <MudSelect T="ImageFit" Label="Fit to" @bind-Value="_settings.BackgroundFit" Dense="true">
+                                        <MudSelectItem Value="ImageFit.Width">Width</MudSelectItem>
+                                        <MudSelectItem Value="ImageFit.Height">Height</MudSelectItem>
+                                    </MudSelect>
+                                    <MudSelect T="ImageAlign" Label="Aligned to" @bind-Value="_settings.BackgroundAlign" Dense="true">
+                                        <MudSelectItem Value="ImageAlign.Start">@(_settings.BackgroundFit == ImageFit.Width ? "Top" : "Left")</MudSelectItem>
+                                        <MudSelectItem Value="ImageAlign.Center">Center</MudSelectItem>
+                                        <MudSelectItem Value="ImageAlign.End">@(_settings.BackgroundFit == ImageFit.Width ? "Bottom" : "Right")</MudSelectItem>
+                                    </MudSelect>
+                                </MudStack>
+                            }
                             <MudSlider T="double" @bind-Value="_settings.BackgroundOpacity" Min="0.05" Max="1" Step="0.05"
                                        Class="mt-2">
                                 Background strength: @((_settings.BackgroundOpacity * 100).ToString("0"))% (lower it to turn
@@ -71,12 +101,12 @@
                         <MudAlert Severity="Severity.Info" Dense="true" NoIcon="true">
                             <b>For your designer</b> (images up to 3 MB, PNG, JPEG or WebP):
                             <ul class="mt-1 mb-0">
-                                <li><b>Logo:</b> PNG with a transparent background, about 1200 × 400 px. Printed up to 80 ×
-                                    30 mm, top left.</li>
+                                <li><b>Logo:</b> PNG with a transparent background, about 1200 × 400 px. Printed top left at
+                                    the height chosen above.</li>
                                     <li><b>Background:</b> a full page, portrait, @BackgroundPixels px (300 dpi; half that is
                                         fine for a lighter file).
-                                        It is stretched to the whole sheet. Keep text and strong colours out of the content
-                                        area:
+                                        It is stretched to the whole sheet (or to the results box, when chosen above). Keep
+                                        text and strong colours out of the content area:
                                         @_settings.MarginsMm.Top mm from the top, @_settings.MarginsMm.Bottom mm from the
                                         bottom,
                                         @_settings.MarginsMm.Left mm left and @_settings.MarginsMm.Right mm right are free for

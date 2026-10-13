@@ -97,6 +97,35 @@ public enum ReferenceDisplay
     None
 }
 
+/// <summary>Where a report's background image is drawn.</summary>
+public enum BackgroundArea
+{
+    [DisplayString("Whole page")]
+    Page,
+    [DisplayString("Results box")]
+    ResultsBox
+}
+
+/// <summary>Which side of an image keeping its proportions fills its area.</summary>
+public enum ImageFit
+{
+    [DisplayString("Width")]
+    Width,
+    [DisplayString("Height")]
+    Height
+}
+
+/// <summary>Where an image that doesn't fill its whole area sits: top/left, centre or bottom/right.</summary>
+public enum ImageAlign
+{
+    [DisplayString("Start")]
+    Start,
+    [DisplayString("Center")]
+    Center,
+    [DisplayString("End")]
+    End
+}
+
 /// <summary>Comparison of an interpretation rule's condition.</summary>
 public enum RuleOperator
 {

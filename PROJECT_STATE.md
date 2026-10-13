@@ -1,6 +1,6 @@
 # VetManagement — Project State
 
-**Last updated:** 2026-10-12 · **Branch:** feature/lab-reports-modules-roles · **Tests:** 277 (+3 on SQL Server)
+**Last updated:** 2026-10-12 · **Branch:** feature/lab-reports-modules-roles · **Tests:** 283 (+3 on SQL Server)
 
 Product model: one generic staff CRM sold to many clinics; each clinic has its own deployment and database, its
 own branded public site, and configures every business policy itself (admin-editable settings).
@@ -21,7 +21,7 @@ How the code is organised: [`docs/architecture/ARCHITECTURE.md`](docs/architectu
 | F12 | ✅ | Client portal "Mis mascotas" — [CLIENT_PORTAL.md](docs/modules/CLIENT_PORTAL.md) |
 | — | ✅ | "Charge visit": appointment + procedures + supplies, one sale or split taxed / VAT-exempt; legacy visit payment fields retired — [BILLING.md](docs/modules/BILLING.md) |
 | — | ✅ | Modules per clinic (`Modules:Enabled`) and area roles (Inventory, Laboratory, Reception, Clinical, Cashier + Supervisor) — [ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) |
-| — | ✅ | Exam reports: per-exam templates with normal ranges (↓/↑), interpretation bands, multi-value interpretation rules, reference column and IDEXX-style bars, previous result column; clinic branding (logo, background, font, footer); multi-page print / save PDF — [EXAM_REPORTS.md](docs/modules/EXAM_REPORTS.md) |
+| — | ✅ | Exam reports: per-exam templates with normal ranges (↓/↑), interpretation bands, multi-value interpretation rules, reference column and IDEXX-style bars, previous result column, highlighted qualitative results, reports for unregistered (typed) patients; clinic branding (logo, background, font, footer); multi-page print / save PDF — [EXAM_REPORTS.md](docs/modules/EXAM_REPORTS.md) |
 | — | ✅ | Legacy SPLabHybrid data migration script — [DEPLOYMENT.md](docs/DEPLOYMENT.md#moving-a-clinic-from-the-legacy-splabhybrid-app-san-pablo) |
 | — | ✅ | Test data page for development (Administration → Test Data) — [guide](docs/guides/TEST_DATA.md) |
 

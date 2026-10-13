@@ -836,7 +836,7 @@ namespace VetManagement.Api.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<int>("PetId")
+                    b.Property<int?>("PetId")
                         .HasColumnType("int");
 
                     b.Property<DateOnly?>("PreviousReceivedOn")
@@ -1396,6 +1396,8 @@ namespace VetManagement.Api.Migrations
 
                             b1.Property<int>("Direction");
 
+                            b1.Property<int>("Kind");
+
                             b1.Property<string>("Name")
                                 .IsRequired();
 
@@ -1450,6 +1452,47 @@ namespace VetManagement.Api.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("ExamReportId");
                         });
+
+                    b.OwnsOne("VetManagement.Domain.Exams.ReportPatient", "Patient", b1 =>
+                        {
+                            b1.Property<int>("ExamReportId")
+                                .HasColumnType("int");
+
+                            b1.Property<DateOnly?>("Birthdate")
+                                .HasColumnType("date");
+
+                            b1.Property<string>("Breed")
+                                .HasMaxLength(100)
+                                .HasColumnType("nvarchar(100)");
+
+                            b1.Property<string>("Name")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("nvarchar(100)");
+
+                            b1.Property<string>("OwnerLastName")
+                                .HasMaxLength(100)
+                                .HasColumnType("nvarchar(100)");
+
+                            b1.Property<string>("OwnerName")
+                                .HasMaxLength(100)
+                                .HasColumnType("nvarchar(100)");
+
+                            b1.Property<int>("Sex")
+                                .HasColumnType("int");
+
+                            b1.Property<int>("Species")
+                                .HasColumnType("int");
+
+                            b1.HasKey("ExamReportId");
+
+                            b1.ToTable("ExamReports");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ExamReportId");
+                        });
+
+                    b.Navigation("Patient");
 
                     b.Navigation("Results");
 

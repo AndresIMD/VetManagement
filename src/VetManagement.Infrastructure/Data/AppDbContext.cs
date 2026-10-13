@@ -93,6 +93,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             e.Property(r => r.CreatedBy).HasMaxLength(256);
             e.Property(r => r.UpdatedBy).HasMaxLength(256);
             e.OwnsOne(r => r.Sections);
+            e.OwnsOne(r => r.Patient, p =>
+            {
+                p.Property(x => x.Name).HasMaxLength(100);
+                p.Property(x => x.Breed).HasMaxLength(100);
+                p.Property(x => x.OwnerName).HasMaxLength(100);
+                p.Property(x => x.OwnerLastName).HasMaxLength(100);
+            });
             e.OwnsMany(r => r.Results, b => b.ToJson());
         });
 

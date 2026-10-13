@@ -67,8 +67,29 @@
                                 <MudItem xs="12">
                                     <MudTextField T="string" Label="Options (optional, separated by ;)" Placeholder="DEA 1.1 Positivo; DEA 1.1 Negativo"
                                                   Value="@string.Join("; ", p.Options)"
-                                                  ValueChanged="v => p.Options = (v ?? string.Empty).Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList()" />
+                                                  ValueChanged="v => SetOptions(p, v)" />
                                 </MudItem>
+                                @if (p.Options.Count > 0)
+                                {
+                                    <MudItem xs="12">
+                                        <MudSelect T="string" Label="Abnormal results (print in red)" MultiSelection="true" Clearable="true"
+                                                   SelectedValues="p.AbnormalOptions" SelectedValuesChanged="v => p.AbnormalOptions = v.ToList()"
+                                                   HelperText="E.g. 'Positivo' in a SNAP or PCR test. Leave empty when no value is abnormal (blood types).">
+                                            @foreach (var option in p.Options)
+                                            {
+                                                <MudSelectItem Value="@option">@option</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudItem>
+                                }
+                                @if (_template.Parameters.All(x => x.Kind == ReportParameterKind.Text) && p == _template.Parameters[0])
+                                {
+                                    <MudItem xs="12">
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                            All parameters are text: the report prints each result highlighted (no unit or reference columns).
+                                        </MudText>
+                                    </MudItem>
+                                }
                             }
                             else
                             {
@@ -251,7 +272,6 @@
             </MudItem>
 
             <MudItem xs="12" lg="6">
-                <MudText Typo="Typo.subtitle2" Class="mb-2">Preview (logo, colours and footer from Report Design)</MudText>
                 <div style="overflow-x:auto">
                     <div style="width:fit-content;margin:auto">
                         <ExamReportSheet Settings="_settings!" Report="Preview" Placeholder="true" LogoUrl="@_logo" BackgroundUrl="@_background" />
@@ -326,6 +346,13 @@
     private List<ReportParameter> NumberParameters => _template!.Parameters
         .Where(p => p.Kind == ReportParameterKind.Number && !string.IsNullOrWhiteSpace(p.Code)).ToList();
 
+    /// <summary>Options typed as "a; b"; abnormal ones that are no longer options are dropped.</summary>
+    private static void SetOptions(ReportParameter p, string? text)
+    {
+        p.Options = (text ?? string.Empty).Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList();
+        p.AbnormalOptions = p.AbnormalOptions.Where(a => p.Options.Contains(a, StringComparer.OrdinalIgnoreCase)).ToList();
+    }
+
     private RuleCondition NewCondition() => new() { Code = NumberParameters.FirstOrDefault()?.Code ?? string.Empty };
 
     private void MoveUp(InterpretationRule rule)
@@ -354,7 +381,7 @@
             return ExamReportSheet.PlaceholderReport(_template.Title, _method,
                 results.Select(r => new ExamReportResultDto
                 {
-                    Name = r.Name, Unit = r.Unit, Value = r.Value, Reference = r.Reference, Band = r.Band, Abnormal = r.Abnormal,
+                    Name = r.Name, Kind = r.Kind, Unit = r.Unit, Value = r.Value, Reference = r.Reference, Band = r.Band, Abnormal = r.Abnormal,
                     Direction = r.Direction, BarMin = r.BarMin, BarMax = r.BarMax,
                     PreviousValue = _template.Sections.PreviousResult ? "—" : null
                 }).ToList(),

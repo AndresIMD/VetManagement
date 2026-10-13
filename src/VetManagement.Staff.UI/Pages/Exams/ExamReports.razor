@@ -35,10 +35,17 @@
             <MudTd>@context.ReceivedOn.ToString("dd MMM yyyy")</MudTd>
             <MudTd>@context.Title</MudTd>
             <MudTd>
-                <AuthorizeView Policy="Medical.Read" Context="auth">
-                    <Authorized><MudLink Href="@($"clinical/pets/{context.PetId}")">@context.PetName</MudLink></Authorized>
-                    <NotAuthorized>@context.PetName</NotAuthorized>
-                </AuthorizeView>
+                @if (context.PetId is int petId)
+                {
+                    <AuthorizeView Policy="Medical.Read" Context="auth">
+                        <Authorized><MudLink Href="@($"clinical/pets/{petId}")">@context.PetName</MudLink></Authorized>
+                        <NotAuthorized>@context.PetName</NotAuthorized>
+                    </AuthorizeView>
+                }
+                else
+                {
+                    @context.PetName <MudText Typo="Typo.caption" Color="Color.Secondary" Inline="true">(not registered)</MudText>
+                }
             </MudTd>
             <MudTd>@context.OwnerName</MudTd>
             <MudTd>
