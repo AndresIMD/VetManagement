@@ -21,10 +21,11 @@
         .xr-patient b { margin-right: 1.5mm; }
         .xr-results { padding: 3mm 6mm 5mm; flex: 1; display: flex; flex-direction: column; }
         .xr-table { width: 100%; align-self: stretch; table-layout: fixed; border-collapse: collapse; }
-        .xr-table th { text-align: left; font-size: 9.5pt; text-transform: uppercase; padding: 2mm 1.5mm; border-bottom: 0.4mm solid #ccc; }
+        .xr-table th { text-align: left; vertical-align: bottom; font-size: 9pt; text-transform: uppercase; padding: 2mm 1.5mm; border-bottom: 0.4mm solid #ccc; overflow-wrap: break-word; hyphens: auto; }
         .xr-table td { padding: 1.6mm 1.5mm; vertical-align: top; border-bottom: 0.2mm solid #eee; overflow-wrap: anywhere; }
         .xr-flag { font-weight: 700; color: #C62828; }
-        .xr-gauge { display: flex; align-items: center; gap: 1.5mm; height: 4mm; margin-top: 0.4mm; }
+        .xr-previous { color: #555; }
+        .xr-gauge { display: flex; align-items: center; height: 4mm; margin-top: 0.8mm; max-width: 55mm; }
         .xr-gauge-box { position: relative; flex: 1; height: 3.2mm; border: 0.25mm solid #333; }
         .xr-gauge-tick { position: absolute; top: 0; bottom: 0; width: 0.25mm; background: #333; }
         .xr-gauge-mark { position: absolute; top: -0.2mm; bottom: -0.2mm; width: 0.9mm; margin-left: -0.45mm; background: #111; }
@@ -104,11 +105,12 @@
                                 </colgroup>
                                 <thead>
                                     <tr>
-                                        <th>Parámetro</th><th>Resultado</th><th>Unidad</th><th>Valor referencial</th>
-                                        @if (HasBars)
+                                        <th>Parámetro</th><th>Resultado</th>
+                                        @if (HasPrevious)
                                         {
-                                            <th></th>
+                                            <th class="xr-previous">@PreviousHeader</th>
                                         }
+                                        <th>Unidad</th><th>Valor referencial</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -117,12 +119,12 @@
                                         <tr>
                                             <td>@line.Name</td>
                                             <td class="@(line.Abnormal ? "xr-flag" : null)">@line.Value @Mark(line)</td>
-                                            <td>@line.Unit</td>
-                                            <td>@line.Reference</td>
-                                            @if (HasBars)
+                                            @if (HasPrevious)
                                             {
-                                                <td>@Gauge(line)</td>
+                                                <td class="xr-previous">@line.PreviousValue</td>
                                             }
+                                            <td>@line.Unit</td>
+                                            <td>@line.Reference @Gauge(line)</td>
                                         </tr>
                                     }
                                 </tbody>
@@ -130,9 +132,9 @@
                         }
                         @if (last)
                         {
-                            @if (Report.Results.Any(r => r.Abnormal))
+                            @if (Legend is { } legend)
                             {
-                                <div class="xr-note">↑ Sobre el rango · ↓ Bajo el rango · * Fuera de la referencia</div>
+                                <div class="xr-note">@legend</div>
                             }
                             @if (Report.Sections.Interpretation && !string.IsNullOrWhiteSpace(Report.Interpretation))
                             {
@@ -211,16 +213,37 @@
     private double PageHeight => Settings.Paper == PaperSize.A4 ? 297 : 279.4;
     private static string Mm(double value) => value.ToString(CultureInfo.InvariantCulture);
     private bool HasHeader => LogoUrl is not null || Settings.HeaderLines.Count > 0;
-    private bool HasBars => Report.Results.Any(r => r.BarMin is not null && r.BarMax is not null);
-    private int[] ColumnWidths => HasBars ? [22, 13, 14, 25, 26] : [28, 18, 14, 40];
+    private static bool HasBar(ExamReportResultDto line) => line is { BarMin: { } min, BarMax: { } max } && max > min;
+    private bool HasPrevious => Report.Sections.PreviousResult && (Report.PreviousReceivedOn is not null || Placeholder);
+    private string PreviousHeader => Report.PreviousReceivedOn?.ToString("dd/MM/yyyy") ?? "DD/MM/AAAA";
+    // Parameter, result, [previous result], unit, reference (with the bar under it).
+    private int[] ColumnWidths => HasPrevious ? [26, 15, 14, 12, 33] : [30, 18, 14, 38];
 
-    private static string? Mark(ExamReportResultDto line) => line switch
+    /// <summary>↑ / ↓ when the template prints arrows; "*" marks the other flagged values (abnormal band, outside every band).</summary>
+    private string? Mark(ExamReportResultDto line) => line switch
     {
-        { Direction: ResultDirection.High } => "↑",
-        { Direction: ResultDirection.Low } => "↓",
-        { Abnormal: true } => "*",
+        { Direction: ResultDirection.High } when Report.Sections.DirectionArrows => "↑",
+        { Direction: ResultDirection.Low } when Report.Sections.DirectionArrows => "↓",
+        { Direction: ResultDirection.None, Abnormal: true } => "*",
         _ => null
     };
+
+    /// <summary>Explains only the marks this report prints.</summary>
+    private string? Legend
+    {
+        get
+        {
+            var marks = Report.Results.Select(Mark).ToHashSet();
+            var parts = new[]
+            {
+                marks.Contains("↑") ? "↑ Sobre el rango" : null,
+                marks.Contains("↓") ? "↓ Bajo el rango" : null,
+                marks.Contains("*") ? "* Fuera de la referencia" : null,
+                Report.Results.Any(r => r.Abnormal) ? "En rojo: resultado alterado" : null
+            }.OfType<string>().ToList();
+            return parts.Count == 0 ? null : string.Join(" · ", parts);
+        }
+    }
 
     /// <summary>
     /// IDEXX-style bar: the normal range is the middle third; the mark sits where the value falls, and a value
@@ -228,8 +251,9 @@
     /// </summary>
     private RenderFragment Gauge(ExamReportResultDto line) => __builder =>
     {
-        if (line is not { BarMin: { } min, BarMax: { } max } || max <= min)
+        if (!HasBar(line))
             return;
+        var (min, max) = (line.BarMin!.Value, line.BarMax!.Value);
         var value = ReportParameter.ParseNumber(line.Value);
         var position = value is { } v ? (double)(1m / 3 + (v - min) / (max - min) / 3) : (double?)null;
         <div class="xr-gauge">
@@ -297,7 +321,9 @@
     private double RowMm(ExamReportResultDto line)
     {
         var widths = ColumnWidths.Select(w => ContentWidth * w / 100 - 3).ToArray();
-        var lines = new[] { Lines(line.Name, widths[0]), Lines($"{line.Value} *", widths[1]), Lines(line.Unit, widths[2]), Lines(line.Reference, widths[3]) }.Max();
+        var reference = (string.IsNullOrEmpty(line.Reference) ? 0 : Lines(line.Reference, widths[^1])) + (HasBar(line) ? 1 : 0);
+        var previous = HasPrevious ? Lines(line.PreviousValue, widths[2]) : 1;
+        var lines = new[] { Lines(line.Name, widths[0]), Lines($"{line.Value} *", widths[1]), previous, Lines(line.Unit, widths[^2]), reference }.Max();
         return lines * LINE_MM + 3.6;
     }
 

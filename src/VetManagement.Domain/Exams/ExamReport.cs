@@ -32,6 +32,9 @@ public class ExamReport : Entity<int>
 
     public List<ExamReportResult> Results { get; set; } = [];
 
+    /// <summary>Reception date of the previous report copied into <see cref="ExamReportResult.PreviousValue"/>; null = none.</summary>
+    public DateOnly? PreviousReceivedOn { get; set; }
+
     public DateTime CreatedAtUtc { get; set; }
 
     public string CreatedBy { get; set; } = string.Empty;
@@ -67,4 +70,6 @@ public class ExamReportResult
     /// <summary>Normal range drawn as a bar; set only when the parameter shows one and the range has both limits.</summary>
     public decimal? BarMin { get; set; }
     public decimal? BarMax { get; set; }
+    /// <summary>The same parameter's value in the previous report (when the template shows that column).</summary>
+    public string? PreviousValue { get; set; }
 }

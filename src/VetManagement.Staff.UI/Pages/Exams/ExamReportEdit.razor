@@ -55,7 +55,8 @@
                     </MudSelect>
                 </MudItem>
                 <MudItem xs="12" sm="6">
-                    <MudDatePicker Label="Sample received" @bind-Date="_receivedOn" />
+                    <MudDatePicker Label="Sample received" @bind-Date="_receivedOn" Editable="true" DateFormat="dd/MM/yyyy"
+                                   Placeholder="dd/mm/yyyy" HelperText="Today by default; type or pick another date." />
                 </MudItem>
                 <MudItem xs="12">
                     <MudTextField Label="Referring vet" @bind-Value="_referringVet" MaxLength="200"
@@ -149,12 +150,10 @@
         ? "Write the interpretation, or leave it empty."
         : "Leave empty to print the automatic interpretation shown here.";
 
-    private string? AutomaticInterpretation => Template is { } template
-        ? ExamReport.InterpretationFrom(template.Parameters
-            .Where(p => !string.IsNullOrWhiteSpace(Value(p.Code)))
-            .Select(p => new ExamReportResult { Name = p.Name, Band = p.Evaluate(Value(p.Code), Species).Band?.Label })
-            .ToList())
-        : null;
+    private string? AutomaticInterpretation => Template?.Interpret(Template.Parameters
+        .Where(p => !string.IsNullOrWhiteSpace(Value(p.Code)))
+        .Select(p => p.ToResult(Value(p.Code)!, Species))
+        .ToList());
 
     protected override async Task OnInitializedAsync()
     {
@@ -173,9 +172,9 @@
             _receivedOn = report.ReceivedOn.ToDateTime(TimeOnly.MinValue);
             _referringVet = report.ReferringVet;
             _values = report.Results.ToDictionary(r => r.Code, r => (string?)r.Value, StringComparer.OrdinalIgnoreCase);
-            _interpretation = report.Interpretation == ExamReport.InterpretationFrom(report.Results
-                .Select(r => new ExamReportResult { Name = r.Name, Band = r.Band }).ToList()) ? null : report.Interpretation;
             await OnPetChangedAsync(report.PetId);
+            // A stored interpretation equal to the automatic one stays automatic, so a correction recomputes it.
+            _interpretation = report.Interpretation == AutomaticInterpretation ? null : report.Interpretation;
         }
         else
         {

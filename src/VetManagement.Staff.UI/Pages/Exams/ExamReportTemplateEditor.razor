@@ -33,6 +33,8 @@
                         <MudCheckBox T="bool" @bind-Value="_template.Sections.Interpretation" Label="Interpretation" />
                         <MudCheckBox T="bool" @bind-Value="_template.Sections.Method" Label="Method (brand - machine)" />
                         <MudCheckBox T="bool" @bind-Value="_template.Sections.ReportedBy" Label="Issued by (staff member)" />
+                        <MudCheckBox T="bool" @bind-Value="_template.Sections.DirectionArrows" Label="↑ / ↓ arrows on values outside the normal range" />
+                        <MudCheckBox T="bool" @bind-Value="_template.Sections.PreviousResult" Label="Previous result column (the pet's last report of this exam, headed by its date)" />
                     </MudStack>
                 </MudPaper>
 
@@ -91,7 +93,7 @@
                                 <MudItem xs="12">
                                     <MudText Typo="Typo.subtitle2">Normal range</MudText>
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        Values outside it print with ↑ or ↓. Leave it empty if the parameter has no range. A range for one species replaces the one for all.
+                                        Values outside it print in red (with ↑ or ↓ when the arrows are on). Leave it empty if the parameter has no range. A range for one species replaces the one for all.
                                     </MudText>
                                     @foreach (var range in p.Ranges)
                                     {
@@ -121,8 +123,10 @@
                                 <MudItem xs="12">
                                     <MudText Typo="Typo.subtitle2">Interpretation (optional)</MudText>
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        Name what a value means, e.g. ≤ 200 "Normal", 200 – 399.9 "Zona gris". Limits included; the first band
-                                        that contains the value is used. Tick the box to flag values in that band (*).
+                                        Name what a value means, e.g. ≤ 200 "Normal", 200 – 399.9 "Zona gris", ≥ 400 "Consistente con pancreatitis".
+                                        Limits included; the first band that contains the value is used and its meaning becomes the automatic
+                                        interpretation. Tick <b>Abnormal</b> on bands that are not normal results: a value there prints in red with *,
+                                        even inside the normal range.
                                     </MudText>
                                     @foreach (var band in p.Bands)
                                     {
@@ -139,9 +143,11 @@
                                             </MudItem>
                                             <MudItem xs="3" sm="2"><MudNumericField T="decimal?" Label="From" @bind-Value="b.Min" HideSpinButtons="true" /></MudItem>
                                             <MudItem xs="3" sm="2"><MudNumericField T="decimal?" Label="To" @bind-Value="b.Max" HideSpinButtons="true" /></MudItem>
-                                            <MudItem xs="8" sm="4"><MudTextField Label="Meaning" @bind-Value="b.Label" Placeholder="Zona gris" /></MudItem>
-                                            <MudItem xs="3" sm="1" Class="d-flex align-center">
-                                                <MudTooltip Text="Flag values in this band (*)"><MudCheckBox T="bool" @bind-Value="b.Abnormal" Color="Color.Warning" /></MudTooltip>
+                                            <MudItem xs="8" sm="3"><MudTextField Label="Meaning" @bind-Value="b.Label" Placeholder="Zona gris" /></MudItem>
+                                            <MudItem xs="3" sm="2" Class="d-flex align-center">
+                                                <MudTooltip Text="A value in this band prints in red with * (not a normal result)">
+                                                    <MudCheckBox T="bool" @bind-Value="b.Abnormal" Color="Color.Warning" Label="Abnormal" Dense="true" />
+                                                </MudTooltip>
                                             </MudItem>
                                             <MudItem xs="1" Class="d-flex align-center">
                                                 <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="() => p.Bands.Remove(b)" />
@@ -165,6 +171,71 @@
                                 </MudSelect>
                             </MudItem>
                         </MudGrid>
+                    </MudPaper>
+                }
+
+                @if (NumberParameters.Count >= 2)
+                {
+                    <MudPaper Class="pa-4 mb-3" Elevation="1">
+                        <MudText Typo="Typo.subtitle2">Interpretation from several values (optional)</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            For exams read as a whole, e.g. cortisol at 0, 4 and 8 h. Rules are checked from the top; the first one whose
+                            conditions all hold gives the automatic interpretation. If none holds, the bands' meanings are used.
+                            A condition compares a value with a number, or with a percentage of another value (e.g. 4 h &lt; 50 % of basal).
+                        </MudText>
+                        @foreach (var rule in _template.Rules)
+                        {
+                            var rl = rule;
+                            <MudPaper Outlined="true" Class="pa-3 mt-2">
+                                @foreach (var condition in rl.Conditions)
+                                {
+                                    var c = condition;
+                                    <MudGrid Spacing="1">
+                                        <MudItem xs="6" sm="3">
+                                            <MudSelect T="string" Label="@(rl.Conditions.IndexOf(c) == 0 ? "If" : "and")" @bind-Value="c.Code" Dense="true">
+                                                @foreach (var p in NumberParameters)
+                                                {
+                                                    <MudSelectItem Value="@p.Code">@p.Name</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudItem>
+                                        <MudItem xs="6" sm="2">
+                                            <MudSelect T="RuleOperator" Label="is" @bind-Value="c.Operator" Dense="true">
+                                                @foreach (var op in Enum.GetValues<RuleOperator>())
+                                                {
+                                                    <MudSelectItem Value="op">@op.GetDisplayString()</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudItem>
+                                        <MudItem xs="5" sm="2"><MudNumericField T="decimal" Label="Value" @bind-Value="c.Value" HideSpinButtons="true" /></MudItem>
+                                        <MudItem xs="6" sm="4">
+                                            <MudSelect T="string" Label="of" @bind-Value="c.PercentOf" Dense="true">
+                                                <MudSelectItem T="string" Value="null">(the number itself)</MudSelectItem>
+                                                @foreach (var p in NumberParameters.Where(p => p.Code != c.Code))
+                                                {
+                                                    <MudSelectItem Value="@p.Code">% of @p.Name</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudItem>
+                                        <MudItem xs="1" Class="d-flex align-center">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="() => rl.Conditions.Remove(c)" />
+                                        </MudItem>
+                                    </MudGrid>
+                                }
+                                <MudButton Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" OnClick="() => rl.Conditions.Add(NewCondition())">Add condition</MudButton>
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-1">
+                                    <MudTextField Label="Then the interpretation is" @bind-Value="rl.Label" Placeholder="Compatible con hiperadrenocorticismo hipofisario" />
+                                    <MudTooltip Text="Move up">
+                                        <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward" Size="Size.Small" Disabled="@(_template.Rules.IndexOf(rl) == 0)" OnClick="() => MoveUp(rl)" />
+                                    </MudTooltip>
+                                    <MudTooltip Text="Remove rule">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => _template.Rules.Remove(rl)" />
+                                    </MudTooltip>
+                                </MudStack>
+                            </MudPaper>
+                        }
+                        <MudButton Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" Class="mt-2"
+                                   OnClick="() => _template.Rules.Add(new InterpretationRule { Conditions = [NewCondition()] })">Add rule</MudButton>
                     </MudPaper>
                 }
 
@@ -252,6 +323,18 @@
     /// <summary>A number parameter with an empty normal range ready to fill.</summary>
     private static ReportParameter NewParameter(string name = "") => new() { Name = name, Ranges = [new ReferenceRange()] };
 
+    private List<ReportParameter> NumberParameters => _template!.Parameters
+        .Where(p => p.Kind == ReportParameterKind.Number && !string.IsNullOrWhiteSpace(p.Code)).ToList();
+
+    private RuleCondition NewCondition() => new() { Code = NumberParameters.FirstOrDefault()?.Code ?? string.Empty };
+
+    private void MoveUp(InterpretationRule rule)
+    {
+        var index = _template!.Rules.IndexOf(rule);
+        _template.Rules.RemoveAt(index);
+        _template.Rules.Insert(index - 1, rule);
+    }
+
     /// <summary>A code from the name ("Na+" → "na"), so nobody has to think about codes.</summary>
     private void FillCode(ReportParameter p)
     {
@@ -272,15 +355,18 @@
                 results.Select(r => new ExamReportResultDto
                 {
                     Name = r.Name, Unit = r.Unit, Value = r.Value, Reference = r.Reference, Band = r.Band, Abnormal = r.Abnormal,
-                    Direction = r.Direction, BarMin = r.BarMin, BarMax = r.BarMax
+                    Direction = r.Direction, BarMin = r.BarMin, BarMax = r.BarMax,
+                    PreviousValue = _template.Sections.PreviousResult ? "—" : null
                 }).ToList(),
-                ExamReport.InterpretationFrom(results),
+                _template.Interpret(results),
                 new ExamReportSectionsDto
                 {
                     PatientData = _template.Sections.PatientData,
                     Method = _template.Sections.Method,
                     Interpretation = _template.Sections.Interpretation,
-                    ReportedBy = _template.Sections.ReportedBy
+                    ReportedBy = _template.Sections.ReportedBy,
+                    DirectionArrows = _template.Sections.DirectionArrows,
+                    PreviousResult = _template.Sections.PreviousResult
                 });
         }
     }

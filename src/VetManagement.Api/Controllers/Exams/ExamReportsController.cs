@@ -121,13 +121,16 @@ public class ExamReportsController(ExamReportService service, ExamReportSettings
             PatientData = view.Report.Sections.PatientData,
             Method = view.Report.Sections.Method,
             Interpretation = view.Report.Sections.Interpretation,
-            ReportedBy = view.Report.Sections.ReportedBy
+            ReportedBy = view.Report.Sections.ReportedBy,
+            DirectionArrows = view.Report.Sections.DirectionArrows,
+            PreviousResult = view.Report.Sections.PreviousResult
         },
         Results = view.Report.Results.Select(r => new ExamReportResultDto
         {
             Code = r.Code, Name = r.Name, Unit = r.Unit, Value = r.Value, Reference = r.Reference, Band = r.Band, Abnormal = r.Abnormal,
-            Direction = r.Direction, BarMin = r.BarMin, BarMax = r.BarMax
+            Direction = r.Direction, BarMin = r.BarMin, BarMax = r.BarMax, PreviousValue = r.PreviousValue
         }).ToList(),
+        PreviousReceivedOn = view.Report.PreviousReceivedOn,
         CreatedAtUtc = view.Report.CreatedAtUtc,
         CreatedBy = view.Report.CreatedBy,
         PetName = view.Pet.Name,

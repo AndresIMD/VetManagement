@@ -134,3 +134,41 @@ h1:focus {
     color: var(--mud-palette-text-disabled);
     font-size: 0.875rem;
 }
+/* Start-up spinner in index.html while the app downloads; Blazor sets --blazor-load-percentage(-text). */
+.loading-progress {
+    position: absolute;
+    display: block;
+    width: 8rem;
+    height: 8rem;
+    inset: 35vh 0 auto 0;
+    margin: 0 auto;
+}
+
+.loading-progress circle {
+    fill: none;
+    stroke: #e0e0e0;
+    stroke-width: 0.6rem;
+    transform-origin: 50% 50%;
+    transform: rotate(-90deg);
+}
+
+.loading-progress circle:last-child {
+    stroke: #12A9C1;
+    stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * 0.8), 500%;
+    transition: stroke-dasharray 0.05s ease-in-out;
+}
+
+.loading-progress-text {
+    position: absolute;
+    text-align: center;
+    inset: calc(35vh + 3.25rem) 0 auto 0;
+    color: #555;
+}
+
+.loading-progress-text:after {
+    content: var(--blazor-load-percentage-text, "Loading");
+}
+
+.loading-progress-text:before {
+    content: "VetManagement ";
+}

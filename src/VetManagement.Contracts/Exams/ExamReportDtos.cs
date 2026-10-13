@@ -42,6 +42,8 @@ public sealed class ExamReportDto
     public string? Interpretation { get; set; }
     public ExamReportSectionsDto Sections { get; set; } = new();
     public List<ExamReportResultDto> Results { get; set; } = [];
+    /// <summary>Date of the previous report whose values are in <see cref="ExamReportResultDto.PreviousValue"/>.</summary>
+    public DateOnly? PreviousReceivedOn { get; set; }
     public DateTime CreatedAtUtc { get; set; }
     public string CreatedBy { get; set; } = string.Empty;
 
@@ -60,6 +62,8 @@ public sealed class ExamReportSectionsDto
     public bool Method { get; set; }
     public bool Interpretation { get; set; }
     public bool ReportedBy { get; set; }
+    public bool DirectionArrows { get; set; } = true;
+    public bool PreviousResult { get; set; }
 }
 
 public sealed class ExamReportResultDto
@@ -74,6 +78,7 @@ public sealed class ExamReportResultDto
     public ResultDirection Direction { get; set; }
     public decimal? BarMin { get; set; }
     public decimal? BarMax { get; set; }
+    public string? PreviousValue { get; set; }
 }
 
 /// <summary>The clinic's exam report settings (branding and templates) with the version they were read at.</summary>

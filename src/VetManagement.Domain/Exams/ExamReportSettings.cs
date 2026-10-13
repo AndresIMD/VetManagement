@@ -87,8 +87,19 @@ public class ExamReportTemplate
 
     public List<ReportParameter> Parameters { get; set; } = [];
 
+    /// <summary>Interpretations that depend on several values (e.g. cortisol at 0, 4 and 8 h); checked in order.</summary>
+    public List<InterpretationRule> Rules { get; set; } = [];
+
     public ReportParameter? FindParameter(string code)
         => Parameters.FirstOrDefault(p => string.Equals(p.Code, code, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>The automatic interpretation: the first rule whose conditions all hold, otherwise the band labels.</summary>
+    public string? Interpret(IReadOnlyList<ExamReportResult> results)
+    {
+        var numbers = results.GroupBy(r => r.Code, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => ReportParameter.ParseNumber(g.First().Value), StringComparer.OrdinalIgnoreCase);
+        return Rules.FirstOrDefault(r => r.Matches(numbers))?.Label ?? ExamReport.InterpretationFrom(results);
+    }
 
     public List<string> Validate()
     {
@@ -117,6 +128,17 @@ public class ExamReportTemplate
             if (p.Kind == ReportParameterKind.Text && p.Bands.Count > 0)
                 errors.Add($"Template '{name}', parameter '{p.Code}': text parameters have no bands.");
         }
+
+        bool IsNumber(string? code) => FindParameter(code ?? string.Empty) is { Kind: ReportParameterKind.Number };
+        foreach (var (rule, index) in Rules.Select((r, i) => (r, i + 1)))
+        {
+            if (string.IsNullOrWhiteSpace(rule.Label))
+                errors.Add($"Template '{name}', rule {index}: write what it means.");
+            if (rule.Conditions.Count == 0)
+                errors.Add($"Template '{name}', rule {index}: add at least one condition.");
+            if (rule.Conditions.Any(c => !IsNumber(c.Code) || (!string.IsNullOrWhiteSpace(c.PercentOf) && !IsNumber(c.PercentOf))))
+                errors.Add($"Template '{name}', rule {index}: conditions must use number parameters of this template.");
+        }
         return errors;
     }
 }
@@ -131,6 +153,10 @@ public class ExamReportSections
     public bool Interpretation { get; set; } = true;
     /// <summary>Name of the staff member who issued the report.</summary>
     public bool ReportedBy { get; set; }
+    /// <summary>↑ / ↓ next to values above or below the normal range; without them such values are only printed in red.</summary>
+    public bool DirectionArrows { get; set; } = true;
+    /// <summary>A column with the values of the pet's previous report of the same exam, headed by its date.</summary>
+    public bool PreviousResult { get; set; }
 }
 
 /// <summary>One measured value of an exam, e.g. cPL in ng/mL.</summary>
@@ -271,6 +297,51 @@ public class ReferenceRange
         (null, { } max) => $"≤ {max.ToString(CultureInfo.InvariantCulture)}",
         _ => string.Empty
     };
+}
+
+/// <summary>
+/// An interpretation that holds when all its conditions do, e.g. "8 h ≥ 1.4 and 4 h &lt; 50 % of basal" →
+/// "Compatible con hiperadrenocorticismo hipofisario".
+/// </summary>
+public class InterpretationRule
+{
+    public List<RuleCondition> Conditions { get; set; } = [];
+    /// <summary>Printed as the interpretation.</summary>
+    public string Label { get; set; } = string.Empty;
+
+    /// <summary>All conditions hold; a missing or non-numeric value makes its condition false.</summary>
+    public bool Matches(IReadOnlyDictionary<string, decimal?> values)
+        => Conditions.Count > 0 && Conditions.All(c => c.Holds(values));
+}
+
+/// <summary>A parameter compared with a number, or with a percentage of another parameter.</summary>
+public class RuleCondition
+{
+    public string Code { get; set; } = string.Empty;
+    public RuleOperator Operator { get; set; } = RuleOperator.LessThan;
+    public decimal Value { get; set; }
+    /// <summary>When set, the threshold is <see cref="Value"/> % of this parameter's value (e.g. 50 % of basal).</summary>
+    public string? PercentOf { get; set; }
+
+    public bool Holds(IReadOnlyDictionary<string, decimal?> values)
+    {
+        if (values.GetValueOrDefault(Code) is not { } value)
+            return false;
+        var threshold = Value;
+        if (!string.IsNullOrWhiteSpace(PercentOf))
+        {
+            if (values.GetValueOrDefault(PercentOf) is not { } basis)
+                return false;
+            threshold = basis * Value / 100;
+        }
+        return Operator switch
+        {
+            RuleOperator.LessThan => value < threshold,
+            RuleOperator.LessOrEqual => value <= threshold,
+            RuleOperator.GreaterThan => value > threshold,
+            _ => value >= threshold
+        };
+    }
 }
 
 public sealed record BandResult(InterpretationBand? Band, bool Abnormal, ResultDirection Direction = ResultDirection.None);

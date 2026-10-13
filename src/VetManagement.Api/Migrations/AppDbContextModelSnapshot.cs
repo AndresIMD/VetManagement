@@ -839,6 +839,9 @@ namespace VetManagement.Api.Migrations
                     b.Property<int>("PetId")
                         .HasColumnType("int");
 
+                    b.Property<DateOnly?>("PreviousReceivedOn")
+                        .HasColumnType("date");
+
                     b.Property<DateOnly>("ReceivedOn")
                         .HasColumnType("date");
 
@@ -1396,6 +1399,8 @@ namespace VetManagement.Api.Migrations
                             b1.Property<string>("Name")
                                 .IsRequired();
 
+                            b1.Property<string>("PreviousValue");
+
                             b1.Property<string>("Reference");
 
                             b1.Property<string>("Unit");
@@ -1420,6 +1425,9 @@ namespace VetManagement.Api.Migrations
                             b1.Property<int>("ExamReportId")
                                 .HasColumnType("int");
 
+                            b1.Property<bool>("DirectionArrows")
+                                .HasColumnType("bit");
+
                             b1.Property<bool>("Interpretation")
                                 .HasColumnType("bit");
 
@@ -1427,6 +1435,9 @@ namespace VetManagement.Api.Migrations
                                 .HasColumnType("bit");
 
                             b1.Property<bool>("PatientData")
+                                .HasColumnType("bit");
+
+                            b1.Property<bool>("PreviousResult")
                                 .HasColumnType("bit");
 
                             b1.Property<bool>("ReportedBy")

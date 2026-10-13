@@ -97,6 +97,19 @@ public enum ReferenceDisplay
     None
 }
 
+/// <summary>Comparison of an interpretation rule's condition.</summary>
+public enum RuleOperator
+{
+    [DisplayString("<")]
+    LessThan,
+    [DisplayString("≤")]
+    LessOrEqual,
+    [DisplayString(">")]
+    GreaterThan,
+    [DisplayString("≥")]
+    GreaterOrEqual
+}
+
 /// <summary>Where a result falls against its normal range.</summary>
 public enum ResultDirection
 {

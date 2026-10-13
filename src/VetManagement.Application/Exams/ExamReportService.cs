@@ -178,16 +178,35 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
             PatientData = template.Sections.PatientData,
             Method = template.Sections.Method,
             Interpretation = template.Sections.Interpretation,
-            ReportedBy = template.Sections.ReportedBy
+            ReportedBy = template.Sections.ReportedBy,
+            DirectionArrows = template.Sections.DirectionArrows,
+            PreviousResult = template.Sections.PreviousResult
         };
         report.Results = template.Parameters
             .Where(p => values.ContainsKey(p.Code))
             .Select(p => p.ToResult(values[p.Code], pet.Species))
             .ToList();
         report.Interpretation = string.IsNullOrWhiteSpace(input.Interpretation)
-            ? ExamReport.InterpretationFrom(report.Results)
+            ? template.Interpret(report.Results)
             : input.Interpretation.Trim();
+        await CopyPreviousAsync(report);
         return null;
+    }
+
+    /// <summary>
+    /// Copies the values of the pet's latest earlier report of the same exam, so a reprint never changes when that
+    /// report is corrected later.
+    /// </summary>
+    private async Task CopyPreviousAsync(ExamReport report)
+    {
+        var previous = report.Sections.PreviousResult
+            ? (await unitOfWork.ExamReports.FindAsync(r => r.PetId == report.PetId && r.ExamId == report.ExamId
+                                                          && r.ReceivedOn < report.ReceivedOn && r.Id != report.Id))
+                .OrderByDescending(r => r.ReceivedOn).ThenByDescending(r => r.Id).FirstOrDefault()
+            : null;
+        report.PreviousReceivedOn = previous?.ReceivedOn;
+        foreach (var line in report.Results)
+            line.PreviousValue = previous?.Results.FirstOrDefault(r => string.Equals(r.Code, line.Code, StringComparison.OrdinalIgnoreCase))?.Value;
     }
 
     private static ExamReportResultStatus Invalid(string error) => new(ExamReportStatus.Invalid, Error: error);

@@ -160,6 +160,100 @@ public class ExamReportsApiTests : IClassFixture<CustomWebAppFactory>
         report.Results[2].Should().BeEquivalentTo(new { Reference = "Sin rango de referencia", Abnormal = false, Direction = ResultDirection.None });
         report.Results[3].Should().BeEquivalentTo(new { Value = "Sangre venosa", Abnormal = false });
         report.Interpretation.Should().BeNull();
+        report.Sections.DirectionArrows.Should().BeTrue("templates print the arrows unless turned off");
+    }
+
+    [Fact]
+    public async Task ArrowsTurnedOffInTheTemplate_AreOffInTheIssuedReport()
+    {
+        var (petId, examId) = await AddPetAndExamAsync(Species.Dog);
+        var template = LipaseTemplate(examId);
+        template.Sections.DirectionArrows = false;
+        await AddTemplateAsync(template);
+
+        var report = await CreateAsync(_employee, new { PetId = petId, ExamId = examId, ReceivedOn = new DateOnly(2026, 10, 12), Values = new Dictionary<string, string> { ["cpl"] = "86.6" } });
+
+        report.Sections.DirectionArrows.Should().BeFalse();
+    }
+
+    private static ExamReportTemplate CortisolTemplate(int examId) => new()
+    {
+        ExamId = examId,
+        Title = "SUPRESIÓN CON DEXAMETASONA",
+        Parameters =
+        [
+            new ReportParameter { Code = "basal", Name = "Cortisol basal", Unit = "µg/dL" },
+            new ReportParameter { Code = "4h", Name = "Cortisol 4 h", Unit = "µg/dL" },
+            new ReportParameter { Code = "8h", Name = "Cortisol 8 h", Unit = "µg/dL" }
+        ],
+        Rules =
+        [
+            new InterpretationRule { Label = "Supresión normal", Conditions = [new RuleCondition { Code = "8h", Operator = RuleOperator.LessThan, Value = 1.4m }] },
+            new InterpretationRule
+            {
+                Label = "Compatible con origen hipofisario",
+                Conditions =
+                [
+                    new RuleCondition { Code = "8h", Operator = RuleOperator.GreaterOrEqual, Value = 1.4m },
+                    new RuleCondition { Code = "4h", Operator = RuleOperator.LessThan, Value = 50, PercentOf = "basal" }
+                ]
+            },
+            new InterpretationRule { Label = "Sin supresión", Conditions = [new RuleCondition { Code = "8h", Operator = RuleOperator.GreaterOrEqual, Value = 1.4m }] }
+        ]
+    };
+
+    [Theory]
+    [InlineData("6.0", "1.0", "1.2", "Supresión normal")]
+    [InlineData("6.0", "2.9", "2.0", "Compatible con origen hipofisario")]
+    [InlineData("6.0", "3.0", "2.0", "Sin supresión")] // 3.0 is exactly 50 % of basal: not below it
+    public async Task Rules_InterpretSeveralValuesTogether_FirstMatchingRuleWins(string basal, string fourHours, string eightHours, string expected)
+    {
+        var (petId, examId) = await AddPetAndExamAsync(Species.Dog);
+        await AddTemplateAsync(CortisolTemplate(examId));
+
+        var report = await CreateAsync(_employee, new
+        {
+            PetId = petId, ExamId = examId, ReceivedOn = new DateOnly(2026, 10, 12),
+            Values = new Dictionary<string, string> { ["basal"] = basal, ["4h"] = fourHours, ["8h"] = eightHours }
+        });
+
+        report.Interpretation.Should().Be(expected);
+    }
+
+    [Fact]
+    public async Task Rules_UsingUnknownParameters_AreRejected()
+    {
+        var (_, examId) = await AddPetAndExamAsync(Species.Dog);
+        var template = CortisolTemplate(examId);
+        template.Rules[0].Conditions[0].Code = "12h";
+
+        var errors = template.Validate();
+
+        errors.Should().ContainSingle().Which.Should().Contain("rule 1");
+    }
+
+    [Fact]
+    public async Task PreviousResultColumn_CopiesThePetsLatestEarlierReportOfTheSameExam()
+    {
+        var (petId, examId) = await AddPetAndExamAsync(Species.Dog);
+        var template = LipaseTemplate(examId);
+        template.Sections.PreviousResult = true;
+        await AddTemplateAsync(template);
+        Task<ExamReportDto> Issue(DateOnly on, string value) => CreateAsync(_employee, new { PetId = petId, ExamId = examId, ReceivedOn = on, Values = new Dictionary<string, string> { ["cpl"] = value } });
+
+        var first = await Issue(new DateOnly(2026, 8, 1), "150");
+        await Issue(new DateOnly(2026, 9, 1), "250");
+        var latest = await Issue(new DateOnly(2026, 10, 1), "420");
+
+        first.PreviousReceivedOn.Should().BeNull("there was nothing before it");
+        latest.PreviousReceivedOn.Should().Be(new DateOnly(2026, 9, 1));
+        latest.Results.Single().PreviousValue.Should().Be("250");
+
+        var corrected = await _employee.PutAsJsonAsync($"/api/exam-reports/{first.Id}",
+            new { PetId = petId, ExamId = examId, ReceivedOn = new DateOnly(2026, 8, 1), Values = new Dictionary<string, string> { ["cpl"] = "155" } });
+        corrected.EnsureSuccessStatusCode();
+        (await _admin.GetFromJsonAsync<ExamReportDto>($"/api/exam-reports/{latest.Id}"))!.Results.Single().PreviousValue
+            .Should().Be("250", "the copy is a snapshot: correcting an older report doesn't change a later one");
     }
 
     [Fact]

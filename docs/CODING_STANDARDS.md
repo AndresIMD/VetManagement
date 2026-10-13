@@ -467,7 +467,7 @@ public enum InventoryMovementType
 ```razor
 @foreach (var type in Enum.GetValues<InventoryMovementType>())
 {
-    <MudSelectItem Value="@type">@type.DisplayString()</MudSelectItem>
+    <MudSelectItem Value="@type">@type.GetDisplayString()</MudSelectItem>
 }
 ```
 
