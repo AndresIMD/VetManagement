@@ -4,7 +4,6 @@
 @using VetManagement.Staff.UI.Helpers
 @inject NavigationManager Navigation
 @inject ExamApiService ExamApi
-@inject VetManagement.Staff.UI.Services.App.Exams.ExamService ExamService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @attribute [Authorize(Policy = "Exams.Read")]
@@ -56,6 +55,12 @@
                         <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Variant="Variant.Filled"
                             Size="Size.Small" OnClick="@(() => ShowEditModal(exam))" />
                     </MudTooltip>
+                    <AuthorizeView Policy="Exams.Update" Context="auth">
+                        <MudTooltip Text="Report template">
+                            <MudIconButton Icon="@Icons.Material.Filled.Tune" Color="Color.Secondary" Variant="Variant.Filled"
+                                Size="Size.Small" Href="@($"exams/{exam.Id}/report-template")" />
+                        </MudTooltip>
+                    </AuthorizeView>
                     <MudTooltip Text="Delete">
                         <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Filled"
                             Size="Size.Small" OnClick="@(() => ShowDeleteModal(exam))" />
@@ -97,7 +102,7 @@
         StateHasChanged();
         try
         {
-            _all = await ExamService.GetAllAsync();
+            _all = await ExamApi.GetAllExamsAsync() ?? [];
             ApplyFilters();
         }
         finally

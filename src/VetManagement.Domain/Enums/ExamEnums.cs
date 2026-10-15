@@ -58,3 +58,94 @@ public enum ExamItemStatus
     [DisplayString("Cancelled")]
     Cancelled
 }
+
+/// <summary>Paper the exam reports are printed on.</summary>
+public enum PaperSize
+{
+    [DisplayString("Letter")]
+    Letter,
+    [DisplayString("A4")]
+    A4
+}
+
+/// <summary>What a report parameter holds: a measured number (evaluated against bands) or free text.</summary>
+public enum ReportParameterKind
+{
+    [DisplayString("Number")]
+    Number,
+    [DisplayString("Text")]
+    Text
+}
+
+/// <summary>Images the clinic uploads for its printed documents.</summary>
+public enum ClinicImageKind
+{
+    [DisplayString("Report logo")]
+    ReportLogo = 1,
+    [DisplayString("Report background")]
+    ReportBackground = 2
+}
+
+/// <summary>What the reference column of a report parameter shows.</summary>
+public enum ReferenceDisplay
+{
+    [DisplayString("Normal range")]
+    Range,
+    [DisplayString("Written text")]
+    Text,
+    [DisplayString("Nothing")]
+    None
+}
+
+/// <summary>Where a report's background image is drawn.</summary>
+public enum BackgroundArea
+{
+    [DisplayString("Whole page")]
+    Page,
+    [DisplayString("Results box")]
+    ResultsBox
+}
+
+/// <summary>Which side of an image keeping its proportions fills its area.</summary>
+public enum ImageFit
+{
+    [DisplayString("Width")]
+    Width,
+    [DisplayString("Height")]
+    Height
+}
+
+/// <summary>Where an image that doesn't fill its whole area sits: top/left, centre or bottom/right.</summary>
+public enum ImageAlign
+{
+    [DisplayString("Start")]
+    Start,
+    [DisplayString("Center")]
+    Center,
+    [DisplayString("End")]
+    End
+}
+
+/// <summary>Comparison of an interpretation rule's condition.</summary>
+public enum RuleOperator
+{
+    [DisplayString("<")]
+    LessThan,
+    [DisplayString("≤")]
+    LessOrEqual,
+    [DisplayString(">")]
+    GreaterThan,
+    [DisplayString("≥")]
+    GreaterOrEqual
+}
+
+/// <summary>Where a result falls against its normal range.</summary>
+public enum ResultDirection
+{
+    [DisplayString("Within range")]
+    None,
+    [DisplayString("Low")]
+    Low,
+    [DisplayString("High")]
+    High
+}

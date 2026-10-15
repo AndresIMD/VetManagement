@@ -1,5 +1,6 @@
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -172,6 +173,9 @@ builder.Services.AddScoped<VetManagement.Application.Billing.BillingService>();
 builder.Services.AddScoped<VetManagement.Application.Clinical.ClinicalSettingsService>();
 builder.Services.AddScoped<VetManagement.Application.Clinical.ClinicalService>();
 builder.Services.AddScoped<VetManagement.Application.Reports.ReportsService>();
+builder.Services.AddSingleton(new EnabledModules(builder.Configuration));
+builder.Services.AddScoped<VetManagement.Application.Exams.ExamReportSettingsService>();
+builder.Services.AddScoped<VetManagement.Application.Exams.ExamReportService>();
 builder.Services.AddScoped<VetManagement.Application.ClientPortal.ClientPortalService>();
 builder.Services.AddScoped<VetManagement.Api.TestData.TestDataService>();
 builder.Services.AddPaymentGateway(builder.Configuration, builder.Environment);
@@ -196,6 +200,23 @@ builder.Services.AddHostedService<AppointmentRemindersHostedService>();
 builder.Services.AddScoped<IDataSeeder, DataSeeder>();
 
 builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
+
+// Behind proxies (a cloud host's front ends, a CDN such as Cloudflare) the client's IP, used by the rate limits, and
+// the scheme, used by the HTTPS redirect, come from X-Forwarded-For / -Proto. Proxy:ForwardLimit = how many proxies
+// stand in front of the API; only that many entries are read from the right, so a client can't fake its IP.
+// Unset = no proxy (a server on the clinic's own network).
+var proxyForwardLimit = builder.Configuration.GetValue<int?>("Proxy:ForwardLimit");
+if (proxyForwardLimit is > 0)
+{
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        options.ForwardLimit = proxyForwardLimit;
+        // The proxies' addresses aren't fixed (cloud front ends); ForwardLimit is what bounds the trust.
+        options.KnownIPNetworks.Clear();
+        options.KnownProxies.Clear();
+    });
+}
 
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>();
 if (allowedOrigins == null || allowedOrigins.Length == 0)
@@ -287,6 +308,11 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+// Some hosts (Azure App Service on Linux) already add this middleware when ASPNETCORE_FORWARDEDHEADERS_ENABLED is set,
+// using the options above; adding it twice would read one forwarded entry too many.
+if (proxyForwardLimit is > 0 && !string.Equals(Environment.GetEnvironmentVariable("ASPNETCORE_FORWARDEDHEADERS_ENABLED"), "true", StringComparison.OrdinalIgnoreCase))
+    app.UseForwardedHeaders();
 
 var securityConfig = builder.Configuration.GetSection("Security");
 var enableHttpsRedirection = securityConfig.GetValue<bool>("EnableHttpsRedirection", true);

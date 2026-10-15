@@ -1,0 +1,128 @@
+@page "/exam-reports"
+@using VetManagement.Contracts.Exams
+@inject ExamReportsApiService ReportsApi
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@attribute [Authorize(Policy = "ExamsPerformed.Read")]
+
+<PageTitle>Exam Reports</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
+    <PageHeader Title="Exam Reports" Icon="@Icons.Material.Filled.Science" />
+
+    <MudPaper Class="pa-4 mb-3" Elevation="1">
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+            <MudNumericField T="int?" Label="Pet ID" Value="PetId" ValueChanged="OnPetChangedAsync" Min="1" HideSpinButtons="true" Clearable="true" Style="max-width:160px" />
+            <MudTextField T="string" Label="Search" @bind-Value="_search" Immediate="true" Placeholder="Pet, owner or exam" Style="max-width:280px" />
+            <MudSpacer />
+            <AuthorizeView Policy="ExamsPerformed.Create">
+                <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.AddBox"
+                           Href="@(PetId is int id ? $"exam-reports/new?petId={id}" : "exam-reports/new")">New report</MudButton>
+            </AuthorizeView>
+        </MudStack>
+    </MudPaper>
+
+    <MudTable Items="Filtered" Loading="_loading" Dense="true" Hover="true" Striped="true" RowsPerPage="25">
+        <HeaderContent>
+            <MudTh>Received</MudTh>
+            <MudTh>Exam</MudTh>
+            <MudTh>Pet</MudTh>
+            <MudTh>Owner</MudTh>
+            <MudTh>Result</MudTh>
+            <MudTh />
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.ReceivedOn.ToString("dd MMM yyyy")</MudTd>
+            <MudTd>@context.Title</MudTd>
+            <MudTd>
+                @if (context.PetId is int petId)
+                {
+                    <AuthorizeView Policy="Medical.Read" Context="auth">
+                        <Authorized><MudLink Href="@($"clinical/pets/{petId}")">@context.PetName</MudLink></Authorized>
+                        <NotAuthorized>@context.PetName</NotAuthorized>
+                    </AuthorizeView>
+                }
+                else
+                {
+                    @context.PetName <MudText Typo="Typo.caption" Color="Color.Secondary" Inline="true">(not registered)</MudText>
+                }
+            </MudTd>
+            <MudTd>@context.OwnerName</MudTd>
+            <MudTd>
+                @if (context.Results.Any(r => r.Abnormal))
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Warning">Flagged</MudChip>
+                }
+                @context.Interpretation
+            </MudTd>
+            <MudTd Class="text-end" Style="white-space:nowrap">
+                <MudTooltip Text="View / print">
+                    <MudIconButton Icon="@Icons.Material.Filled.Print" Size="Size.Small" Color="Color.Primary" Href="@($"exam-reports/{context.Id}")" />
+                </MudTooltip>
+                <AuthorizeView Policy="ExamsPerformed.Create" Context="auth">
+                    <MudTooltip Text="New report for this patient">
+                        <MudIconButton Icon="@Icons.Material.Filled.PostAdd" Size="Size.Small" Href="@($"exam-reports/new?fromReport={context.Id}")" />
+                    </MudTooltip>
+                </AuthorizeView>
+                <AuthorizeView Policy="ExamsPerformed.Delete" Context="auth">
+                    <MudTooltip Text="Delete">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => DeleteAsync(context)" />
+                    </MudTooltip>
+                </AuthorizeView>
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudText Color="Color.Secondary">No reports yet.</MudText>
+        </NoRecordsContent>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+</MudContainer>
+
+@code {
+    [SupplyParameterFromQuery(Name = "petId")] public int? PetId { get; set; }
+
+    private List<ExamReportDto> _reports = [];
+    private string? _search;
+    private bool _loading;
+
+    private IEnumerable<ExamReportDto> Filtered => string.IsNullOrWhiteSpace(_search)
+        ? _reports
+        : _reports.Where(r => $"{r.PetName} {r.OwnerName} {r.Title}".Contains(_search.Trim(), StringComparison.CurrentCultureIgnoreCase));
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task OnPetChangedAsync(int? petId)
+    {
+        PetId = petId;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _reports = await ReportsApi.ListAsync(PetId);
+        _loading = false;
+    }
+
+    private async Task DeleteAsync(ExamReportDto report)
+    {
+        var parameters = new DialogParameters<ConfirmModal>
+        {
+            { x => x.Title, "Delete report" },
+            { x => x.Message, $"Delete the {report.Title} report of {report.PetName} ({report.ReceivedOn:dd MMM yyyy})? Use it only for reports made by mistake." },
+            { x => x.ButtonConfirmText, "Delete" },
+            { x => x.ButtonCancelText, "Cancel" },
+            { x => x.TitleIcon, Icons.Material.Filled.Delete },
+            { x => x.TitleColor, Color.Error }
+        };
+        var dialog = await DialogService.ShowAsync<ConfirmModal>("Delete report", parameters, new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall });
+        if (await dialog.Result is not { Canceled: false })
+            return;
+
+        var result = await ReportsApi.DeleteAsync(report.Id);
+        Snackbar.Add(result.Ok ? "Report deleted." : result.Error ?? "The report could not be deleted.", result.Ok ? Severity.Success : Severity.Error);
+        await LoadAsync();
+    }
+}

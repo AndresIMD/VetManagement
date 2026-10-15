@@ -1,3 +1,5 @@
+using VetManagement.Domain.Enums;
+using VetManagement.Api.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -9,6 +11,7 @@ namespace VetManagement.Api.Controllers.Public;
 /// <summary>Client portal: pets' file through an emailed link, no account. Rate limited per client IP.</summary>
 [ApiController]
 [AllowAnonymous]
+[RequiresModule(AppModule.Clinical)]
 [Route("api/public/portal")]
 [EnableRateLimiting("public-read")]
 public class PublicClientPortalController(ClientPortalService service, BookingPortalOptions portal) : ControllerBase

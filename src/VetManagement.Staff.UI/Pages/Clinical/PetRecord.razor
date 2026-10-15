@@ -41,6 +41,9 @@
                 <MudText Typo="Typo.body2" Color="Color.Secondary">
                     Owner: @_history.OwnerName @(_history.OwnerPhone is null ? "" : $"· {_history.OwnerPhone}") @(_history.OwnerEmail is null ? "" : $"· {_history.OwnerEmail}")
                 </MudText>
+                <AuthorizeView Policy="ExamsPerformed.Read" Context="auth">
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Science" Href="@($"exam-reports?petId={PetId}")">Lab reports</MudButton>
+                </AuthorizeView>
             </MudStack>
         </MudPaper>
 

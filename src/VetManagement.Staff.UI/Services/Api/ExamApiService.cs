@@ -4,7 +4,7 @@ using VetManagement.Staff.UI.Models.Exams;
 
 namespace VetManagement.Staff.UI.Services.Api;
 
-public class ExamApiService(HttpClient http) : IExamApiService
+public class ExamApiService(HttpClient http)
 {
     public async Task<List<Exam>?> GetAllExamsAsync()
         => await http.GetFromJsonAsync<List<Exam>>(ApiRouteConstants.EXAMS);

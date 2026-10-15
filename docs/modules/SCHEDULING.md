@@ -16,7 +16,7 @@ the admin edits it. Every change is validated, versioned (optimistic concurrency
 | Cancellation | client deadline (hours), refund mode: `Automatic` / `NoRefund` / `ManualApproval` |
 | Payment | pending-payment hold (minutes) while WebPay confirms |
 | Notifications | each one toggled separately: confirmation, reminder (+ hours before), reschedule notice; WhatsApp reserved for later |
-| Services | stable `Code`, name, `Enabled` (module on/off), duration, buffer, price, deposit %, online booking allowed, resources that can perform it |
+| Services | stable `Code`, name, `Enabled` (service offered), duration, buffer, price, deposit %, online booking allowed, resources that can perform it |
 | Resources | stable `Code`, name, kind (`Vet` / `Room`), enabled, weekly blocks, progressive release |
 | Exceptions | date range, whole clinic or one resource, kind `Closed` / `Absence` / `CustomHours` (+ blocks), reason |
 
@@ -48,10 +48,9 @@ Statuses: `PendingPayment` → `Confirmed` → `Completed` / `Cancelled` / `NoSh
 `NeedsReschedule` when an absence affects a confirmed appointment. Online bookings confirm
 automatically (after payment when the service requires a deposit). Staff can cancel, reassign and
 overbook. Clients are identified by RUT without an account; an emailed link allows cancellation.
-Booking re-checks availability while holding an exclusive per-resource lock (`sp_getapplock`) inside a
-transaction, so two people can't take the last slot. Serializable isolation alone deadlocked under
-contention; `ConcurrentBookingTests` runs parallel bookings against real SQL Server (locally via LocalDB,
-and in CI via a SQL Server service container).
+Booking re-checks availability while holding a per-resource lock
+([exclusive work](../architecture/ARCHITECTURE.md#shared-mechanisms)), so two people can't take the last slot
+(`ConcurrentBookingTests`).
 
 Client emails (Spanish, clinic time zone): confirmation on booking, notice when staff moves or cancels,
 and a reminder sent once by a background job; each one is toggled in the settings and a failed send never
@@ -75,3 +74,13 @@ in `BookingPortal:AllowedReturnOrigins`.
   job releases expired holds. A payment arriving after the hold expired is refunded if the slot was taken.
 - Client cancellation before the deadline applies the clinic's refund mode.
 - The emailed link (`/booking/{publicToken}`) shows status and allows cancellation.
+
+## Permissions
+
+| Permission | Who |
+|---|---|
+| `scheduling.read` — agenda | Reception, Clinical, Cashier |
+| `scheduling.book` — create, cancel, reassign appointments | Reception |
+| `scheduling.manage` — agenda settings | Reception + Supervisor |
+
+Admin has all of them.

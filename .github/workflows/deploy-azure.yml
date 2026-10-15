@@ -1,0 +1,85 @@
+name: Deploy to Azure
+
+# Run by hand (Actions → Deploy to Azure → Run workflow) for one clinic. Everything clinic-specific lives in a GitHub
+# Environment named after the clinic (Settings → Environments), never in this file:
+#   variables: AZURE_API_APP_NAME   App Service name of the API
+#              API_BASE_URL         public URL of the API, e.g. https://api.example.cl/
+#   secrets:   AZURE_API_PUBLISH_PROFILE   App Service → Download publish profile
+#              AZURE_STAFF_SWA_TOKEN       Static Web App → Manage deployment token
+# The API's own settings (connection string, JWT, CORS...) are App Service settings: see docs/DEPLOYMENT.md.
+# The API applies pending database migrations on start-up.
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: GitHub Environment of the clinic (e.g. my-clinic)
+        required: true
+        type: string
+      deploy_api:
+        description: Deploy the API
+        type: boolean
+        default: true
+      deploy_staff_web:
+        description: Deploy the staff web
+        type: boolean
+        default: true
+
+env:
+  DOTNET_VERSION: '10.0.x'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      # Same projects as CI (the MAUI app needs platform workloads and isn't built on Linux).
+      - run: dotnet test tests/VetManagement.Tests/VetManagement.Tests.csproj
+
+  api:
+    if: inputs.deploy_api
+    needs: test
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - run: dotnet publish src/VetManagement.Api/VetManagement.Api.csproj -c Release -o publish/api
+      - uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_API_APP_NAME }}
+          publish-profile: ${{ secrets.AZURE_API_PUBLISH_PROFILE }}
+          package: publish/api
+
+  staff-web:
+    if: inputs.deploy_staff_web
+    needs: test
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - run: dotnet publish src/VetManagement.Staff.Web/VetManagement.Staff.Web.csproj -c Release -o publish/staff
+      # config.json is ignored by git (each install has its own): written here from the clinic's environment.
+      - name: Write config.json
+        env:
+          API_BASE_URL: ${{ vars.API_BASE_URL }}
+        run: |
+          test -n "$API_BASE_URL" || { echo "Set the API_BASE_URL variable in the '${{ inputs.environment }}' environment."; exit 1; }
+          printf '{ "ApiBaseUrl": "%s" }\n' "$API_BASE_URL" > publish/staff/wwwroot/config.json
+          # A precompressed copy would be served instead of the file just written.
+          rm -f publish/staff/wwwroot/config.json.br publish/staff/wwwroot/config.json.gz
+      - uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STAFF_SWA_TOKEN }}
+          action: upload
+          app_location: publish/staff/wwwroot
+          skip_app_build: true
+          skip_api_build: true

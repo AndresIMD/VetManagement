@@ -49,4 +49,7 @@ public class ClientRepository(AppDbContext context) : Repository<Client>(context
 
         return await query.ToListAsync();
     }
+
+    public async Task<List<Client>> GetWithProvisionalAsync(IReadOnlyCollection<int> ids)
+        => await _context.Clients.IgnoreQueryFilters().Where(c => ids.Contains(c.Id)).ToListAsync();
 }

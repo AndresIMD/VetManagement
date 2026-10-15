@@ -7,7 +7,7 @@ using VetManagement.Domain.Enums;
 
 namespace VetManagement.Api.Services;
 
-public class UserManagementService(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager, AuditService? audit = null)
+public class UserManagementService(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager, AuditService? audit = null, EnabledModules? modules = null)
 {
     public async Task<List<IdentityUser>> GetAllUsersAsync()
         => await userManager.Users.ToListAsync();
@@ -99,7 +99,7 @@ public class UserManagementService(UserManager<IdentityUser> userManager, RoleMa
         }
     }
 
-    private static HashSet<string> GetClaimsForRoles(IEnumerable<string> roles)
-        => roles.SelectMany(Permissions.ForRole).ToHashSet();
+    private HashSet<string> GetClaimsForRoles(IEnumerable<string> roles)
+        => modules?.Filter(Permissions.ForRoles(roles)) ?? Permissions.ForRoles(roles);
 }
 

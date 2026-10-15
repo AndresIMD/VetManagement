@@ -1,0 +1,414 @@
+@page "/exam-reports/new"
+@page "/exam-reports/{Id:int}/edit"
+@using VetManagement.Contracts.Exams
+@using VetManagement.Domain.Exams
+@using ExamModel = VetManagement.Staff.UI.Models.Exams.Exam
+@inject ExamReportsApiService ReportsApi
+@inject ExamApiService ExamsApi
+@inject ClientPetApiService ClientPetApi
+@inject NavigationManager Navigation
+@attribute [Authorize(Policy = "ExamsPerformed.Create")]
+
+<PageTitle>@(Id is null ? "New Exam Report" : "Correct Exam Report")</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mx-auto px-2 mt-8">
+    <PageHeader Title="@(Id is null ? "New Exam Report" : "Correct Exam Report")" Icon="@Icons.Material.Filled.Science" />
+
+    @if (_settings is null)
+    {
+        <MudProgressLinear Indeterminate="true" />
+    }
+    else if (_exams.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info">
+            No exam has a report template yet. Open the exam catalog and use "Report template" on an exam to define its parameters.
+        </MudAlert>
+    }
+    else
+    {
+        @if (_error is not null)
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-3" ShowCloseIcon="true" CloseIconClicked="() => _error = null">@_error</MudAlert>
+        }
+
+        <MudPaper Class="pa-4 mb-3" Elevation="1">
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudRadioGroup T="bool" @bind-Value="_registered">
+                        <MudRadio T="bool" Value="false">Patient not registered (typed here, kept only in this report)</MudRadio>
+                        <MudRadio T="bool" Value="true">Registered pet</MudRadio>
+                    </MudRadioGroup>
+                </MudItem>
+                @if (_registered)
+                {
+                    <MudItem xs="12" sm="4">
+                        <MudNumericField T="int?" Label="Pet ID" Value="_petId" ValueChanged="OnPetChangedAsync" Min="1" HideSpinButtons="true" />
+                    </MudItem>
+                    <MudItem xs="12" sm="8" Class="d-flex align-center">
+                        @if (_pet is not null)
+                        {
+                            <MudText><b>@_pet.Name</b> · @_pet.Species · @_pet.Breed · Owner: @_pet.OwnerName</MudText>
+                        }
+                        else if (_petId is not null)
+                        {
+                            <MudText Color="Color.Warning">Pet #@_petId was not found.</MudText>
+                        }
+                    </MudItem>
+                }
+                else
+                {
+                    <MudItem xs="12">
+                        <MudAutocomplete T="ExamReportPatientDto" Label="Typed before? Search by patient or owner" SearchFunc="SearchTypedPatientsAsync"
+                                         ToStringFunc="@(p => p is null ? null : $"{p.Name} · {p.OwnerName} {p.OwnerLastName}".TrimEnd())"
+                                         ValueChanged="UseTypedPatient" ResetValueOnEmptyText="true" Clearable="true" DebounceInterval="300"
+                                         AdornmentIcon="@Icons.Material.Filled.Search"
+                                         HelperText="Fills the fields with the patient's last report, so its reports share a history." />
+                    </MudItem>
+                    <MudItem xs="12" sm="4"><MudTextField Label="Patient name" Class="vm-upper" @bind-Value="_patient.Name" MaxLength="100" Required="true" /></MudItem>
+                    <MudItem xs="6" sm="4">
+                        <MudSelect T="Species" Label="Species" @bind-Value="_patient.Species">
+                            @foreach (var species in Enum.GetValues<Species>())
+                            {
+                                <MudSelectItem Value="species">@species.GetDisplayString()</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="6" sm="4"><MudTextField Label="Breed" Class="vm-upper" @bind-Value="_patient.Breed" MaxLength="100" /></MudItem>
+                    <MudItem xs="6" sm="4">
+                        <MudSelect T="Sex" Label="Sex" @bind-Value="_patient.Sex">
+                            @foreach (var sex in Enum.GetValues<Sex>())
+                            {
+                                <MudSelectItem Value="sex">@sex.GetDisplayString()</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="6" sm="2">
+                        <MudNumericField T="int?" Label="Age: years" Value="_ageYears" ValueChanged="y => OnAgeChanged(y, _ageMonths)" Min="0" Max="40" />
+                    </MudItem>
+                    <MudItem xs="6" sm="2">
+                        <MudNumericField T="int?" Label="Months" Value="_ageMonths" ValueChanged="m => OnAgeChanged(_ageYears, m)" Min="0" Max="11" />
+                    </MudItem>
+                    <MudItem xs="12" sm="4">
+                        <MudDatePicker Label="Birth date" Date="_birthdate" DateChanged="OnBirthdateChanged" Editable="true" DateFormat="dd/MM/yyyy"
+                                       Placeholder="dd/mm/yyyy" Clearable="true" MaxDate="_receivedOn"
+                                       HelperText="@(_birthdate is null ? "Or the exact date, if known." : _exactBirthdate ? "Exact date." : "Worked out from the age.")" />
+                    </MudItem>
+                    <MudItem xs="6" sm="4"><MudTextField Label="Owner first name" Class="vm-upper" @bind-Value="_patient.OwnerName" MaxLength="100" /></MudItem>
+                    <MudItem xs="6" sm="4"><MudTextField Label="Owner last name" Class="vm-upper" @bind-Value="_patient.OwnerLastName" MaxLength="100" /></MudItem>
+                }
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="int" Label="Exam" Value="_examId" ValueChanged="OnExamChanged">
+                        @foreach (var exam in _exams)
+                        {
+                            <MudSelectItem Value="@exam.Id">@exam.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="6" sm="@(AsksLotNumber ? 3 : 6)">
+                    <MudDatePicker Label="Sample received" Date="_receivedOn" DateChanged="OnReceivedChanged" Editable="true" DateFormat="dd/MM/yyyy"
+                                   Placeholder="dd/mm/yyyy" HelperText="Today by default." />
+                </MudItem>
+                @if (AsksLotNumber)
+                {
+                    <MudItem xs="6" sm="3">
+                        <MudTextField Label="Lot number" Class="vm-upper" @bind-Value="_lotNumber" MaxLength="50"
+                                      HelperText="Test kit or reagent; optional." />
+                    </MudItem>
+                }
+                <MudItem xs="12">
+                    <MudTextField Label="Referring vet" Class="vm-upper" @bind-Value="_referringVet" MaxLength="200"
+                                  HelperText="Vet who requested the exam (printed as 'Médico tratante')." />
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+
+        @if (Template is { } template)
+        {
+            <MudPaper Class="pa-4 mb-3" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">@template.Title</MudText>
+                <MudGrid>
+                    @foreach (var parameter in template.Parameters)
+                    {
+                        var current = parameter;
+                        var evaluation = current.Evaluate(Value(current.Code), Species);
+                        <MudItem xs="12" sm="5">
+                            @if (current.Options.Count > 0)
+                            {
+                                <MudSelect T="string" Label="@current.Name" Value="@Value(current.Code)" ValueChanged="v => _values[current.Code] = v" Clearable="true">
+                                    @foreach (var option in current.Options)
+                                    {
+                                        <MudSelectItem Value="@option">@option</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            }
+                            else
+                            {
+                                <MudTextField T="string" Label="@current.Name" Value="@Value(current.Code)" ValueChanged="v => _values[current.Code] = v"
+                                              Immediate="true" Adornment="Adornment.End" AdornmentText="@current.Unit" />
+                            }
+                        </MudItem>
+                        <MudItem xs="12" sm="7" Class="d-flex align-center gap-2">
+                            @if (evaluation.Band is { Label.Length: > 0 } band)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="@(evaluation.Abnormal ? Color.Warning : Color.Success)">@band.Label</MudChip>
+                            }
+                            else if (evaluation.Abnormal)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Warning">Out of range</MudChip>
+                            }
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">@current.ReferenceFor(Species)</MudText>
+                        </MudItem>
+                    }
+                    @if (template.Sections.Interpretation)
+                    {
+                        <MudItem xs="12">
+                            <MudTextField Label="Interpretation" @bind-Value="_interpretation" Lines="3" MaxLength="2000"
+                                          Placeholder="@AutomaticInterpretation"
+                                          HelperText="@InterpretationHelp" />
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudPaper>
+
+            <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mb-8">
+                <MudButton Variant="Variant.Outlined" Href="@CancelHref">Cancel</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_saving || !HasPatient" OnClick="SaveAsync">Save and view</MudButton>
+            </MudStack>
+        }
+    }
+</MudContainer>
+
+@code {
+    private const string ReportRoute = "exam-reports/{0}";
+
+    [Parameter] public int? Id { get; set; }
+    [SupplyParameterFromQuery(Name = "petId")] public int? QueryPetId { get; set; }
+    [SupplyParameterFromQuery(Name = "examId")] public int? QueryExamId { get; set; }
+    /// <summary>Another exam for the same patient: copies this report's patient, referring vet and reception date.</summary>
+    [SupplyParameterFromQuery(Name = "fromReport")] public int? FromReportId { get; set; }
+
+    private ExamReportSettings? _settings;
+    private List<ExamModel> _exams = [];
+    // Patients aren't registered yet, so a typed patient is the default.
+    private bool _registered;
+    private int? _petId;
+    private PetInfo? _pet;
+    private ExamReportPatientDto _patient = new();
+    // Owners usually give an approximate age; the birth date is then worked out from the reception date.
+    // Age and birth date are linked: changing one updates the other, and the last one edited is what's kept.
+    private bool _exactBirthdate;
+    private DateTime? _birthdate;
+    private int? _ageYears;
+    private int? _ageMonths;
+    private int _examId;
+    private DateTime? _receivedOn = DateTime.Today;
+    private string? _referringVet;
+    private string? _lotNumber;
+    private string? _interpretation;
+    private Dictionary<string, string?> _values = new(StringComparer.OrdinalIgnoreCase);
+    private string? _error;
+    private bool _saving;
+
+    private ExamReportTemplate? Template => _settings?.FindTemplate(_examId);
+    private Species Species => _registered ? _pet?.Species ?? Species.Unknown : _patient.Species;
+    // Only exams whose template asks for it show the lot; a correction keeps a lot already given.
+    private bool AsksLotNumber => Template?.Sections.LotNumber == true || !string.IsNullOrEmpty(_lotNumber);
+    private bool HasPatient => _registered ? _pet is not null : !string.IsNullOrWhiteSpace(_patient.Name);
+    private string? Value(string code) => _values.GetValueOrDefault(code);
+
+    private string CancelHref => Id is null ? "exam-reports" : string.Format(ReportRoute, Id);
+
+    private string InterpretationHelp => AutomaticInterpretation is null
+        ? "Write the interpretation, or leave it empty."
+        : "Leave empty to print the automatic interpretation shown here.";
+
+    private string? AutomaticInterpretation => Template?.Interpret(Template.Parameters
+        .Where(p => !string.IsNullOrWhiteSpace(Value(p.Code)))
+        .Select(p => p.ToResult(Value(p.Code)!, Species))
+        .ToList());
+
+    protected override async Task OnInitializedAsync()
+    {
+        _settings = (await ReportsApi.GetSettingsAsync()).Settings;
+        _exams = (await ExamsApi.GetAllExamsAsync() ?? []).Where(e => _settings.FindTemplate(e.Id) is not null).OrderBy(e => e.Name).ToList();
+
+        if (Id is int id)
+        {
+            var report = await ReportsApi.GetAsync(id);
+            if (report is null)
+            {
+                _error = $"Report #{id} was not found.";
+                return;
+            }
+            _examId = report.ExamId;
+            _receivedOn = report.ReceivedOn.ToDateTime(TimeOnly.MinValue);
+            _referringVet = report.ReferringVet;
+            _lotNumber = report.LotNumber;
+            _values = report.Results.ToDictionary(r => r.Code, r => (string?)r.Value, StringComparer.OrdinalIgnoreCase);
+            if (report.Patient is { } patient)
+            {
+                _patient = patient;
+                _birthdate = patient.Birthdate?.ToDateTime(TimeOnly.MinValue);
+                _exactBirthdate = patient.Birthdate is not null && !patient.BirthdateApproximate;
+                (_ageYears, _ageMonths) = AgeAt(_birthdate);
+            }
+            else
+            {
+                _registered = true;
+                await OnPetChangedAsync(report.PetId);
+            }
+            // A stored interpretation equal to the automatic one stays automatic, so a correction recomputes it.
+            _interpretation = report.Interpretation == AutomaticInterpretation ? null : report.Interpretation;
+        }
+        else
+        {
+            _examId = QueryExamId is int examId && _exams.Any(e => e.Id == examId) ? examId : _exams.FirstOrDefault()?.Id ?? 0;
+            if (FromReportId is int sourceId && await ReportsApi.GetAsync(sourceId) is { } source)
+            {
+                // Usually another exam of the same sample: start on a different exam than the source's.
+                _examId = _exams.FirstOrDefault(e => e.Id != source.ExamId)?.Id ?? _examId;
+                _receivedOn = source.ReceivedOn.ToDateTime(TimeOnly.MinValue);
+                _referringVet = source.ReferringVet;
+                if (source.Patient is { } typed)
+                    UseTypedPatient(typed);
+                else
+                {
+                    _registered = true;
+                    await OnPetChangedAsync(source.PetId);
+                }
+            }
+            else if (QueryPetId is int petId)
+            {
+                _registered = true;
+                await OnPetChangedAsync(petId);
+            }
+        }
+    }
+
+    private async Task OnPetChangedAsync(int? petId)
+    {
+        _petId = petId;
+        _pet = petId is int id and > 0 ? await TryGetPetAsync(id) : null;
+    }
+
+    private sealed record PetInfo(int Id, string Name, Species Species, string Breed, string? OwnerName);
+
+    private async Task<PetInfo?> TryGetPetAsync(int petId)
+    {
+        try
+        {
+            if (await ClientPetApi.GetPetByIdAsync(petId) is not { } pet)
+                return null;
+            var owner = await ClientPetApi.GetClientByIdAsync(pet.OwnerId);
+            return new PetInfo(pet.Id, pet.Name, pet.Species, pet.Breed, owner is null ? null : $"{owner.Name} {owner.LastName}".Trim());
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+    }
+
+    private void OnExamChanged(int examId)
+    {
+        _examId = examId;
+        _values.Clear();
+        _interpretation = null;
+        if (Template?.Sections.LotNumber != true)
+            _lotNumber = null;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (!HasPatient || _receivedOn is null)
+        {
+            _error = _registered ? "Choose the pet and the reception date." : "Type the patient's name and the reception date.";
+            return;
+        }
+        _saving = true;
+        _error = null;
+        var request = new ExamReportRequest
+        {
+            PetId = _registered ? _pet!.Id : null,
+            Patient = _registered ? null : WithBirthdate(_patient),
+            ExamId = _examId,
+            ReceivedOn = DateOnly.FromDateTime(_receivedOn.Value),
+            ReferringVet = _referringVet,
+            LotNumber = _lotNumber,
+            Values = Template!.Parameters.Where(p => !string.IsNullOrWhiteSpace(Value(p.Code))).ToDictionary(p => p.Code, p => Value(p.Code)!),
+            Interpretation = _interpretation
+        };
+        var result = Id is int id ? await ReportsApi.UpdateAsync(id, request) : await ReportsApi.CreateAsync(request);
+        _saving = false;
+        if (!result.Ok)
+        {
+            _error = result.Error;
+            return;
+        }
+        Navigation.NavigateTo(string.Format(ReportRoute, Id ?? result.Id));
+    }
+
+    private async Task<IEnumerable<ExamReportPatientDto>> SearchTypedPatientsAsync(string? search, CancellationToken token)
+        => string.IsNullOrWhiteSpace(search) ? [] : await ReportsApi.ProvisionalPatientsAsync(search);
+
+    /// <summary>The same patient typed again: the server links the report to its earlier ones (name, species and owner).</summary>
+    private void UseTypedPatient(ExamReportPatientDto? patient)
+    {
+        if (patient is null)
+            return;
+        _patient = new ExamReportPatientDto
+        {
+            Name = patient.Name, Species = patient.Species, Breed = patient.Breed, Sex = patient.Sex,
+            OwnerName = patient.OwnerName, OwnerLastName = patient.OwnerLastName
+        };
+        _birthdate = patient.Birthdate?.ToDateTime(TimeOnly.MinValue);
+        _exactBirthdate = patient.Birthdate is not null && !patient.BirthdateApproximate;
+        (_ageYears, _ageMonths) = AgeAt(_birthdate);
+    }
+
+    /// <summary>Typing an age makes the birth date approximate: worked out back from the reception date.</summary>
+    private void OnAgeChanged(int? years, int? months)
+    {
+        (_ageYears, _ageMonths) = (years, months);
+        _exactBirthdate = false;
+        _birthdate = BirthdateFromAge();
+    }
+
+    /// <summary>Picking a date makes it exact and shows the age it gives at the reception date.</summary>
+    private void OnBirthdateChanged(DateTime? birthdate)
+    {
+        _birthdate = birthdate;
+        _exactBirthdate = birthdate is not null;
+        (_ageYears, _ageMonths) = AgeAt(birthdate);
+    }
+
+    /// <summary>The reception date moves an approximate birth date with it; an exact one keeps its date and its age changes.</summary>
+    private void OnReceivedChanged(DateTime? received)
+    {
+        _receivedOn = received;
+        if (_exactBirthdate)
+            (_ageYears, _ageMonths) = AgeAt(_birthdate);
+        else
+            _birthdate = BirthdateFromAge();
+    }
+
+    private DateTime? BirthdateFromAge()
+        => (_ageYears is > 0 || _ageMonths is > 0) && _receivedOn is { } received
+            ? received.Date.AddYears(-(_ageYears ?? 0)).AddMonths(-(_ageMonths ?? 0))
+            : null;
+
+    /// <summary>Whole years and months from <paramref name="birthdate"/> to the reception date; nulls without a date.</summary>
+    private (int?, int?) AgeAt(DateTime? birthdate)
+    {
+        if (birthdate is not { } born || _receivedOn is not { } received || born > received)
+            return (null, null);
+        var months = (received.Year - born.Year) * 12 + received.Month - born.Month - (received.Day < born.Day ? 1 : 0);
+        return (months / 12, months % 12);
+    }
+
+    private ExamReportPatientDto WithBirthdate(ExamReportPatientDto patient)
+    {
+        patient.Birthdate = _birthdate is { } born ? DateOnly.FromDateTime(born) : null;
+        patient.BirthdateApproximate = patient.Birthdate is not null && !_exactBirthdate;
+        return patient;
+    }
+}

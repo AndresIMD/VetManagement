@@ -1,3 +1,4 @@
+using VetManagement.Api.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -22,6 +23,7 @@ public sealed class BookingPortalOptions
 /// <summary>Anonymous endpoints for the public booking portal. Rate limited per client IP.</summary>
 [ApiController]
 [AllowAnonymous]
+[RequiresModule(AppModule.Scheduling)]
 [Route("api/public/booking")]
 [EnableRateLimiting("public-read")]
 public class PublicBookingController(

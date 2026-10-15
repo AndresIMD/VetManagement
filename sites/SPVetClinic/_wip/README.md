@@ -1,43 +1,34 @@
-# _wip — código en espera / huérfano
+# _wip — parked / orphaned code
 
-> **Reemplazado:** la reserva de horas ahora es el portal propio del producto (`src/VetManagement.Booking.Web`),
-> al que el sitio enlaza con `BookingUrl` (ver `docs/DEPLOYMENT.md`). El módulo de booking de esta carpeta ya no
-> se va a reactivar; se puede borrar cuando se quiera (git conserva el historial).
+> **Replaced:** booking is now the product's own portal (`src/VetManagement.Booking.Web`), which the site links to
+> through `BookingUrl` (see `docs/DEPLOYMENT.md`). The booking module in this folder won't be revived; it can be
+> deleted at any time (git keeps the history).
 
-Esta carpeta contiene código que existe en el repositorio pero que **no se usa
-en ninguna página actualmente**. Se movió aquí para sacarlo del árbol activo
-del sitio sin borrarlo, en caso de que se quiera retomar más adelante.
+This folder holds code that exists in the repository but **isn't used by any page**. It was moved here to take it out
+of the site's active tree without deleting it.
 
-Está **excluida del build** vía `DefaultItemExcludes` en `SPVetClinic.csproj`,
-así que nada de lo que hay acá se compila ni se publica con el sitio.
+It is **excluded from the build** through `DefaultItemExcludes` in `SPVetClinic.csproj`, so nothing here is compiled or
+published with the site.
 
-## Contenido
+## Contents
 
-- `Components/Cards/ServiceCard.razor`, `SpecialistCard.razor` — tarjetas
-  reutilizables, sin uso directo (Home y Servicios/Especialistas tienen su
-  propio markup de tarjeta).
-- `Components/Sections/ServicesSection.razor`, `SpecialistsSection.razor` —
-  secciones que usan las tarjetas de arriba; no están referenciadas por
-  ninguna página.
-- `Components/Booking/*.razor` (BookingForm, BookingSummary, PaymentStep,
-  SpecialistSelector, TimeSlotCalendar) — módulo de reserva de horas, UI
-  construida pero sin flujo activado desde ninguna página.
-- `Services/Booking/*.cs` (BookingStateService, BookingMockDataService) —
-  servicios de soporte del módulo de booking; nunca se registraron en
-  `Program.cs`.
-- `Data/Models/Booking/*.cs` — modelos de datos del módulo de booking.
-- `wwwroot/css/booking.css` — estilos del módulo de booking; no estaba
-  enlazado desde ningún `.html`.
+- `Components/Cards/ServiceCard.razor`, `SpecialistCard.razor` — reusable cards with no direct use (Home and
+  Services/Specialists have their own card markup).
+- `Components/Sections/ServicesSection.razor`, `SpecialistsSection.razor` — sections using the cards above; no page
+  references them.
+- `Components/Booking/*.razor` (BookingForm, BookingSummary, PaymentStep, SpecialistSelector, TimeSlotCalendar) —
+  booking UI, built but never wired to a page.
+- `Services/Booking/*.cs` (BookingStateService, BookingMockDataService) — services for the booking module; never
+  registered in `Program.cs`.
+- `Data/Models/Booking/*.cs` — booking data models.
+- `wwwroot/css/booking.css` — booking styles; not linked from any `.html`.
 
-Todos los `.razor` conservan su `@namespace` original (agregado explícitamente
-al moverlos) para que, si se reactivan, no haga falta tocar ninguna
-referencia.
+Every `.razor` keeps its original `@namespace` (added explicitly when moved), so reviving one needs no reference
+changes.
 
-## Para reactivar el módulo de booking
+## Reviving the booking module
 
-1. Mover los archivos de vuelta a sus carpetas originales (o quitar la
-   exclusión `_wip/**` del `.csproj` y ajustar rutas).
-2. Registrar `BookingStateService` y `BookingMockDataService` en el
-   contenedor de DI (`Program.cs`) — no estaba hecho ni siquiera cuando el
-   módulo vivía en su ubicación original.
-3. Enlazar `booking.css` desde `index.html` si se vuelve a usar.
+1. Move the files back to their original folders (or remove the `_wip/**` exclusion from the `.csproj` and fix paths).
+2. Register `BookingStateService` and `BookingMockDataService` in DI (`Program.cs`) — never done, not even when the
+   module lived in its original place.
+3. Link `booking.css` from `index.html` if it is used again.

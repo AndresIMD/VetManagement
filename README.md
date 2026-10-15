@@ -13,16 +13,16 @@ refunds, payment methods, taxes, vaccine protocols, reminders) is configured per
 | **Clinical record** | Visits with clinical notes, vaccines and deworming with next due dates and owner reminders, supplies used per visit |
 | **Billing (caja)** | Sales from the agenda, the clinical record ("Charge visit") or the counter; split payments; VAT-exempt/taxed lines and split charges; voids; daily cash close |
 | **Inventory** | Items and stock movements; stock leaves automatically with sales, visit supplies and vaccines; low-stock email alerts |
-| **Exams** | Exam catalog, requests per patient, external labs |
+| **Exams** | Exam catalog, requests per patient, external labs; printable lab reports with per-exam templates, normal ranges and clinic branding |
 | **Reports** | Agenda occupancy and no-shows, income by method and day, top sold, stock value, clinical activity |
 | **Client portal** | "Mis mascotas": owners see vaccines, visits and upcoming appointments through an emailed link (no account) |
-| **Platform** | Roles and claim-based permissions, audit log, real-time updates (SignalR), rate limits, health check |
+| **Platform** | Modules per clinic, area roles and claim-based permissions, audit log, real-time updates (SignalR), rate limits, health check |
 
 ## Tech stack
 
 - .NET 10 / C# 14, ASP.NET Core Web API, EF Core + SQL Server, JWT authentication
 - Blazor WebAssembly (staff web, booking portal), .NET MAUI (staff desktop), MudBlazor
-- Clean Architecture modular monolith; xUnit + FluentAssertions; GitHub Actions CI (with a SQL Server container)
+- Clean Architecture modular monolith; xUnit + Moq + FluentAssertions; GitHub Actions CI (with a SQL Server container)
 
 ## Solution layout
 
@@ -74,7 +74,7 @@ Visual Studio), Visual Studio 2022+ or VS Code.
    Without WebPay credentials, deposits use a simulated payment page.
 
 3. **Sample data** — staff web → *Administration → Test Data* creates realistic records per kind, in dependency
-   order. Guide (Spanish): [`docs/guides/DATOS_DE_PRUEBA.md`](docs/guides/DATOS_DE_PRUEBA.md).
+   order. Guide: [`docs/guides/TEST_DATA.md`](docs/guides/TEST_DATA.md).
 
 4. **Tests**
 

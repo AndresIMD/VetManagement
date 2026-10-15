@@ -37,15 +37,17 @@ public class ItemService
 
 ✅ **DO**:
 ```csharp
-await notificationService?.NotifyAsync(entity);
 string name = user?.FullName ?? "Unknown";
+logger?.LogInformation("Saved {Id}", item.Id);
 ```
 
 ❌ **DON'T**:
 ```csharp
-if (notificationService != null) { await notificationService.NotifyAsync(entity); }
 string name = user != null ? user.FullName : "Unknown";
+await notificationService?.NotifyAsync(entity);  // ❌ awaits null when the service is missing: NullReferenceException
 ```
+
+For an optional async call, check first: `if (notificationService is not null) await notificationService.NotifyAsync(entity);`
 
 ---
 
@@ -264,12 +266,13 @@ public class ItemService(IUnitOfWork unitOfWork)
             EntityName = nameof(Item),
             EntityId = item.Id,
             UserName = userName,
-            OldData = JsonConvert.SerializeObject(oldData),
-            NewData = JsonConvert.SerializeObject(item)
+            OldData = JsonSerializer.Serialize(oldData),
+            NewData = JsonSerializer.Serialize(item)
         });
 
         // 3. Send notification
-        await notificationService?.NotifyEntityChangedAsync(item, AuditActionType.Edit);
+        if (notificationService is not null)
+            await notificationService.NotifyEntityChangedAsync(item, AuditActionType.Edit);
     }
 }
 ```
@@ -464,7 +467,7 @@ public enum InventoryMovementType
 ```razor
 @foreach (var type in Enum.GetValues<InventoryMovementType>())
 {
-    <MudSelectItem Value="@type">@type.DisplayString()</MudSelectItem>
+    <MudSelectItem Value="@type">@type.GetDisplayString()</MudSelectItem>
 }
 ```
 
@@ -617,9 +620,9 @@ All enums live in Domain (one source of truth for backend and UI):
 ```
 VetManagement.Domain/Enums/
 ├─ InventoryEnums.cs                   (Item types, movements, filters, sorting)
-├─ ExamEnums.cs                        (Sample types/containers, exam item status)
+├─ ExamEnums.cs                        (Samples, exam item status, report paper/parameters/images/reference)
 ├─ PetEnums.cs                         (Sex, species, reproductive status)
-├─ CommonEnums.cs                      (Payments, audit actions)
+├─ CommonEnums.cs                      (Payments, audit actions, AppModule)
 ├─ SchedulingEnums.cs                  (Resources, appointments, deposits, refunds)
 ├─ BillingEnums.cs                     (Sale status, line kinds)
 ├─ ClinicalEnums.cs                    (Preventive dose kind and status)
@@ -688,7 +691,8 @@ All documentation is indexed in [`docs/README.md`](README.md).
 - `docs/modules/<MODULE>.md`: one per business module — rules, per-clinic settings, permissions, limits.
   Updated in the same commit that changes the module.
 - `docs/DEPLOYMENT.md`: every configuration key
-- `docs/guides/`: step-by-step guides for people using the system (Spanish)
+- `docs/guides/`: step-by-step guides for people using the system
+- All documentation is in English; only client-facing text (emails, printed reports, the public portal) is Spanish
 - `PROJECT_STATE.md`: where things stand (no history: that's `git log`)
 
 ❌ **FORBIDDEN**:
@@ -729,7 +733,7 @@ public async Task UpdateAsync_WithValidItem_UpdatesSuccessfully()
 The full layer map, dependency rules, module pattern and guard tests are in
 [`architecture/ARCHITECTURE.md`](architecture/ARCHITECTURE.md). In short:
 
-- **Domain**: entities and enums, no dependencies, no attributes.
+- **Domain**: entities and enums, no dependencies, no framework attributes (only its own `[DisplayString]`).
 - **Contracts**: request/DTO transport types with server-side validation.
 - **Application**: services; depends on Domain and Contracts.
 - **Infrastructure**: EF Core; implements Application's repository interfaces.
@@ -772,8 +776,6 @@ refactor: delegate audit filtering to repository
 - Implement server-side paging with DB-side filtering
 - Update AuditService to call repository method
 - Reduces memory usage and improves scalability for large datasets
-
-Related: T-010 (server-side pagination)
 ```
 
 ❌ **DON'T**:
@@ -796,9 +798,3 @@ This document defines the **architectural vision** and **coding philosophy** of 
 5. **Professionalism**: Consistent style, international naming, no hacks
 
 **Golden Rule**: *"Code is read much more often than it is written. Make it readable and purposeful."*
-
----
-
-**Version**: 1.1  
-**Last Updated**: 2026-10-03  
-**Maintainer**: VetManagement Core Team

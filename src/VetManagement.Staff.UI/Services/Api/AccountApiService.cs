@@ -64,10 +64,11 @@ public class AccountApiService
 #else
         if (_js != null)
         {
-            if (rememberMe)
-                await _js.InvokeVoidAsync("localStorage.setItem", TOKEN_KEY, token);
-            else
-                await _js.InvokeVoidAsync("sessionStorage.setItem", TOKEN_KEY, token);
+            // localStorage survives closing the browser; sessionStorage ends with the tab. Clear the other one so a
+            // token from an earlier login can't win over this one.
+            var (keep, clear) = rememberMe ? ("localStorage", "sessionStorage") : ("sessionStorage", "localStorage");
+            await _js.InvokeVoidAsync($"{clear}.removeItem", TOKEN_KEY);
+            await _js.InvokeVoidAsync($"{keep}.setItem", TOKEN_KEY, token);
         }
 #endif
     }

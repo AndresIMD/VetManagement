@@ -23,12 +23,12 @@ public class LoginPermissionSyncTests : IClassFixture<CustomWebAppFactory>
         using (var scope = _factory.Services.CreateScope())
         {
             var roles = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-            if (!await roles.RoleExistsAsync("Employee"))
-                await roles.CreateAsync(new IdentityRole("Employee"));
+            if (!await roles.RoleExistsAsync(Permissions.ROLES.LABORATORY))
+                await roles.CreateAsync(new IdentityRole(Permissions.ROLES.LABORATORY));
             var users = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
             var user = new IdentityUser(userName);
             (await users.CreateAsync(user, password)).Succeeded.Should().BeTrue();
-            await users.AddToRoleAsync(user, "Employee"); // existing user: role but no permission claims yet
+            await users.AddToRoleAsync(user, Permissions.ROLES.LABORATORY); // existing user: role but no permission claims yet
         }
 
         var response = await _factory.CreateClient().PostAsJsonAsync("/api/account/login", new { Username = userName, Password = password });
@@ -36,7 +36,7 @@ public class LoginPermissionSyncTests : IClassFixture<CustomWebAppFactory>
 
         var permissions = new JwtSecurityTokenHandler().ReadJwtToken(token).Claims
             .Where(c => c.Type == Permissions.CLAIM_TYPE).Select(c => c.Value);
-        permissions.Should().BeEquivalentTo(Permissions.ForRole("Employee"));
-        permissions.Should().Contain(Permissions.SCHEDULING.BOOK).And.NotContain(Permissions.SCHEDULING.MANAGE);
+        permissions.Should().BeEquivalentTo(Permissions.ForRole(Permissions.ROLES.LABORATORY));
+        permissions.Should().Contain(Permissions.EXAMS_PERFORMED.CREATE).And.NotContain(Permissions.MEDICAL.READ);
     }
 }

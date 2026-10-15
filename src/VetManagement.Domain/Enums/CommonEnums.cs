@@ -76,3 +76,25 @@ public enum AuditActionType
     [DisplayString("Setup Bootstrap Failed")]
     SetupBootstrapFailed = 208
 }
+
+/// <summary>
+/// Parts of the CRM a clinic can have switched on (configuration key Modules:Enabled). Users, audit and
+/// settings of the system are always available.
+/// </summary>
+public enum AppModule
+{
+    [DisplayString("Inventory")]
+    Inventory,
+    [DisplayString("Clients and pets")]
+    Clients,
+    [DisplayString("Exams and lab reports")]
+    Exams,
+    [DisplayString("Clinical record")]
+    Clinical,
+    [DisplayString("Agenda and online booking")]
+    Scheduling,
+    [DisplayString("Billing")]
+    Billing,
+    [DisplayString("Reports dashboard")]
+    Reports
+}

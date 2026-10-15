@@ -15,7 +15,7 @@ namespace VetManagement.Tests.Integration;
 public class ReportsApiTests(CustomWebAppFactory factory) : IClassFixture<CustomWebAppFactory>
 {
     private readonly HttpClient _admin = factory.CreateClientWithPermissions([.. Permissions.ForRole("Admin")]);
-    private readonly HttpClient _employee = factory.CreateClientWithPermissions([.. Permissions.ForRole("Employee")]);
+    private readonly HttpClient _employee = factory.CreateClientWithPermissions([.. Permissions.ForRole(Permissions.ROLES.CASHIER)]);
     private static readonly TimeZoneInfo Zone = TimeZoneInfo.FindSystemTimeZoneById("America/Santiago");
 
     private static DateOnly Today => DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Zone));
@@ -80,6 +80,6 @@ public class ReportsApiTests(CustomWebAppFactory factory) : IClassFixture<Custom
         (await _employee.GetAsync($"/api/reports/summary?from={today:yyyy-MM-dd}&to={today:yyyy-MM-dd}")).StatusCode.Should().Be(HttpStatusCode.Forbidden);
         (await _admin.GetAsync($"/api/reports/summary?from={today:yyyy-MM-dd}&to={today.AddDays(-1):yyyy-MM-dd}")).StatusCode.Should().Be(HttpStatusCode.BadRequest);
         (await _admin.GetAsync($"/api/reports/summary?from={today.AddDays(-400):yyyy-MM-dd}&to={today:yyyy-MM-dd}")).StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        Permissions.ForRole("Manager").Should().Contain(Permissions.REPORTS.READ);
+        Permissions.ForRoles([Permissions.ROLES.CASHIER, Permissions.ROLES.SUPERVISOR]).Should().Contain(Permissions.REPORTS.READ);
     }
 }

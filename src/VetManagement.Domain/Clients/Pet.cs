@@ -29,4 +29,7 @@ public class Pet : Entity<int>
     public ReproductiveStatus ReproductiveStatus { get; set; }
 
     public int ChipId { get; set; }
+
+    /// <summary>Pet of a provisional <see cref="Client"/>: hidden the same way, see <see cref="Client.IsProvisional"/>.</summary>
+    public bool IsProvisional { get; set; }
 }

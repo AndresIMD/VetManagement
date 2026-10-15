@@ -140,6 +140,8 @@
             {
                 new MenuItem { Title = "Exam Catalog", Href = "exams", RequiredPerms = new[] { "exams.read" } },
                 new MenuItem { Title = "Requests", Href = "exam-requests", RequiredPerms = new[] { "examsperformed.read" } },
+                new MenuItem { Title = "Lab Reports", Href = "exam-reports", RequiredPerms = new[] { "examsperformed.read" } },
+                new MenuItem { Title = "Report Design", Href = "exam-reports/settings", RequiredPerms = new[] { "exams.update" } },
                 new MenuItem { Title = "External Labs", Href = "external-labs", RequiredPerms = new[] { "externallabs.read" } },
                 new MenuItem { Title = "Medical Visits", Href = "medical-visits", RequiredPerms = new[] { "medical.read" } }
             }

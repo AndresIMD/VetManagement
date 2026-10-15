@@ -1,3 +1,5 @@
+using VetManagement.Domain.Enums;
+
 namespace VetManagement.Api.Authorization;
 
 /// <summary>
@@ -104,36 +106,78 @@ public static class Permissions
         public const string MANAGE = "clinical.manage";
     }
 
-    /// <summary>Single source of the permissions each role grants (seeding and user management both use it).</summary>
-    public static IEnumerable<string> ForRole(string role) => role switch
+    /// <summary>Roles the system knows. A user may have several; their permissions add up.</summary>
+    public static class ROLES
     {
-        "Admin" => ALL(),
-        "Manager" =>
-        [
-            INVENTORY.READ, INVENTORY.CREATE, INVENTORY.UPDATE,
-            EXAMS.READ, EXAMS.UPDATE,
-            EXTERNAL_LABS.READ, EXTERNAL_LABS.UPDATE,
-            EXAMS_PERFORMED.READ, EXAMS_PERFORMED.CREATE, EXAMS_PERFORMED.UPDATE,
-            MEDICAL.READ, MEDICAL.CREATE, MEDICAL.UPDATE,
-            CLIENTS_PETS.READ, CLIENTS_PETS.CREATE, CLIENTS_PETS.UPDATE,
-            AUDIT.READ,
-            SYSTEM.SEND_EMAIL,
-            SCHEDULING.READ, SCHEDULING.BOOK,
-            BILLING.READ, BILLING.CHARGE,
-            REPORTS.READ
-        ],
-        "Employee" =>
-        [
-            INVENTORY.READ, INVENTORY.CREATE, INVENTORY.UPDATE,
-            EXAMS.READ,
-            EXTERNAL_LABS.READ,
-            EXAMS_PERFORMED.READ, EXAMS_PERFORMED.CREATE,
-            MEDICAL.READ, MEDICAL.CREATE,
-            CLIENTS_PETS.READ, CLIENTS_PETS.CREATE,
-            SCHEDULING.READ, SCHEDULING.BOOK,
-            BILLING.READ, BILLING.CHARGE
-        ],
-        _ => []
+        public const string ADMIN = "Admin";
+        public const string INVENTORY = "Inventory";
+        public const string LABORATORY = "Laboratory";
+        public const string RECEPTION = "Reception";
+        public const string CLINICAL = "Clinical";
+        public const string CASHIER = "Cashier";
+        /// <summary>Adds deleting and settings in the areas the user already has, plus audit and the reports dashboard.</summary>
+        public const string SUPERVISOR = "Supervisor";
+
+        public static readonly string[] ALL = [ADMIN, INVENTORY, LABORATORY, RECEPTION, CLINICAL, CASHIER, SUPERVISOR];
+    }
+
+    /// <summary>An area role: what its staff do every day, and what a supervisor of the area may also do.</summary>
+    private sealed record Area(string Role, string[] Work, string[] Supervise);
+
+    private static readonly Area[] AREAS =
+    [
+        new(ROLES.INVENTORY,
+            [INVENTORY.READ, INVENTORY.CREATE, INVENTORY.UPDATE],
+            [INVENTORY.DELETE, SYSTEM.SEND_EMAIL]),
+        new(ROLES.LABORATORY,
+            [EXAMS.READ, EXTERNAL_LABS.READ, EXAMS_PERFORMED.READ, EXAMS_PERFORMED.CREATE, EXAMS_PERFORMED.UPDATE,
+             CLIENTS_PETS.READ, CLIENTS_PETS.CREATE, CLIENTS_PETS.UPDATE],
+            [EXAMS.CREATE, EXAMS.UPDATE, EXAMS.DELETE, EXTERNAL_LABS.CREATE, EXTERNAL_LABS.UPDATE, EXTERNAL_LABS.DELETE, EXAMS_PERFORMED.DELETE]),
+        new(ROLES.RECEPTION,
+            [CLIENTS_PETS.READ, CLIENTS_PETS.CREATE, CLIENTS_PETS.UPDATE, SCHEDULING.READ, SCHEDULING.BOOK],
+            [CLIENTS_PETS.DELETE, SCHEDULING.MANAGE]),
+        new(ROLES.CLINICAL,
+            [MEDICAL.READ, MEDICAL.CREATE, MEDICAL.UPDATE, CLIENTS_PETS.READ, CLIENTS_PETS.CREATE, CLIENTS_PETS.UPDATE,
+             EXAMS.READ, EXAMS_PERFORMED.READ, EXAMS_PERFORMED.CREATE, SCHEDULING.READ, INVENTORY.READ],
+            [MEDICAL.DELETE, CLINICAL.MANAGE]),
+        new(ROLES.CASHIER,
+            [BILLING.READ, BILLING.CHARGE, CLIENTS_PETS.READ, SCHEDULING.READ, INVENTORY.READ],
+            [BILLING.MANAGE])
+    ];
+
+    /// <summary>
+    /// Single source of the permissions roles grant (seeding and user management both use it): Admin has all; each
+    /// area role its daily work; Supervisor adds the supervision permissions of the user's areas, audit and reports.
+    /// </summary>
+    public static HashSet<string> ForRoles(IEnumerable<string> roles)
+    {
+        var set = roles.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (set.Contains(ROLES.ADMIN))
+            return [.. ALL()];
+
+        var areas = AREAS.Where(a => set.Contains(a.Role)).ToList();
+        var permissions = areas.SelectMany(a => a.Work).ToHashSet();
+        if (set.Contains(ROLES.SUPERVISOR) && areas.Count > 0)
+        {
+            permissions.UnionWith(areas.SelectMany(a => a.Supervise));
+            permissions.UnionWith([AUDIT.READ, REPORTS.READ]);
+        }
+        return permissions;
+    }
+
+    public static HashSet<string> ForRole(string role) => ForRoles([role]);
+
+    /// <summary>The module a permission belongs to; null for the ones every clinic has (users, audit, system).</summary>
+    public static AppModule? ModuleOf(string permission) => permission.Split('.')[0] switch
+    {
+        "inventory" => AppModule.Inventory,
+        "exams" or "externallabs" or "examsperformed" => AppModule.Exams,
+        "clientspets" => AppModule.Clients,
+        "medical" or "clinical" => AppModule.Clinical,
+        "scheduling" => AppModule.Scheduling,
+        "billing" => AppModule.Billing,
+        "reports" => AppModule.Reports,
+        _ => null
     };
 
     public static IEnumerable<string> ALL()

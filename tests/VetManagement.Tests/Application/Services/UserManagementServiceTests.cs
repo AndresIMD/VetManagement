@@ -13,7 +13,7 @@ namespace VetManagement.Tests;
 public class UserManagementServiceTests
 {
     [Fact]
-    public async Task AssignRole_ShouldSyncClaims_ForManager()
+    public async Task AssignRole_ShouldSyncClaims_ForLaboratory()
     {
         // Mocks for Identity
         var store = new Mock<IUserStore<IdentityUser>>();
@@ -33,15 +33,15 @@ public class UserManagementServiceTests
 
         var user = new IdentityUser { Id = "u1", UserName = "john" };
         userManager.Setup(m => m.FindByIdAsync("u1")).ReturnsAsync(user);
-        roleManager.Setup(r => r.RoleExistsAsync("Manager")).ReturnsAsync(true);
-        userManager.Setup(m => m.AddToRoleAsync(user, "Manager")).ReturnsAsync(IdentityResult.Success);
-        userManager.Setup(m => m.GetRolesAsync(user)).ReturnsAsync(new List<string> { "Manager" });
+        roleManager.Setup(r => r.RoleExistsAsync(Permissions.ROLES.LABORATORY)).ReturnsAsync(true);
+        userManager.Setup(m => m.AddToRoleAsync(user, Permissions.ROLES.LABORATORY)).ReturnsAsync(IdentityResult.Success);
+        userManager.Setup(m => m.GetRolesAsync(user)).ReturnsAsync(new List<string> { Permissions.ROLES.LABORATORY });
         userManager.Setup(m => m.GetClaimsAsync(user)).ReturnsAsync(new List<Claim>());
         userManager.Setup(m => m.AddClaimAsync(user, It.IsAny<Claim>())).ReturnsAsync(IdentityResult.Success);
         userManager.Setup(m => m.RemoveClaimAsync(user, It.IsAny<Claim>())).ReturnsAsync(IdentityResult.Success);
 
         var svc = new UserManagementService(userManager.Object, roleManager.Object, auditService);
-        var ok = await svc.AssignRoleAsync("u1", "Manager");
+        var ok = await svc.AssignRoleAsync("u1", Permissions.ROLES.LABORATORY);
 
         Assert.True(ok);
         userManager.Verify(m => m.AddClaimAsync(user, It.Is<Claim>(c => c.Type == Permissions.CLAIM_TYPE && c.Value == Permissions.EXAMS.READ)), Times.AtLeastOnce);

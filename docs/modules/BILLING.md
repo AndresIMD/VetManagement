@@ -7,7 +7,7 @@ Principle: the clinic's billing **policy** is per-clinic configuration (admin-ed
 
 | Setting | Default | Meaning |
 |---|---|---|
-| `Enabled` | `true` | Module on/off |
+| `Enabled` | `true` | Clinic switch for charging; separate from the vendor's `Modules:Enabled`, which must include `Billing` too |
 | `PaymentMethods` | Efectivo (cash), Débito, Crédito, Transferencia | Stable `Code`, display `Name`, `Enabled`, `IsCash` (counted in the drawer) |
 | `MaxDiscountPercent` | `10` | Largest discount per line without `billing.manage` |
 | `DeductStockOnSale` | `true` | Paying a sale takes its products out of inventory; a void puts them back |
@@ -52,17 +52,16 @@ payments and its sales can't be voided. One close per day.
 
 ## Permissions
 
-| Permission | Admin | Manager | Employee |
+| Permission | Admin | Cashier | Cashier + Supervisor |
 |---|---|---|---|
 | `billing.read` — sales, cash summary | ✓ | ✓ | ✓ |
 | `billing.charge` — open sales, lines, payments, close the day | ✓ | ✓ | ✓ |
-| `billing.manage` — void, discounts above the limit, settings | ✓ | | |
+| `billing.manage` — void, discounts above the limit, settings | ✓ | | ✓ |
 
 ## Concurrency
 
-Every billing write runs under one clinic-wide `sp_getapplock` (`stock`, shared with every automatic stock
-change), so two desks can't overpay a sale, no payment slips past a day being closed, and a sale and a
-visit never overwrite each other's stock count (`ConcurrentPaymentTests`, real SQL Server).
+Every billing write takes the clinic-wide `stock` lock ([exclusive work](../architecture/ARCHITECTURE.md#shared-mechanisms)),
+so two desks can't overpay a sale and no payment slips past a day being closed (`ConcurrentPaymentTests`).
 
 ## Not yet
 

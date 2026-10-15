@@ -5,7 +5,7 @@
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
-@attribute [Authorize(Roles = "Admin")]
+@attribute [Authorize(Policy = "ClientsPets.Read")]
 
 <PageTitle>Client and Pet Search</PageTitle>
 
@@ -159,8 +159,12 @@
     }
 
     #region Initialization
+    /// <summary>Opens filtered on one client, e.g. one just registered from an exam report.</summary>
+    [SupplyParameterFromQuery(Name = "clientId")] public int? QueryClientId { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
+        _filterClientId = QueryClientId;
         await ReloadAndFilter();
     }
     #endregion

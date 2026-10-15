@@ -36,6 +36,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<VetManagement.Domain.Clients.ClientAccessToken> ClientAccessTokens { get; set; }
 
     public DbSet<ClinicSetting> ClinicSettings { get; set; }
+    public DbSet<ClinicImage> ClinicImages { get; set; }
+    public DbSet<ExamReport> ExamReports { get; set; }
     public DbSet<Appointment> Appointments { get; set; }
     public DbSet<VetManagement.Domain.Billing.Sale> Sales { get; set; }
     public DbSet<VetManagement.Domain.Billing.SaleLine> SaleLines { get; set; }
@@ -75,6 +77,37 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         builder.Entity<ClinicSetting>().Property(s => s.Key).HasMaxLength(100);
         builder.Entity<ClinicSetting>().Property(s => s.UpdatedBy).HasMaxLength(256);
         builder.Entity<ClinicSetting>().Property(s => s.Version).IsConcurrencyToken();
+
+        builder.Entity<ClinicImage>().HasIndex(i => i.Kind).IsUnique();
+        builder.Entity<ClinicImage>().Property(i => i.ContentType).HasMaxLength(100);
+        builder.Entity<ClinicImage>().Property(i => i.UpdatedBy).HasMaxLength(256);
+
+        // Exam reports: result lines are a snapshot of the template, stored as JSON with the report.
+        builder.Entity<ExamReport>(e =>
+        {
+            e.HasIndex(r => r.PetId);
+            e.Property(r => r.Title).HasMaxLength(200);
+            e.Property(r => r.Method).HasMaxLength(200);
+            e.Property(r => r.ReferringVet).HasMaxLength(200);
+            e.Property(r => r.LotNumber).HasMaxLength(50);
+            e.Property(r => r.Interpretation).HasMaxLength(2000);
+            e.Property(r => r.CreatedBy).HasMaxLength(256);
+            e.Property(r => r.UpdatedBy).HasMaxLength(256);
+            e.OwnsOne(r => r.Sections);
+            e.OwnsOne(r => r.Patient, p =>
+            {
+                p.Property(x => x.Name).HasMaxLength(100);
+                p.Property(x => x.Breed).HasMaxLength(100);
+                p.Property(x => x.OwnerName).HasMaxLength(100);
+                p.Property(x => x.OwnerLastName).HasMaxLength(100);
+            });
+            e.OwnsMany(r => r.Results, b => b.ToJson());
+            e.OwnsOne(r => r.Criteria, b =>
+            {
+                b.ToJson();
+                b.OwnsMany(t => t.Rows);
+            });
+        });
 
         // Availability queries filter by resource and time; the index also narrows the serializable range locks taken while booking.
         builder.Entity<Appointment>().HasIndex(a => new { a.ResourceCode, a.StartUtc });
@@ -144,6 +177,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         .HasForeignKey(p => p.OwnerId)
         .IsRequired()
         .OnDelete(DeleteBehavior.Cascade);
+
+        // Provisional clients and pets (typed into an exam report) exist only for the reports' history: every query skips
+        // them unless it calls IgnoreQueryFilters (the exam report repositories' *WithProvisional methods).
+        builder.Entity<Client>().HasQueryFilter(c => !c.IsProvisional);
+        builder.Entity<Pet>().HasQueryFilter(p => !p.IsProvisional);
 
         // ExamsPerformed relationships
         builder.Entity<ExamPerformed>()

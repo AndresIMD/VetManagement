@@ -1,0 +1,15 @@
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/_framework/*", "/_content/*", "/css/*", "/js/*", "/*.{json,ico,png,svg,txt,webmanifest}"]
+  },
+  "routes": [
+    { "route": "/config.json", "headers": { "Cache-Control": "no-store" } },
+    { "route": "/index.html", "headers": { "Cache-Control": "no-cache" } }
+  ],
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "strict-origin-when-cross-origin"
+  }
+}

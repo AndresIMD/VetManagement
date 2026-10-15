@@ -62,7 +62,7 @@ public class TestDataTests(CustomWebAppFactory factory) : IClassFixture<CustomWe
         (await _admin.GetAsync("/api/reports/summary?from=2026-01-01&to=2026-12-31")).StatusCode.Should().Be(HttpStatusCode.OK, "the data is usable by the app");
         (await CreateAsync("clients", 0)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
         (await CreateAsync("dragons")).StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await factory.CreateClientWithPermissions(Permissions.ForRole("Manager").ToArray()).GetAsync("/api/dev/test-data"))
+        (await factory.CreateClientWithPermissions(Permissions.ForRoles([Permissions.ROLES.CASHIER, Permissions.ROLES.SUPERVISOR]).ToArray()).GetAsync("/api/dev/test-data"))
             .StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 }
