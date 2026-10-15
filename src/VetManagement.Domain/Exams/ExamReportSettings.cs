@@ -112,6 +112,9 @@ public class ExamReportTemplate
     /// <summary>Interpretations that depend on several values (e.g. cortisol at 0, 4 and 8 h); checked in order.</summary>
     public List<InterpretationRule> Rules { get; set; } = [];
 
+    /// <summary>The manufacturer's criteria table, printed under the results when <see cref="ExamReportSections.CriteriaTable"/> is on.</summary>
+    public CriteriaTable Criteria { get; set; } = new();
+
     public ReportParameter? FindParameter(string code)
         => Parameters.FirstOrDefault(p => string.Equals(p.Code, code, StringComparison.OrdinalIgnoreCase));
 
@@ -163,6 +166,13 @@ public class ExamReportTemplate
             if (rule.Conditions.Any(c => !IsNumber(c.Code) || (!string.IsNullOrWhiteSpace(c.PercentOf) && !IsNumber(c.PercentOf))))
                 errors.Add($"Template '{name}', rule {index}: conditions must use number parameters of this template.");
         }
+
+        if (Sections.CriteriaTable && (Criteria.Columns.Count == 0 || Criteria.Rows.Count == 0))
+            errors.Add($"Template '{name}': the criteria table needs at least one column and one row.");
+        if (Criteria.Columns.Count > CriteriaTable.MaxColumns || Criteria.Rows.Count > CriteriaTable.MaxRows)
+            errors.Add($"Template '{name}': the criteria table has at most {CriteriaTable.MaxColumns} columns and {CriteriaTable.MaxRows} rows.");
+        if (Criteria.Rows.Any(r => r.Cells.Count != Criteria.Columns.Count))
+            errors.Add($"Template '{name}': every row of the criteria table needs one cell per column.");
         return errors;
     }
 }
@@ -181,6 +191,31 @@ public class ExamReportSections
     public bool DirectionArrows { get; set; } = true;
     /// <summary>A column with the values of the pet's previous report of the same exam, headed by its date.</summary>
     public bool PreviousResult { get; set; }
+    /// <summary>The form asks for the lot of the test kit or reagent (e.g. blood typing); hidden for other exams.</summary>
+    public bool LotNumber { get; set; }
+    /// <summary>The template's criteria table (e.g. the manufacturer's cortisol table) under the results.</summary>
+    public bool CriteriaTable { get; set; }
+}
+
+/// <summary>
+/// A table copied from the exam's instructions, e.g. 4 h / 8 h cortisol → interpretation. It's printed as written, for the
+/// reader; the automatic interpretation comes from <see cref="InterpretationRule"/>s.
+/// </summary>
+public class CriteriaTable
+{
+    public const int MaxColumns = 6;
+    public const int MaxRows = 20;
+
+    /// <summary>Optional heading, e.g. "Prueba de supresión con dexametasona a dosis baja".</summary>
+    public string? Title { get; set; }
+    public List<string> Columns { get; set; } = [];
+    public List<CriteriaRow> Rows { get; set; } = [];
+}
+
+public class CriteriaRow
+{
+    /// <summary>One text per column; a line break inside a cell prints as a new line.</summary>
+    public List<string> Cells { get; set; } = [];
 }
 
 /// <summary>One measured value of an exam, e.g. cPL in ng/mL.</summary>

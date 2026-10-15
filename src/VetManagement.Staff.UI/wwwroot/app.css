@@ -169,3 +169,8 @@ h1:focus {
     .loading-progress-text:after {
         content: var(--blazor-load-percentage-text, "Loading");
     }
+
+/* Fields whose text is stored and printed in capitals (exam report patient data). */
+.vm-upper input {
+    text-transform: uppercase;
+}

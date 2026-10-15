@@ -159,8 +159,12 @@
     }
 
     #region Initialization
+    /// <summary>Opens filtered on one client, e.g. one just registered from an exam report.</summary>
+    [SupplyParameterFromQuery(Name = "clientId")] public int? QueryClientId { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
+        _filterClientId = QueryClientId;
         await ReloadAndFilter();
     }
     #endregion

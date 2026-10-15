@@ -59,6 +59,11 @@
                 <MudTooltip Text="View / print">
                     <MudIconButton Icon="@Icons.Material.Filled.Print" Size="Size.Small" Color="Color.Primary" Href="@($"exam-reports/{context.Id}")" />
                 </MudTooltip>
+                <AuthorizeView Policy="ExamsPerformed.Create" Context="auth">
+                    <MudTooltip Text="New report for this patient">
+                        <MudIconButton Icon="@Icons.Material.Filled.PostAdd" Size="Size.Small" Href="@($"exam-reports/new?fromReport={context.Id}")" />
+                    </MudTooltip>
+                </AuthorizeView>
                 <AuthorizeView Policy="ExamsPerformed.Delete" Context="auth">
                     <MudTooltip Text="Delete">
                         <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => DeleteAsync(context)" />

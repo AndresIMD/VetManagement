@@ -24,6 +24,10 @@ public sealed class ExamReportRequest
     [MaxLength(200)]
     public string? ReferringVet { get; init; }
 
+    /// <summary>Lot of the test kit or reagent; optional.</summary>
+    [MaxLength(50)]
+    public string? LotNumber { get; init; }
+
     public Dictionary<string, string> Values { get; init; } = [];
 
     /// <summary>Written interpretation; leave empty to use the one the bands give.</summary>
@@ -41,6 +45,8 @@ public sealed class ExamReportPatientDto
     public string? Breed { get; set; }
     public Sex Sex { get; set; }
     public DateOnly? Birthdate { get; set; }
+    /// <summary>Birthdate comes from an approximate age; the form shows it as years and months again.</summary>
+    public bool BirthdateApproximate { get; set; }
     [MaxLength(100)]
     public string? OwnerName { get; set; }
     [MaxLength(100)]
@@ -53,6 +59,8 @@ public sealed class ExamReportDto
     /// <summary>Null when the patient was typed into the report (see <see cref="Patient"/>).</summary>
     public int? PetId { get; set; }
     public ExamReportPatientDto? Patient { get; set; }
+    /// <summary>The typed patient is kept as a provisional client and pet that can be registered (see the register-patient endpoint).</summary>
+    public bool CanRegisterPatient { get; set; }
     public int ExamId { get; set; }
     /// <summary>Catalog name of the exam (for the PDF file name); filled when one report is read.</summary>
     public string? ExamName { get; set; }
@@ -60,9 +68,11 @@ public sealed class ExamReportDto
     public string? Method { get; set; }
     public DateOnly ReceivedOn { get; set; }
     public string? ReferringVet { get; set; }
+    public string? LotNumber { get; set; }
     public string? Interpretation { get; set; }
     public ExamReportSectionsDto Sections { get; set; } = new();
     public List<ExamReportResultDto> Results { get; set; } = [];
+    public CriteriaTableDto? Criteria { get; set; }
     /// <summary>Date of the previous report whose values are in <see cref="ExamReportResultDto.PreviousValue"/>.</summary>
     public DateOnly? PreviousReceivedOn { get; set; }
     public DateTime CreatedAtUtc { get; set; }
@@ -85,6 +95,16 @@ public sealed class ExamReportSectionsDto
     public bool ReportedBy { get; set; }
     public bool DirectionArrows { get; set; } = true;
     public bool PreviousResult { get; set; }
+    public bool LotNumber { get; set; }
+    public bool CriteriaTable { get; set; }
+}
+
+/// <summary>The criteria table printed under the results; each row has one text per column.</summary>
+public sealed class CriteriaTableDto
+{
+    public string? Title { get; set; }
+    public List<string> Columns { get; set; } = [];
+    public List<List<string>> Rows { get; set; } = [];
 }
 
 public sealed class ExamReportResultDto

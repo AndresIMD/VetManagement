@@ -40,4 +40,13 @@ public class PetRepository(AppDbContext context) : Repository<Pet>(context), IPe
 
         return await query.ToListAsync();
     }
+
+    public async Task<List<Pet>> GetWithProvisionalAsync(IReadOnlyCollection<int> ids)
+        => await _context.Pets.IgnoreQueryFilters().AsNoTracking().Where(p => ids.Contains(p.Id)).ToListAsync();
+
+    public async Task<List<Pet>> FindProvisionalByNameAsync(string name)
+        => await _context.Pets.IgnoreQueryFilters().Where(p => p.IsProvisional && p.Name == name).ToListAsync();
+
+    public async Task<Pet?> GetProvisionalAsync(int id)
+        => await _context.Pets.IgnoreQueryFilters().FirstOrDefaultAsync(p => p.Id == id && p.IsProvisional);
 }

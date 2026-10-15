@@ -30,11 +30,17 @@ public class ExamReport : Entity<int>
     /// <summary>Vet who requested the exam ("médico tratante"), often from another clinic: free text.</summary>
     public string? ReferringVet { get; set; }
 
+    /// <summary>Lot of the test kit or reagent, for exams that require it; optional.</summary>
+    public string? LotNumber { get; set; }
+
     public string? Interpretation { get; set; }
 
     public ExamReportSections Sections { get; set; } = new();
 
     public List<ExamReportResult> Results { get; set; } = [];
+
+    /// <summary>Copy of the template's criteria table when it prints; null otherwise.</summary>
+    public CriteriaTable? Criteria { get; set; }
 
     /// <summary>Reception date of the previous report copied into <see cref="ExamReportResult.PreviousValue"/>; null = none.</summary>
     public DateOnly? PreviousReceivedOn { get; set; }
@@ -67,6 +73,8 @@ public class ReportPatient
     public string? Breed { get; set; }
     public Sex Sex { get; set; }
     public DateOnly? Birthdate { get; set; }
+    /// <summary>The birth date was worked out from an approximate age ("5 years 6 months"), as owners usually give it.</summary>
+    public bool BirthdateApproximate { get; set; }
     public string? OwnerName { get; set; }
     public string? OwnerLastName { get; set; }
 }

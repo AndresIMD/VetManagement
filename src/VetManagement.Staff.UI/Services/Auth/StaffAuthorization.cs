@@ -18,6 +18,7 @@ public static class StaffAuthorization
         ["Inventory.Read"] = "inventory.read",
         ["Inventory.Delete"] = "inventory.delete",
         ["ClientsPets.Read"] = "clientspets.read",
+        ["ClientsPets.Create"] = "clientspets.create",
         ["Audit.Read"] = "audit.read",
         ["Exams.Read"] = "exams.read",
         ["Exams.Update"] = "exams.update",

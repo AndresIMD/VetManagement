@@ -32,4 +32,10 @@ public class Client : Entity<int>
     public string Email { get; set; } = string.Empty;
 
     public List<Pet> Pets { get; set; } = [];
+
+    /// <summary>
+    /// Typed into an exam report, not validated: only the name is known. Hidden from every client list and search (a query
+    /// filter) until registered; kept so the patient's reports have a history.
+    /// </summary>
+    public bool IsProvisional { get; set; }
 }

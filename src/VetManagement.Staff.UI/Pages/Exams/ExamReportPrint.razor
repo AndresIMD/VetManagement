@@ -3,6 +3,9 @@
 @using VetManagement.Domain.Exams
 @inject ExamReportsApiService ReportsApi
 @inject IJSRuntime Js
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
 @attribute [Authorize(Policy = "ExamsPerformed.Read")]
 
 <PageTitle>Exam Report</PageTitle>
@@ -23,9 +26,27 @@
             <AuthorizeView Policy="ExamsPerformed.Update">
                 <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Edit" Href="@($"exam-reports/{Id}/edit")">Correct</MudButton>
             </AuthorizeView>
-            <AuthorizeView Policy="Medical.Read">
-                <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.MedicalInformation" Href="@($"clinical/pets/{_report.PetId}")">Clinical record</MudButton>
+            <AuthorizeView Policy="ExamsPerformed.Create">
+                <MudTooltip Text="Another exam for this patient, with its data already filled in">
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.PostAdd" Href="@($"exam-reports/new?fromReport={Id}")">New report for this patient</MudButton>
+                </MudTooltip>
             </AuthorizeView>
+            @if (_report.PetId is int petId)
+            {
+                @* Typed patients aren't registered, so they have no clinical record. *@
+                <AuthorizeView Policy="Medical.Read">
+                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.MedicalInformation" Href="@($"clinical/pets/{petId}")">Clinical record</MudButton>
+                </AuthorizeView>
+            }
+            else if (_report.CanRegisterPatient)
+            {
+                @* The typed patient is kept as a provisional client, hidden from searches until registered here. *@
+                <AuthorizeView Policy="ClientsPets.Create">
+                    <MudTooltip Text="Make this patient and owner a client, then complete their details">
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.PersonAdd" Disabled="_registering" OnClick="RegisterPatientAsync">Register as client</MudButton>
+                    </MudTooltip>
+                </AuthorizeView>
+            }
             <MudSpacer />
             <MudText Typo="Typo.body2" Color="Color.Secondary">To send it, choose "Save as PDF" in the print dialog and attach the file.</MudText>
         </MudStack>
@@ -58,6 +79,35 @@
         _background = await ReportsApi.GetImageDataUrlAsync(ClinicImageKind.ReportBackground);
     }
 
+    private bool _registering;
+
+    private async Task RegisterPatientAsync()
+    {
+        var parameters = new DialogParameters<ConfirmModal>
+        {
+            { x => x.Title, "Register as client" },
+            { x => x.Message, $"Add {_report!.PetName} and {_report.OwnerName ?? "its owner"} to the clients? You'll then complete their details (tax ID, phone, email) in the client screen." },
+            { x => x.ButtonConfirmText, "Register" },
+            { x => x.ButtonCancelText, "Cancel" },
+            { x => x.TitleIcon, Icons.Material.Filled.PersonAdd }
+        };
+        var dialog = await DialogService.ShowAsync<ConfirmModal>("Register as client", parameters, new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall });
+        if (await dialog.Result is not { Canceled: false })
+            return;
+
+        _registering = true;
+        var result = await ReportsApi.RegisterPatientAsync(Id);
+        _registering = false;
+        if (!result.Ok || result.Id is not int clientId)
+        {
+            Snackbar.Add(result.Error ?? "The patient could not be registered.", Severity.Error);
+            return;
+        }
+        Snackbar.Add("Registered. Complete the client's details.", Severity.Success);
+        Navigation.NavigateTo($"client-search?clientId={clientId}");
+    }
+
     private async Task PrintAsync()
-        => await Js.InvokeVoidAsync("appPrint.element", ExamReportSheet.ElementId, ExamReportSheet.FileName(_report!));
+        => await Js.InvokeVoidAsync("appPrint.element", ExamReportSheet.ElementId, ExamReportSheet.FileName(_report!),
+            ExamReportSheet.PageSize(_settings!));
 }

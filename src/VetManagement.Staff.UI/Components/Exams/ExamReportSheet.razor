@@ -5,7 +5,7 @@
 
 <div id="@ElementId" class="xr-doc" style="font-family:'@Settings.FontFamily', Arial, sans-serif">
     <style>
-        @@page { size: @(Settings.Paper == PaperSize.A4 ? "A4" : "letter"); margin: 0; }
+        @@page { size: @PageSize(Settings); margin: 0; }
         .xr-page { position: relative; overflow: hidden; background: #fff; color: #222; font-size: 10.5pt; line-height: 1.35; box-sizing: border-box; break-after: page; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .xr-page:last-child { break-after: auto; }
         @@media screen { .xr-page { box-shadow: 0 2px 12px rgba(0,0,0,.25); margin-bottom: 8mm; } }
@@ -19,7 +19,10 @@
         .xr-results-box { position: relative; overflow: hidden; flex: 1; display: flex; flex-direction: column; }
         .xr-results-box > .xr-bar, .xr-results-box > .xr-results { position: relative; z-index: 1; }
         .xr-bar { color: #fff; font-weight: 700; text-align: center; padding: 1.6mm; font-size: 11.5pt; letter-spacing: .4px; }
-        .xr-patient { display: grid; grid-template-columns: 1fr 1fr; gap: 1mm 8mm; padding: 3mm 8mm; }
+        .xr-patient { display: grid; grid-template-columns: 1fr 1fr; gap: 1mm 8mm; padding: 3mm 8mm; text-transform: uppercase; }
+        .xr-continued { font-size: 9.5pt; text-transform: uppercase; }
+        /* A hair shorter than the paper when printing, so rounding never pushes the footer onto an extra page. */
+        @@media print { .xr-page { height: @(Mm(PageHeight - 0.6))mm !important; } }
         .xr-patient b { margin-right: 1.5mm; }
         .xr-results { padding: 3mm 6mm 5mm; flex: 1; display: flex; flex-direction: column; }
         .xr-table { width: 100%; align-self: stretch; table-layout: fixed; border-collapse: collapse; }
@@ -50,6 +53,12 @@
         .xr-disclaimer { margin-top: 1.5mm; }
         .xr-pageno { margin-top: 1.5mm; text-align: right; font-size: 8.5pt; color: #555; }
         .xr-note { font-size: 8pt; color: #666; margin-top: 1mm; }
+        .xr-criteria { margin-top: 5mm; font-size: 8.5pt; }
+        .xr-criteria-title { font-weight: 700; margin-bottom: 1.5mm; }
+        .xr-criteria table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+        .xr-criteria th { color: #fff; font-weight: 600; padding: 1.2mm 1.5mm; }
+        .xr-criteria th, .xr-criteria td { text-align: center; vertical-align: middle; white-space: pre-line; overflow-wrap: anywhere; }
+        .xr-criteria td { padding: 1mm 1.5mm; border-bottom: 0.2mm solid #ccc; }
     </style>
 
     @{ var pages = Paginate(); }
@@ -98,7 +107,7 @@
                 }
                 else if (!first)
                 {
-                    <div style="font-size:9.5pt"><b>@Report.PetName</b> · @Report.OwnerName · @Report.ReceivedOn.ToString("dd/MM/yyyy")</div>
+                    <div class="xr-continued"><b>@Report.PetName</b> · @Report.OwnerName · @Report.ReceivedOn.ToString("dd/MM/yyyy")</div>
                 }
 
                 <div class="xr-box xr-results-box" style="border-color:@Settings.AccentColor">
@@ -135,7 +144,11 @@
                                 </colgroup>
                                 <thead>
                                     <tr>
-                                        <th>Parámetro</th><th>Resultado</th><th>Unidad</th><th>Valor referencial</th>
+                                        <th>Parámetro</th><th>Resultado</th><th>Unidad</th>
+                                        @if (HasReference)
+                                        {
+                                            <th>Valor referencial</th>
+                                        }
                                         @if (HasPrevious)
                                         {
                                             <th class="xr-previous">@PreviousHeader</th>
@@ -149,7 +162,10 @@
                                             <td>@line.Name</td>
                                             <td class="@(line.Abnormal ? "xr-flag" : null)">@line.Value @Mark(line)</td>
                                             <td>@line.Unit</td>
-                                            <td>@line.Reference @Gauge(line)</td>
+                                            @if (HasReference)
+                                            {
+                                                <td>@line.Reference @Gauge(line)</td>
+                                            }
                                             @if (HasPrevious)
                                             {
                                                 <td class="xr-previous">@line.PreviousValue</td>
@@ -165,6 +181,32 @@
                             {
                                 <div class="xr-note">@legend</div>
                             }
+                            @if (Report.Criteria is { Columns.Count: > 0 } criteria)
+                            {
+                                <div class="xr-criteria">
+                                    @if (!string.IsNullOrWhiteSpace(criteria.Title))
+                                    {
+                                        <div class="xr-criteria-title">@criteria.Title</div>
+                                    }
+                                    <table>
+                                        <tr>
+                                            @foreach (var column in criteria.Columns)
+                                            {
+                                                <th style="background:@Settings.HeaderColor">@column</th>
+                                            }
+                                        </tr>
+                                        @foreach (var row in criteria.Rows)
+                                        {
+                                            <tr>
+                                                @foreach (var cell in row)
+                                                {
+                                                    <td>@cell</td>
+                                                }
+                                            </tr>
+                                        }
+                                    </table>
+                                </div>
+                            }
                             @if (Report.Sections.Interpretation && !string.IsNullOrWhiteSpace(Report.Interpretation))
                             {
                                 <div class="xr-interpretation"><b>INTERPRETACIÓN:</b> @Report.Interpretation</div>
@@ -173,9 +215,9 @@
                             {
                                 <div class="xr-signed">Informado por: @Report.CreatedBy</div>
                             }
-                            @if (Report.Sections.Method && !string.IsNullOrWhiteSpace(Report.Method))
+                            @if (MethodLine is { } methodLine)
                             {
-                                <div class="xr-method" style="background:@Settings.HeaderColor">@Report.Method</div>
+                                <div class="xr-method" style="background:@Settings.HeaderColor">@methodLine</div>
                             }
                         }
                     </div>
@@ -238,6 +280,9 @@
         return $"INFORME-{Part(report.ExamName ?? report.Title)}_{patient}_{report.ReceivedOn:dd-MM-yyyy}";
     }
 
+    /// <summary>The paper as a CSS @page size, so the print dialog uses exactly the sheet's paper.</summary>
+    public static string PageSize(ExamReportSettings settings) => settings.Paper == PaperSize.A4 ? "210mm 297mm" : "215.9mm 279.4mm";
+
     private double PageWidth => Settings.Paper == PaperSize.A4 ? 210 : 215.9;
     private double PageHeight => Settings.Paper == PaperSize.A4 ? 297 : 279.4;
     private static string Mm(double value) => value.ToString(CultureInfo.InvariantCulture);
@@ -245,8 +290,16 @@
     private static bool HasBar(ExamReportResultDto line) => line is { BarMin: { } min, BarMax: { } max } && max > min;
     private bool HasPrevious => Report.Sections.PreviousResult && (Report.PreviousReceivedOn is not null || Placeholder);
     private string PreviousHeader => Report.PreviousReceivedOn?.ToString("dd/MM/yyyy") ?? "DD/MM/AAAA";
-    // Parameter, result, unit, reference (with the bar under it), [previous result].
-    private int[] ColumnWidths => HasPrevious ? [26, 15, 12, 31, 16] : [30, 18, 14, 38];
+    /// <summary>Exams read without a reference (e.g. cortisol samples judged together by the rules) drop the column.</summary>
+    private bool HasReference => Report.Results.Any(r => !string.IsNullOrWhiteSpace(r.Reference) || HasBar(r));
+    // Parameter, result, unit, [reference (with the bar under it)], [previous result].
+    private int[] ColumnWidths => (HasReference, HasPrevious) switch
+    {
+        (true, true) => [26, 15, 12, 31, 16],
+        (true, false) => [30, 18, 14, 38],
+        (false, true) => [40, 22, 16, 22],
+        (false, false) => [50, 28, 22]
+    };
 
     /// <summary>Only text results (Positivo / Negativo, blood types): each prints as a highlighted result, no table.</summary>
     private bool Qualitative => Report.Results.Count > 0 && Report.Results.All(r => r.Kind == ReportParameterKind.Text);
@@ -373,7 +426,8 @@
             + (Report.Sections.Interpretation && !string.IsNullOrWhiteSpace(Report.Interpretation)
                 ? 5 + (Report.Interpretation.Split('\n').Sum(l => Lines(l, ContentWidth)) + 0.5) * LINE_MM : 0)
             + (Report.Sections.ReportedBy ? 9 : 0)
-            + (Report.Sections.Method && !string.IsNullOrWhiteSpace(Report.Method) ? 12 : 0);
+            + (MethodLine is null ? 0 : 12)
+            + CriteriaMm();
 
         var pages = new List<List<ExamReportResultDto>> { new() };
         var used = 0.0;
@@ -401,10 +455,21 @@
         var widths = ColumnWidths.Select(w => ContentWidth * w / 100 - 3).ToArray();
         if (Qualitative)
             return Math.Max(1, Lines(line.Name, ContentWidth - 80)) * LINE_MM + 6;
-        var reference = (string.IsNullOrEmpty(line.Reference) ? 0 : Lines(line.Reference, widths[3])) + (HasBar(line) ? 1 : 0);
-        var previous = HasPrevious ? Lines(line.PreviousValue, widths[4]) : 1;
+        var reference = !HasReference ? 0 : (string.IsNullOrEmpty(line.Reference) ? 0 : Lines(line.Reference, widths[3])) + (HasBar(line) ? 1 : 0);
+        var previous = HasPrevious ? Lines(line.PreviousValue, widths[^1]) : 1;
         var lines = new[] { Lines(line.Name, widths[0]), Lines($"{line.Value} *", widths[1]), Lines(line.Unit, widths[2]), reference, previous }.Max();
         return lines * LINE_MM + 3.6;
+    }
+
+    /// <summary>The criteria table: title, header and each row as tall as its fullest cell (smaller print, ~0.85 of a line).</summary>
+    private double CriteriaMm()
+    {
+        if (Report.Criteria is not { Columns.Count: > 0 } table)
+            return 0;
+        var width = ContentWidth / table.Columns.Count - 3;
+        double RowLines(IEnumerable<string?> cells) => cells.Max(c => (c ?? string.Empty).Split('\n').Sum(l => Lines(l, width)));
+        var lines = RowLines(table.Columns) + table.Rows.Sum(r => r.Count == 0 ? 1 : RowLines(r));
+        return 5 + (string.IsNullOrWhiteSpace(table.Title) ? 0 : LINE_MM + 1.5) + lines * LINE_MM * 0.85 + (table.Rows.Count + 1) * 2.4;
     }
 
     private static int Lines(string? text, double widthMm)
@@ -425,6 +490,18 @@
                 _ => Report.Species.ToString()
             };
             return string.Join(" – ", new[] { species, Report.Breed }.Where(s => !string.IsNullOrWhiteSpace(s))).ToUpperInvariant();
+        }
+    }
+
+    /// <summary>Method bar: "Vcheck - BIONOTE · LOTE: A123". The lot prints whenever it was given, even without a method.</summary>
+    private string? MethodLine
+    {
+        get
+        {
+            var method = Report.Sections.Method && !string.IsNullOrWhiteSpace(Report.Method) ? Report.Method : null;
+            var lot = !string.IsNullOrWhiteSpace(Report.LotNumber) ? $"LOTE: {Report.LotNumber}"
+                : Placeholder && Report.Sections.LotNumber ? "LOTE: N° DE LOTE" : null;
+            return method is null && lot is null ? null : string.Join(" · ", new[] { method, lot }.Where(s => s is not null));
         }
     }
 

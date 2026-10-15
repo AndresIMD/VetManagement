@@ -89,6 +89,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             e.Property(r => r.Title).HasMaxLength(200);
             e.Property(r => r.Method).HasMaxLength(200);
             e.Property(r => r.ReferringVet).HasMaxLength(200);
+            e.Property(r => r.LotNumber).HasMaxLength(50);
             e.Property(r => r.Interpretation).HasMaxLength(2000);
             e.Property(r => r.CreatedBy).HasMaxLength(256);
             e.Property(r => r.UpdatedBy).HasMaxLength(256);
@@ -101,6 +102,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
                 p.Property(x => x.OwnerLastName).HasMaxLength(100);
             });
             e.OwnsMany(r => r.Results, b => b.ToJson());
+            e.OwnsOne(r => r.Criteria, b =>
+            {
+                b.ToJson();
+                b.OwnsMany(t => t.Rows);
+            });
         });
 
         // Availability queries filter by resource and time; the index also narrows the serializable range locks taken while booking.
@@ -171,6 +177,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         .HasForeignKey(p => p.OwnerId)
         .IsRequired()
         .OnDelete(DeleteBehavior.Cascade);
+
+        // Provisional clients and pets (typed into an exam report) exist only for the reports' history: every query skips
+        // them unless it calls IgnoreQueryFilters (the exam report repositories' *WithProvisional methods).
+        builder.Entity<Client>().HasQueryFilter(c => !c.IsProvisional);
+        builder.Entity<Pet>().HasQueryFilter(p => !p.IsProvisional);
 
         // ExamsPerformed relationships
         builder.Entity<ExamPerformed>()

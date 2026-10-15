@@ -471,6 +471,9 @@ namespace VetManagement.Api.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsProvisional")
+                        .HasColumnType("bit");
+
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -543,6 +546,9 @@ namespace VetManagement.Api.Migrations
 
                     b.Property<int>("ChipId")
                         .HasColumnType("int");
+
+                    b.Property<bool>("IsProvisional")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -831,6 +837,10 @@ namespace VetManagement.Api.Migrations
                     b.Property<string>("Interpretation")
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("LotNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Method")
                         .HasMaxLength(200)
@@ -1376,6 +1386,47 @@ namespace VetManagement.Api.Migrations
 
             modelBuilder.Entity("VetManagement.Domain.Exams.ExamReport", b =>
                 {
+                    b.OwnsOne("VetManagement.Domain.Exams.CriteriaTable", "Criteria", b1 =>
+                        {
+                            b1.Property<int>("ExamReportId");
+
+                            b1.PrimitiveCollection<string>("Columns")
+                                .IsRequired();
+
+                            b1.Property<string>("Title");
+
+                            b1.HasKey("ExamReportId");
+
+                            b1.ToTable("ExamReports");
+
+                            b1
+                                .ToJson("Criteria")
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ExamReportId");
+
+                            b1.OwnsMany("VetManagement.Domain.Exams.CriteriaRow", "Rows", b2 =>
+                                {
+                                    b2.Property<int>("CriteriaTableExamReportId");
+
+                                    b2.Property<int>("__synthesizedOrdinal")
+                                        .ValueGeneratedOnAddOrUpdate();
+
+                                    b2.PrimitiveCollection<string>("Cells")
+                                        .IsRequired();
+
+                                    b2.HasKey("CriteriaTableExamReportId", "__synthesizedOrdinal");
+
+                                    b2.ToTable("ExamReports");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("CriteriaTableExamReportId");
+                                });
+
+                            b1.Navigation("Rows");
+                        });
+
                     b.OwnsMany("VetManagement.Domain.Exams.ExamReportResult", "Results", b1 =>
                         {
                             b1.Property<int>("ExamReportId");
@@ -1427,10 +1478,16 @@ namespace VetManagement.Api.Migrations
                             b1.Property<int>("ExamReportId")
                                 .HasColumnType("int");
 
+                            b1.Property<bool>("CriteriaTable")
+                                .HasColumnType("bit");
+
                             b1.Property<bool>("DirectionArrows")
                                 .HasColumnType("bit");
 
                             b1.Property<bool>("Interpretation")
+                                .HasColumnType("bit");
+
+                            b1.Property<bool>("LotNumber")
                                 .HasColumnType("bit");
 
                             b1.Property<bool>("Method")
@@ -1460,6 +1517,9 @@ namespace VetManagement.Api.Migrations
 
                             b1.Property<DateOnly?>("Birthdate")
                                 .HasColumnType("date");
+
+                            b1.Property<bool>("BirthdateApproximate")
+                                .HasColumnType("bit");
 
                             b1.Property<string>("Breed")
                                 .HasMaxLength(100)
@@ -1491,6 +1551,8 @@ namespace VetManagement.Api.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("ExamReportId");
                         });
+
+                    b.Navigation("Criteria");
 
                     b.Navigation("Patient");
 

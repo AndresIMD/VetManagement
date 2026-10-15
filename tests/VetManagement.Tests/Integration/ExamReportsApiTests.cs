@@ -8,6 +8,7 @@ using VetManagement.Api.Authorization;
 using VetManagement.Application.Configuration;
 using VetManagement.Contracts.Exams;
 using VetManagement.Domain.Clients;
+using VetManagement.Domain.Configuration;
 using VetManagement.Domain.Enums;
 using VetManagement.Domain.Exams;
 using VetManagement.Infrastructure.Data;
@@ -153,12 +154,14 @@ public class ExamReportsApiTests : IClassFixture<CustomWebAppFactory>
             Values = new Dictionary<string, string> { ["k"] = "4,4", ["na"] = "140", ["nak"] = "38", ["sample"] = "Sangre venosa" }
         });
 
-        report.Results[0].Should().BeEquivalentTo(new { Reference = "2.9 - 4.2", Abnormal = true, Direction = ResultDirection.High, BarMin = 2.9m, BarMax = 4.2m },
+        // By code: the in-memory test database doesn't keep the order of a report's lines after other reports are deleted.
+        ExamReportResultDto Line(string code) => report.Results.Single(r => r.Code == code);
+        Line("k").Should().BeEquivalentTo(new { Reference = "2.9 - 4.2", Abnormal = true, Direction = ResultDirection.High, BarMin = 2.9m, BarMax = 4.2m },
             "the cat's own range replaces the one for all species");
-        report.Results[1].Should().BeEquivalentTo(new { Reference = "147 - 162", Abnormal = true, Direction = ResultDirection.Low, BarMin = (decimal?)null },
+        Line("na").Should().BeEquivalentTo(new { Reference = "147 - 162", Abnormal = true, Direction = ResultDirection.Low, BarMin = (decimal?)null },
             "no bar unless the parameter asks for one");
-        report.Results[2].Should().BeEquivalentTo(new { Reference = "Sin rango de referencia", Abnormal = false, Direction = ResultDirection.None });
-        report.Results[3].Should().BeEquivalentTo(new { Value = "Sangre venosa", Abnormal = false });
+        Line("nak").Should().BeEquivalentTo(new { Reference = "Sin rango de referencia", Abnormal = false, Direction = ResultDirection.None });
+        Line("sample").Should().BeEquivalentTo(new { Value = "Sangre venosa", Abnormal = false });
         report.Interpretation.Should().BeNull();
         report.Sections.DirectionArrows.Should().BeTrue("templates print the arrows unless turned off");
     }
@@ -233,6 +236,49 @@ public class ExamReportsApiTests : IClassFixture<CustomWebAppFactory>
     }
 
     [Fact]
+    public async Task CriteriaTable_IsCopiedIntoTheReport_OnlyWhenTurnedOn()
+    {
+        var (petId, examId) = await AddPetAndExamAsync(Species.Dog);
+        var template = CortisolTemplate(examId);
+        template.Criteria = new CriteriaTable
+        {
+            Title = "Supresión con dexametasona",
+            Columns = ["Cortisol 4 h", "Cortisol 8 h", "Interpretación"],
+            Rows = [new CriteriaRow { Cells = ["-", "< 1 µg/dL", "Normal"] }, new CriteriaRow { Cells = ["1 - 1.4 µg/dL", "1 - 1.4 µg/dL", "Equívoco"] }]
+        };
+        template.Sections.CriteriaTable = true;
+        await AddTemplateAsync(template);
+
+        var report = await CreateAsync(_employee, new { PetId = petId, ExamId = examId, ReceivedOn = new DateOnly(2026, 10, 3), Values = new Dictionary<string, string> { ["basal"] = "5" } });
+
+        report.Sections.CriteriaTable.Should().BeTrue();
+        report.Criteria.Should().BeEquivalentTo(new CriteriaTableDto
+        {
+            Title = "Supresión con dexametasona",
+            Columns = ["Cortisol 4 h", "Cortisol 8 h", "Interpretación"],
+            Rows = [["-", "< 1 µg/dL", "Normal"], ["1 - 1.4 µg/dL", "1 - 1.4 µg/dL", "Equívoco"]]
+        }, o => o.WithStrictOrdering());
+
+        template.Sections.CriteriaTable = false;
+        template.Validate().Should().BeEmpty("a table kept while turned off is fine");
+        template.Criteria.Rows[0].Cells.RemoveAt(0);
+        template.Validate().Should().ContainSingle().Which.Should().Contain("one cell per column");
+    }
+
+    [Fact]
+    public async Task CriteriaTable_TurnedOff_IsNotCopied()
+    {
+        var (petId, examId) = await AddPetAndExamAsync(Species.Dog);
+        var template = CortisolTemplate(examId);
+        template.Criteria = new CriteriaTable { Columns = ["A"], Rows = [new CriteriaRow { Cells = ["x"] }] };
+        await AddTemplateAsync(template);
+
+        var report = await CreateAsync(_employee, new { PetId = petId, ExamId = examId, ReceivedOn = new DateOnly(2026, 10, 3), Values = new Dictionary<string, string> { ["basal"] = "5" } });
+
+        report.Criteria.Should().BeNull();
+    }
+
+    [Fact]
     public async Task PreviousResultColumn_CopiesThePetsLatestEarlierReportOfTheSameExam()
     {
         var (petId, examId) = await AddPetAndExamAsync(Species.Dog);
@@ -264,22 +310,92 @@ public class ExamReportsApiTests : IClassFixture<CustomWebAppFactory>
         {
             ExamId = examId,
             Title = "POTASIO",
-            Sections = new ExamReportSections { PreviousResult = true },
+            Sections = new ExamReportSections { PreviousResult = true, LotNumber = true },
             Parameters = [new ReportParameter { Code = "k", Name = "K+", Ranges = [new ReferenceRange { Species = Species.Cat, Min = 2.9m, Max = 4.2m }] }]
         });
 
         var report = await CreateAsync(_employee, new
         {
             ExamId = examId, ReceivedOn = new DateOnly(2026, 10, 13), Values = new Dictionary<string, string> { ["k"] = "4.5" },
-            Patient = new { Name = " Michi ", Species = Species.Cat, Sex = Sex.Female, Birthdate = new DateOnly(2022, 1, 5), OwnerName = "Ana", OwnerLastName = "Pérez" }
+            Patient = new { Name = " Michi ", Species = Species.Cat, Sex = Sex.Female, Birthdate = new DateOnly(2022, 1, 5), BirthdateApproximate = true, OwnerName = "Ana", OwnerLastName = "Pérez" },
+            ReferringVet = "dra. soto", LotNumber = " a123 "
         });
 
         report.PetId.Should().BeNull();
-        report.Should().BeEquivalentTo(new { PetName = "Michi", Species = Species.Cat, Sex = Sex.Female, OwnerName = "Ana Pérez", OwnerLastName = "Pérez" });
+        report.Should().BeEquivalentTo(new { PetName = "MICHI", Species = Species.Cat, Sex = Sex.Female, OwnerName = "ANA PÉREZ", OwnerLastName = "PÉREZ", ReferringVet = "DRA. SOTO", LotNumber = "A123" },
+            "typed report data is stored in capitals, as it prints");
         report.Birthdate.Should().Be(new DateTime(2022, 1, 5));
+        report.Patient!.BirthdateApproximate.Should().BeTrue("the form shows an approximate age again on correction");
+        report.Sections.LotNumber.Should().BeTrue("the form asks for the lot when the template does");
         report.Results.Single().Direction.Should().Be(ResultDirection.High, "the typed species picks the cat's range");
         report.PreviousReceivedOn.Should().BeNull("a typed patient has no history");
         (await _admin.GetFromJsonAsync<List<ExamReportDto>>("/api/exam-reports"))!.Should().Contain(r => r.Id == report.Id);
+    }
+
+    [Fact]
+    public async Task TypedPatient_IsAHiddenProvisionalClient_SharingHistory_UntilRegistered()
+    {
+        var (_, examId) = await AddPetAndExamAsync(Species.Dog);
+        await AddTemplateAsync(new ExamReportTemplate
+        {
+            ExamId = examId,
+            Title = "GLUCOSA",
+            Sections = new ExamReportSections { PreviousResult = true },
+            Parameters = [new ReportParameter { Code = "glu", Name = "Glucosa" }]
+        });
+        object Request(DateOnly on, string value) => new
+        {
+            ExamId = examId, ReceivedOn = on, Values = new Dictionary<string, string> { ["glu"] = value },
+            Patient = new { Name = "Toby", Species = Species.Dog, OwnerName = "Luis", OwnerLastName = "Rojas" }
+        };
+        async Task<string> ClientsJson() => await _admin.GetStringAsync("/api/clientpet/clients");
+
+        var first = await CreateAsync(_employee, Request(new DateOnly(2026, 9, 1), "90"));
+        var second = await CreateAsync(_employee, Request(new DateOnly(2026, 10, 1), "130"));
+
+        second.PreviousReceivedOn.Should().Be(new DateOnly(2026, 9, 1), "the same typed patient shares its history");
+        second.Results.Single().PreviousValue.Should().Be("90");
+        second.PetId.Should().BeNull("the provisional pet stays internal");
+        second.CanRegisterPatient.Should().BeTrue();
+        (await ClientsJson()).Should().NotContain("ROJAS", "provisional clients are hidden from client lists");
+        (await _employee.GetFromJsonAsync<List<ExamReportPatientDto>>("/api/exam-reports/provisional-patients?search=tob"))!
+            .Should().ContainSingle().Which.OwnerLastName.Should().Be("ROJAS");
+
+        var examsOnly = _factory.CreateClientWithPermissions([Permissions.EXAMS_PERFORMED.READ, Permissions.EXAMS_PERFORMED.UPDATE]);
+        (await examsOnly.PostAsync($"/api/exam-reports/{second.Id}/register-patient", null)).StatusCode
+            .Should().Be(HttpStatusCode.Forbidden, "registering creates a client");
+        var response = await _employee.PostAsync($"/api/exam-reports/{second.Id}/register-patient", null);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        (await ClientsJson()).Should().Contain("ROJAS");
+        var registered = (await _admin.GetFromJsonAsync<ExamReportDto>($"/api/exam-reports/{first.Id}"))!;
+        registered.PetId.Should().NotBeNull("both reports now belong to the registered pet");
+        registered.Patient.Should().BeNull();
+        registered.PetName.Should().Be("TOBY");
+    }
+
+    [Fact]
+    public async Task EveryChange_ToReportsImagesAndDesign_IsAudited()
+    {
+        var (petId, examId) = await AddPetAndExamAsync(Species.Dog);
+        await AddTemplateAsync(LipaseTemplate(examId)); // design + templates: settings save
+        var report = await CreateAsync(_employee, new { PetId = petId, ExamId = examId, ReceivedOn = new DateOnly(2026, 10, 13), Values = new Dictionary<string, string> { ["cpl"] = "80" } });
+        (await _employee.PutAsJsonAsync($"/api/exam-reports/{report.Id}",
+            new { PetId = petId, ExamId = examId, ReceivedOn = new DateOnly(2026, 10, 13), Values = new Dictionary<string, string> { ["cpl"] = "90" } })).EnsureSuccessStatusCode();
+        (await _admin.PutAsJsonAsync("/api/exam-reports/images/ReportLogo", new { ContentType = "image/png", Data = new byte[] { 1, 2, 3 } })).EnsureSuccessStatusCode();
+        (await _admin.DeleteAsync("/api/exam-reports/images/ReportLogo")).EnsureSuccessStatusCode();
+        (await _admin.DeleteAsync($"/api/exam-reports/{report.Id}")).EnsureSuccessStatusCode();
+
+        using var scope = _factory.Services.CreateScope();
+        var logs = scope.ServiceProvider.GetRequiredService<AppDbContext>().AuditLogs.ToList();
+        logs.Where(l => l.EntityName == nameof(ExamReport) && l.EntityId == report.Id).Select(l => l.Action)
+            .Should().Equal(AuditActionType.Add, AuditActionType.Edit, AuditActionType.Delete);
+        logs.Where(l => l.EntityName == nameof(ExamReport) && l.Action == AuditActionType.Edit && l.EntityId == report.Id)
+            .Should().ContainSingle().Which.Changes.Should().Contain("Before:").And.Contain("After:");
+        logs.Should().Contain(l => l.EntityName == nameof(ClinicImage) && l.Action == AuditActionType.Edit)
+            .And.Contain(l => l.EntityName == nameof(ClinicImage) && l.Action == AuditActionType.Delete)
+            .And.Contain(l => l.EntityName == nameof(ExamReportSettings) && l.Action == AuditActionType.Edit);
+        logs.Where(l => l.EntityName == nameof(ExamReport)).Should().OnlyContain(l => !string.IsNullOrEmpty(l.User), "every entry names who did it");
     }
 
     [Fact]

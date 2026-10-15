@@ -31,6 +31,14 @@ public class ExamReportsApiService(HttpClient http)
     public async Task<ApiResult> UpdateAsync(int id, ExamReportRequest request)
         => await ApiResult.FromResponseAsync(await http.PutAsJsonAsync(string.Format(ApiRouteConstants.EXAM_REPORT_BY_ID, id), request));
 
+    /// <summary>Patients typed into earlier reports whose name or owner contains <paramref name="search"/>.</summary>
+    public async Task<List<ExamReportPatientDto>> ProvisionalPatientsAsync(string? search)
+        => await http.GetFromJsonAsync<List<ExamReportPatientDto>>($"{ApiRouteConstants.EXAM_REPORT_PROVISIONAL_PATIENTS}?search={Uri.EscapeDataString(search ?? string.Empty)}") ?? [];
+
+    /// <summary>Registers the report's provisional patient; <see cref="ApiResult.Id"/> is the new client's id.</summary>
+    public async Task<ApiResult> RegisterPatientAsync(int reportId)
+        => await ApiResult.FromResponseAsync(await http.PostAsync(string.Format(ApiRouteConstants.EXAM_REPORT_REGISTER_PATIENT, reportId), null));
+
     public async Task<ApiResult> DeleteAsync(int id)
         => await ApiResult.FromResponseAsync(await http.DeleteAsync(string.Format(ApiRouteConstants.EXAM_REPORT_BY_ID, id)));
 
