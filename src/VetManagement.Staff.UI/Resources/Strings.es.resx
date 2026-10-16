@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Spanish texts. name = the English text used in the code (or a MudBlazor key), value = Spanish. -->
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- MudBlazor built-in texts -->
+  <data name="Converter_InvalidDateTime" xml:space="preserve"><value>Fecha y hora no válida</value></data>
+  <data name="Converter_InvalidNumber" xml:space="preserve"><value>Número no válido</value></data>
+  <data name="Converter_InvalidTimeSpan" xml:space="preserve"><value>Hora no válida</value></data>
+  <data name="MudAlert_Close" xml:space="preserve"><value>Cerrar</value></data>
+  <data name="MudBaseDatePicker_NextMonth" xml:space="preserve"><value>Mes siguiente {0}</value></data>
+  <data name="MudBaseDatePicker_NextYear" xml:space="preserve"><value>Año siguiente {0}</value></data>
+  <data name="MudBaseDatePicker_Open" xml:space="preserve"><value>Abrir</value></data>
+  <data name="MudBaseDatePicker_PrevMonth" xml:space="preserve"><value>Mes anterior {0}</value></data>
+  <data name="MudBaseDatePicker_PrevYear" xml:space="preserve"><value>Año anterior {0}</value></data>
+  <data name="MudChip_Close" xml:space="preserve"><value>Cerrar</value></data>
+  <data name="MudColorPicker_Close" xml:space="preserve"><value>Cerrar</value></data>
+  <data name="MudColorPicker_Open" xml:space="preserve"><value>Abrir</value></data>
+  <data name="MudDataGrid_AddFilter" xml:space="preserve"><value>Agregar filtro</value></data>
+  <data name="MudDataGrid_Apply" xml:space="preserve"><value>Aplicar</value></data>
+  <data name="MudDataGrid_Cancel" xml:space="preserve"><value>Cancelar</value></data>
+  <data name="MudDataGrid_Clear" xml:space="preserve"><value>Limpiar</value></data>
+  <data name="MudDataGrid_ClearFilter" xml:space="preserve"><value>Quitar filtro</value></data>
+  <data name="MudDataGrid_Column" xml:space="preserve"><value>Columna</value></data>
+  <data name="MudDataGrid_Columns" xml:space="preserve"><value>Columnas</value></data>
+  <data name="MudDataGrid_Contains" xml:space="preserve"><value>contiene</value></data>
+  <data name="MudDataGrid_EndsWith" xml:space="preserve"><value>termina con</value></data>
+  <data name="MudDataGrid_Equals" xml:space="preserve"><value>es igual a</value></data>
+  <data name="MudDataGrid_False" xml:space="preserve"><value>falso</value></data>
+  <data name="MudDataGrid_Filter" xml:space="preserve"><value>Filtrar</value></data>
+  <data name="MudDataGrid_FilterValue" xml:space="preserve"><value>Valor del filtro</value></data>
+  <data name="MudDataGrid_Hide" xml:space="preserve"><value>Ocultar</value></data>
+  <data name="MudDataGrid_HideAll" xml:space="preserve"><value>Ocultar todo</value></data>
+  <data name="MudDataGrid_Is" xml:space="preserve"><value>es</value></data>
+  <data name="MudDataGrid_IsAfter" xml:space="preserve"><value>es posterior a</value></data>
+  <data name="MudDataGrid_IsBefore" xml:space="preserve"><value>es anterior a</value></data>
+  <data name="MudDataGrid_IsEmpty" xml:space="preserve"><value>está vacío</value></data>
+  <data name="MudDataGrid_IsNot" xml:space="preserve"><value>no es</value></data>
+  <data name="MudDataGrid_IsNotEmpty" xml:space="preserve"><value>no está vacío</value></data>
+  <data name="MudDataGrid_IsOnOrAfter" xml:space="preserve"><value>es igual o posterior a</value></data>
+  <data name="MudDataGrid_IsOnOrBefore" xml:space="preserve"><value>es igual o anterior a</value></data>
+  <data name="MudDataGrid_Loading" xml:space="preserve"><value>Cargando…</value></data>
+  <data name="MudDataGrid_NotContains" xml:space="preserve"><value>no contiene</value></data>
+  <data name="MudDataGrid_NotEquals" xml:space="preserve"><value>no es igual a</value></data>
+  <data name="MudDataGrid_Operator" xml:space="preserve"><value>Operador</value></data>
+  <data name="MudDataGrid_RefreshData" xml:space="preserve"><value>Actualizar datos</value></data>
+  <data name="MudDataGrid_RemoveFilter" xml:space="preserve"><value>Quitar filtro</value></data>
+  <data name="MudDataGrid_Save" xml:space="preserve"><value>Guardar</value></data>
+  <data name="MudDataGrid_ShowAll" xml:space="preserve"><value>Mostrar todo</value></data>
+  <data name="MudDataGrid_Sort" xml:space="preserve"><value>Ordenar</value></data>
+  <data name="MudDataGrid_StartsWith" xml:space="preserve"><value>comienza con</value></data>
+  <data name="MudDataGrid_True" xml:space="preserve"><value>verdadero</value></data>
+  <data name="MudDataGrid_Unsort" xml:space="preserve"><value>Quitar orden</value></data>
+  <data name="MudDataGrid_Value" xml:space="preserve"><value>Valor</value></data>
+  <data name="MudDataGridPager_AllItems" xml:space="preserve"><value>Todos</value></data>
+  <data name="MudDataGridPager_FirstPage" xml:space="preserve"><value>Primera página</value></data>
+  <data name="MudDataGridPager_InfoFormat" xml:space="preserve"><value>{0}-{1} de {2}</value></data>
+  <data name="MudDataGridPager_LastPage" xml:space="preserve"><value>Última página</value></data>
+  <data name="MudDataGridPager_NextPage" xml:space="preserve"><value>Página siguiente</value></data>
+  <data name="MudDataGridPager_PreviousPage" xml:space="preserve"><value>Página anterior</value></data>
+  <data name="MudDataGridPager_RowsPerPage" xml:space="preserve"><value>Filas por página:</value></data>
+  <data name="MudDateRangePicker_End" xml:space="preserve"><value>Fecha de término</value></data>
+  <data name="MudDateRangePicker_Start" xml:space="preserve"><value>Fecha de inicio</value></data>
+  <data name="MudDialog_Close" xml:space="preserve"><value>Cerrar</value></data>
+  <data name="MudExitPrompt_Cancel" xml:space="preserve"><value>Cancelar</value></data>
+  <data name="MudExitPrompt_Exit" xml:space="preserve"><value>Aceptar</value></data>
+  <data name="MudExitPrompt_Text" xml:space="preserve"><value>¿Salir del sitio? Es posible que los cambios no se guarden.</value></data>
+  <data name="MudExitPrompt_Title" xml:space="preserve"><value>Confirmar salida</value></data>
+  <data name="MudFileUpload_Button" xml:space="preserve"><value>Buscar archivos</value></data>
+  <data name="MudFileUpload_DragAndDrop" xml:space="preserve"><value>Arrastra archivos aquí o haz clic para buscarlos</value></data>
+  <data name="MudFileUpload_FileSizeError" xml:space="preserve"><value>El archivo '{0}' supera el tamaño máximo permitido de {1} bytes.</value></data>
+  <data name="MudFileUpload_MaximumFileCountExceeded" xml:space="preserve"><value>Seleccionaste {0} archivos; el máximo es {1}</value></data>
+  <data name="MudInput_Clear" xml:space="preserve"><value>Limpiar</value></data>
+  <data name="MudInput_Decrement" xml:space="preserve"><value>Disminuir</value></data>
+  <data name="MudInput_Increment" xml:space="preserve"><value>Aumentar</value></data>
+  <data name="MudPagination_CurrentPage" xml:space="preserve"><value>Página actual {0}</value></data>
+  <data name="MudPagination_FirstPage" xml:space="preserve"><value>Primera página</value></data>
+  <data name="MudPagination_LastPage" xml:space="preserve"><value>Última página</value></data>
+  <data name="MudPagination_NextPage" xml:space="preserve"><value>Página siguiente</value></data>
+  <data name="MudPagination_PageIndex" xml:space="preserve"><value>Página {0}</value></data>
+  <data name="MudPagination_PreviousPage" xml:space="preserve"><value>Página anterior</value></data>
+  <data name="MudRangeInput_End" xml:space="preserve"><value>Fin</value></data>
+  <data name="MudRangeInput_Start" xml:space="preserve"><value>Inicio</value></data>
+  <data name="MudSnackbar_Close" xml:space="preserve"><value>Cerrar</value></data>
+  <data name="MudStepper_Complete" xml:space="preserve"><value>Completar</value></data>
+  <data name="MudStepper_Next" xml:space="preserve"><value>Siguiente</value></data>
+  <data name="MudStepper_Previous" xml:space="preserve"><value>Anterior</value></data>
+  <data name="MudStepper_Reset" xml:space="preserve"><value>Reiniciar</value></data>
+  <data name="MudStepper_Skip" xml:space="preserve"><value>Omitir</value></data>
+  <data name="MudTable_CancelEditRow" xml:space="preserve"><value>Cancelar edición</value></data>
+  <data name="MudTable_CollapseGroup" xml:space="preserve"><value>Contraer grupo</value></data>
+  <data name="MudTable_CommitRow" xml:space="preserve"><value>Confirmar edición</value></data>
+  <data name="MudTable_EditRow" xml:space="preserve"><value>Editar fila</value></data>
+  <data name="MudTable_ExpandGroup" xml:space="preserve"><value>Expandir grupo</value></data>
+  <data name="MudTable_Loading" xml:space="preserve"><value>Cargando…</value></data>
+  <data name="MudTablePager_FirstPage" xml:space="preserve"><value>Primera página</value></data>
+  <data name="MudTablePager_LastPage" xml:space="preserve"><value>Última página</value></data>
+  <data name="MudTablePager_NextPage" xml:space="preserve"><value>Página siguiente</value></data>
+  <data name="MudTablePager_PreviousPage" xml:space="preserve"><value>Página anterior</value></data>
+  <data name="MudTabs_CloseTab" xml:space="preserve"><value>Cerrar pestaña</value></data>
+  <data name="MudTimePicker_Open" xml:space="preserve"><value>Abrir</value></data>
+  <data name="MudTreeView_CollapseItem" xml:space="preserve"><value>Contraer</value></data>
+  <data name="MudTreeView_ExpandItem" xml:space="preserve"><value>Expandir</value></data>
+
+  <!-- Staff UI texts -->
+  <data name="Inventory" xml:space="preserve"><value>Inventario</value></data>
+  <data name="Dashboard" xml:space="preserve"><value>Panel</value></data>
+  <data name="Items" xml:space="preserve"><value>Productos</value></data>
+  <data name="Audit" xml:space="preserve"><value>Auditoría</value></data>
+  <data name="Metrics" xml:space="preserve"><value>Métricas</value></data>
+  <data name="Email Alerts" xml:space="preserve"><value>Alertas por correo</value></data>
+  <data name="Exams" xml:space="preserve"><value>Exámenes</value></data>
+  <data name="Exam Catalog" xml:space="preserve"><value>Catálogo de exámenes</value></data>
+  <data name="Requests" xml:space="preserve"><value>Solicitudes</value></data>
+  <data name="Lab Reports" xml:space="preserve"><value>Informes de laboratorio</value></data>
+  <data name="Report Design" xml:space="preserve"><value>Diseño de informes</value></data>
+  <data name="External Labs" xml:space="preserve"><value>Laboratorios externos</value></data>
+  <data name="Medical Visits" xml:space="preserve"><value>Visitas médicas</value></data>
+  <data name="Clients" xml:space="preserve"><value>Clientes</value></data>
+  <data name="Search" xml:space="preserve"><value>Buscar</value></data>
+  <data name="Vaccines Due" xml:space="preserve"><value>Vacunas pendientes</value></data>
+  <data name="Clinical Settings" xml:space="preserve"><value>Configuración clínica</value></data>
+  <data name="Agenda" xml:space="preserve"><value>Agenda</value></data>
+  <data name="Calendar" xml:space="preserve"><value>Calendario</value></data>
+  <data name="Settings" xml:space="preserve"><value>Configuración</value></data>
+  <data name="Billing" xml:space="preserve"><value>Facturación</value></data>
+  <data name="Sales" xml:space="preserve"><value>Ventas</value></data>
+  <data name="Cash Close" xml:space="preserve"><value>Cierre de caja</value></data>
+  <data name="Reports" xml:space="preserve"><value>Reportes</value></data>
+  <data name="Administration" xml:space="preserve"><value>Administración</value></data>
+  <data name="Users" xml:space="preserve"><value>Usuarios</value></data>
+  <data name="Test Data" xml:space="preserve"><value>Datos de prueba</value></data>
+  <data name="Toggle light/dark theme" xml:space="preserve"><value>Cambiar tema claro/oscuro</value></data>
+  <data name="Logout" xml:space="preserve"><value>Cerrar sesión</value></data>
+  <data name="User" xml:space="preserve"><value>Usuario</value></data>
+  <data name="Admin" xml:space="preserve"><value>Administrador</value></data>
+  <data name="Laboratory" xml:space="preserve"><value>Laboratorio</value></data>
+  <data name="Reception" xml:space="preserve"><value>Recepción</value></data>
+  <data name="Clinical" xml:space="preserve"><value>Clínica</value></data>
+  <data name="Cashier" xml:space="preserve"><value>Caja</value></data>
+  <data name="Supervisor" xml:space="preserve"><value>Supervisor</value></data>
+  <data name="Something went wrong" xml:space="preserve"><value>Algo salió mal</value></data>
+  <data name="Could not reach the server. Check your connection and try again." xml:space="preserve"><value>No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.</value></data>
+  <data name="An unexpected error occurred on this page." xml:space="preserve"><value>Ocurrió un error inesperado en esta página.</value></data>
+  <data name="Try again" xml:space="preserve"><value>Reintentar</value></data>
+  <data name="Sign in" xml:space="preserve"><value>Iniciar sesión</value></data>
+  <data name="Username" xml:space="preserve"><value>Usuario</value></data>
+  <data name="Username is required" xml:space="preserve"><value>El usuario es obligatorio</value></data>
+  <data name="Password" xml:space="preserve"><value>Contraseña</value></data>
+  <data name="Password is required" xml:space="preserve"><value>La contraseña es obligatoria</value></data>
+  <data name="Show/Hide password" xml:space="preserve"><value>Mostrar/ocultar contraseña</value></data>
+  <data name="Remember me" xml:space="preserve"><value>Recordarme</value></data>
+  <data name="Log in" xml:space="preserve"><value>Ingresar</value></data>
+  <data name="Too many login attempts. Wait a minute and try again." xml:space="preserve"><value>Demasiados intentos de ingreso. Espera un minuto e inténtalo de nuevo.</value></data>
+  <data name="Password change required." xml:space="preserve"><value>Debes cambiar tu contraseña.</value></data>
+  <data name="Login successful!" xml:space="preserve"><value>¡Ingreso exitoso!</value></data>
+  <data name="Invalid username or password." xml:space="preserve"><value>Usuario o contraseña incorrectos.</value></data>
+  <data name="Change Password" xml:space="preserve"><value>Cambiar contraseña</value></data>
+  <data name="Change your password" xml:space="preserve"><value>Cambia tu contraseña</value></data>
+  <data name="Current password" xml:space="preserve"><value>Contraseña actual</value></data>
+  <data name="New password" xml:space="preserve"><value>Nueva contraseña</value></data>
+  <data name="Confirm new password" xml:space="preserve"><value>Confirmar nueva contraseña</value></data>
+  <data name="Change password" xml:space="preserve"><value>Cambiar contraseña</value></data>
+  <data name="Password mismatch or missing fields" xml:space="preserve"><value>Las contraseñas no coinciden o faltan campos</value></data>
+  <data name="Password changed successfully" xml:space="preserve"><value>Contraseña cambiada correctamente</value></data>
+  <data name="Could not change password" xml:space="preserve"><value>No se pudo cambiar la contraseña</value></data>
+  <data name="Home" xml:space="preserve"><value>Inicio</value></data>
+  <data name="Main panel" xml:space="preserve"><value>Panel principal</value></data>
+  <data name="Quick access and system overview." xml:space="preserve"><value>Accesos rápidos y resumen del sistema.</value></data>
+  <data name="Inventory summary and quick alerts." xml:space="preserve"><value>Resumen del inventario y alertas rápidas.</value></data>
+  <data name="Out of stock items! ({0})" xml:space="preserve"><value>¡Productos sin stock! ({0})</value></data>
+  <data name="Low stock items ({0})" xml:space="preserve"><value>Productos con stock bajo ({0})</value></data>
+  <data name="View details" xml:space="preserve"><value>Ver detalle</value></data>
+  <data name="No inventory alerts" xml:space="preserve"><value>Sin alertas de inventario</value></data>
+  <data name="Panel" xml:space="preserve"><value>Panel</value></data>
+</root>

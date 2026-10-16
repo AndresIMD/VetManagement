@@ -8,14 +8,14 @@
 
 <MudContainer MaxWidth="MaxWidth.ExtraSmall" Class="d-flex flex-column align-center justify-center" Style="min-height:80vh;">
     <MudPaper Elevation="6" Class="pa-6" Style="width:100%; max-width:400px;">
-        <MudText Typo="Typo.h5" Align="Align.Center" Class="mb-4">Sign in</MudText>
+        <MudText Typo="Typo.h5" Align="Align.Center" Class="mb-4">@L["Sign in"]</MudText>
         <MudForm @ref="_mudForm" Model="_loginModel">
-            <MudTextField Immediate="true" OnKeyDown="OnEnterDown" Variant="Variant.Outlined" T="string" @bind-Value="_loginModel.Username" Label="Username" Required="true" RequiredError="Username is required" Class="mb-3" Disabled="@_loading" />
-            <MudTextField Immediate="true" OnKeyDown="OnEnterDown" Variant="Variant.Outlined" T="string" @bind-Value="_loginModel.Password" Label="Password" InputType="@_passwordInput" Required="true" RequiredError="Password is required" Class="mb-3" Disabled="@_loading" Adornment="Adornment.End" AdornmentIcon="@_passwordInputIcon" OnAdornmentClick="TogglePasswordVisibility" AdornmentAriaLabel="Show/Hide password" />
-            <MudCheckBox T="bool" Value="_loginModel.RememberMe" ValueChanged="@((bool value) => { _loginModel.RememberMe = value; StateHasChanged(); })" Label="Remember me" Class="mb-3" Disabled="@_loading" />
+            <MudTextField Immediate="true" OnKeyDown="OnEnterDown" Variant="Variant.Outlined" T="string" @bind-Value="_loginModel.Username" Label="@L["Username"]" Required="true" RequiredError="@L["Username is required"]" Class="mb-3" Disabled="@_loading" />
+            <MudTextField Immediate="true" OnKeyDown="OnEnterDown" Variant="Variant.Outlined" T="string" @bind-Value="_loginModel.Password" Label="@L["Password"]" InputType="@_passwordInput" Required="true" RequiredError="@L["Password is required"]" Class="mb-3" Disabled="@_loading" Adornment="Adornment.End" AdornmentIcon="@_passwordInputIcon" OnAdornmentClick="TogglePasswordVisibility" AdornmentAriaLabel="@L["Show/Hide password"]" />
+            <MudCheckBox T="bool" Value="_loginModel.RememberMe" ValueChanged="@((bool value) => { _loginModel.RememberMe = value; StateHasChanged(); })" Label="@L["Remember me"]" Class="mb-3" Disabled="@_loading" />
             <MudStack Row="true" Spacing="2" Justify="Justify.FlexEnd">
                 <MudLoadingButton Loading="@_loading" OnClick="OnLogin">
-                    Log in
+                    @L["Log in"]
                 </MudLoadingButton>
             </MudStack>
         </MudForm>
@@ -49,8 +49,8 @@
         catch (HttpRequestException ex)
         {
             Snackbar.Add(ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests
-                ? "Too many login attempts. Wait a minute and try again."
-                : "Could not reach the server. Check your connection and try again.", Severity.Error);
+                ? L["Too many login attempts. Wait a minute and try again."]
+                : L["Could not reach the server. Check your connection and try again."], Severity.Error);
             return;
         }
         finally
@@ -64,18 +64,18 @@
                 jwtProvider.NotifyUserAuthentication();
             if (AccountService.MustChangePassword)
             {
-                Snackbar.Add("Password change required.", Severity.Info);
+                Snackbar.Add(L["Password change required."], Severity.Info);
                 Navigation.NavigateTo("/force-change-password", true);
             }
             else
             {
-                Snackbar.Add("Login successful!", Severity.Success);
+                Snackbar.Add(L["Login successful!"], Severity.Success);
                 Navigation.NavigateTo("/");
             }
         }
         else
         {
-            Snackbar.Add("Invalid username or password.", Severity.Error);
+            Snackbar.Add(L["Invalid username or password."], Severity.Error);
         }
     }
 

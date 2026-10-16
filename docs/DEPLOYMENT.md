@@ -39,6 +39,15 @@ and [EXAM_REPORTS.md](modules/EXAM_REPORTS.md).
 Permissions are stored in the login token: after an update that adds permissions, users log out and
 in again to see the new screens.
 
+## Staff web and desktop app (`src/VetManagement.Staff.Web`, `src/VetManagement.Staff.Maui`)
+
+`config.json` (template: `config.template.json`):
+
+| Key | Notes |
+|---|---|
+| `ApiBaseUrl` | Public URL of the API (or `LocalApiBaseUrl` + `CloudApiBaseUrl`: the local one is used when it answers). |
+| `Culture` | The clinic's language and date/number formats, e.g. `es-CL`. Absent or unknown = English. Texts are translated in `Staff.UI/Resources/Strings.{language}.resx`; a text without translation shows in English. |
+
 ## Booking portal (`src/VetManagement.Booking.Web`)
 
 Static Blazor WebAssembly app. Set `wwwroot/appsettings.json` → `ApiBaseUrl` to the API's public URL.
@@ -72,7 +81,7 @@ private repository, not here.
    `Proxy__ForwardLimit`. The first start creates the schema (migrations run on start-up) and the `SeedAdmin` user.
 3. GitHub → Settings → Environments → one per clinic, with the variables and secrets listed at the top of
    `.github/workflows/deploy-azure.yml`; then Actions → **Deploy to Azure** → Run workflow with that environment. It runs
-   the tests, publishes the API and the staff web, and writes the staff web's `config.json` (`ApiBaseUrl`).
+   the tests, publishes the API and the staff web, and writes the staff web's `config.json` (`ApiBaseUrl`, and `Culture` from the optional `STAFF_CULTURE` variable).
 4. Custom domains, DNS at Cloudflare: a `CNAME` per subdomain to the Azure default host name, plus the `TXT asuid.<sub>`
    record App Service asks for. Keep the records **DNS only (grey cloud)** until Azure has validated the domain and issued
    its certificate; with the proxy on afterwards, use SSL mode **Full (strict)** and set `Proxy:ForwardLimit` to 2.

@@ -4,6 +4,7 @@ name: Deploy to Azure
 # Environment named after the clinic (Settings → Environments), never in this file:
 #   variables: AZURE_API_APP_NAME   App Service name of the API
 #              API_BASE_URL         public URL of the API, e.g. https://api.example.cl/
+#              STAFF_CULTURE        optional: staff UI language and formats, e.g. es-CL (absent = English)
 #   secrets:   AZURE_API_PUBLISH_PROFILE   App Service → Download publish profile
 #              AZURE_STAFF_SWA_TOKEN       Static Web App → Manage deployment token
 # The API's own settings (connection string, JWT, CORS...) are App Service settings: see docs/DEPLOYMENT.md.
@@ -71,9 +72,10 @@ jobs:
       - name: Write config.json
         env:
           API_BASE_URL: ${{ vars.API_BASE_URL }}
+          STAFF_CULTURE: ${{ vars.STAFF_CULTURE }}
         run: |
           test -n "$API_BASE_URL" || { echo "Set the API_BASE_URL variable in the '${{ inputs.environment }}' environment."; exit 1; }
-          printf '{ "ApiBaseUrl": "%s" }\n' "$API_BASE_URL" > publish/staff/wwwroot/config.json
+          printf '{ "ApiBaseUrl": "%s", "Culture": "%s" }\n' "$API_BASE_URL" "$STAFF_CULTURE" > publish/staff/wwwroot/config.json
           # A precompressed copy would be served instead of the file just written.
           rm -f publish/staff/wwwroot/config.json.br publish/staff/wwwroot/config.json.gz
       - uses: Azure/static-web-apps-deploy@v1

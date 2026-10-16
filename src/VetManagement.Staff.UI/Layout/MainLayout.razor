@@ -33,13 +33,13 @@
             </ChildContent>
             <ErrorContent Context="ex">
                 <MudAlert Severity="Severity.Error" Class="ma-4">
-                    <MudText Typo="Typo.subtitle2">Something went wrong</MudText>
+                    <MudText Typo="Typo.subtitle2">@L["Something went wrong"]</MudText>
                     <MudText Typo="Typo.body2">
                         @(ex is HttpRequestException
-                            ? "Could not reach the server. Check your connection and try again."
-                            : "An unexpected error occurred on this page.")
+                            ? L["Could not reach the server. Check your connection and try again."]
+                            : L["An unexpected error occurred on this page."])
                     </MudText>
-                    <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="() => _errorBoundary?.Recover()">Try again</MudButton>
+                    <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="() => _errorBoundary?.Recover()">@L["Try again"]</MudButton>
                 </MudAlert>
             </ErrorContent>
         </ErrorBoundary>

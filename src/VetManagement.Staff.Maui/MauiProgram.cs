@@ -26,6 +26,7 @@ public static class MauiProgram
 
         // Get the API base URL from config.json, prefer Local if healthy
         string apiBaseUrl;
+        string? culture;
         try
         {
             var configPath = Path.Combine(AppContext.BaseDirectory, "config.json");
@@ -33,6 +34,7 @@ public static class MauiProgram
                 throw new InvalidOperationException($"Configuration file was not found: {configPath}");
             var configJson = File.ReadAllText(configPath);
             var config = JsonSerializer.Deserialize<ConfigModel>(configJson) ?? new ConfigModel();
+            culture = config.Culture;
 
             static bool IsHealthy(string? baseUrl)
             {
@@ -66,6 +68,10 @@ public static class MauiProgram
         {
             throw new InvalidOperationException($"Error reading API configuration: {ex.Message}");
         }
+
+        // The clinic's language and formats
+        builder.Services.AddStaffLocalization();
+        StaffLocalization.ApplyCulture(culture);
 
         // Add HTTP client services
         builder.Services.AddTransient<JwtAuthorizationMessageHandler>();
@@ -147,5 +153,7 @@ public static class MauiProgram
         public string? ApiBaseUrl { get; set; }
         public string? LocalApiBaseUrl { get; set; }
         public string? CloudApiBaseUrl { get; set; }
+        /// <summary>The clinic's language and formats, e.g. "es-CL". Absent = English.</summary>
+        public string? Culture { get; set; }
     }
 }
