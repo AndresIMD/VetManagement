@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using VetManagement.Api.Services;
 using VetManagement.Application.Services;
+using VetManagement.Contracts.Accounts;
 using VetManagement.Domain.Enums;
 
 namespace VetManagement.Api.Controllers.Admin;
@@ -15,12 +16,22 @@ public class UsersController(
     UserManager<IdentityUser> userManager,
     AuditService audit) : ApiControllerBase
 {
+    /// <summary>Users with their roles; never the Identity record itself (it carries the password hash).</summary>
     [HttpGet]
     [Authorize(Policy = "Users.Read")]
-    public async Task<ActionResult<List<IdentityUser>>> GetAllAsync()
+    public async Task<ActionResult<List<UserDto>>> GetAllAsync()
     {
-        var users = await userService.GetAllUsersAsync();
-        return Ok(users);
+        var result = new List<UserDto>();
+        // One at a time: the user manager shares one DbContext.
+        foreach (var user in await userService.GetAllUsersAsync())
+            result.Add(new UserDto
+            {
+                Id = user.Id,
+                UserName = user.UserName ?? string.Empty,
+                Email = user.Email ?? string.Empty,
+                Roles = [.. await userService.GetUserRolesAsync(user)]
+            });
+        return Ok(result.OrderBy(u => u.UserName, StringComparer.OrdinalIgnoreCase).ToList());
     }
 
     [HttpGet("roles")]
@@ -40,18 +51,6 @@ public class UsersController(
             return NotFound();
         var roles = await userService.GetUserRolesAsync(user);
         return Ok(roles);
-    }
-
-    [HttpGet("{id}/claims")]
-    [Authorize(Policy = "Users.Read")]
-    public async Task<ActionResult<object>> GetUserClaimsAsync(string id)
-    {
-        var user = await userManager.FindByIdAsync(id);
-        if (user is null)
-            return NotFound();
-        var claims = await userManager.GetClaimsAsync(user);
-        var list = claims.Select(c => new { c.Type, c.Value });
-        return Ok(list);
     }
 
     public record CreateUserRequest(string UserName, string Email, string Password, List<string> Roles);
