@@ -13,7 +13,8 @@
                     <MudHidden Breakpoint="Breakpoint.MdAndUp">
                         <MudMenu AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft" Color="Color.Inherit" Dense="true">
                             <ActivatorContent Context="menuContext">
-                                <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" />
+                                @* MudBlazor 9: a custom activator opens its menu itself. *@
+                                <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" OnClick="@(e => menuContext.ToggleAsync(e))" />
                             </ActivatorContent>
                             <ChildContent>
                                 @foreach (var item in MenuItems)
@@ -82,9 +83,9 @@
                             <MudMenuItem OnClick="@LogoutAsync">@L["Logout"]</MudMenuItem>
                         </ChildContent>
                         <ActivatorContent Context="userMenuContext">
-                            <MudAvatar Color="Color.Tertiary" Style="cursor:pointer;">
-                                @UserInitial
-                            </MudAvatar>
+                            <div @onclick="@(e => userMenuContext.ToggleAsync(e))" style="cursor:pointer;">
+                                <MudAvatar Color="Color.Tertiary">@UserInitial</MudAvatar>
+                            </div>
                         </ActivatorContent>
                     </MudMenu>
                 </MudStack>
