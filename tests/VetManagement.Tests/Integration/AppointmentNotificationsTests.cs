@@ -35,7 +35,7 @@ public class AppointmentNotificationsTests : IClassFixture<CustomWebAppFactory>
         var doc = (await _admin.GetFromJsonAsync<JsonObject>("/api/scheduling/settings"))!;
         var s = doc["settings"]!;
         s["enabled"] = true;
-        s["clinicName"] = "San Pablo Vet Clinic";
+        s["clinicName"] = "Example Vet Clinic";
         s["clinicPhone"] = "+56 2 2345 6789";
         foreach (var service in s["services"]!.AsArray())
             service!["enabled"] = service["code"]!.GetValue<string>() == "specialist";
@@ -74,7 +74,7 @@ public class AppointmentNotificationsTests : IClassFixture<CustomWebAppFactory>
 
             var email = EmailsTo("confirm@mail.cl").Should().ContainSingle().Subject;
             var local = TimeZoneInfo.ConvertTimeFromUtc(slot.StartUtc, TimeZoneInfo.FindSystemTimeZoneById("America/Santiago"));
-            email.Subject.Should().Be("Your appointment is confirmed – San Pablo Vet Clinic");
+            email.Subject.Should().Be("Your appointment is confirmed – Example Vet Clinic");
             email.Body.Should().Contain("Hello Ana Lopez").And.Contain("Consulta especialista").And.Contain($"Time: {local:HH:mm}")
                 .And.Contain("Wednesday").And.Contain("Patient: Luna").And.Contain("+56 2 2345 6789");
         }

@@ -51,7 +51,7 @@ public class OnlineBookingTests : IClassFixture<CustomWebAppFactory>
         var doc = (await _admin.GetFromJsonAsync<JsonObject>("/api/scheduling/settings"))!;
         var s = doc["settings"]!;
         s["enabled"] = true;
-        s["clinicName"] = "San Pablo Vet Clinic";
+        s["clinicName"] = "Example Vet Clinic";
         s["cancellation"] = new JsonObject { ["clientDeadlineHours"] = cancelDeadlineHours, ["refundMode"] = refundMode.ToString() };
         s["booking"]!["horizonDays"] = 180; // tests book up to ~10 weeks ahead
         foreach (var service in s["services"]!.AsArray())
