@@ -9,11 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Remove="Pages\theme-overrides.css" />
-    <Content Remove="Pages\Items\MaterialForm.razor" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Update="Pages\**\*.css">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
@@ -37,15 +32,7 @@
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.10" />
     <PackageReference Include="Microsoft.Extensions.Localization" Version="10.0.10" />
     <PackageReference Include="MudBlazor" Version="9.7.0" />
-    <PackageReference Include="RestSharp" Version="114.0.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.22.0" />
-  </ItemGroup>
-  
-  <ItemGroup>
-    <None Update="wwwroot/js/debug.js">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </None>
   </ItemGroup>
 
 </Project>

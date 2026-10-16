@@ -12,14 +12,6 @@ namespace VetManagement.Staff.UI.Services.Api;
 
 public class InventoryMovementApiService(HttpClient http)
 {
-    public async Task<List<InventoryMovement>?> GetAllMovementsAsync()
-    {
-        var response = await http.GetAsync(ApiRouteConstants.INVENTORY_MOVEMENTS_BASE);
-        response.EnsureSuccessStatusCode();
-        var movements = await response.Content.ReadFromJsonAsync<List<MovementDto>>();
-        return movements?.Select(MapToShared).ToList();
-    }
-
     public async Task<List<InventoryMovement>> GetMovementsByItemIdAsync(int itemId)
     {
         var response = await http.GetAsync(string.Format(ApiRouteConstants.INVENTORY_MOVEMENT_BY_ITEM, itemId));
@@ -57,60 +49,6 @@ public class InventoryMovementApiService(HttpClient http)
         response.EnsureSuccessStatusCode();
         var movements = await response.Content.ReadFromJsonAsync<List<MovementDto>>();
         return movements?.Select(MapToShared).ToList() ?? [];
-    }
-
-    public async Task<PagedResult<InventoryMovement>?> GetMovementsFilteredPagedAsync(
-        int page = 0,
-        int pageSize = 25,
-        int? itemId = null,
-        InventoryMovementType? type = null,
-        string? responsible = null,
-        DateTime? from = null,
-        DateTime? to = null)
-    {
-        var parameters = new List<string>
-        {
-            $"page={page}",
-            $"pageSize={pageSize}"
-        };
-
-        if (itemId.HasValue)
-            parameters.Add($"itemId={itemId.Value}");
-        if (type.HasValue && type.Value != InventoryMovementType.None)
-            parameters.Add($"type={type}");
-        if (!string.IsNullOrWhiteSpace(responsible))
-            parameters.Add($"responsible={Uri.EscapeDataString(responsible)}");
-        if (from.HasValue)
-            parameters.Add($"from={from.Value:O}");
-        if (to.HasValue)
-            parameters.Add($"to={to.Value:O}");
-
-        string url = $"{ApiRouteConstants.INVENTORY_MOVEMENTS_BASE}/paged?" + string.Join("&", parameters);
-
-        var response = await http.GetAsync(url);
-        response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<PagedResponse<MovementDto>>();
-        return result is null
-            ? null
-            : new PagedResult<InventoryMovement>
-            {
-                Items = result.Items.Select(MapToShared).ToList(),
-                TotalCount = result.TotalCount,
-                Page = result.Page,
-                PageSize = result.PageSize
-            };
-    }
-
-    public async Task AddInventoryMovementAsync(InventoryMovement movement)
-    {
-        var response = await http.PostAsJsonAsync(ApiRouteConstants.INVENTORY_MOVEMENTS_BASE, new MovementCreateRequest
-        {
-            ItemId = movement.ItemId,
-            Type = (DomainInventoryMovementType)movement.Type,
-            Quantity = movement.Quantity,
-            Reason = movement.Reason
-        });
-        response.EnsureSuccessStatusCode();
     }
 
     public async Task AdjustStockAsync(int itemId, int amount, string reason)

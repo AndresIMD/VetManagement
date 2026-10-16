@@ -468,35 +468,6 @@
         }
     }
 
-    private async Task ShowQuickAdjustStockModal()
-    {
-        var options = new DialogOptions
-        {
-            MaxWidth = MaxWidth.Small,
-            FullWidth = true,
-            CloseOnEscapeKey = false
-        };
-        var parameters = new DialogParameters<QuickAdjustStockBarcodeModal>
-        {
-        { x => x.Title, L["Adjust stock by barcode"].Value },
-        { x => x.TitleIcon, Icons.Material.Filled.QrCodeScanner },
-        { x => x.TitleColor, Color.Secondary }
-        };
-        var dialog = await DialogService.ShowAsync<QuickAdjustStockBarcodeModal>(null, parameters, options);
-        var result = await dialog.Result;
-        if (result == null || result.Canceled)
-        {
-            Snackbar.Add(L["Barcode adjustment canceled."], Severity.Info);
-            return;
-        }
-        if (result.Data is not Item item)
-        {
-            Snackbar.Add(L["Could not get item from scanner."], Severity.Warning);
-            return;
-        }
-        var dto = item.ToInventoryItemDTO();
-        await ShowAdjustStockModal(dto);
-    }
     #endregion
 
     private IEnumerable<FilterChipModel> BuildActiveChips()

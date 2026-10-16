@@ -73,10 +73,6 @@ public class AccountApiService
 #endif
     }
 
-    public async Task SetTokenAsync(string token)
-    {
-        await SetTokenAsync(token, false);
-    }
 
     public async Task<string?> GetTokenAsync()
     {

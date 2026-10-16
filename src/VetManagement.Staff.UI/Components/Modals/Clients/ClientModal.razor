@@ -22,7 +22,11 @@
         errorMessage = null;
         try
         {
-            await _clientpetService.AddClientAsync(ClientModel);
+            // An existing client (opened from "Edit client") is updated, never added again.
+            if (ClientModel.Id == 0)
+                await _clientpetService.AddClientAsync(ClientModel);
+            else
+                await _clientpetService.UpdateClientAsync(ClientModel);
             MudDialog.Close(DialogResult.Ok(ClientModel));
         }
         catch (Exception ex)

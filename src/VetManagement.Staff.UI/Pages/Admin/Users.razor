@@ -25,7 +25,6 @@
                     <MudTh>@L["User"]</MudTh>
                     <MudTh>@L["Email"]</MudTh>
                     <MudTh>@L["Roles"]</MudTh>
-                    <MudTh>@L["Actions"]</MudTh>
                 </HeaderContent>
                 <RowTemplate Context="user">
                     <MudTd DataLabel="@L["User"]">@user.UserName</MudTd>
@@ -39,20 +38,6 @@
                                 @L[role]
                             </MudChip>
                         }
-                    </MudTd>
-                    <MudTd DataLabel="@L["Actions"]">
-                        <MudTooltip Text="@L["Edit user"]">
-                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary"
-                                Disabled="@(!CanManageRoles)" OnClick="@(() => EditUser(user))" />
-                        </MudTooltip>
-                        <MudTooltip Text="@L["Delete user"]">
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
-                                Disabled="@(!CanManageRoles)" OnClick="@(() => DeleteUser(user))" />
-                        </MudTooltip>
-                        <MudTooltip Text="@L["Reset password"]">
-                            <MudIconButton Icon="@Icons.Material.Filled.LockReset" Color="Color.Secondary"
-                                Disabled="@(!CanManageRoles)" OnClick="@(() => ResetPassword(user))" />
-                        </MudTooltip>
                     </MudTd>
                 </RowTemplate>
                 <PagerContent>
@@ -124,21 +109,6 @@
             else { Snackbar.Add(L["Could not assign role."], Severity.Error); }
         }
         StateHasChanged();
-    }
-
-    private void EditUser(UserDto user)
-    {
-        Snackbar.Add(L["Edit user: {0}", user.UserName], Severity.Info);
-    }
-
-    private void DeleteUser(UserDto user)
-    {
-        Snackbar.Add(L["Delete user: {0}", user.UserName], Severity.Warning);
-    }
-
-    private void ResetPassword(UserDto user)
-    {
-        Snackbar.Add(L["Reset password for: {0}", user.UserName], Severity.Info);
     }
 
     private async Task ShowCreateUserModal()

@@ -284,8 +284,6 @@
   <data name="Settings saved." xml:space="preserve"><value>Configuración guardada.</value></data>
   <data name="The text is not valid JSON: {0}" xml:space="preserve"><value>El texto no es JSON válido: {0}</value></data>
   <data name="Date Range" xml:space="preserve"><value>Rango de fechas</value></data>
-  <data name="Month" xml:space="preserve"><value>Mes</value></data>
-  <data name="No movements for this month." xml:space="preserve"><value>No hay movimientos este mes.</value></data>
   <data name="Processing..." xml:space="preserve"><value>Procesando...</value></data>
   <data name="Are you sure you want to continue?" xml:space="preserve"><value>¿Seguro que quieres continuar?</value></data>
   <data name="Accept" xml:space="preserve"><value>Aceptar</value></data>
@@ -345,9 +343,6 @@
   <data name="Item deleted." xml:space="preserve"><value>Producto eliminado.</value></data>
   <data name="Error deleting item: {0}" xml:space="preserve"><value>Error al eliminar el producto: {0}</value></data>
   <data name="Deletion canceled." xml:space="preserve"><value>Eliminación cancelada.</value></data>
-  <data name="Adjust stock by barcode" xml:space="preserve"><value>Ajustar stock por código de barras</value></data>
-  <data name="Barcode adjustment canceled." xml:space="preserve"><value>Ajuste por código de barras cancelado.</value></data>
-  <data name="Could not get item from scanner." xml:space="preserve"><value>No se pudo obtener el producto desde el lector.</value></data>
   <data name="Name/Brand/Compound: {0}" xml:space="preserve"><value>Nombre/Marca/Compuesto: {0}</value></data>
   <data name="Category: {0}" xml:space="preserve"><value>Categoría: {0}</value></data>
   <data name="Inventory History" xml:space="preserve"><value>Historial de inventario</value></data>
@@ -434,8 +429,6 @@
   <data name="No item was found with the barcode '{0}'." xml:space="preserve"><value>No se encontró un producto con el código de barras '{0}'.</value></data>
   <data name="No items" xml:space="preserve"><value>Sin productos</value></data>
   <data name="There are no items with quantity greater than 0 to process." xml:space="preserve"><value>No hay productos con cantidad mayor que 0 para procesar.</value></data>
-  <data name="Scan or enter the barcode" xml:space="preserve"><value>Escanea o escribe el código de barras</value></data>
-  <data name="Clear" xml:space="preserve"><value>Limpiar</value></data>
   <data name="Inventory Email Alerts" xml:space="preserve"><value>Alertas de inventario por correo</value></data>
   <data name="Send inventory alerts by email" xml:space="preserve"><value>Enviar alertas de inventario por correo</value></data>
   <data name="An email will be generated listing items that are &quot;Low stock&quot; and/or &quot;Out of stock&quot;. Items with threshold 0 will only appear in &quot;Out of stock&quot;." xml:space="preserve"><value>Se generará un correo con los productos en "Stock bajo" y/o "Sin stock". Los productos con umbral 0 solo aparecen en "Sin stock".</value></data>
@@ -749,13 +742,8 @@
   <data name="Client added successfully." xml:space="preserve"><value>Cliente agregado correctamente.</value></data>
   <data name="Pet added successfully." xml:space="preserve"><value>Mascota agregada correctamente.</value></data>
   <data name="Client updated successfully." xml:space="preserve"><value>Cliente actualizado correctamente.</value></data>
-  <data name="Edit pet" xml:space="preserve"><value>Editar mascota</value></data>
-  <data name="Pet updated successfully." xml:space="preserve"><value>Mascota actualizada correctamente.</value></data>
   <data name="Are you sure you want to delete client {0} {1}?" xml:space="preserve"><value>¿Seguro que quieres eliminar al cliente {0} {1}?</value></data>
   <data name="Client deleted successfully." xml:space="preserve"><value>Cliente eliminado correctamente.</value></data>
-  <data name="Delete pet" xml:space="preserve"><value>Eliminar mascota</value></data>
-  <data name="Are you sure you want to delete pet {0} from client {1} {2}?" xml:space="preserve"><value>¿Seguro que quieres eliminar la mascota {0} del cliente {1} {2}?</value></data>
-  <data name="Pet deleted successfully." xml:space="preserve"><value>Mascota eliminada correctamente.</value></data>
   <data name="First name" xml:space="preserve"><value>Nombre</value></data>
   <data name="Owner (ID)" xml:space="preserve"><value>Dueño (ID)</value></data>
   <data name="Select a species first" xml:space="preserve"><value>Primero elige una especie</value></data>
@@ -769,17 +757,11 @@
   <data name="User Administration" xml:space="preserve"><value>Administración de usuarios</value></data>
   <data name="New user" xml:space="preserve"><value>Nuevo usuario</value></data>
   <data name="Roles" xml:space="preserve"><value>Roles</value></data>
-  <data name="Edit user" xml:space="preserve"><value>Editar usuario</value></data>
-  <data name="Delete user" xml:space="preserve"><value>Eliminar usuario</value></data>
-  <data name="Reset password" xml:space="preserve"><value>Restablecer contraseña</value></data>
   <data name="You are not authorized to view this page." xml:space="preserve"><value>No tienes permiso para ver esta página.</value></data>
   <data name="Role '{0}' removed." xml:space="preserve"><value>Rol '{0}' quitado.</value></data>
   <data name="Could not remove role." xml:space="preserve"><value>No se pudo quitar el rol.</value></data>
   <data name="Role '{0}' assigned." xml:space="preserve"><value>Rol '{0}' asignado.</value></data>
   <data name="Could not assign role." xml:space="preserve"><value>No se pudo asignar el rol.</value></data>
-  <data name="Edit user: {0}" xml:space="preserve"><value>Editar usuario: {0}</value></data>
-  <data name="Delete user: {0}" xml:space="preserve"><value>Eliminar usuario: {0}</value></data>
-  <data name="Reset password for: {0}" xml:space="preserve"><value>Restablecer contraseña de: {0}</value></data>
   <data name="Create new user" xml:space="preserve"><value>Crear nuevo usuario</value></data>
   <data name="Email is required." xml:space="preserve"><value>El correo es obligatorio.</value></data>
   <data name="Must be at least 8 characters, with uppercase, lowercase, and a number." xml:space="preserve"><value>Mínimo 8 caracteres, con mayúscula, minúscula y un número.</value></data>

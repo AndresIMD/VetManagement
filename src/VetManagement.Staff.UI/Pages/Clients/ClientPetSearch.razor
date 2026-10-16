@@ -230,23 +230,6 @@
         StateHasChanged();
     }
 
-    private static bool ClientFilter(ClientWithPetsResult client, string search)
-    {
-        if (string.IsNullOrWhiteSpace(search))
-            return true;
-
-        return
-        StringExtensions.ContainsIgnoringAccents(client.OwnerName, search) ||
-        StringExtensions.ContainsIgnoringAccents(client.OwnerLastName, search) ||
-        StringExtensions.ContainsIgnoringAccents(client.TaxId, search) ||
-        StringExtensions.ContainsIgnoringAccents(client.Email, search) ||
-        client.PhoneNumber.ToString().Contains(search, StringComparison.OrdinalIgnoreCase) ||
-        (client.Pets.Any(p =>
-        StringExtensions.ContainsIgnoringAccents(p.Name, search) ||
-        StringExtensions.ContainsIgnoringAccents(p.Breed ?? string.Empty, search) ||
-        p.ChipId.ToString().Contains(search, StringComparison.OrdinalIgnoreCase)
-        ));
-    }
     #endregion
 
     #region CRUD Modals
@@ -289,34 +272,6 @@
         if (result is { Canceled: false })
             await ReloadAndFilter(L["Client updated successfully."]);
     }
-    private async Task ShowEditPetModal(ClientPetResult petResult)
-    {
-        var client = (_allClients ?? new List<Client>()).FirstOrDefault(c => c.Id == petResult.ClientId);
-        var pet = client?.Pets.FirstOrDefault(p => p.Id == petResult.PetId);
-        if (pet is null) return;
-        var parameters = new DialogParameters<PetModal>
-        {
-            { x => x.AllClients, _allClients ?? new List<Client>() },
-            { x => x.PetModel, new Pet{
-            Id = pet.Id,
-            OwnerId = pet.OwnerId,
-            Name = pet.Name,
-            Sex = pet.Sex,
-            Species = pet.Species,
-            Breed = pet.Breed,
-            Birthdate = pet.Birthdate,
-            Age = pet.Age,
-            Weight = pet.Weight,
-            ReproductiveStatus = pet.ReproductiveStatus,
-            ChipId = pet.ChipId
-            }}
-        };
-        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
-        var dialog = await DialogService.ShowAsync<PetModal>(L["Edit pet"], parameters, options);
-        var dialogResult = await dialog.Result;
-        if (dialogResult is { Canceled: false })
-            await ReloadAndFilter(L["Pet updated successfully."]);
-    }
     private async Task ShowDeleteClientModal(ClientWithPetsResult client)
     {
         var parameters = new DialogParameters<ConfirmModal>
@@ -335,29 +290,6 @@
         {
             await ClientPetService.DeleteClientAsync(client.ClientId);
             await ReloadAndFilter(L["Client deleted successfully."]);
-        }
-    }
-    private async Task ShowDeletePetModal(ClientPetResult petResult)
-    {
-        var client = (_allClients ?? new List<Client>()).FirstOrDefault(c => c.Id == petResult.ClientId);
-        var pet = client?.Pets.FirstOrDefault(p => p.Id == petResult.PetId);
-        if (pet is null) return;
-        var parameters = new DialogParameters<ConfirmModal>
-        {
-            { x => x.Title, L["Delete pet"].Value },
-            { x => x.Message, L["Are you sure you want to delete pet {0} from client {1} {2}?", pet.Name, client?.Name ?? "", client?.LastName ?? ""].Value },
-            { x => x.ButtonConfirmText, L["Delete"].Value },
-            { x => x.ButtonCancelText, L["Cancel"].Value },
-            { x => x.TitleIcon, Icons.Material.Filled.Delete },
-            { x => x.TitleColor, Color.Error }
-        };
-        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
-        var dialog = await DialogService.ShowAsync<ConfirmModal>(L["Delete pet"], parameters, options);
-        var dialogResult = await dialog.Result;
-        if (dialogResult is { Canceled: false })
-        {
-            await ClientPetService.DeletePetAsync(pet.Id);
-            await ReloadAndFilter(L["Pet deleted successfully."]);
         }
     }
     #endregion
@@ -380,19 +312,5 @@
         public int PhoneNumber { get; init; }
         public string Email { get; init; } = string.Empty;
         public List<Pet> Pets { get; init; } = new List<Pet>();
-    }
-
-    public class ClientPetResult
-    {
-        public int ClientId { get; init; }
-        public string OwnerName { get; init; } = string.Empty;
-        public string OwnerLastName { get; init; } = string.Empty;
-        public string TaxId { get; init; } = string.Empty;
-        public int PhoneNumber { get; init; }
-        public string Email { get; init; } = string.Empty;
-        public int PetId { get; init; }
-        public string PetName { get; init; } = string.Empty;
-        public string Species { get; init; } = string.Empty;
-        public string Breed { get; set; } = string.Empty;
     }
 }

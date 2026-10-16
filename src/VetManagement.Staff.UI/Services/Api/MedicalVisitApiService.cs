@@ -32,15 +32,12 @@ public class MedicalVisitApiService(HttpClient http)
         return await http.GetFromJsonAsync<List<MedicalVisit>>(url);
     }
 
-    public async Task<MedicalVisit?> GetByIdAsync(int id)
-        => await http.GetFromJsonAsync<MedicalVisit>(string.Format(ApiRouteConstants.MEDICAL_VISIT_BY_ID, id));
-
     public async Task AddAsync(MedicalVisit visit)
-        => await http.PostAsJsonAsync(ApiRouteConstants.MEDICAL_VISITS, visit);
+        => (await http.PostAsJsonAsync(ApiRouteConstants.MEDICAL_VISITS, visit)).EnsureSuccessStatusCode();
 
     public async Task UpdateAsync(MedicalVisit visit)
-        => await http.PutAsJsonAsync(string.Format(ApiRouteConstants.MEDICAL_VISIT_BY_ID, visit.Id), visit);
+        => (await http.PutAsJsonAsync(string.Format(ApiRouteConstants.MEDICAL_VISIT_BY_ID, visit.Id), visit)).EnsureSuccessStatusCode();
 
     public async Task DeleteAsync(int id)
-        => await http.DeleteAsync(string.Format(ApiRouteConstants.MEDICAL_VISIT_BY_ID, id));
+        => (await http.DeleteAsync(string.Format(ApiRouteConstants.MEDICAL_VISIT_BY_ID, id))).EnsureSuccessStatusCode();
 }

@@ -1,5 +1,4 @@
 using VetManagement.Domain.Enums;
-using VetManagement.Staff.UI.Models.Core;
 
 namespace VetManagement.Staff.UI.Models.DTOs;
 
@@ -25,32 +24,3 @@ public class InventoryMassUpdateDTO
     public int Quantity { get; set; }
 }
 
-public class InventoryAdjustStockDTO
-{
-    public int ItemId { get; set; }
-    public int Amount { get; set; }
-    public string Reason { get; set; } = string.Empty;
-}
-
-public static class InventoryItemDTOExtensions
-{
-    /// <summary>
-    /// Converts an Item or Drug to InventoryItemDTO.
-    /// </summary>
-    public static InventoryItemDTO ToInventoryItemDTO(this Item item)
-    {
-        return new InventoryItemDTO
-        {
-            Id = item.Id,
-            Name = item.Name ?? string.Empty,
-            Brand = item.Brand ?? string.Empty,
-            Compound = item is Drug drug ? drug.Compound : null,
-            Type = item.Type,
-            Stock = item.Stock,
-            SellPrice = item.SellPrice,
-            Barcode = item.Barcode ?? string.Empty,
-            BrandBarcode = item.BrandBarcode ?? string.Empty,
-            LowStockThreshold = item.LowStockThreshold
-        };
-    }
-}
