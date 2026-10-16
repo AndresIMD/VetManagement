@@ -7,7 +7,7 @@
 @code {
     [Parameter] public DateRange? DateRange { get; set; }
     [Parameter] public EventCallback<DateRange?> DateRangeChanged { get; set; }
-    [Parameter] public string Label { get; set; } = "Date Range";
+    [Parameter] public string Label { get; set; } = Strings.T("Date Range");
     [Parameter] public string? Class { get; set; }
 
     private async Task OnDateRangeChangedAsync(DateRange? range)

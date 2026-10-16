@@ -22,19 +22,19 @@
                                     {
                                         if (item.Children != null && item.Children.Any(c => c.Visible(UserPerm)))
                                         {
-                                            <MudMenuItem Disabled="true">@item.Title</MudMenuItem>
+                                            <MudMenuItem Disabled="true">@L[item.Title]</MudMenuItem>
                                             @foreach (var child in item.Children)
                                             {
                                                 if (child.Visible(UserPerm))
                                                 {
-                                                    <MudMenuItem Href="@child.Href" Class="pl-4">@child.Title</MudMenuItem>
+                                                    <MudMenuItem Href="@child.Href" Class="pl-4">@L[child.Title]</MudMenuItem>
                                                 }
                                             }
                                             <MudDivider />
                                         }
                                         else if (!string.IsNullOrEmpty(item.Href))
                                         {
-                                            <MudMenuItem Href="@item.Href">@item.Title</MudMenuItem>
+                                            <MudMenuItem Href="@item.Href">@L[item.Title]</MudMenuItem>
                                         }
                                     }
                                 }
@@ -54,11 +54,11 @@
                             {
                                 if (item.Children != null && item.Children.Any(c => c.Visible(UserPerm)))
                                 {
-                                    <NavDropdown Title="@item.Title" Icon="@item.Icon" Items="@item.Children!.Where(c => c.Visible(UserPerm)).Select(c => (c.Title, c.Href))" />
+                                    <NavDropdown Title="@L[item.Title]" Icon="@item.Icon" Items="@item.Children!.Where(c => c.Visible(UserPerm)).Select(c => ((string)L[c.Title], c.Href))" />
                                 }
                                 else if (!string.IsNullOrEmpty(item.Href))
                                 {
-                                    <MudNavLink Href="@item.Href" Icon="@item.Icon" Class="mx-2 mud-nav-link nav-item">@item.Title</MudNavLink>
+                                    <MudNavLink Href="@item.Href" Icon="@item.Icon" Class="mx-2 mud-nav-link nav-item">@L[item.Title]</MudNavLink>
                                 }
                             }
                         }
@@ -67,7 +67,7 @@
 
                 <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexEnd" Spacing="2" Class="ml-2">
                     <RealtimeConnectionIndicator />
-                    <MudTooltip Text="Toggle light/dark theme">
+                    <MudTooltip Text="@L["Toggle light/dark theme"]">
                         <MudIconButton Icon="@(_isDark? Icons.Material.Filled.DarkMode : Icons.Material.Filled.WbSunny)" Color="Color.Inherit" OnClick="@(() => OnToggleDarkMode.InvokeAsync())" />
                     </MudTooltip>
                     <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.BottomRight" Color="Color.Inherit" Dense="true">
@@ -75,11 +75,11 @@
                             <MudMenuItem Disabled="true">
                                 <MudStack Spacing="1">
                                     <MudText Typo="Typo.body2">@user?.Identity?.Name</MudText>
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@PrimaryRole</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@L[PrimaryRole]</MudText>
                                 </MudStack>
                             </MudMenuItem>
                             <MudDivider />
-                            <MudMenuItem OnClick="@LogoutAsync">Logout</MudMenuItem>
+                            <MudMenuItem OnClick="@LogoutAsync">@L["Logout"]</MudMenuItem>
                         </ChildContent>
                         <ActivatorContent Context="userMenuContext">
                             <MudAvatar Color="Color.Tertiary" Style="cursor:pointer;">

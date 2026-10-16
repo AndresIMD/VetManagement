@@ -27,8 +27,9 @@ static bool IsPlaceholder(string? value)
 static string? Normalize(string? value)
  => string.IsNullOrWhiteSpace(value) || IsPlaceholder(value) ? null : value.Trim();
 
-// Load API base URL from wwwroot/config.json; prefer Local if health check succeeds
+// Load API base URL and culture from wwwroot/config.json; prefer Local if health check succeeds
 string? apiBaseUrl = null;
+string? culture = null;
 try
 {
     using var http = new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) };
@@ -37,6 +38,7 @@ try
     var cacheBuster = $"?v={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
     var configJson = await http.GetStringAsync($"config.json{cacheBuster}");
     var config = JsonSerializer.Deserialize<ConfigModel>(configJson) ?? new ConfigModel();
+    culture = Normalize(config.Culture);
 
     // Optional health probe to decide between Local and Cloud
     async Task<bool> IsHealthyAsync(string baseUrl)
@@ -82,6 +84,9 @@ catch
 {
     // Ignore read errors; UI will surface a bootstrap state via AppBootstrapError
 }
+
+// The clinic's language and formats
+builder.Services.AddStaffLocalization();
 
 // Always register AppBootstrapError so DI can resolve it in layouts/components
 builder.Services.AddSingleton(new VetManagement.Staff.UI.Models.Configuration.AppBootstrapError(
@@ -159,7 +164,9 @@ builder.Services.AddHttpClient<AccountApiService>(client =>
 builder.Services.AddScoped<AppBackgroundService>();
 builder.Services.AddScoped<ThemeService>();
 
-await builder.Build().RunAsync();
+var host = builder.Build();
+StaffLocalization.ApplyCulture(culture);
+await host.RunAsync();
 
 namespace VetManagement.Staff.Web
 {
@@ -168,5 +175,7 @@ namespace VetManagement.Staff.Web
         public string? ApiBaseUrl { get; set; }
         public string? LocalApiBaseUrl { get; set; }
         public string? CloudApiBaseUrl { get; set; }
+        /// <summary>The clinic's language and formats, e.g. "es-CL". Absent = English.</summary>
+        public string? Culture { get; set; }
     }
 }

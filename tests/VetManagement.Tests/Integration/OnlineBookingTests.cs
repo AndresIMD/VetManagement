@@ -51,7 +51,7 @@ public class OnlineBookingTests : IClassFixture<CustomWebAppFactory>
         var doc = (await _admin.GetFromJsonAsync<JsonObject>("/api/scheduling/settings"))!;
         var s = doc["settings"]!;
         s["enabled"] = true;
-        s["clinicName"] = "San Pablo Vet Clinic";
+        s["clinicName"] = "Example Vet Clinic";
         s["cancellation"] = new JsonObject { ["clientDeadlineHours"] = cancelDeadlineHours, ["refundMode"] = refundMode.ToString() };
         s["booking"]!["horizonDays"] = 180; // tests book up to ~10 weeks ahead
         foreach (var service in s["services"]!.AsArray())
@@ -99,7 +99,7 @@ public class OnlineBookingTests : IClassFixture<CustomWebAppFactory>
             first.Confirmed.Should().BeTrue();
             first.PaymentUrl.Should().BeNull();
             (await PublicBookingAsync(first.PublicToken)).Status.Should().Be(AppointmentStatus.Confirmed);
-            _factory.Emails.Sent.Should().Contain(e => e.To == "first@mail.cl" && e.Subject.StartsWith("Confirmación"));
+            _factory.Emails.Sent.Should().Contain(e => e.To == "first@mail.cl" && e.Subject.StartsWith("Your appointment is confirmed"));
 
             using var scope = _factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -149,7 +149,7 @@ public class OnlineBookingTests : IClassFixture<CustomWebAppFactory>
             var paid = await PublicBookingAsync(booking.PublicToken);
             paid.Status.Should().Be(AppointmentStatus.Confirmed);
             paid.DepositStatus.Should().Be(DepositStatus.Paid);
-            _factory.Emails.Sent.Should().Contain(e => e.To == "paid@mail.cl" && e.Subject.StartsWith("Confirmación"));
+            _factory.Emails.Sent.Should().Contain(e => e.To == "paid@mail.cl" && e.Subject.StartsWith("Your appointment is confirmed"));
         }
         finally { Serial.Release(); }
     }

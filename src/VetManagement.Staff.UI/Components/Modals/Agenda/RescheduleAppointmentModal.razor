@@ -2,39 +2,39 @@
 @inherits ModalBase<RescheduleAppointmentRequest>
 @inject SchedulingApiService SchedulingApi
 
-<ModalShell Title="Reschedule appointment"
+<ModalShell Title="@L["Reschedule appointment"]"
             TitleIcon="@Icons.Material.Filled.EditCalendar"
             IsLoading="@isLoading"
             IsValid="@CanSave"
-            PrimaryText="Move"
-            PrimaryLoadingText="Moving..."
+            PrimaryText="@L["Move"]"
+            PrimaryLoadingText="@L["Moving..."]"
             OnPrimaryClick="MoveAsync"
             OnCancelClick="OnCancel">
     <MudText Typo="Typo.body2" Class="mb-2">
         @Appointment.OwnerName@(string.IsNullOrWhiteSpace(Appointment.PetName) ? "" : $" · {Appointment.PetName}") ·
-        @Catalog.ServiceName(Appointment.ServiceCode) · now @Catalog.ResourceName(Appointment.ResourceCode),
+        @Catalog.ServiceName(Appointment.ServiceCode) · @L["now {0}", Catalog.ResourceName(Appointment.ResourceCode)],
         @Appointment.StartUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")
     </MudText>
 
     <MudGrid>
         <MudItem xs="12" sm="6">
-            <MudDatePicker Label="New date" Date="_date" DateChanged="OnDateChanged" />
+            <MudDatePicker Label="@L["New date"]" Date="_date" DateChanged="OnDateChanged" />
         </MudItem>
         <MudItem xs="12" sm="6">
-            <MudSwitch T="bool" @bind-Value="_overbook" Color="Color.Warning" Label="Overbook at a specific time" />
+            <MudSwitch T="bool" @bind-Value="_overbook" Color="Color.Warning" Label="@L["Overbook at a specific time"]" />
         </MudItem>
 
         @if (_overbook)
         {
             <MudItem xs="12" sm="6">
-                <MudSelect T="string" Label="Vet / room" @bind-Value="_resourceCode">
+                <MudSelect T="string" Label="@L["Vet / room"]" @bind-Value="_resourceCode">
                     @foreach (var resource in ServiceResources)
                     {
                         <MudSelectItem Value="@resource">@Catalog.ResourceName(resource)</MudSelectItem>
                     }
                 </MudSelect>
             </MudItem>
-            <MudItem xs="12" sm="6"><MudTimePicker Label="Time" @bind-Time="_time" AmPm="false" /></MudItem>
+            <MudItem xs="12" sm="6"><MudTimePicker Label="@L["Time"]" @bind-Time="_time" AmPm="false" /></MudItem>
         }
         else
         {
@@ -45,7 +45,7 @@
                 }
                 else if (_slots.Count == 0)
                 {
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">No free slots that day.</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">@L["No free slots that day."]</MudText>
                 }
                 else
                 {
@@ -113,7 +113,7 @@
                 Snackbar.Add(result.Error!, Severity.Error);
                 return;
             }
-            Snackbar.Add("Appointment moved.", Severity.Success);
+            Snackbar.Add(L["Appointment moved."], Severity.Success);
             MudDialog.Close(DialogResult.Ok(true));
         }
         finally

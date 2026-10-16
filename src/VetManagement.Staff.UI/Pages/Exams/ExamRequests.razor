@@ -11,21 +11,21 @@
 @using VetManagement.Staff.UI.Models.Exams
 @using VetManagement.Staff.UI.Helpers
 
-<PageTitle>Exam Requests</PageTitle>
+<PageTitle>@L["Exam Requests"]</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
-    <PageHeader Title="Exam Requests" Icon="@Icons.Material.Filled.ReceiptLong" />
+    <PageHeader Title="@L["Exam Requests"]" Icon="@Icons.Material.Filled.ReceiptLong" />
 
     <MudPaper Class="pa-6 mb-4 elevation-3 rounded-lg app-surface">
         <MudGrid>
             <MudItem xs="12" sm="6" md="3">
-                <MudTextFilterField @bind-Value="FilterText" Label="Search by responsible..." />
+                <MudTextFilterField @bind-Value="FilterText" Label="@L["Search by responsible..."]" />
             </MudItem>
             <MudItem xs="12" sm="6" md="3">
-                <MudNumericField T="int?" Label="Pet ID" @bind-Value="FilterPetId" Variant="Variant.Outlined" />
+                <MudNumericField T="int?" Label="@L["Pet ID"]" @bind-Value="FilterPetId" Variant="Variant.Outlined" />
             </MudItem>
             <MudItem xs="12" sm="6" md="3">
-                <MudDateRangePicker @bind-DateRange="FilterRange" Label="Date range" Variant="Variant.Outlined" />
+                <MudDateRangePicker @bind-DateRange="FilterRange" Label="@L["Date Range"]" Variant="Variant.Outlined" />
             </MudItem>
             <MudItem xs="12" md="3" Class="d-flex align-center">
                 <ActiveFilterChips Chips="@BuildActiveChips()" />
@@ -34,9 +34,9 @@
         <MudStack Row="true" Justify="Justify.FlexEnd" AlignItems="AlignItems.Center" Class="mt-3">
             <MudStack Row="true" Spacing="2">
                 <MudButton Color="Color.Secondary" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Clear"
-                    OnClick="ClearFilters">Clear filter</MudButton>
+                    OnClick="ClearFilters">@L["Clear filter"]</MudButton>
                 <MudButton Color="Color.Success" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.AddBox"
-                    OnClick="ShowAddModal">New request</MudButton>
+                    OnClick="ShowAddModal">@L["New request"]</MudButton>
             </MudStack>
         </MudStack>
     </MudPaper>
@@ -48,36 +48,36 @@
         <ToolBarContent></ToolBarContent>
         <HeaderContent>
             <MudTh style="width:12%">ID</MudTh>
-            <MudTh style="width:18%">Pet</MudTh>
-            <MudTh style="width:18%">Responsible</MudTh>
-            <MudTh style="width:20%">Date</MudTh>
-            <MudTh style="width:22%">Summary</MudTh>
-            <MudTh style="width:10%; text-align:right">Actions</MudTh>
+            <MudTh style="width:18%">@L["Pet"]</MudTh>
+            <MudTh style="width:18%">@L["Responsible"]</MudTh>
+            <MudTh style="width:20%">@L["Date"]</MudTh>
+            <MudTh style="width:22%">@L["Summary"]</MudTh>
+            <MudTh style="width:10%; text-align:right">@L["Actions"]</MudTh>
         </HeaderContent>
         <RowTemplate Context="req">
             <MudTd DataLabel="ID">@req.Id</MudTd>
-            <MudTd DataLabel="Pet">@req.PatientId</MudTd>
-            <MudTd DataLabel="Responsible">@req.Responsible</MudTd>
-            <MudTd DataLabel="Date">@req.Date.ToLocalTime().ToString("g")</MudTd>
-            <MudTd DataLabel="Summary">
+            <MudTd DataLabel="@L["Pet"]">@req.PatientId</MudTd>
+            <MudTd DataLabel="@L["Responsible"]">@req.Responsible</MudTd>
+            <MudTd DataLabel="@L["Date"]">@req.Date.ToLocalTime().ToString("g")</MudTd>
+            <MudTd DataLabel="@L["Summary"]">
                 @if (req.Items?.Any() == true)
                 {
                     <MudList T="string" Dense="true">
                         @foreach (var it in req.Items)
                         {
-                            <MudListItem T="string">@GetExamName(it.ExamId) - @it.Status@(it.IsExternal ? " (ext)" :
+                            <MudListItem T="string">@GetExamName(it.ExamId) - @it.Status.ToText()@(it.IsExternal ? L[" (ext)"].Value :
                                                         string.Empty)</MudListItem>
                         }
                     </MudList>
                 }
             </MudTd>
-            <MudTd DataLabel="Actions" Class="text-end">
+            <MudTd DataLabel="@L["Actions"]" Class="text-end">
                 <MudStack Row="true" Spacing="1" Justify="Justify.FlexEnd">
-                    <MudTooltip Text="Edit">
+                    <MudTooltip Text="@L["Edit"]">
                         <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Tertiary"
                             Variant="Variant.Filled" Size="Size.Small" OnClick="@(() => ShowEditModal(req))" />
                     </MudTooltip>
-                    <MudTooltip Text="Delete">
+                    <MudTooltip Text="@L["Delete"]">
                         <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Filled"
                             Size="Size.Small" OnClick="@(() => ShowDeleteModal(req))" />
                     </MudTooltip>
@@ -179,7 +179,7 @@
         if (!string.IsNullOrWhiteSpace(FilterText))
             chips.Add(new FilterChipModel
             {
-                Label = $"Responsible: {FilterText}",
+                Label = L["Responsible: {0}", FilterText].Value,
                 Color = Color.Primary,
                 OnClear = () => FilterText
             = string.Empty
@@ -187,7 +187,7 @@
         if (FilterPetId.HasValue)
             chips.Add(new FilterChipModel
             {
-                Label = $"Pet ID: {FilterPetId}",
+                Label = L["Pet ID: {0}", FilterPetId].Value,
                 Color = Color.Secondary,
                 OnClear = () => FilterPetId =
             null
@@ -195,7 +195,7 @@
         if (FilterRange is not null && FilterRange.Start.HasValue && FilterRange.End.HasValue)
             chips.Add(new FilterChipModel
             {
-                Label = $"Dates: {FilterRange.Start:dd/MM} - {FilterRange.End:dd/MM}",
+                Label = L["Dates: {0} - {1}", FilterRange.Start.Value.ToString("dd/MM"), FilterRange.End.Value.ToString("dd/MM")].Value,
                 Color =
             Color.Info,
                 OnClear = () => FilterRange = null
@@ -209,7 +209,7 @@
         var parameters = new DialogParameters<Components.Modals.Exams.ExamRequestEditModal>
         {
             { x => x.Initial, null },
-            { x => x.Title, "New request" },
+            { x => x.Title, L["New request"].Value },
             { x => x.TitleIcon, Icons.Material.Filled.ReceiptLong },
             { x => x.TitleColor, Color.Success }
         };
@@ -225,7 +225,7 @@
         var parameters = new DialogParameters<Components.Modals.Exams.ExamRequestEditModal>
         {
             { x => x.Initial, entity },
-            { x => x.Title, "Edit request" },
+            { x => x.Title, L["Edit request"].Value },
             { x => x.TitleIcon, Icons.Material.Filled.Edit },
             { x => x.TitleColor, Color.Primary }
         };
@@ -241,10 +241,10 @@
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = false };
         var parameters = new DialogParameters<Components.Modals.Common.ConfirmModal>
         {
-            { x => x.Title, "Delete request" },
-            { x => x.Message, $"Are you sure you want to delete request #{entity.Id}?" },
-            { x => x.ButtonConfirmText, "Delete" },
-            { x => x.ButtonCancelText, "Cancel" },
+            { x => x.Title, L["Delete request"].Value },
+            { x => x.Message, L["Are you sure you want to delete request #{0}?", entity.Id].Value },
+            { x => x.ButtonConfirmText, L["Delete"].Value },
+            { x => x.ButtonCancelText, L["Cancel"].Value },
             { x => x.TitleIcon, Icons.Material.Filled.Delete },
             { x => x.TitleColor, Color.Error }
         };
@@ -255,12 +255,12 @@
             try
             {
                 await RequestsService.DeleteAsync(_current.Id);
-                Snackbar.Add("Request deleted.", Severity.Success);
+                Snackbar.Add(L["Request deleted."], Severity.Success);
                 await LoadAsync();
             }
             catch (Exception ex)
             {
-                Snackbar.Add($"Error deleting request: {ex.Message}", Severity.Error);
+                Snackbar.Add(L["Error deleting request: {0}", ex.Message], Severity.Error);
             }
         }
     }

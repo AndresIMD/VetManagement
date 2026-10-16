@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using VetManagement.Api.Services;
 using VetManagement.Contracts.Accounts;
+using VetManagement.Domain.Localization;
 
 namespace VetManagement.Api.Controllers.Admin;
 
@@ -43,7 +44,7 @@ public class UserManagementController(
         var success = await userAdminService.AssignRoleAsync(req.UserId, req.Role);
         if (success)
             return Ok();
-        return BadRequest("Could not assign role.");
+        return BadRequest(Texts.T("Could not assign role."));
     }
 
     [HttpPost("remove-role")]
@@ -52,21 +53,21 @@ public class UserManagementController(
         var success = await userAdminService.RemoveRoleAsync(req.UserId, req.Role);
         if (success)
             return Ok();
-        return BadRequest("Could not remove role.");
+        return BadRequest(Texts.T("Could not remove role."));
     }
 
     [HttpPost("create-user")]
     public async Task<IActionResult> CreateUserAsync([FromBody] CreateUserRequest req)
     {
         if (await userManager.FindByNameAsync(req.UserName) != null)
-            return BadRequest("Username already exists.");
+            return BadRequest(Texts.T("Username already exists."));
         if (await userManager.FindByEmailAsync(req.Email) != null)
-            return BadRequest("Email is already in use.");
+            return BadRequest(Texts.T("Email is already in use."));
         if (req.Roles == null || req.Roles.Count == 0)
-            return BadRequest("You must assign at least one role.");
+            return BadRequest(Texts.T("You must assign at least one role."));
         foreach (var role in req.Roles)
             if (!await roleManager.RoleExistsAsync(role))
-                return BadRequest($"Role '{role}' does not exist.");
+                return BadRequest(Texts.T("Role '{0}' does not exist.", role));
 
         var user = new IdentityUser { UserName = req.UserName, Email = req.Email, EmailConfirmed = true };
         var result = await userManager.CreateAsync(user, req.Password);
@@ -80,6 +81,6 @@ public class UserManagementController(
                 return BadRequest(roleResult.Errors);
         }
 
-        return Ok("User created successfully.");
+        return Ok(Texts.T("User created successfully."));
     }
 }

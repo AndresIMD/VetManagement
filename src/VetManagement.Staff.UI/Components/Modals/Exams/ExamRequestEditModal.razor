@@ -13,15 +13,15 @@
             TitleColor="@TitleColor"
             IsLoading="@_isLoading"
             IsValid="@_isValid"
-            PrimaryText="Save"
-            PrimaryLoadingText="Saving..."
+            PrimaryText="@L["Save"]"
+            PrimaryLoadingText="@L["Saving..."]"
             OnPrimaryClick="SaveAsync"
             OnCancelClick="OnCancelRequested">
     @if (_dataLoading)
     {
         <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="pa-4">
             <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
-            <MudText Color="Color.Secondary" Class="mt-2">Loading data...</MudText>
+            <MudText Color="Color.Secondary" Class="mt-2">@L["Loading data..."]</MudText>
         </MudStack>
     }
     else
@@ -29,48 +29,48 @@
         <MudForm @ref="_form" @bind-IsValid="_isValid">
             <MudStack Spacing="2">
                 <MudGrid Class="mb-2">
-                    <MudItem xs="12" sm="6"><MudTextField Label="Responsible" @bind-Value="_current.Responsible" Required="true" RequiredError="Responsible is required." /></MudItem>
-                    <MudItem xs="12" sm="6"><MudNumericField T="int" Label="Pet ID" @bind-Value="_current.PatientId" Required="true" RequiredError="Pet ID is required." /></MudItem>
+                    <MudItem xs="12" sm="6"><MudTextField Label="@L["Responsible"]" @bind-Value="_current.Responsible" Required="true" RequiredError="@L["Responsible is required."]" /></MudItem>
+                    <MudItem xs="12" sm="6"><MudNumericField T="int" Label="@L["Pet ID"]" @bind-Value="_current.PatientId" Required="true" RequiredError="@L["Pet ID is required."]" /></MudItem>
                 </MudGrid>
 
                 <MudPaper Class="pa-3 mb-2">
                     <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
-                        <MudSelect T="int" Label="Add Exam" Value="_selectedExamId" ValueChanged="OnExamSelectedAsync" Clearable="true" Disabled="@_dataLoading">
-                            <MudSelectItem Value="0">Select...</MudSelectItem>
+                        <MudSelect T="int" Label="@L["Add exam"]" Value="_selectedExamId" ValueChanged="OnExamSelectedAsync" Clearable="true" Disabled="@_dataLoading">
+                            <MudSelectItem Value="0">@L["Select..."]</MudSelectItem>
                             @foreach (var ex in _catalog)
                             {
                                 <MudSelectItem Value="@ex.Id">@ex.Name (@ex.Brand - @ex.Machine)</MudSelectItem>
                             }
                         </MudSelect>
-                        <MudText Color="Color.Secondary">Exams added: @_current.Items.Count</MudText>
+                        <MudText Color="Color.Secondary">@L["Exams added: {0}", _current.Items.Count]</MudText>
                     </MudStack>
                 </MudPaper>
 
                 <MudTable Items="@_current.Items" Dense="true" Hover="true" Bordered="true" Striped="true">
                     <HeaderContent>
-                        <MudTh>Exam</MudTh>
-                        <MudTh>Status</MudTh>
-                        <MudTh>External</MudTh>
-                        <MudTh>Laboratory</MudTh>
-                        <MudTh>ETA</MudTh>
-                        <MudTh>Notes</MudTh>
-                        <MudTh style="width:80px; text-align:right;">Actions</MudTh>
+                        <MudTh>@L["Exam"]</MudTh>
+                        <MudTh>@L["Status"]</MudTh>
+                        <MudTh>@L["External"]</MudTh>
+                        <MudTh>@L["Laboratory"]</MudTh>
+                        <MudTh>@L["Days"]</MudTh>
+                        <MudTh>@L["Notes"]</MudTh>
+                        <MudTh style="width:80px; text-align:right;">@L["Actions"]</MudTh>
                     </HeaderContent>
                     <RowTemplate Context="it">
-                        <MudTd DataLabel="Exam">@GetExamName(it.ExamId)</MudTd>
-                        <MudTd DataLabel="Status">
+                        <MudTd DataLabel="@L["Exam"]">@GetExamName(it.ExamId)</MudTd>
+                        <MudTd DataLabel="@L["Status"]">
                             <MudSelect T="ExamItemStatus" @bind-Value="it.Status">
                                 @foreach (var st in Enum.GetValues<ExamItemStatus>())
                                 {
                                     if (st == ExamItemStatus.None) continue;
-                                    <MudSelectItem Value="@st">@st.ToString()</MudSelectItem>
+                                    <MudSelectItem Value="@st">@st.ToText()</MudSelectItem>
                                 }
                             </MudSelect>
                         </MudTd>
-                        <MudTd DataLabel="External">
+                        <MudTd DataLabel="@L["External"]">
                             <MudSwitch T="bool" @bind-Checked="it.IsExternal" Color="Color.Primary" />
                         </MudTd>
-                        <MudTd DataLabel="Laboratory">
+                        <MudTd DataLabel="@L["Laboratory"]">
                             <MudSelect T="int?" @bind-Value="it.ExternalLabId" Disabled="@(!it.IsExternal)">
                                 <MudSelectItem T="int?" Value="@((int?)null)">-</MudSelectItem>
                                 @foreach (var lab in _labs)
@@ -79,17 +79,17 @@
                                 }
                             </MudSelect>
                         </MudTd>
-                        <MudTd DataLabel="ETA">
+                        <MudTd DataLabel="@L["Days"]">
                             <MudNumericField T="int?" @bind-Value="it.ExternalEstimatedDays" Disabled="@(!it.IsExternal)" />
                         </MudTd>
-                        <MudTd DataLabel="Notes">
+                        <MudTd DataLabel="@L["Notes"]">
                             <MudTextField T="string"
                                           Value="@GetNotesBuffer(it.ExamId)"
                                           ValueChanged="@((string v) => SetNotesBuffer(it.ExamId, v))"
-                                          Placeholder="key=value;..." Immediate="false"
+                                          Placeholder="@L["key=value;..."]" Immediate="false"
                                           OnBlur="@(async _ => await ApplyNotesAsync(it))" />
                         </MudTd>
-                        <MudTd DataLabel="Actions" Class="text-end">
+                        <MudTd DataLabel="@L["Actions"]" Class="text-end">
                             <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => RemoveItem(it))" />
                         </MudTd>
                     </RowTemplate>
@@ -164,7 +164,7 @@
             foreach (var item in _current.Items)
             {
                 if (!item.IsExternal || item.ExternalLabId != null) continue;
-                Snackbar.Add("An external lab must be selected for external exams.", Severity.Warning);
+                Snackbar.Add(L["An external lab must be selected for external exams."], Severity.Warning);
                 _isLoading = false;
                 return;
             }
@@ -172,18 +172,18 @@
             if (_current.Id == 0)
             {
                 await RequestsService.AddAsync(_current);
-                Snackbar.Add("Request created.", Severity.Success);
+                Snackbar.Add(L["Request created."], Severity.Success);
             }
             else
             {
                 await RequestsService.UpdateAsync(_current);
-                Snackbar.Add("Request updated.", Severity.Success);
+                Snackbar.Add(L["Request updated."], Severity.Success);
             }
             MudDialog.Close(DialogResult.Ok(_current));
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error saving request: {ex.Message}", Severity.Error);
+            Snackbar.Add(L["Error saving request: {0}", ex.Message], Severity.Error);
         }
         finally
         {
@@ -207,10 +207,10 @@
             var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = false };
             var parameters = new DialogParameters<Components.Modals.Common.ConfirmModal>
             {
-                { x => x.Title, "Discard Changes" },
-                { x => x.Message, "There are unsaved changes. Do you want to exit without saving?" },
-                { x => x.ButtonConfirmText, "Exit" },
-                { x => x.ButtonCancelText, "Keep Editing" },
+                { x => x.Title, L["Discard changes"].Value },
+                { x => x.Message, L["There are unsaved changes. Do you want to exit without saving?"].Value },
+                { x => x.ButtonConfirmText, L["Exit"].Value },
+                { x => x.ButtonCancelText, L["Keep editing"].Value },
                 { x => x.TitleIcon, Icons.Material.Filled.Warning },
                 { x => x.TitleColor, Color.Warning }
             };

@@ -8,7 +8,7 @@
 
 <MudContainer MaxWidth="MaxWidth.Small" Class="d-flex flex-column align-center justify-center" Style="min-height:80vh;">
 	<MudPaper Elevation="6" Class="pa-6" Style="width:100%; max-width:500px;">
-		<MudText Typo="Typo.h5" Align="Align.Center" Class="mb-4">My Profile</MudText>
+		<MudText Typo="Typo.h5" Align="Align.Center" Class="mb-4">@L["My profile"]</MudText>
 
 		@if (_isLoading)
 		{
@@ -17,33 +17,33 @@
 		else
 		{
 			<MudForm @ref="_mudForm" Model="_profileModel">
-				<MudTextField T="string" @bind-Value="_profileModel.Username" Label="Username" Disabled="true" Class="mb-3" />
-				<MudTextField T="string" @bind-Value="_profileModel.Email" Label="Email" Required="true" RequiredError="Email is required" Class="mb-3" />
+				<MudTextField T="string" @bind-Value="_profileModel.Username" Label="@L["Username"]" Disabled="true" Class="mb-3" />
+				<MudTextField T="string" @bind-Value="_profileModel.Email" Label="@L["Email"]" Required="true" RequiredError="@L["Email is required."]" Class="mb-3" />
 				<MudStack Row="true" Spacing="2" Class="mb-4">
 					<MudLoadingButton OnClick="OnSaveProfile"
 									  Loading="@_saving"
 									  Color="Color.Primary"
 									  Variant="Variant.Filled"
-									  LoadingText="Saving...">
-						Save changes
+									  LoadingText="@L["Saving..."]">
+						@L["Save changes"]
 					</MudLoadingButton>
 				</MudStack>
 			</MudForm>
 
 			<MudDivider Class="my-4" />
 
-			<MudText Typo="Typo.h6" Class="mb-2">Change password</MudText>
+			<MudText Typo="Typo.h6" Class="mb-2">@L["Change password"]</MudText>
 			<MudForm @ref="_passwordForm" Model="_passwordModel">
-				<MudTextField T="string" @bind-Value="_passwordModel.CurrentPassword" Label="Current password" InputType="InputType.Password" Required="true" Class="mb-3" />
-				<MudTextField T="string" @bind-Value="_passwordModel.NewPassword" Label="New password" InputType="InputType.Password" Required="true" Class="mb-3" />
-				<MudTextField T="string" @bind-Value="_passwordModel.ConfirmPassword" Label="Confirm new password" InputType="InputType.Password" Required="true" Class="mb-3" />
+				<MudTextField T="string" @bind-Value="_passwordModel.CurrentPassword" Label="@L["Current password"]" InputType="InputType.Password" Required="true" Class="mb-3" />
+				<MudTextField T="string" @bind-Value="_passwordModel.NewPassword" Label="@L["New password"]" InputType="InputType.Password" Required="true" Class="mb-3" />
+				<MudTextField T="string" @bind-Value="_passwordModel.ConfirmPassword" Label="@L["Confirm new password"]" InputType="InputType.Password" Required="true" Class="mb-3" />
 				<MudStack Row="true" Spacing="2">
 					<MudLoadingButton OnClick="OnChangePassword"
 									  Loading="@_changingPassword"
 									  Color="Color.Secondary"
 									  Variant="Variant.Filled"
-									  LoadingText="Changing...">
-						Change password
+									  LoadingText="@L["Changing..."]">
+						@L["Change password"]
 					</MudLoadingButton>
 				</MudStack>
 			</MudForm>
@@ -79,12 +79,12 @@
 			}
 			else
 			{
-				Snackbar.Add("Failed to load user information.", Severity.Error);
+				Snackbar.Add(L["Failed to load user information."], Severity.Error);
 			}
 		}
 		catch (Exception ex)
 		{
-			Snackbar.Add($"Error loading profile: {ex.Message}", Severity.Error);
+			Snackbar.Add(L["Error loading profile: {0}", ex.Message], Severity.Error);
 		}
 		finally
 		{
@@ -105,16 +105,16 @@
 
 			if (success)
 			{
-				Snackbar.Add("Profile updated successfully!", Severity.Success);
+				Snackbar.Add(L["Profile updated successfully!"], Severity.Success);
 			}
 			else
 			{
-				Snackbar.Add("Failed to update profile. Please try again.", Severity.Error);
+				Snackbar.Add(L["Failed to update profile. Please try again."], Severity.Error);
 			}
 		}
 		catch (Exception ex)
 		{
-			Snackbar.Add($"Error updating profile: {ex.Message}", Severity.Error);
+			Snackbar.Add(L["Error updating profile: {0}", ex.Message], Severity.Error);
 		}
 		finally
 		{
@@ -129,13 +129,13 @@
 
 		if (_passwordModel.NewPassword != _passwordModel.ConfirmPassword)
 		{
-			Snackbar.Add("Passwords do not match.", Severity.Error);
+			Snackbar.Add(L["Passwords do not match."], Severity.Error);
 			return;
 		}
 
 		if (_passwordModel.NewPassword.Length < 6)
 		{
-			Snackbar.Add("Password must be at least 6 characters long.", Severity.Error);
+			Snackbar.Add(L["Password must be at least 6 characters long."], Severity.Error);
 			return;
 		}
 
@@ -152,18 +152,18 @@
 
 			if (success)
 			{
-				Snackbar.Add("Password changed successfully!", Severity.Success);
+				Snackbar.Add(L["Password changed successfully"], Severity.Success);
 				// Clear the password fields
 				_passwordModel = new ChangePasswordModel();
 			}
 			else
 			{
-				Snackbar.Add("Failed to change password. Please verify your current password.", Severity.Error);
+				Snackbar.Add(L["Failed to change password. Please verify your current password."], Severity.Error);
 			}
 		}
 		catch (Exception ex)
 		{
-			Snackbar.Add($"Error changing password: {ex.Message}", Severity.Error);
+			Snackbar.Add(L["Error changing password: {0}", ex.Message], Severity.Error);
 		}
 		finally
 		{

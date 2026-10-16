@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using VetManagement.Application.ClientPortal;
 using VetManagement.Contracts.ClientPortal;
+using VetManagement.Domain.Localization;
 
 namespace VetManagement.Api.Controllers.Public;
 
@@ -25,7 +26,7 @@ public class PublicClientPortalController(ClientPortalService service, BookingPo
         return status switch
         {
             LinkRequestStatus.Accepted => Accepted(),
-            LinkRequestStatus.InvalidRut => ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["rut"] = ["The RUT is not valid."] })),
+            LinkRequestStatus.InvalidRut => ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["rut"] = [Texts.T("The RUT is not valid.")] })),
             _ => NotFound()
         };
     }

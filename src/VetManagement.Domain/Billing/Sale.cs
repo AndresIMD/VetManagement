@@ -1,5 +1,6 @@
 using VetManagement.Domain.Enums;
 using VetManagement.Domain.Primitives;
+using VetManagement.Domain.Localization;
 
 namespace VetManagement.Domain.Billing;
 
@@ -50,12 +51,12 @@ public class Sale : Entity<int>
 
     public string? AddLine(SaleLine line)
     {
-        if (Status != SaleStatus.Open) return "Only open sales can be changed.";
-        if (string.IsNullOrWhiteSpace(line.Description)) return "The line needs a description.";
-        if (line.Quantity < 1) return "Quantity must be at least 1.";
-        if (line.UnitPrice < 0) return "The price can't be negative.";
-        if (line.Discount < 0 || line.Discount > line.Gross) return "The discount must be between 0 and the line amount.";
-        if (line.Kind == SaleLineKind.Product && line.ItemId is null) return "A product line needs an inventory item.";
+        if (Status != SaleStatus.Open) return Texts.T("Only open sales can be changed.");
+        if (string.IsNullOrWhiteSpace(line.Description)) return Texts.T("The line needs a description.");
+        if (line.Quantity < 1) return Texts.T("Quantity must be at least 1.");
+        if (line.UnitPrice < 0) return Texts.T("The price can't be negative.");
+        if (line.Discount < 0 || line.Discount > line.Gross) return Texts.T("The discount must be between 0 and the line amount.");
+        if (line.Kind == SaleLineKind.Product && line.ItemId is null) return Texts.T("A product line needs an inventory item.");
 
         Lines.Add(line);
         return null;
@@ -63,10 +64,10 @@ public class Sale : Entity<int>
 
     public string? RemoveLine(int lineId)
     {
-        if (Status != SaleStatus.Open) return "Only open sales can be changed.";
+        if (Status != SaleStatus.Open) return Texts.T("Only open sales can be changed.");
         var line = Lines.FirstOrDefault(l => l.Id == lineId);
-        if (line is null) return "Line not found.";
-        if (Total - line.Total < PaidAmount) return "The total can't go below what was already paid.";
+        if (line is null) return Texts.T("Line not found.");
+        if (Total - line.Total < PaidAmount) return Texts.T("The total can't go below what was already paid.");
 
         Lines.Remove(line);
         return null;
@@ -75,9 +76,9 @@ public class Sale : Entity<int>
     /// <summary>Takes a payment; the sale becomes <see cref="SaleStatus.Paid"/> when nothing is left to pay.</summary>
     public string? AddPayment(SalePayment payment)
     {
-        if (Status != SaleStatus.Open) return "Only open sales take payments.";
-        if (payment.Amount < 1) return "The amount must be greater than 0.";
-        if (payment.Amount > Balance) return $"The amount exceeds the balance ({Balance}).";
+        if (Status != SaleStatus.Open) return Texts.T("Only open sales take payments.");
+        if (payment.Amount < 1) return Texts.T("The amount must be greater than 0.");
+        if (payment.Amount > Balance) return Texts.T("The amount exceeds the balance ({0}).", Balance);
 
         Payments.Add(payment);
         if (Balance == 0)
@@ -90,8 +91,8 @@ public class Sale : Entity<int>
 
     public string? Void(string reason, string userName, DateTime nowUtc)
     {
-        if (Status == SaleStatus.Voided) return "The sale is already voided.";
-        if (string.IsNullOrWhiteSpace(reason)) return "A reason is required to void a sale.";
+        if (Status == SaleStatus.Voided) return Texts.T("The sale is already voided.");
+        if (string.IsNullOrWhiteSpace(reason)) return Texts.T("A reason is required to void a sale.");
 
         Status = SaleStatus.Voided;
         VoidReason = reason;

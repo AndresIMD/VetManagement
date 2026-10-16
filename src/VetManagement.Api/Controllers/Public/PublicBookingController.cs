@@ -6,6 +6,7 @@ using VetManagement.Application.Scheduling;
 using VetManagement.Contracts.Scheduling;
 using VetManagement.Domain.Enums;
 using VetManagement.Domain.Scheduling;
+using VetManagement.Domain.Localization;
 
 namespace VetManagement.Api.Controllers.Public;
 
@@ -71,7 +72,7 @@ public class PublicBookingController(
     public async Task<ActionResult<List<AvailableSlotDto>>> GetAvailabilityAsync([FromQuery(Name = "service")] string serviceCode, [FromQuery] DateOnly from, [FromQuery] DateOnly to)
     {
         if (to < from || to.DayNumber - from.DayNumber > 31)
-            return ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["to"] = ["Use a range of at most 31 days."] }));
+            return ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["to"] = [Texts.T("Use a range of at most 31 days.")] }));
         var slots = await appointments.GetAvailabilityAsync(serviceCode, from, to, BookingAudience.Public);
         return slots is null ? NotFound() : slots.Select(s => new AvailableSlotDto(s.ResourceCode, s.StartUtc, s.EndUtc, s.IsOverflow)).ToList();
     }
@@ -96,8 +97,8 @@ public class PublicBookingController(
             },
             OnlineBookingStatus.SlotUnavailable => Conflict(new ProblemDetails
             {
-                Title = "That time was just taken.",
-                Detail = "Please pick another time.",
+                Title = Texts.T("That time was just taken."),
+                Detail = Texts.T("Please pick another time."),
                 Status = StatusCodes.Status409Conflict
             }),
             _ => ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["booking"] = [result.Error!] }))
@@ -160,11 +161,11 @@ public class PublicBookingController(
             OnlineCancelStatus.NotFound => NotFound(),
             OnlineCancelStatus.TooLate => Conflict(new ProblemDetails
             {
-                Title = "It's too late to cancel online.",
-                Detail = "Please contact the clinic.",
+                Title = Texts.T("It's too late to cancel online."),
+                Detail = Texts.T("Please contact the clinic."),
                 Status = StatusCodes.Status409Conflict
             }),
-            _ => Conflict(new ProblemDetails { Title = "This booking can no longer be cancelled.", Status = StatusCodes.Status409Conflict })
+            _ => Conflict(new ProblemDetails { Title = Texts.T("This booking can no longer be cancelled."), Status = StatusCodes.Status409Conflict })
         };
     }
 

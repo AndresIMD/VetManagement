@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using VetManagement.Application.Configuration;
@@ -11,6 +10,7 @@ using VetManagement.Domain.Clients;
 using VetManagement.Domain.Clinical;
 using VetManagement.Domain.Enums;
 using VetManagement.Domain.Medical;
+using VetManagement.Domain.Localization;
 
 namespace VetManagement.Application.Clinical;
 
@@ -56,8 +56,6 @@ public class ClinicalService(
     TimeProvider clock,
     ILogger<ClinicalService> logger)
 {
-    private static readonly CultureInfo Chile = CultureInfo.GetCultureInfo("es-CL");
-
     /// <summary>Doses due this many days back are still reminded; older ones were missed and stay on the due list only.</summary>
     private const int ReminderLookbackDays = 30;
 
@@ -92,11 +90,11 @@ public class ClinicalService(
         var settings = (await clinicalSettings.GetAsync()).Settings;
         var today = await TodayAsync();
         if (request.AppliedOn > today)
-            return new ClinicalResult(ClinicalStatus.Invalid, Error: "The application date can't be in the future.");
+            return new ClinicalResult(ClinicalStatus.Invalid, Error: Texts.T("The application date can't be in the future."));
 
         var item = request.ItemId is int itemId ? await unitOfWork.Items.GetByIdAsNoTrackingAsync(itemId) : null;
         if (request.ItemId is not null && item is null)
-            return new ClinicalResult(ClinicalStatus.Invalid, Error: "The inventory item doesn't exist.");
+            return new ClinicalResult(ClinicalStatus.Invalid, Error: Texts.T("The inventory item doesn't exist."));
 
         var dose = new PreventiveDose
         {
@@ -114,7 +112,7 @@ public class ClinicalService(
         {
             var protocol = settings.FindProtocol(request.ProtocolCode);
             if (protocol is null)
-                return new ClinicalResult(ClinicalStatus.Invalid, Error: $"Unknown protocol '{request.ProtocolCode}'.");
+                return new ClinicalResult(ClinicalStatus.Invalid, Error: Texts.T("Unknown protocol '{0}'.", request.ProtocolCode));
             dose.ProtocolCode = protocol.Code;
             dose.Kind = protocol.Kind;
             dose.ProductName = string.IsNullOrWhiteSpace(request.ProductName) ? protocol.Name : request.ProductName.Trim();
@@ -124,14 +122,14 @@ public class ClinicalService(
         {
             var name = string.IsNullOrWhiteSpace(request.ProductName) ? item?.Name : request.ProductName.Trim();
             if (name is null)
-                return new ClinicalResult(ClinicalStatus.Invalid, Error: "Pick a protocol or enter the product name.");
+                return new ClinicalResult(ClinicalStatus.Invalid, Error: Texts.T("Pick a protocol or enter the product name."));
             dose.ProductName = name;
             dose.Kind = request.Kind ?? PreventiveKind.Other;
             dose.NextDueOn = request.NextDueOn;
         }
 
         if (dose.NextDueOn <= dose.AppliedOn)
-            return new ClinicalResult(ClinicalStatus.Invalid, Error: "The next dose must be after the application date.");
+            return new ClinicalResult(ClinicalStatus.Invalid, Error: Texts.T("The next dose must be after the application date."));
 
         var result = await unitOfWork.ExecuteExclusiveAsync(Stock.LockKey, async () =>
         {
@@ -140,7 +138,7 @@ public class ClinicalService(
                 var stock = (await unitOfWork.Items.GetByIdAsync(item.Id))?.Stock ?? 0;
                 if (stock < 1)
                     return new ClinicalResult(ClinicalStatus.Invalid, Error: $"'{item.Name}' is out of stock.");
-                await Stock.MoveAsync(unitOfWork, item.Id, 1, InventoryMovementType.Egress, $"Dose for pet #{petId}", userName, dose.CreatedAtUtc);
+                await Stock.MoveAsync(unitOfWork, item.Id, 1, InventoryMovementType.Egress, Texts.T("Dose for pet #{0}", petId), userName, dose.CreatedAtUtc);
                 dose.StockDeducted = true;
             }
             await unitOfWork.PreventiveDoses.AddAsync(dose);
@@ -166,7 +164,7 @@ public class ClinicalService(
 
             snapshot = JsonSerializer.Serialize(dose);
             if (dose.StockDeducted && dose.ItemId is int itemId)
-                await Stock.MoveAsync(unitOfWork, itemId, 1, InventoryMovementType.Ingress, $"Dose #{id} deleted", userName, clock.GetUtcNow().UtcDateTime);
+                await Stock.MoveAsync(unitOfWork, itemId, 1, InventoryMovementType.Ingress, Texts.T("Dose #{0} deleted", id), userName, clock.GetUtcNow().UtcDateTime);
             unitOfWork.PreventiveDoses.Remove(dose);
             await unitOfWork.SaveChangesAsync();
             return new ClinicalResult(ClinicalStatus.Done, id);
@@ -181,7 +179,7 @@ public class ClinicalService(
     public async Task<ClinicalResult> AddSupplyAsync(int visitId, int itemId, int quantity, string? notes, string userName)
     {
         if (quantity < 1)
-            return new ClinicalResult(ClinicalStatus.Invalid, Error: "Quantity must be at least 1.");
+            return new ClinicalResult(ClinicalStatus.Invalid, Error: Texts.T("Quantity must be at least 1."));
         var settings = (await clinicalSettings.GetAsync()).Settings;
         var now = clock.GetUtcNow().UtcDateTime;
 
@@ -191,9 +189,9 @@ public class ClinicalService(
                 return new ClinicalResult(ClinicalStatus.NotFound);
             var item = await unitOfWork.Items.GetByIdAsNoTrackingAsync(itemId);
             if (item is null)
-                return new ClinicalResult(ClinicalStatus.Invalid, Error: "The inventory item doesn't exist.");
+                return new ClinicalResult(ClinicalStatus.Invalid, Error: Texts.T("The inventory item doesn't exist."));
             if (settings.DeductStockOnUse && quantity > item.Stock)
-                return new ClinicalResult(ClinicalStatus.Invalid, Error: $"Only {item.Stock} of '{item.Name}' left in stock.");
+                return new ClinicalResult(ClinicalStatus.Invalid, Error: Texts.T("Only {0} of '{1}' left in stock.", item.Stock, item.Name));
 
             var supply = new VisitSupply
             {
@@ -202,7 +200,7 @@ public class ClinicalService(
             };
             if (settings.DeductStockOnUse)
             {
-                await Stock.MoveAsync(unitOfWork, item.Id, quantity, InventoryMovementType.Egress, $"Visit #{visitId}", userName, now);
+                await Stock.MoveAsync(unitOfWork, item.Id, quantity, InventoryMovementType.Egress, Texts.T("Visit #{0}", visitId), userName, now);
                 supply.StockDeducted = true;
             }
             await unitOfWork.VisitSupplies.AddAsync(supply);
@@ -225,7 +223,7 @@ public class ClinicalService(
                 return new ClinicalResult(ClinicalStatus.NotFound);
             if (supply.StockDeducted)
                 await Stock.MoveAsync(unitOfWork, supply.ItemId, supply.Quantity, InventoryMovementType.Ingress,
-                    $"Visit #{supply.VisitId} supply removed", userName, clock.GetUtcNow().UtcDateTime);
+                    Texts.T("Visit #{0} supply removed", supply.VisitId), userName, clock.GetUtcNow().UtcDateTime);
             unitOfWork.VisitSupplies.Remove(supply);
             await unitOfWork.SaveChangesAsync();
             return new ClinicalResult(ClinicalStatus.Done, supplyId);
@@ -276,16 +274,18 @@ public class ClinicalService(
             if (pet is null || owner is null || string.IsNullOrWhiteSpace(owner.Email))
                 continue;
 
-            var contact = string.IsNullOrWhiteSpace(agenda.ClinicPhone) ? "" : $" llamando al {agenda.ClinicPhone}";
-            var when = dose.NextDueOn!.Value < today ? "estaba programada para" : "corresponde el";
+            var contact = string.IsNullOrWhiteSpace(agenda.ClinicPhone) ? "" : Texts.T(" by calling {0}", agenda.ClinicPhone);
+            var date = dose.NextDueOn!.Value.ToString("D", Texts.Culture);
             var body =
-                $"Hola {owner.Name},{Environment.NewLine}{Environment.NewLine}" +
-                $"Te recordamos que la próxima dosis de {dose.ProductName} de {pet.Name} {when} " +
-                $"{dose.NextDueOn.Value.ToString("dddd d 'de' MMMM 'de' yyyy", Chile)}.{Environment.NewLine}{Environment.NewLine}" +
-                $"Agenda tu hora{contact}.{Environment.NewLine}{Environment.NewLine}{agenda.ClinicName}";
+                Texts.T("Hello {0},", owner.Name) + Environment.NewLine + Environment.NewLine +
+                (dose.NextDueOn.Value < today
+                    ? Texts.T("This is a reminder that {1}'s next dose of {0} was due on {2}.", dose.ProductName, pet.Name, date)
+                    : Texts.T("This is a reminder that {1}'s next dose of {0} is due on {2}.", dose.ProductName, pet.Name, date)) +
+                Environment.NewLine + Environment.NewLine +
+                Texts.T("Book your appointment{0}.", contact) + Environment.NewLine + Environment.NewLine + agenda.ClinicName;
             try
             {
-                await email.SendAsync(owner.Email, $"Recordatorio: {dose.ProductName} de {pet.Name} – {agenda.ClinicName}", body);
+                await email.SendAsync(owner.Email, Texts.T("Reminder: {0} for {1} – {2}", dose.ProductName, pet.Name, agenda.ClinicName), body);
             }
             catch (Exception ex)
             {

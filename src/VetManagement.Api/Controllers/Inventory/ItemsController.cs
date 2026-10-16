@@ -9,6 +9,7 @@ using DomainItemSortField = VetManagement.Domain.Enums.ItemSortField;
 using DomainItemType = VetManagement.Domain.Enums.ItemType;
 using DomainSortDirection = VetManagement.Domain.Enums.SortDirection;
 using DomainStockAlertFilter = VetManagement.Domain.Enums.StockAlertFilter;
+using VetManagement.Domain.Localization;
 
 namespace VetManagement.Api.Controllers.Inventory;
 
@@ -50,7 +51,7 @@ public class ItemsController(ItemService itemService, InventoryQueryService quer
 
         var result = await itemService.AddAsync(item, GetUserName());
         if (!result)
-            return BadRequest("Invalid item data.");
+            return BadRequest(Texts.T("Invalid item data."));
 
         return Ok(MapToDto(item));
     }
@@ -67,7 +68,7 @@ public class ItemsController(ItemService itemService, InventoryQueryService quer
 
         var result = await itemService.UpdateAsync(item, oldData, GetUserName());
         if (!result)
-            return BadRequest("Invalid update data.");
+            return BadRequest(Texts.T("Invalid update data."));
 
         return Ok();
     }

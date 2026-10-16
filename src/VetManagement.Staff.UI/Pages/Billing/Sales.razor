@@ -5,28 +5,28 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @attribute [Authorize(Policy = "Billing.Read")]
 
-<PageTitle>Sales</PageTitle>
+<PageTitle>@L["Sales"]</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mx-auto px-2 mt-8">
-    <PageHeader Title="Sales" Icon="@Icons.Material.Filled.PointOfSale" />
+    <PageHeader Title="@L["Sales"]" Icon="@Icons.Material.Filled.PointOfSale" />
 
     <MudPaper Class="pa-3 mb-3" Elevation="1">
         <MudStack Row="true" Spacing="3" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
-            <MudDatePicker Label="Date" Date="_date" DateChanged="OnDateChanged" Style="max-width: 180px;" />
-            <MudSelect T="SaleStatus?" Label="Status" Value="_status" ValueChanged="OnStatusChanged" Clearable="true" Style="max-width: 180px;">
+            <MudDatePicker Label="@L["Date"]" Date="_date" DateChanged="OnDateChanged" Style="max-width: 180px;" />
+            <MudSelect T="SaleStatus?" Label="@L["Status"]" Value="_status" ValueChanged="OnStatusChanged" Clearable="true" Style="max-width: 180px;">
                 @foreach (var status in Enum.GetValues<SaleStatus>())
                 {
-                    <MudSelectItem T="SaleStatus?" Value="status">@status</MudSelectItem>
+                    <MudSelectItem T="SaleStatus?" Value="status">@status.ToText()</MudSelectItem>
                 }
             </MudSelect>
             <MudSpacer />
-            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Calculate" Href="billing/cash">Cash close</MudButton>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Calculate" Href="billing/cash">@L["Cash Close"]</MudButton>
             @if (_canCharge)
             {
-                <MudTextField T="string" @bind-Value="_customerName" Label="Customer name" Style="max-width: 240px;" Immediate="true"
+                <MudTextField T="string" @bind-Value="_customerName" Label="@L["Customer name"]" Style="max-width: 240px;" Immediate="true"
                               OnKeyUp="@(e => e.Key == "Enter" ? CreateAsync() : Task.CompletedTask)" />
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
-                           Disabled="@(string.IsNullOrWhiteSpace(_customerName) || _creating)" OnClick="CreateAsync">New sale</MudButton>
+                           Disabled="@(string.IsNullOrWhiteSpace(_customerName) || _creating)" OnClick="CreateAsync">@L["New sale"]</MudButton>
             }
         </MudStack>
         @if (_error is not null)
@@ -42,19 +42,19 @@
         }
         else if (_sales.Count == 0)
         {
-            <MudText Typo="Typo.body2" Color="Color.Secondary">No sales on this day. Charge an appointment from the Agenda, or open a counter sale above.</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">@L["No sales on this day. Charge an appointment from the Agenda, or open a counter sale above."]</MudText>
         }
         else
         {
             <MudTable Items="_sales" Dense="true" Hover="true" Elevation="0" OnRowClick="@((TableRowClickEventArgs<SaleDto> e) => Navigation.NavigateTo($"billing/sales/{e.Item!.Id}"))" T="SaleDto" Style="cursor: pointer;">
                 <HeaderContent>
                     <MudTh>#</MudTh>
-                    <MudTh>Time</MudTh>
-                    <MudTh>Customer</MudTh>
-                    <MudTh Style="text-align:right">Total</MudTh>
-                    <MudTh Style="text-align:right">Paid</MudTh>
-                    <MudTh Style="text-align:right">Balance</MudTh>
-                    <MudTh>Status</MudTh>
+                    <MudTh>@L["Time"]</MudTh>
+                    <MudTh>@L["Customer"]</MudTh>
+                    <MudTh Style="text-align:right">@L["Total"]</MudTh>
+                    <MudTh Style="text-align:right">@L["Paid amount"]</MudTh>
+                    <MudTh Style="text-align:right">@L["Balance"]</MudTh>
+                    <MudTh>@L["Status"]</MudTh>
                 </HeaderContent>
                 <RowTemplate>
                     <MudTd>@context.Id</MudTd>
@@ -63,7 +63,7 @@
                         @context.CustomerName
                         @if (context.AppointmentId is not null)
                         {
-                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">Appointment</MudChip>
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@L["Appointment"]</MudChip>
                         }
                     </MudTd>
                     <MudTd Style="text-align:right">@Money.Clp(context.Total)</MudTd>
@@ -72,7 +72,7 @@
                     <MudTd><SaleStatusChip Status="context.Status" /></MudTd>
                 </RowTemplate>
                 <FooterContent>
-                    <MudTd colspan="3"><b>Total (not voided)</b></MudTd>
+                    <MudTd colspan="3"><b>@L["Total (not voided)"]</b></MudTd>
                     <MudTd Style="text-align:right"><b>@Money.Clp(_sales.Where(s => s.Status != SaleStatus.Voided).Sum(s => s.Total))</b></MudTd>
                     <MudTd Style="text-align:right"><b>@Money.Clp(_sales.Where(s => s.Status != SaleStatus.Voided).Sum(s => s.PaidAmount))</b></MudTd>
                     <MudTd Style="text-align:right"><b>@Money.Clp(_sales.Where(s => s.Status != SaleStatus.Voided).Sum(s => s.Balance))</b></MudTd>

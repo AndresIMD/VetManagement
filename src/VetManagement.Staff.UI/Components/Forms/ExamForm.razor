@@ -5,10 +5,10 @@
 <MudForm @ref="_mudForm" Model="ExamModel" @bind-IsValid="IsValid" FieldChanged="OnFormFieldChanged">
     <MudGrid>
         <MudItem xs="12" sm="6">
-            <MudTextField Label="Name" @bind-Value="ExamModel.Name" For="@(() => ExamModel.Name)" Required="true" />
+            <MudTextField Label="@L["Name"]" @bind-Value="ExamModel.Name" For="@(() => ExamModel.Name)" Required="true" />
         </MudItem>
         <MudItem xs="12" sm="6">
-            <MudSelect T="string" Label="Brand" Value="ExamModel.Brand" ValueChanged="OnBrandChangedMud" Required="true">
+            <MudSelect T="string" Label="@L["Brand"]" Value="ExamModel.Brand" ValueChanged="OnBrandChangedMud" Required="true">
                 @foreach (var brand in Brands)
                 {
                     <MudSelectItem Value="@brand">@brand</MudSelectItem>
@@ -16,7 +16,7 @@
             </MudSelect>
         </MudItem>
         <MudItem xs="12" sm="6">
-            <MudSelect T="string" Label="Machine" @bind-Value="ExamModel.Machine" Required="true">
+            <MudSelect T="string" Label="@L["Machine"]" @bind-Value="ExamModel.Machine" Required="true">
                 @foreach (var machine in Machines)
                 {
                     <MudSelectItem Value="@machine">@machine</MudSelectItem>
@@ -24,33 +24,33 @@
             </MudSelect>
         </MudItem>
         <MudItem xs="12" sm="6">
-            <MudSelect T="SampleType" Label="Sample type" @bind-Value="ExamModel.SampleType" Required="true">
+            <MudSelect T="SampleType" Label="@L["Sample type"]" @bind-Value="ExamModel.SampleType" Required="true">
                 @foreach (var value in Enum.GetValues<SampleType>())
                 {
                     if (value == SampleType.None) { continue; }
-                    <MudSelectItem Value="@value">@value.ToString()</MudSelectItem>
+                    <MudSelectItem Value="@value">@value.ToText()</MudSelectItem>
                 }
             </MudSelect>
         </MudItem>
         <MudItem xs="12" sm="6">
-            <MudSelect T="SampleContainer" Label="Container" @bind-Value="ExamModel.SampleContainer" Required="true">
+            <MudSelect T="SampleContainer" Label="@L["Container"]" @bind-Value="ExamModel.SampleContainer" Required="true">
                 @foreach (var value in Enum.GetValues<SampleContainer>())
                 {
                     if (value == SampleContainer.None) { continue; }
-                    <MudSelectItem Value="@value">@value.ToString()</MudSelectItem>
+                    <MudSelectItem Value="@value">@value.ToText()</MudSelectItem>
                 }
             </MudSelect>
         </MudItem>
         <MudItem xs="12" sm="6">
-            <MudNumericField T="int" Label="Cost (buy)" @bind-Value="ExamModel.BuyPrice" For="@(() => ExamModel.BuyPrice)" Step="1000" Required="true" />
+            <MudNumericField T="int" Label="@L["Cost (buy)"]" @bind-Value="ExamModel.BuyPrice" For="@(() => ExamModel.BuyPrice)" Step="1000" Required="true" />
         </MudItem>
         <MudItem xs="12" sm="6">
-            <MudNumericField T="int" Label="Price (sell)" @bind-Value="ExamModel.SellPrice" For="@(() => ExamModel.SellPrice)" Step="1000" Required="true" />
+            <MudNumericField T="int" Label="@L["Price (sell)"]" @bind-Value="ExamModel.SellPrice" For="@(() => ExamModel.SellPrice)" Step="1000" Required="true" />
         </MudItem>
         <MudItem xs="12">
             <MudStack Row="true" Spacing="2">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync">Save</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="OnCancel">Cancel</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync">@L["Save"]</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="OnCancel">@L["Cancel"]</MudButton>
             </MudStack>
         </MudItem>
     </MudGrid>

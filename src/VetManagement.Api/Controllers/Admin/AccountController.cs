@@ -11,6 +11,7 @@ using VetManagement.Api.Authorization;
 using VetManagement.Api.Services;
 using VetManagement.Application.Services;
 using VetManagement.Domain.Enums;
+using VetManagement.Domain.Localization;
 
 namespace VetManagement.Api.Controllers.Admin;
 
@@ -33,7 +34,7 @@ public class AccountController(
         if (user != null && await userManager.IsLockedOutAsync(user))
         {
             await audit.LogSecurityAsync(AuditActionType.UserLoginFailed, request.Username, "Account locked out");
-            return Unauthorized("Invalid credentials.");
+            return Unauthorized(Texts.T("Invalid credentials."));
         }
 
         if (user != null && await userManager.CheckPasswordAsync(user, request.Password))
@@ -52,7 +53,7 @@ public class AccountController(
             await userManager.AccessFailedAsync(user); // locks the account after MaxFailedAccessAttempts
 
         await audit.LogSecurityAsync(AuditActionType.UserLoginFailed, request.Username, "Invalid credentials");
-        return Unauthorized("Invalid credentials.");
+        return Unauthorized(Texts.T("Invalid credentials."));
     }
 
     [HttpGet("user-info")]

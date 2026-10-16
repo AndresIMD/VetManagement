@@ -31,13 +31,13 @@ public class Drug : Item
         DosageCat = dosageCat ?? new DosageRange(0, 0);
     }
 
-    [Required(ErrorMessage = GenericConstants.REQUIRED_FIELD_ERROR)]
+    [Required(ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.Required))]
     public string Compound { get; set; } = string.Empty;
 
-    [Range(0, float.MaxValue, ErrorMessage = "The amount (mL) must be 0 or greater.")]
+    [Range(0, float.MaxValue, ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.AmountNotNegative))]
     public float ML { get; set; }
 
-    [Range(0, 100.0, ErrorMessage = "Concentration must be between 0 and 100.")]
+    [Range(0, 100.0, ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.ConcentrationRange))]
     public float Concentration { get; set; }
 
     public DosageRange DosageDog { get; set; } = new(0, 0);

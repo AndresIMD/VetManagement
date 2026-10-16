@@ -23,6 +23,7 @@ Environment variable names use `__` for sections, e.g. `Payments__WebPayPlus__Ap
 | `Security:*` | HTTPS redirection / HSTS (on by default). |
 | `Proxy:ForwardLimit` | Number of proxies in front of the API (cloud front ends, CDN). Client IPs (rate limits) and the scheme (HTTPS redirect) are then read from `X-Forwarded-For` / `-Proto`. Azure App Service = `1`; App Service behind Cloudflare's proxy (orange cloud) = `2`. Unset on a server in the clinic's own network. Too low: the whole clinic shares one login limit; too high: a client can fake its IP. |
 | `Modules:Enabled` | Modules this clinic has: `Inventory`, `Clients`, `Exams`, `Clinical`, `Scheduling`, `Billing`, `Reports`. Absent = all. A module that is off grants no permissions (not even to Admin) and its public endpoints answer 404. Exams, Clinical, Scheduling and Billing need `Clients`; startup fails otherwise. |
+| `Localization:Culture` | The clinic's language for what the API writes to people: validation errors, client emails, defaults of new settings (payment methods, vaccine protocols, report footer). E.g. `es-CL`. Absent = English. Set it to the same culture as the staff web's `Culture`. Translations: `Domain/Resources/Texts.{language}.resx`. |
 | `TestData:Enabled` | Sample-data page on a non-production demo/staging server. Ignored in Production (always off there). |
 
 Health check: `GET /healthz` (includes the database).
@@ -38,6 +39,15 @@ and [EXAM_REPORTS.md](modules/EXAM_REPORTS.md).
 
 Permissions are stored in the login token: after an update that adds permissions, users log out and
 in again to see the new screens.
+
+## Staff web and desktop app (`src/VetManagement.Staff.Web`, `src/VetManagement.Staff.Maui`)
+
+`config.json` (template: `config.template.json`):
+
+| Key | Notes |
+|---|---|
+| `ApiBaseUrl` | Public URL of the API (or `LocalApiBaseUrl` + `CloudApiBaseUrl`: the local one is used when it answers). |
+| `Culture` | The clinic's language and date/number formats, e.g. `es-CL`. Absent or unknown = English. Texts are translated in `Staff.UI/Resources/Strings.{language}.resx` (English key → translation); a country file such as `Strings.es-CL.resx` holds only the terms that differ (RUT for the tax ID). A text without translation shows in English. Printed exam reports use the same texts. |
 
 ## Booking portal (`src/VetManagement.Booking.Web`)
 
@@ -68,11 +78,11 @@ private repository, not here.
 
 1. Create the database, App Service and Static Web App.
 2. App Service → Environment variables: the keys of the API table above (`ConnectionStrings__DefaultConnection`,
-   `Jwt__Key`, `AllowedOrigins__0`, `Modules__Enabled__0`, ...), `ASPNETCORE_ENVIRONMENT=Production` and
+   `Jwt__Key`, `AllowedOrigins__0`, `Modules__Enabled__0`, `Localization__Culture`, ...), `ASPNETCORE_ENVIRONMENT=Production` and
    `Proxy__ForwardLimit`. The first start creates the schema (migrations run on start-up) and the `SeedAdmin` user.
 3. GitHub → Settings → Environments → one per clinic, with the variables and secrets listed at the top of
    `.github/workflows/deploy-azure.yml`; then Actions → **Deploy to Azure** → Run workflow with that environment. It runs
-   the tests, publishes the API and the staff web, and writes the staff web's `config.json` (`ApiBaseUrl`).
+   the tests, publishes the API and the staff web, and writes the staff web's `config.json` (`ApiBaseUrl`, and `Culture` from the optional `STAFF_CULTURE` variable).
 4. Custom domains, DNS at Cloudflare: a `CNAME` per subdomain to the Azure default host name, plus the `TXT asuid.<sub>`
    record App Service asks for. Keep the records **DNS only (grey cloud)** until Azure has validated the domain and issued
    its certificate; with the proxy on afterwards, use SSL mode **Full (strict)** and set `Proxy:ForwardLimit` to 2.

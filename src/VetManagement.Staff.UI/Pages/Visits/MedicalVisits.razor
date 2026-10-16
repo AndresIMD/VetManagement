@@ -10,29 +10,29 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
-<PageTitle>Medical Visits</PageTitle>
+<PageTitle>@L["Medical Visits"]</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
-    <PageHeader Title="Home Medical Visits" Icon="@Icons.Material.Filled.Home" />
+    <PageHeader Title="@L["Home medical visits"]" Icon="@Icons.Material.Filled.Home" />
 
     <MudPaper Class="pa-6 mb-4 elevation-3 rounded-lg app-surface">
         <MudGrid>
             <MudItem xs="12" sm="6" md="3">
-                <MudTextFilterField @bind-Value="FilterText" Label="Search patient, record, location..." />
+                <MudTextFilterField @bind-Value="FilterText" Label="@L["Search patient, record, location..."]" />
             </MudItem>
             <MudItem xs="12" sm="6" md="3">
-                <MudNumericField T="int?" Label="Pet ID" @bind-Value="FilterPetId" Variant="Variant.Outlined" />
+                <MudNumericField T="int?" Label="@L["Pet ID"]" @bind-Value="FilterPetId" Variant="Variant.Outlined" />
             </MudItem>
             <MudItem xs="12" sm="6" md="3">
-                <MudDateRangePicker @bind-DateRange="FilterRange" Label="Date range" Variant="Variant.Outlined" />
+                <MudDateRangePicker @bind-DateRange="FilterRange" Label="@L["Date Range"]" Variant="Variant.Outlined" />
             </MudItem>
         </MudGrid>
         <MudStack Row="true" Justify="Justify.FlexEnd" AlignItems="AlignItems.Center" Class="mt-3">
             <MudStack Row="true" Spacing="2">
                 <MudButton Color="Color.Secondary" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Clear"
-                    OnClick="ClearFilters">Clear filters</MudButton>
+                    OnClick="ClearFilters">@L["Clear filters"]</MudButton>
                 <MudButton Color="Color.Success" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.AddBox"
-                    OnClick="ShowCreateModal">New visit</MudButton>
+                    OnClick="ShowCreateModal">@L["New visit"]</MudButton>
             </MudStack>
         </MudStack>
     </MudPaper>
@@ -44,29 +44,29 @@
         <ToolBarContent></ToolBarContent>
         <HeaderContent>
             <MudTh style="width:10%">ID</MudTh>
-            <MudTh style="width:12%">Date</MudTh>
-            <MudTh style="width:16%">Patient</MudTh>
-            <MudTh style="width:10%">Record</MudTh>
-            <MudTh style="width:24%">Reason</MudTh>
-            <MudTh style="width:12%">Total</MudTh>
-            <MudTh style="width:16%">Location</MudTh>
-            <MudTh style="width:10%; text-align:right">Actions</MudTh>
+            <MudTh style="width:12%">@L["Date"]</MudTh>
+            <MudTh style="width:16%">@L["Patient"]</MudTh>
+            <MudTh style="width:10%">@L["Record"]</MudTh>
+            <MudTh style="width:24%">@L["Reason"]</MudTh>
+            <MudTh style="width:12%">@L["Total"]</MudTh>
+            <MudTh style="width:16%">@L["Location"]</MudTh>
+            <MudTh style="width:10%; text-align:right">@L["Actions"]</MudTh>
         </HeaderContent>
         <RowTemplate Context="v">
             <MudTd DataLabel="ID">@v.Id</MudTd>
-            <MudTd DataLabel="Date">@v.Date.ToLocalTime().ToString("g")</MudTd>
-            <MudTd DataLabel="Patient">@v.PatientName (@v.PatientId)</MudTd>
-            <MudTd DataLabel="Record">@v.RecordNumber</MudTd>
-            <MudTd DataLabel="Reason"><MudLink Href="@($"clinical/pets/{v.PatientId}")">@(v.Reason ?? "—")</MudLink></MudTd>
-            <MudTd DataLabel="Total">@Money.Clp(v.TotalValue)</MudTd>
-            <MudTd DataLabel="Location">@v.Location</MudTd>
-            <MudTd DataLabel="Actions" Class="text-end">
+            <MudTd DataLabel="@L["Date"]">@v.Date.ToLocalTime().ToString("g")</MudTd>
+            <MudTd DataLabel="@L["Patient"]">@v.PatientName (@v.PatientId)</MudTd>
+            <MudTd DataLabel="@L["Record"]">@v.RecordNumber</MudTd>
+            <MudTd DataLabel="@L["Reason"]"><MudLink Href="@($"clinical/pets/{v.PatientId}")">@(v.Reason ?? "—")</MudLink></MudTd>
+            <MudTd DataLabel="@L["Total"]">@Money.Clp(v.TotalValue)</MudTd>
+            <MudTd DataLabel="@L["Location"]">@v.Location</MudTd>
+            <MudTd DataLabel="@L["Actions"]" Class="text-end">
                 <MudStack Row="true" Spacing="1" Justify="Justify.FlexEnd">
-                    <MudTooltip Text="Edit">
+                    <MudTooltip Text="@L["Edit"]">
                         <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Tertiary"
                             Variant="Variant.Filled" Size="Size.Small" OnClick="@(() => ShowEditModal(v))" />
                     </MudTooltip>
-                    <MudTooltip Text="Delete">
+                    <MudTooltip Text="@L["Delete"]">
                         <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Filled"
                             Size="Size.Small" OnClick="@(() => ShowDeleteModal(v))" />
                     </MudTooltip>
@@ -162,7 +162,7 @@
 {
 { x => x.Visit, new MedicalVisit { Date = DateTime.UtcNow, Procedures = new List<VisitProcedure>() } }
 };
-        var dialog = await DialogService.ShowAsync<VetManagement.Staff.UI.Components.Modals.Visits.MedicalVisitEditModal>("New visit", parameters, options);
+        var dialog = await DialogService.ShowAsync<VetManagement.Staff.UI.Components.Modals.Visits.MedicalVisitEditModal>(L["New visit"], parameters, options);
         var result = await dialog.Result;
         if (result is { Canceled: false })
             await LoadAsync();
@@ -175,7 +175,7 @@
 {
 { x => x.Visit, entity }
 };
-        var dialog = await DialogService.ShowAsync<VetManagement.Staff.UI.Components.Modals.Visits.MedicalVisitEditModal>("Edit visit", parameters, options);
+        var dialog = await DialogService.ShowAsync<VetManagement.Staff.UI.Components.Modals.Visits.MedicalVisitEditModal>(L["Edit visit"], parameters, options);
         var result = await dialog.Result;
         if (result is { Canceled: false })
             await LoadAsync();
@@ -187,20 +187,20 @@
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = false };
         var parameters = new DialogParameters<Components.Modals.Common.ConfirmModal>
         {
-            { x => x.Title, "Delete visit" },
-            { x => x.Message, $"Are you sure you want to delete visit #{_current.Id}?" },
-            { x => x.ButtonConfirmText, "Delete" },
-            { x => x.ButtonCancelText, "Cancel" },
+            { x => x.Title, L["Delete visit"].Value },
+            { x => x.Message, L["Are you sure you want to delete visit #{0}?", _current.Id].Value },
+            { x => x.ButtonConfirmText, L["Delete"].Value },
+            { x => x.ButtonCancelText, L["Cancel"].Value },
             { x => x.TitleIcon, Icons.Material.Filled.Delete },
             { x => x.TitleColor, Color.Error }
         };
-        var dialog = await DialogService.ShowAsync<Components.Modals.Common.ConfirmModal>("Delete visit", parameters, options);
+        var dialog = await DialogService.ShowAsync<Components.Modals.Common.ConfirmModal>(L["Delete visit"], parameters, options);
         var result = await dialog.Result;
         if (result is { Canceled: false })
         {
             if (_current.Id != 0)
                 await VisitsService.DeleteAsync(_current.Id);
-            Snackbar.Add("Visit deleted.", Severity.Success);
+            Snackbar.Add(L["Visit deleted."], Severity.Success);
             await LoadAsync();
         }
     }

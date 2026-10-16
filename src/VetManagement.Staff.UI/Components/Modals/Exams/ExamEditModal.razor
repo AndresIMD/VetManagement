@@ -9,8 +9,8 @@
             TitleColor="@TitleColor"
             IsLoading="@isLoading"
             IsValid="true"
-            PrimaryText="Save"
-            PrimaryLoadingText="Saving..."
+            PrimaryText="@L["Save"]"
+            PrimaryLoadingText="@L["Saving..."]"
             OnPrimaryClick="HandleValidSubmit"
             OnCancelClick="OnCancelRequested">
     <ExamForm ExamModel="ExamModel"
@@ -68,18 +68,18 @@
             if (ExamModel.Id == 0)
             {
                 await ExamService.AddExamAsync(ExamModel);
-                Snackbar.Add("Exam created.", Severity.Success);
+                Snackbar.Add(L["Exam created."], Severity.Success);
             }
             else
             {
                 await ExamService.UpdateExamAsync(ExamModel);
-                Snackbar.Add("Exam updated.", Severity.Success);
+                Snackbar.Add(L["Exam updated."], Severity.Success);
             }
             MudDialog.Close(DialogResult.Ok(ExamModel));
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error saving exam: {ex.Message}", Severity.Error);
+            Snackbar.Add(L["Error saving exam: {0}", ex.Message], Severity.Error);
         }
     }
 
@@ -109,10 +109,10 @@
             var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = false };
             var parameters = new DialogParameters<Components.Modals.Common.ConfirmModal>
             {
-                { x => x.Title, "Discard changes" },
-                { x => x.Message, "There are unsaved changes. Do you want to exit without saving?" },
-                { x => x.ButtonConfirmText, "Exit" },
-                { x => x.ButtonCancelText, "Keep editing" },
+                { x => x.Title, L["Discard changes"].Value },
+                { x => x.Message, L["There are unsaved changes. Do you want to exit without saving?"].Value },
+                { x => x.ButtonConfirmText, L["Exit"].Value },
+                { x => x.ButtonCancelText, L["Keep editing"].Value },
                 { x => x.TitleIcon, Icons.Material.Filled.Warning },
                 { x => x.TitleColor, Color.Warning }
             };

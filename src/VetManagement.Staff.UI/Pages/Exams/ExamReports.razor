@@ -5,30 +5,30 @@
 @inject ISnackbar Snackbar
 @attribute [Authorize(Policy = "ExamsPerformed.Read")]
 
-<PageTitle>Exam Reports</PageTitle>
+<PageTitle>@L["Lab Reports"]</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
-    <PageHeader Title="Exam Reports" Icon="@Icons.Material.Filled.Science" />
+    <PageHeader Title="@L["Lab Reports"]" Icon="@Icons.Material.Filled.Science" />
 
     <MudPaper Class="pa-4 mb-3" Elevation="1">
         <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
-            <MudNumericField T="int?" Label="Pet ID" Value="PetId" ValueChanged="OnPetChangedAsync" Min="1" HideSpinButtons="true" Clearable="true" Style="max-width:160px" />
-            <MudTextField T="string" Label="Search" @bind-Value="_search" Immediate="true" Placeholder="Pet, owner or exam" Style="max-width:280px" />
+            <MudNumericField T="int?" Label="@L["Pet ID"]" Value="PetId" ValueChanged="OnPetChangedAsync" Min="1" HideSpinButtons="true" Clearable="true" Style="max-width:160px" />
+            <MudTextField T="string" Label="@L["Search"]" @bind-Value="_search" Immediate="true" Placeholder="@L["Pet, owner or exam"]" Style="max-width:280px" />
             <MudSpacer />
             <AuthorizeView Policy="ExamsPerformed.Create">
                 <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.AddBox"
-                           Href="@(PetId is int id ? $"exam-reports/new?petId={id}" : "exam-reports/new")">New report</MudButton>
+                           Href="@(PetId is int id ? $"exam-reports/new?petId={id}" : "exam-reports/new")">@L["New report"]</MudButton>
             </AuthorizeView>
         </MudStack>
     </MudPaper>
 
     <MudTable Items="Filtered" Loading="_loading" Dense="true" Hover="true" Striped="true" RowsPerPage="25">
         <HeaderContent>
-            <MudTh>Received</MudTh>
-            <MudTh>Exam</MudTh>
-            <MudTh>Pet</MudTh>
-            <MudTh>Owner</MudTh>
-            <MudTh>Result</MudTh>
+            <MudTh>@L["Received"]</MudTh>
+            <MudTh>@L["Exam"]</MudTh>
+            <MudTh>@L["Pet"]</MudTh>
+            <MudTh>@L["Owner"]</MudTh>
+            <MudTh>@L["Result"]</MudTh>
             <MudTh />
         </HeaderContent>
         <RowTemplate>
@@ -44,35 +44,35 @@
                 }
                 else
                 {
-                    @context.PetName <MudText Typo="Typo.caption" Color="Color.Secondary" Inline="true">(not registered)</MudText>
+                    @context.PetName <MudText Typo="Typo.caption" Color="Color.Secondary" Inline="true">@L["(not registered)"]</MudText>
                 }
             </MudTd>
             <MudTd>@context.OwnerName</MudTd>
             <MudTd>
                 @if (context.Results.Any(r => r.Abnormal))
                 {
-                    <MudChip T="string" Size="Size.Small" Color="Color.Warning">Flagged</MudChip>
+                    <MudChip T="string" Size="Size.Small" Color="Color.Warning">@L["Flagged"]</MudChip>
                 }
                 @context.Interpretation
             </MudTd>
             <MudTd Class="text-end" Style="white-space:nowrap">
-                <MudTooltip Text="View / print">
+                <MudTooltip Text="@L["View / print"]">
                     <MudIconButton Icon="@Icons.Material.Filled.Print" Size="Size.Small" Color="Color.Primary" Href="@($"exam-reports/{context.Id}")" />
                 </MudTooltip>
                 <AuthorizeView Policy="ExamsPerformed.Create" Context="auth">
-                    <MudTooltip Text="New report for this patient">
+                    <MudTooltip Text="@L["New report for this patient"]">
                         <MudIconButton Icon="@Icons.Material.Filled.PostAdd" Size="Size.Small" Href="@($"exam-reports/new?fromReport={context.Id}")" />
                     </MudTooltip>
                 </AuthorizeView>
                 <AuthorizeView Policy="ExamsPerformed.Delete" Context="auth">
-                    <MudTooltip Text="Delete">
+                    <MudTooltip Text="@L["Delete"]">
                         <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => DeleteAsync(context)" />
                     </MudTooltip>
                 </AuthorizeView>
             </MudTd>
         </RowTemplate>
         <NoRecordsContent>
-            <MudText Color="Color.Secondary">No reports yet.</MudText>
+            <MudText Color="Color.Secondary">@L["No reports yet."]</MudText>
         </NoRecordsContent>
         <PagerContent>
             <MudTablePager />
@@ -110,19 +110,19 @@
     {
         var parameters = new DialogParameters<ConfirmModal>
         {
-            { x => x.Title, "Delete report" },
-            { x => x.Message, $"Delete the {report.Title} report of {report.PetName} ({report.ReceivedOn:dd MMM yyyy})? Use it only for reports made by mistake." },
-            { x => x.ButtonConfirmText, "Delete" },
-            { x => x.ButtonCancelText, "Cancel" },
+            { x => x.Title, L["Delete report"].Value },
+            { x => x.Message, L["Delete the {0} report of {1} ({2})? Use it only for reports made by mistake.", report.Title, report.PetName, report.ReceivedOn.ToString("dd MMM yyyy")].Value },
+            { x => x.ButtonConfirmText, L["Delete"].Value },
+            { x => x.ButtonCancelText, L["Cancel"].Value },
             { x => x.TitleIcon, Icons.Material.Filled.Delete },
             { x => x.TitleColor, Color.Error }
         };
-        var dialog = await DialogService.ShowAsync<ConfirmModal>("Delete report", parameters, new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall });
+        var dialog = await DialogService.ShowAsync<ConfirmModal>(L["Delete report"], parameters, new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall });
         if (await dialog.Result is not { Canceled: false })
             return;
 
         var result = await ReportsApi.DeleteAsync(report.Id);
-        Snackbar.Add(result.Ok ? "Report deleted." : result.Error ?? "The report could not be deleted.", result.Ok ? Severity.Success : Severity.Error);
+        Snackbar.Add(result.Ok ? L["Report deleted."] : result.Error ?? L["The report could not be deleted."], result.Ok ? Severity.Success : Severity.Error);
         await LoadAsync();
     }
 }

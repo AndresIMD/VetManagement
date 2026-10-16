@@ -12,22 +12,22 @@
 @implements IDisposable
 
 
-<PageTitle>Current Inventory</PageTitle>
+<PageTitle>@L["Current Inventory"]</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
-    <PageHeader Title="Current Inventory" Icon="@Icons.Material.Filled.Inventory2" />
+    <PageHeader Title="@L["Current Inventory"]" Icon="@Icons.Material.Filled.Inventory2" />
     <MudBreadcrumbs Class="mb-2">
-        <BreadcrumbLink Href="/">Home</BreadcrumbLink>
+        <BreadcrumbLink Href="/">@L["Home"]</BreadcrumbLink>
         <BreadcrumbSeparator />
-        <BreadcrumbLink Href="inventory">Inventory</BreadcrumbLink>
+        <BreadcrumbLink Href="inventory">@L["Inventory"]</BreadcrumbLink>
         <BreadcrumbSeparator />
         <BreadcrumbLink Disabled="true">
             @(_alert switch
             {
-                "low" => "Low stock",
-                "zero" => "Out of stock",
-                _ when !string.IsNullOrWhiteSpace(FilterNameOrCompound) => $"Filter: {FilterNameOrCompound}",
-                _ => "Items"
+                "low" => L["Low stock"].Value,
+                "zero" => L["Out of stock"].Value,
+                _ when !string.IsNullOrWhiteSpace(FilterNameOrCompound) => L["Filter: {0}", FilterNameOrCompound].Value,
+                _ => L["Items"].Value
             })
         </BreadcrumbLink>
     </MudBreadcrumbs>
@@ -35,19 +35,19 @@
         <MudGrid>
             <MudItem xs="12" sm="6" md="6">
                 <MudTextFilterField @bind-Value="FilterNameOrCompound"
-                    Label="Search by name, brand, compound or code..." />
+                    Label="@L["Search by name, brand, compound or code..."]" />
             </MudItem>
             <MudItem xs="12" sm="6" md="3">
-                <MudSelect T="ItemType" @bind-Value="FilterItemType" Label="Category" Variant="Variant.Outlined"
+                <MudSelect T="ItemType" @bind-Value="FilterItemType" Label="@L["Category"]" Variant="Variant.Outlined"
                     AnchorOrigin="Origin.BottomCenter">
-                    <MudSelectItem Value="ItemType.None">All categories</MudSelectItem>
-                    <MudSelectItem Value="ItemType.Material">Material</MudSelectItem>
-                    <MudSelectItem Value="ItemType.Drug">Drug</MudSelectItem>
+                    <MudSelectItem Value="ItemType.None">@L["All categories"]</MudSelectItem>
+                    <MudSelectItem Value="ItemType.Material">@L["Material"]</MudSelectItem>
+                    <MudSelectItem Value="ItemType.Drug">@L["Drug"]</MudSelectItem>
                 </MudSelect>
             </MudItem>
             <MudItem xs="12" sm="12" md="3" Class="d-flex align-center justify-end">
                 <MudButton Color="Color.Secondary" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Clear"
-                    OnClick="ClearFilters">Clear filter</MudButton>
+                    OnClick="ClearFilters">@L["Clear filter"]</MudButton>
             </MudItem>
             <MudItem xs="12" Class="d-flex align-center">
                 <ActiveFilterChips Chips="@BuildActiveChips()" />
@@ -62,15 +62,15 @@
         <ActionButtons>
             <MudItem xs="12" sm="3" Class="d-flex justify-end">
                 <MudStack Row="true" Spacing="2">
-                    <MudTooltip Text="Create item">
+                    <MudTooltip Text="@L["Create item"]">
                         <MudIconButton Icon="@Icons.Material.Filled.AddBox" Color="Color.Success"
                             Variant="Variant.Filled" Size="Size.Medium" OnClick="ShowCreateModal" />
                     </MudTooltip>
-                    <MudTooltip Text="Mass ingress">
+                    <MudTooltip Text="@L["Mass ingress"]">
                         <MudIconButton Icon="@Icons.Material.Filled.Upload" Color="Color.Success"
                             Variant="Variant.Filled" Size="Size.Medium" OnClick="ShowMassIngressModal" />
                     </MudTooltip>
-                    <MudTooltip Text="Mass egress">
+                    <MudTooltip Text="@L["Mass egress"]">
                         <MudIconButton Icon="@Icons.Material.Filled.Download" Color="Color.Error"
                             Variant="Variant.Filled" Size="Size.Medium" OnClick="ShowMassEgressModal" />
                     </MudTooltip>
@@ -79,47 +79,47 @@
         </ActionButtons>
         <HeaderContent>
             <MudTh Style="width:25%; min-width:180px;">
-                <MudTableSortLabel T="InventoryItemDTO" SortLabel="Name">Name</MudTableSortLabel>
+                <MudTableSortLabel T="InventoryItemDTO" SortLabel="Name">@L["Name"]</MudTableSortLabel>
             </MudTh>
             <MudTh Style="width:20%; min-width:120px;">
-                <MudTableSortLabel T="InventoryItemDTO" SortLabel="Brand">Brand</MudTableSortLabel>
+                <MudTableSortLabel T="InventoryItemDTO" SortLabel="Brand">@L["Brand"]</MudTableSortLabel>
             </MudTh>
             <MudTh Style="width:20%; min-width:120px;">
-                <MudTableSortLabel T="InventoryItemDTO" SortLabel="Type">Category</MudTableSortLabel>
+                <MudTableSortLabel T="InventoryItemDTO" SortLabel="Type">@L["Category"]</MudTableSortLabel>
             </MudTh>
             <MudTh Style="width:15%; min-width:80px;">
-                <MudTableSortLabel T="InventoryItemDTO" SortLabel="Stock">Stock</MudTableSortLabel>
+                <MudTableSortLabel T="InventoryItemDTO" SortLabel="Stock">@L["Stock"]</MudTableSortLabel>
             </MudTh>
             <MudTh Style="width:20%; min-width:180px; text-align: right;">
-                Actions
+                @L["Actions"]
             </MudTh>
         </HeaderContent>
         <RowTemplate Context="item">
-            <MudTd DataLabel="Name">@(!string.IsNullOrWhiteSpace(item.Name) ? item.Name : "-")</MudTd>
-            <MudTd DataLabel="Brand">@(!string.IsNullOrWhiteSpace(item.Brand) ? item.Brand : "-")</MudTd>
-            <MudTd DataLabel="Category">@item.Type.GetDisplayString()</MudTd>
-            <MudTd DataLabel="Stock">
+            <MudTd DataLabel="@L["Name"]">@(!string.IsNullOrWhiteSpace(item.Name) ? item.Name : "-")</MudTd>
+            <MudTd DataLabel="@L["Brand"]">@(!string.IsNullOrWhiteSpace(item.Brand) ? item.Brand : "-")</MudTd>
+            <MudTd DataLabel="@L["Category"]">@item.Type.ToText()</MudTd>
+            <MudTd DataLabel="@L["Stock"]">
                 <MudText Class="@InventoryUiHelpers.GetStockCss(item.Stock, item.LowStockThreshold)">
                     @item.Stock
                 </MudText>
             </MudTd>
-            <MudTd DataLabel="Actions" Class="text-end">
+            <MudTd DataLabel="@L["Actions"]" Class="text-end">
                 <MudStack Row="true" Spacing="1" Justify="Justify.FlexEnd">
-                    <MudTooltip Text="History">
+                    <MudTooltip Text="@L["History"]">
                         <MudIconButton Icon="@Icons.Material.Filled.History" Variant="Variant.Filled" Color="Color.Info"
                             Size="Size.Small" OnClick="@(() => ShowHistoryModal(item))" />
                     </MudTooltip>
-                    <MudTooltip Text="Adjust stock">
+                    <MudTooltip Text="@L["Adjust stock"]">
                         <MudIconButton Icon="@Icons.Material.Filled.Edit" Variant="Variant.Filled"
                             Color="Color.Secondary" Size="Size.Small" OnClick="@(() => ShowAdjustStockModal(item))" />
                     </MudTooltip>
                     <AuthorizeView Policy="Inventory.Delete">
                         <Authorized>
-                            <MudTooltip Text="Edit">
+                            <MudTooltip Text="@L["Edit"]">
                                 <MudIconButton Icon="@Icons.Material.Filled.EditNote" Variant="Variant.Filled"
                                     Color="Color.Tertiary" Size="Size.Small" OnClick="@(() => ShowEditModal(item))" />
                             </MudTooltip>
-                            <MudTooltip Text="Delete">
+                            <MudTooltip Text="@L["Delete"]">
                                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Filled"
                                     Color="Color.Error" Size="Size.Small" OnClick="@(() => ShowDeleteModal(item))" />
                             </MudTooltip>
@@ -211,7 +211,7 @@
         catch (TaskCanceledException) { }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error loading items: {ex.Message}", Severity.Error);
+            Snackbar.Add(L["Error loading items: {0}", ex.Message], Severity.Error);
         }
 
         return new TableData<InventoryItemDTO> { TotalItems = 0, Items = [] };
@@ -223,7 +223,7 @@
         {
             _ = InvokeAsync(() =>
             {
-                Snackbar.Add($"Item {args.Action.ToLower()} by another user", Severity.Info);
+                Snackbar.Add(L["Items were changed by another user"], Severity.Info);
                 _table?.ReloadServerData();
             });
         }
@@ -244,7 +244,7 @@
                 {
                     item.Stock = newStock;
                     _ = InvokeAsync(StateHasChanged);
-                    Snackbar.Add($"Stock updated for {item.Name}", Severity.Info);
+                    Snackbar.Add(L["Stock updated for {0}", item.Name], Severity.Info);
                 }
             }
         }
@@ -283,7 +283,7 @@
         };
         var parameters = new DialogParameters<CreateItemModal>
         {
-        { x => x.Title, "New product" },
+        { x => x.Title, L["New product"].Value },
         { x => x.TitleIcon, Icons.Material.Filled.AddBox },
         { x => x.TitleColor, Color.Success }
         };
@@ -292,11 +292,11 @@
         if (result is { Canceled: false } && result.Data is Item)
         {
             _table?.ReloadServerData();
-            Snackbar.Add("Product created.", Severity.Success);
+            Snackbar.Add(L["Product created."], Severity.Success);
         }
         else
         {
-            Snackbar.Add("Creation canceled.", Severity.Info);
+            Snackbar.Add(L["Creation canceled."], Severity.Info);
         }
     }
 
@@ -305,7 +305,7 @@
         var parameters = new DialogParameters<EditItemModal>
         {
         { x => x.ItemDTO, dto },
-        { x => x.Title, "Edit item" },
+        { x => x.Title, L["Edit item"].Value },
         { x => x.TitleIcon, Icons.Material.Filled.Edit },
         { x => x.TitleColor, Color.Primary }
         };
@@ -320,11 +320,11 @@
         if (result is { Canceled: false })
         {
             _table?.ReloadServerData();
-            Snackbar.Add("Item edited.", Severity.Success);
+            Snackbar.Add(L["Item edited."], Severity.Success);
         }
         else
         {
-            Snackbar.Add("Edit canceled.", Severity.Info);
+            Snackbar.Add(L["Edit canceled."], Severity.Info);
         }
     }
 
@@ -333,7 +333,7 @@
         var parameters = new DialogParameters<HistoryModal>
         {
         { x => x.Item, dto },
-        { x => x.Title, "Movement history" },
+        { x => x.Title, L["Movement history"].Value },
         { x => x.TitleIcon, Icons.Material.Filled.History },
         { x => x.TitleColor, Color.Info }
         };
@@ -361,17 +361,17 @@
             try
             {
                 await InventoryMovementService.MassiveEntryAsync(itemsList);
-                Snackbar.Add($"Mass ingress applied ({itemsList.Count} items).", Severity.Success);
+                Snackbar.Add(L["Mass ingress applied ({0} items).", itemsList.Count], Severity.Success);
                 _table?.ReloadServerData();
             }
             catch (Exception ex)
             {
-                Snackbar.Add($"Mass ingress error: {ex.Message}", Severity.Error);
+                Snackbar.Add(L["Mass ingress error: {0}", ex.Message], Severity.Error);
             }
         }
         else
         {
-            Snackbar.Add("Mass ingress canceled.", Severity.Info);
+            Snackbar.Add(L["Mass ingress canceled."], Severity.Info);
         }
     }
 
@@ -390,17 +390,17 @@
             try
             {
                 await InventoryMovementService.MassiveExitAsync(itemsList);
-                Snackbar.Add($"Mass egress applied ({itemsList.Count} items).", Severity.Success);
+                Snackbar.Add(L["Mass egress applied ({0} items).", itemsList.Count], Severity.Success);
                 _table?.ReloadServerData();
             }
             catch (Exception ex)
             {
-                Snackbar.Add($"Mass egress error: {ex.Message}", Severity.Error);
+                Snackbar.Add(L["Mass egress error: {0}", ex.Message], Severity.Error);
             }
         }
         else
         {
-            Snackbar.Add("Mass egress canceled.", Severity.Info);
+            Snackbar.Add(L["Mass egress canceled."], Severity.Info);
         }
     }
 
@@ -409,7 +409,7 @@
         var parameters = new DialogParameters<AdjustStockModal>
         {
         { x => x.Item, dto },
-        { x => x.Title, "Adjust stock" },
+        { x => x.Title, L["Adjust stock"].Value },
         { x => x.TitleIcon, Icons.Material.Filled.Edit },
         { x => x.TitleColor, Color.Secondary }
         };
@@ -427,7 +427,7 @@
         }
         else
         {
-            Snackbar.Add("Stock adjustment canceled.", Severity.Info);
+            Snackbar.Add(L["Stock adjustment canceled."], Severity.Info);
         }
     }
 
@@ -435,10 +435,10 @@
     {
         var parameters = new DialogParameters<ConfirmModal>
         {
-        { x => x.Title, "Delete item" },
-        { x => x.Message, $"Are you sure you want to delete item '{dto.Name}'?" },
-        { x => x.ButtonConfirmText, "Delete" },
-        { x => x.ButtonCancelText, "Cancel" },
+        { x => x.Title, L["Delete item"].Value },
+        { x => x.Message, L["Are you sure you want to delete item '{0}'?", dto.Name].Value },
+        { x => x.ButtonConfirmText, L["Delete"].Value },
+        { x => x.ButtonCancelText, L["Cancel"].Value },
         { x => x.TitleIcon, Icons.Material.Filled.Delete },
         { x => x.TitleColor, Color.Error }
         };
@@ -454,49 +454,20 @@
             try
             {
                 await ItemsService.DeleteItemAsync(dto.Id);
-                Snackbar.Add("Item deleted.", Severity.Success);
+                Snackbar.Add(L["Item deleted."], Severity.Success);
                 _table?.ReloadServerData();
             }
             catch (Exception ex)
             {
-                Snackbar.Add($"Error deleting item: {ex.Message}", Severity.Error);
+                Snackbar.Add(L["Error deleting item: {0}", ex.Message], Severity.Error);
             }
         }
         else
         {
-            Snackbar.Add("Deletion canceled.", Severity.Info);
+            Snackbar.Add(L["Deletion canceled."], Severity.Info);
         }
     }
 
-    private async Task ShowQuickAdjustStockModal()
-    {
-        var options = new DialogOptions
-        {
-            MaxWidth = MaxWidth.Small,
-            FullWidth = true,
-            CloseOnEscapeKey = false
-        };
-        var parameters = new DialogParameters<QuickAdjustStockBarcodeModal>
-        {
-        { x => x.Title, "Adjust stock by barcode" },
-        { x => x.TitleIcon, Icons.Material.Filled.QrCodeScanner },
-        { x => x.TitleColor, Color.Secondary }
-        };
-        var dialog = await DialogService.ShowAsync<QuickAdjustStockBarcodeModal>(null, parameters, options);
-        var result = await dialog.Result;
-        if (result == null || result.Canceled)
-        {
-            Snackbar.Add("Barcode adjustment canceled.", Severity.Info);
-            return;
-        }
-        if (result.Data is not Item item)
-        {
-            Snackbar.Add("Could not get item from scanner.", Severity.Warning);
-            return;
-        }
-        var dto = item.ToInventoryItemDTO();
-        await ShowAdjustStockModal(dto);
-    }
     #endregion
 
     private IEnumerable<FilterChipModel> BuildActiveChips()
@@ -505,14 +476,14 @@
         if (!string.IsNullOrWhiteSpace(FilterNameOrCompound))
             list.Add(new FilterChipModel
             {
-                Label = $"Name/Brand/Compound: {FilterNameOrCompound}",
+                Label = L["Name/Brand/Compound: {0}", FilterNameOrCompound].Value,
                 Color = Color.Primary,
                 OnClear = () => FilterNameOrCompound = string.Empty
             });
         if (FilterItemType != ItemType.None)
             list.Add(new FilterChipModel
             {
-                Label = $"Category: {FilterItemType.GetDisplayString()}",
+                Label = L["Category: {0}", FilterItemType.ToText()].Value,
                 Color = Color.Secondary,
                 OnClear = () => FilterItemType = ItemType.None
             });

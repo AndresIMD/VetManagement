@@ -10,14 +10,14 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @attribute [Authorize(Policy = "Medical.Read")]
 
-<PageTitle>Clinical Record</PageTitle>
+<PageTitle>@L["Clinical record"]</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
-    <PageHeader Title="Clinical Record" Icon="@Icons.Material.Filled.MedicalInformation" />
+    <PageHeader Title="@L["Clinical record"]" Icon="@Icons.Material.Filled.MedicalInformation" />
 
     @if (_notFound)
     {
-        <MudAlert Severity="Severity.Warning">Pet #@PetId was not found.</MudAlert>
+        <MudAlert Severity="Severity.Warning">@L["Pet #{0} was not found.", PetId]</MudAlert>
     }
     else if (_history is null)
     {
@@ -28,7 +28,7 @@
         <MudPaper Class="pa-3 mb-3" Elevation="1">
             <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="3">
                 <MudText Typo="Typo.h5">@_history.PetName</MudText>
-                <MudText>@_history.Species · @_history.Breed · @_history.Sex</MudText>
+                <MudText>@_history.Species.ToText() · @_history.Breed · @_history.Sex.ToText()</MudText>
                 @if (_history.Birthdate > DateTime.MinValue.AddYears(1))
                 {
                     <MudText>@Age(_history.Birthdate)</MudText>
@@ -39,10 +39,10 @@
                 }
                 <MudSpacer />
                 <MudText Typo="Typo.body2" Color="Color.Secondary">
-                    Owner: @_history.OwnerName @(_history.OwnerPhone is null ? "" : $"· {_history.OwnerPhone}") @(_history.OwnerEmail is null ? "" : $"· {_history.OwnerEmail}")
+                    @L["Owner: {0}", _history.OwnerName ?? ""] @(_history.OwnerPhone is null ? "" : $"· {_history.OwnerPhone}") @(_history.OwnerEmail is null ? "" : $"· {_history.OwnerEmail}")
                 </MudText>
                 <AuthorizeView Policy="ExamsPerformed.Read" Context="auth">
-                    <MudButton Size="Size.Small" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Science" Href="@($"exam-reports?petId={PetId}")">Lab reports</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Science" Href="@($"exam-reports?petId={PetId}")">@L["Lab Reports"]</MudButton>
                 </AuthorizeView>
             </MudStack>
         </MudPaper>
@@ -53,15 +53,15 @@
         }
 
         <MudPaper Class="pa-3 mb-3" Elevation="1">
-            <MudText Typo="Typo.h6" Class="mb-2">Vaccines and deworming</MudText>
+            <MudText Typo="Typo.h6" Class="mb-2">@L["Vaccines and deworming"]</MudText>
             <MudTable Items="Current" Dense="true" Elevation="0">
                 <HeaderContent>
-                    <MudTh>Product</MudTh>
-                    <MudTh>Kind</MudTh>
-                    <MudTh>Applied</MudTh>
-                    <MudTh>Next dose</MudTh>
-                    <MudTh>Status</MudTh>
-                    <MudTh>Batch</MudTh>
+                    <MudTh>@L["Product"]</MudTh>
+                    <MudTh>@L["Kind"]</MudTh>
+                    <MudTh>@L["Applied"]</MudTh>
+                    <MudTh>@L["Next dose"]</MudTh>
+                    <MudTh>@L["Status"]</MudTh>
+                    <MudTh>@L["Batch"]</MudTh>
                     @if (_canDelete)
                     {
                         <MudTh />
@@ -69,7 +69,7 @@
                 </HeaderContent>
                 <RowTemplate>
                     <MudTd>@context.ProductName</MudTd>
-                    <MudTd>@context.Kind</MudTd>
+                    <MudTd>@context.Kind.ToText()</MudTd>
                     <MudTd>@context.AppliedOn.ToString("dd MMM yyyy") · @context.AppliedBy</MudTd>
                     <MudTd>@(context.NextDueOn?.ToString("dd MMM yyyy") ?? "—")</MudTd>
                     <MudTd><DoseStatusChip Status="context.Status" /></MudTd>
@@ -77,96 +77,96 @@
                     @if (_canDelete)
                     {
                         <MudTd>
-                            <MudTooltip Text="Delete (recorded by mistake)">
+                            <MudTooltip Text="@L["Delete (recorded by mistake)"]">
                                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => DeleteDoseAsync(context.Id)" />
                             </MudTooltip>
                         </MudTd>
                     }
                 </RowTemplate>
-                <NoRecordsContent><MudText Typo="Typo.body2" Color="Color.Secondary">No doses recorded yet.</MudText></NoRecordsContent>
+                <NoRecordsContent><MudText Typo="Typo.body2" Color="Color.Secondary">@L["No doses recorded yet."]</MudText></NoRecordsContent>
             </MudTable>
             @if (_history.Doses.Any(d => d.Status == PreventiveStatus.Superseded))
             {
-                <MudSwitch T="bool" @bind-Value="_showReplaced" Label="Show earlier doses" Color="Color.Primary" Class="mt-1" />
+                <MudSwitch T="bool" @bind-Value="_showReplaced" Label="@L["Show earlier doses"]" Color="Color.Primary" Class="mt-1" />
             }
 
             @if (_canCreate)
             {
                 <MudDivider Class="my-3" />
                 <MudStack Row="true" Spacing="2" AlignItems="AlignItems.End" Wrap="Wrap.Wrap">
-                    <MudSelect T="string" @bind-Value="_dose.ProtocolCode" Label="Protocol" Clearable="true" Style="min-width: 220px;">
+                    <MudSelect T="string" @bind-Value="_dose.ProtocolCode" Label="@L["Protocol"]" Clearable="true" Style="min-width: 220px;">
                         @foreach (var p in ProtocolsForPet)
                         {
-                            <MudSelectItem Value="@p.Code">@p.Name@(p.IntervalDays > 0 ? $" (every {p.IntervalDays} d)" : "")</MudSelectItem>
+                            <MudSelectItem Value="@p.Code">@p.Name@(p.IntervalDays > 0 ? L[" (every {0} d)", p.IntervalDays].Value : "")</MudSelectItem>
                         }
                     </MudSelect>
-                    <MudTextField T="string" @bind-Value="_dose.ProductName" Label="@(string.IsNullOrEmpty(_dose.ProtocolCode) ? "Product" : "Brand / product (optional)")" Style="max-width: 200px;" />
+                    <MudTextField T="string" @bind-Value="_dose.ProductName" Label="@(string.IsNullOrEmpty(_dose.ProtocolCode) ? L["Product"] : L["Brand / product (optional)"])" Style="max-width: 200px;" />
                     @if (string.IsNullOrEmpty(_dose.ProtocolCode))
                     {
-                        <MudSelect T="PreventiveKind" @bind-Value="_dose.Kind" Label="Kind" Style="max-width: 140px;">
+                        <MudSelect T="PreventiveKind" @bind-Value="_dose.Kind" Label="@L["Kind"]" Style="max-width: 140px;">
                             @foreach (var kind in Enum.GetValues<PreventiveKind>())
                             {
-                                <MudSelectItem Value="kind">@kind</MudSelectItem>
+                                <MudSelectItem Value="kind">@kind.ToText()</MudSelectItem>
                             }
                         </MudSelect>
                     }
-                    <MudDatePicker Label="Applied on" @bind-Date="_dose.AppliedOn" MaxDate="DateTime.Today" Style="max-width: 150px;" />
-                    <MudDatePicker Label="Next dose (optional)" @bind-Date="_dose.NextDueOn" Style="max-width: 170px;" Clearable="true"
-                                   HelperText="@(string.IsNullOrEmpty(_dose.ProtocolCode) ? null : "Empty: protocol interval")" />
-                    <MudTextField T="string" @bind-Value="_dose.BatchNumber" Label="Batch" Style="max-width: 120px;" />
-                    <MudAutocomplete T="InventoryItemDTO" @bind-Value="_dose.Item" Label="From inventory (optional)" SearchFunc="SearchItemsAsync"
+                    <MudDatePicker Label="@L["Applied on"]" @bind-Date="_dose.AppliedOn" MaxDate="DateTime.Today" Style="max-width: 150px;" />
+                    <MudDatePicker Label="@L["Next dose (optional)"]" @bind-Date="_dose.NextDueOn" Style="max-width: 170px;" Clearable="true"
+                                   HelperText="@(string.IsNullOrEmpty(_dose.ProtocolCode) ? null : L["Empty: protocol interval"].Value)" />
+                    <MudTextField T="string" @bind-Value="_dose.BatchNumber" Label="@L["Batch"]" Style="max-width: 120px;" />
+                    <MudAutocomplete T="InventoryItemDTO" @bind-Value="_dose.Item" Label="@L["From inventory (optional)"]" SearchFunc="SearchItemsAsync"
                                      ToStringFunc="@(i => i is null ? "" : $"{i.Name} ({i.Stock})")" Clearable="true"
                                      DebounceInterval="300" MinCharacters="2" Style="min-width: 220px;" />
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Vaccines" OnClick="RecordDoseAsync" Disabled="_busy">Record</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Vaccines" OnClick="RecordDoseAsync" Disabled="_busy">@L["Record"]</MudButton>
                 </MudStack>
             }
         </MudPaper>
 
         <MudPaper Class="pa-3" Elevation="1">
             <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
-                <MudText Typo="Typo.h6">Visits</MudText>
+                <MudText Typo="Typo.h6">@L["Visits"]</MudText>
                 <MudSpacer />
                 @if (_canCreate)
                 {
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="NewVisitAsync">New visit</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="NewVisitAsync">@L["New visit"]</MudButton>
                 }
             </MudStack>
             @if (_history.Visits.Count == 0)
             {
-                <MudText Typo="Typo.body2" Color="Color.Secondary">No visits yet.</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">@L["No visits yet."]</MudText>
             }
             <MudTimeline TimelinePosition="TimelinePosition.Start">
                 @foreach (var visit in _history.Visits)
                 {
                     <MudTimelineItem Size="Size.Small" Color="Color.Primary">
                         <MudText Typo="Typo.subtitle1">
-                            @visit.Date.ToLocalTime().ToString("dd MMM yyyy HH:mm") — @(visit.Reason ?? "Visit")
+                            @visit.Date.ToLocalTime().ToString("dd MMM yyyy HH:mm") — @(visit.Reason ?? L["Visit"])
                             <MudText Typo="Typo.caption" Color="Color.Secondary" Inline="true"> · @visit.Responsible</MudText>
                         </MudText>
                         @if (visit.WeightKg is not null || visit.TemperatureC is not null)
                         {
                             <MudText Typo="Typo.body2">
-                                @(visit.WeightKg is null ? "" : $"Weight {visit.WeightKg:0.##} kg  ")@(visit.TemperatureC is null ? "" : $"Temp. {visit.TemperatureC:0.0} °C")
+                                @(visit.WeightKg is null ? "" : L["Weight {0} kg", visit.WeightKg.Value.ToString("0.##")] + "  ")@(visit.TemperatureC is null ? "" : L["Temp. {0} °C", visit.TemperatureC.Value.ToString("0.0")].Value)
                             </MudText>
                         }
-                        <VisitField Label="Anamnesis" Text="@visit.Anamnesis" />
-                        <VisitField Label="Examination" Text="@visit.Examination" />
-                        <VisitField Label="Diagnosis" Text="@visit.Diagnosis" />
-                        <VisitField Label="Treatment" Text="@visit.Treatment" />
+                        <VisitField Label="@L["Anamnesis"]" Text="@visit.Anamnesis" />
+                        <VisitField Label="@L["Examination"]" Text="@visit.Examination" />
+                        <VisitField Label="@L["Diagnosis"]" Text="@visit.Diagnosis" />
+                        <VisitField Label="@L["Treatment"]" Text="@visit.Treatment" />
                         @if (visit.Procedures.Count > 0)
                         {
-                            <MudText Typo="Typo.body2"><b>Procedures:</b> @string.Join(", ", visit.Procedures.Select(p => p.Name))</MudText>
+                            <MudText Typo="Typo.body2"><b>@L["Procedures:"]</b> @string.Join(", ", visit.Procedures.Select(p => p.Name))</MudText>
                         }
                         @{ var charges = _history.Charges.Where(c => c.VisitId == visit.Id).ToList(); }
                         @if (charges.Count > 0)
                         {
                             <MudText Typo="Typo.body2">
-                                <b>Charged:</b>
+                                <b>@L["Charged:"]</b>
                                 @foreach (var c in charges)
                                 {
                                     <MudChip T="string" Size="Size.Small" Href="@($"billing/sales/{c.SaleId}")"
                                              Color="@(c.Status == SaleStatus.Paid ? Color.Success : Color.Info)" Variant="Variant.Outlined">
-                                        Sale #@c.SaleId · @Money.Clp(c.Total)@(c.TaxExempt ? " · exempt" : "")@(c.Balance > 0 ? $" · due {Money.Clp(c.Balance)}" : "")
+                                        @L["Sale #{0}", c.SaleId] · @Money.Clp(c.Total)@(c.TaxExempt ? L[" · exempt"].Value : "")@(c.Balance > 0 ? L[" · due {0}", Money.Clp(c.Balance)].Value : "")
                                     </MudChip>
                                 }
                             </MudText>
@@ -174,13 +174,13 @@
                         else if (_canCharge)
                         {
                             <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success" StartIcon="@Icons.Material.Filled.PointOfSale"
-                                       OnClick="() => ChargeVisitAsync(visit.Id)" Class="mr-2">Charge visit</MudButton>
+                                       OnClick="() => ChargeVisitAsync(visit.Id)" Class="mr-2">@L["Charge visit"]</MudButton>
                         }
                         <VisitSupplies VisitId="visit.Id" Supplies="@_history.Supplies.Where(s => s.VisitId == visit.Id).ToList()"
                                        CanAdd="_canCreate" CanRemove="_canDelete" Changed="LoadAsync" />
                         @if (_canUpdate)
                         {
-                            <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Edit" OnClick="() => EditVisitAsync(visit)">Edit</MudButton>
+                            <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Edit" OnClick="() => EditVisitAsync(visit)">@L["Edit"]</MudButton>
                         }
                     </MudTimelineItem>
                 }
@@ -250,10 +250,10 @@
     private async Task<IEnumerable<InventoryItemDTO>> SearchItemsAsync(string text, CancellationToken ct)
         => (await ItemsApi.GetItemsPagedAsync(text, ItemType.None, 0, 15, ct))?.Items ?? [];
 
-    private static string Age(DateTime birthdate)
+    private string Age(DateTime birthdate)
     {
         var months = (DateTime.Today.Year - birthdate.Year) * 12 + DateTime.Today.Month - birthdate.Month;
-        return months >= 12 ? $"{months / 12} y {months % 12} m" : $"{Math.Max(months, 0)} months";
+        return months >= 12 ? L["{0} y {1} m", months / 12, months % 12] : L["{0} months", Math.Max(months, 0)];
     }
 
     private async Task RecordDoseAsync()
@@ -276,7 +276,7 @@
             _error = result.Error;
             return;
         }
-        Snackbar.Add("Dose recorded.", Severity.Success);
+        Snackbar.Add(L["Dose recorded."], Severity.Success);
         _dose = new DoseForm();
         await LoadAsync();
     }
@@ -289,7 +289,7 @@
         await LoadAsync();
     }
 
-    private Task NewVisitAsync() => OpenVisitAsync("New visit", new MedicalVisit
+    private Task NewVisitAsync() => OpenVisitAsync(L["New visit"], new MedicalVisit
     {
         Date = DateTime.UtcNow,
         PatientId = PetId,
@@ -299,7 +299,7 @@
         Procedures = []
     });
 
-    private Task EditVisitAsync(MedicalVisitDto dto) => OpenVisitAsync("Edit visit", new MedicalVisit
+    private Task EditVisitAsync(MedicalVisitDto dto) => OpenVisitAsync(L["Edit visit"], new MedicalVisit
     {
         Id = dto.Id,
         Date = dto.Date,

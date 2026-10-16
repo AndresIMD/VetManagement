@@ -1,4 +1,4 @@
-<MudChip T="string" Size="Size.Small" Color="@(Status switch { SaleStatus.Paid => Color.Success, SaleStatus.Voided => Color.Error, _ => Color.Info })">@Status</MudChip>
+<MudChip T="string" Size="Size.Small" Color="@(Status switch { SaleStatus.Paid => Color.Success, SaleStatus.Voided => Color.Error, _ => Color.Info })">@Status.ToText()</MudChip>
 
 @code {
     [Parameter] public SaleStatus Status { get; set; }

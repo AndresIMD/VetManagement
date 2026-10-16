@@ -1,4 +1,6 @@
+using VetManagement.Api.Authorization;
 using VetManagement.Application.Payments;
+using VetManagement.Domain.Enums;
 using VetManagement.Infrastructure.Payments;
 
 namespace VetManagement.Api.Payments;
@@ -12,12 +14,20 @@ namespace VetManagement.Api.Payments;
 /// }
 /// </code>
 /// Misconfiguration fails at startup, never when a client is paying.
+/// Without the Scheduling module (online bookings are the only payments) no provider is needed.
 /// </summary>
 public static class PaymentsSetup
 {
-    public static IServiceCollection AddPaymentGateway(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
+    public static IServiceCollection AddPaymentGateway(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment,
+        EnabledModules? modules = null)
     {
         var provider = configuration["Payments:Provider"] ?? (environment.IsProduction() ? null : "Simulated");
+
+        if (configuration["Payments:Provider"] is null && modules?.IsEnabled(AppModule.Scheduling) == false)
+        {
+            services.AddSingleton<IPaymentGateway, NoPaymentGateway>();
+            return services;
+        }
 
         switch (provider)
         {

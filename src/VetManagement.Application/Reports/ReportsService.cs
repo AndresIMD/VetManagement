@@ -2,6 +2,7 @@ using VetManagement.Application.Billing;
 using VetManagement.Application.Clinical;
 using VetManagement.Application.Contracts.Persistence;
 using VetManagement.Application.Scheduling;
+using VetManagement.Domain.Localization;
 using VetManagement.Domain.Billing;
 using VetManagement.Domain.Enums;
 using VetManagement.Domain.Scheduling;
@@ -116,7 +117,7 @@ public class ReportsService(
 
         var byMethod = payments.GroupBy(p => p.Method, StringComparer.OrdinalIgnoreCase)
             .Select(g => new MoneyByKey(g.Key,
-                g.Key == SalePayment.OnlineDepositMethod ? "Abono online" : settings.FindMethod(g.Key)?.Name ?? g.Key, g.Sum(p => p.Amount)))
+                g.Key == SalePayment.OnlineDepositMethod ? Texts.T("Online deposit") : settings.FindMethod(g.Key)?.Name ?? g.Key, g.Sum(p => p.Amount)))
             .OrderByDescending(m => m.Amount).ToList();
 
         var daily = new List<DailyAmount>();

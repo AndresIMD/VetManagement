@@ -12,9 +12,6 @@ public class UserManagementApiService(HttpClient http)
     public async Task<List<string>> GetRolesAsync()
         => await http.GetFromJsonAsync<List<string>>(ApiRouteConstants.USERS_ROLES_ALL) ?? new();
 
-    public async Task<List<string>> GetUserRolesAsync(string userId)
-        => await http.GetFromJsonAsync<List<string>>(string.Format(ApiRouteConstants.USER_ROLES, userId)) ?? new();
-
     public async Task<List<(string Type, string Value)>> GetUserClaimsAsync(string userId)
     {
         var data = await http.GetFromJsonAsync<List<ClaimDto>>(string.Format(ApiRouteConstants.USER_CLAIMS, userId)) ?? new();

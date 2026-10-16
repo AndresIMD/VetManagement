@@ -7,6 +7,7 @@ using VetManagement.Application.Contracts.Services;
 using VetManagement.Application.Scheduling;
 using VetManagement.Domain.Clients;
 using VetManagement.Domain.Enums;
+using VetManagement.Domain.Localization;
 using VetManagement.Domain.Medical;
 using VetManagement.Domain.Scheduling;
 
@@ -67,14 +68,14 @@ public class ClientPortalService(
 
         var agenda = (await schedulingSettings.GetAsync()).Settings;
         var body =
-            $"Hola {client.Name},{Environment.NewLine}{Environment.NewLine}" +
-            $"Para ver la ficha de tus mascotas (vacunas, atenciones y próximas horas) abre este enlace:{Environment.NewLine}" +
+            Texts.T("Hello {0},", client.Name) + Environment.NewLine + Environment.NewLine +
+            Texts.T("To see your pets' record (vaccines, visits and upcoming appointments) open this link:") + Environment.NewLine +
             $"{linkBase.TrimEnd('/')}/{token}{Environment.NewLine}{Environment.NewLine}" +
-            $"El enlace funciona durante {settings.LinkValidMinutes} minutos. Si no lo pediste, ignora este correo.{Environment.NewLine}{Environment.NewLine}" +
+            Texts.T("The link works for {0} minutes. If you didn't ask for it, ignore this email.", settings.LinkValidMinutes) + Environment.NewLine + Environment.NewLine +
             agenda.ClinicName;
         try
         {
-            await email.SendAsync(client.Email, $"Tu acceso a la ficha de tus mascotas – {agenda.ClinicName}", body);
+            await email.SendAsync(client.Email, Texts.T("Your access to your pets' record – {0}", agenda.ClinicName), body);
         }
         catch (Exception ex)
         {

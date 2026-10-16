@@ -5,6 +5,7 @@ using VetManagement.Contracts.Common;
 using VetManagement.Contracts.Inventory;
 using DomainInventoryMovement = VetManagement.Domain.Inventory.InventoryMovement;
 using DomainInventoryMovementType = VetManagement.Domain.Enums.InventoryMovementType;
+using VetManagement.Domain.Localization;
 
 namespace VetManagement.Api.Controllers.Inventory;
 
@@ -71,7 +72,7 @@ public class InventoryMovementsController(InventoryMovementService movementServi
     {
         var result = await movementService.AdjustStockAsync(request.ItemId, request.Amount, request.Reason, GetUserName());
         if (!result)
-            return BadRequest("Could not adjust stock.");
+            return BadRequest(Texts.T("Could not adjust stock."));
         return Ok();
     }
 
@@ -81,7 +82,7 @@ public class InventoryMovementsController(InventoryMovementService movementServi
     {
         var updated = await movementService.MassStockUpdateAsync(items, true, GetUserName());
         if (updated == 0)
-            return NotFound("No items updated.");
+            return NotFound(Texts.T("No items updated."));
         return Ok(new { updated });
     }
 
@@ -91,7 +92,7 @@ public class InventoryMovementsController(InventoryMovementService movementServi
     {
         var updated = await movementService.MassStockUpdateAsync(items, false, GetUserName());
         if (updated == 0)
-            return NotFound("No items updated.");
+            return NotFound(Texts.T("No items updated."));
         return Ok(new { updated });
     }
 

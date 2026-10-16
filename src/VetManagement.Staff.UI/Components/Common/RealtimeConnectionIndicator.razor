@@ -6,15 +6,15 @@
 
 @if (_isConnected)
 {
-    <MudChip T="string" Icon="@Icons.Material.Filled.CloudDone" Color="Color.Success" Size="Size.Small">Live</MudChip>
+    <MudChip T="string" Icon="@Icons.Material.Filled.CloudDone" Color="Color.Success" Size="Size.Small">@L["Live"]</MudChip>
 }
 else if (_isConnecting)
 {
-    <MudChip T="string" Icon="@Icons.Material.Filled.CloudSync" Color="Color.Warning" Size="Size.Small">Connecting...</MudChip>
+    <MudChip T="string" Icon="@Icons.Material.Filled.CloudSync" Color="Color.Warning" Size="Size.Small">@L["Connecting..."]</MudChip>
 }
 else
 {
-    <MudChip T="string" Icon="@Icons.Material.Filled.CloudOff" Color="Color.Error" Size="Size.Small">Offline</MudChip>
+    <MudChip T="string" Icon="@Icons.Material.Filled.CloudOff" Color="Color.Error" Size="Size.Small">@L["Offline"]</MudChip>
 }
 
 @code {

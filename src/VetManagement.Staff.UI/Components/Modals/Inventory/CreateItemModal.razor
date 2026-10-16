@@ -10,8 +10,8 @@
             TitleIcon="@TitleIcon"
             TitleColor="@TitleColor"
             IsLoading="@isLoading"
-            PrimaryText="Create"
-            PrimaryLoadingText="Saving..."
+            PrimaryText="@L["Create"]"
+            PrimaryLoadingText="@L["Saving..."]"
             PrimaryDisabled="@(!isValid)"
             OnPrimaryClick="HandleValidSubmit"
             OnCancelClick="OnCancelRequested">
@@ -50,12 +50,12 @@
             var options = ItemJsonOptions.GetPolymorphicOptions();
             var entityJson = System.Text.Json.JsonSerializer.Serialize(entity, options);
             await ItemsService.AddItemAsync(entity);
-            Snackbar.Add("Item created successfully.", Severity.Success);
+            Snackbar.Add(L["Item created successfully."], Severity.Success);
             MudDialog.Close(DialogResult.Ok(entity));
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error creating item: {ex.Message}", Severity.Error);
+            Snackbar.Add(L["Error creating item: {0}", ex.Message], Severity.Error);
         }
         finally
         {
@@ -70,10 +70,10 @@
             var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = false };
             var parameters = new DialogParameters<Components.Modals.Common.ConfirmModal>
             {
-                { x => x.Title, "Discard changes" },
-                { x => x.Message, "There are unsaved changes. Do you want to exit without saving?" },
-                { x => x.ButtonConfirmText, "Exit" },
-                { x => x.ButtonCancelText, "Keep editing" },
+                { x => x.Title, L["Discard changes"].Value },
+                { x => x.Message, L["There are unsaved changes. Do you want to exit without saving?"].Value },
+                { x => x.ButtonConfirmText, L["Exit"].Value },
+                { x => x.ButtonCancelText, L["Keep editing"].Value },
                 { x => x.TitleIcon, Icons.Material.Filled.Warning },
                 { x => x.TitleColor, Color.Warning }
             };

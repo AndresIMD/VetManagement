@@ -6,6 +6,7 @@ using VetManagement.Application.Exams;
 using VetManagement.Contracts.Exams;
 using VetManagement.Domain.Enums;
 using VetManagement.Domain.Exams;
+using VetManagement.Domain.Localization;
 
 namespace VetManagement.Api.Controllers.Exams;
 
@@ -73,7 +74,7 @@ public class ExamReportsController(ExamReportService service, ExamReportSettings
             return ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["settings"] = [ex.Message] }));
         }
         if (settings is null)
-            return ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["settings"] = ["Settings are required."] }));
+            return ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["settings"] = [Texts.T("Settings are required.")] }));
 
         var result = await settingsService.UpdateAsync(settings, document.Version, GetUserName());
         return result.Status switch
@@ -81,8 +82,8 @@ public class ExamReportsController(ExamReportService service, ExamReportSettings
             SettingsUpdateStatus.Saved => Ok(new { version = result.Version }),
             SettingsUpdateStatus.Conflict => Conflict(new ProblemDetails
             {
-                Title = "The settings were changed by someone else.",
-                Detail = $"Reload the latest version ({result.Version}) and apply your changes again.",
+                Title = Texts.T("The settings were changed by someone else."),
+                Detail = Texts.T("Reload the latest version ({0}) and apply your changes again.", result.Version),
                 Status = StatusCodes.Status409Conflict
             }),
             _ => ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["settings"] = [.. result.Errors] }))
@@ -122,7 +123,7 @@ public class ExamReportsController(ExamReportService service, ExamReportSettings
     {
         ExamReportStatus.Done => Ok(new { id = result.Id }),
         ExamReportStatus.NotFound => NotFound(),
-        _ => ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["report"] = [result.Error ?? "Invalid request."] }))
+        _ => ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["report"] = [result.Error ?? Texts.T("Invalid request.")] }))
     };
 
     private static ExamReportDto ToDto(ExamReportView view) => new()

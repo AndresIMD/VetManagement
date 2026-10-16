@@ -93,15 +93,15 @@
                 @if (first && Report.Sections.PatientData)
                 {
                     <div class="xr-box" style="border-color:@Settings.HeaderColor">
-                        <div class="xr-bar" style="background:@Settings.HeaderColor">DATOS DE LA MASCOTA Y TUTOR</div>
+                        <div class="xr-bar" style="background:@Settings.HeaderColor">@L["PET AND OWNER DATA"]</div>
                         <div class="xr-patient">
-                            <div><b>PACIENTE:</b> @Report.PetName</div>
-                            <div><b>TUTOR:</b> @Report.OwnerName</div>
-                            <div><b>ESPECIE:</b> @(Placeholder ? "ESPECIE – RAZA" : SpeciesAndBreed)</div>
-                            <div><b>MÉDICO TRATANTE:</b> @Report.ReferringVet</div>
-                            <div><b>EDAD:</b> @(Placeholder ? "EDAD" : Age)</div>
-                            <div><b>FECHA RECEPCIÓN:</b> @(Placeholder ? "DD/MM/AAAA" : Report.ReceivedOn.ToString("dd/MM/yyyy"))</div>
-                            <div><b>SEXO:</b> @(Placeholder ? "SEXO" : SexName)</div>
+                            <div><b>@L["PATIENT:"]</b> @Report.PetName</div>
+                            <div><b>@L["OWNER:"]</b> @Report.OwnerName</div>
+                            <div><b>@L["SPECIES:"]</b> @(Placeholder ? L["SPECIES – BREED"] : SpeciesAndBreed)</div>
+                            <div><b>@L["REFERRING VET:"]</b> @Report.ReferringVet</div>
+                            <div><b>@L["AGE:"]</b> @(Placeholder ? Upper(L["Age"]) : Age)</div>
+                            <div><b>@L["RECEIVED ON:"]</b> @(Placeholder ? Upper(L["dd/mm/yyyy"]) : Report.ReceivedOn.ToString("dd/MM/yyyy"))</div>
+                            <div><b>@L["SEX:"]</b> @(Placeholder ? Upper(L["Sex"]) : SexName)</div>
                         </div>
                     </div>
                 }
@@ -115,7 +115,7 @@
                     {
                         @Background
                     }
-                    <div class="xr-bar" style="background:@Settings.AccentColor">@Report.Title@(first ? null : " (continuación)")</div>
+                    <div class="xr-bar" style="background:@Settings.AccentColor">@Report.Title@(first ? null : L[" (continued)"])</div>
                     <div class="xr-results">
                         @if (rows.Count > 0 && Qualitative)
                         {
@@ -144,10 +144,10 @@
                                 </colgroup>
                                 <thead>
                                     <tr>
-                                        <th>Parámetro</th><th>Resultado</th><th>Unidad</th>
+                                        <th>@L["Parameter"]</th><th>@L["Result"]</th><th>@L["Unit"]</th>
                                         @if (HasReference)
                                         {
-                                            <th>Valor referencial</th>
+                                            <th>@L["Reference value"]</th>
                                         }
                                         @if (HasPrevious)
                                         {
@@ -209,11 +209,11 @@
                             }
                             @if (Report.Sections.Interpretation && !string.IsNullOrWhiteSpace(Report.Interpretation))
                             {
-                                <div class="xr-interpretation"><b>INTERPRETACIÓN:</b> @Report.Interpretation</div>
+                                <div class="xr-interpretation"><b>@L["INTERPRETATION:"]</b> @Report.Interpretation</div>
                             }
                             @if (Report.Sections.ReportedBy)
                             {
-                                <div class="xr-signed">Informado por: @Report.CreatedBy</div>
+                                <div class="xr-signed">@L["Reported by: {0}", Report.CreatedBy ?? ""]</div>
                             }
                             @if (MethodLine is { } methodLine)
                             {
@@ -232,7 +232,7 @@
                     {
                         <div class="xr-disclaimer">@Settings.Disclaimer</div>
                     }
-                    <div class="xr-pageno">Página @(i + 1) de @pages.Count</div>
+                    <div class="xr-pageno">@L["Page {0} of {1}", i + 1, pages.Count]</div>
                 </div>
             </div>
         </div>
@@ -253,19 +253,19 @@
     public static ExamReportDto PlaceholderReport(string? title = null, string? method = null, List<ExamReportResultDto>? results = null,
         string? interpretation = null, ExamReportSectionsDto? sections = null) => new()
     {
-        Title = string.IsNullOrWhiteSpace(title) ? "TÍTULO DEL EXAMEN" : title,
-        Method = method ?? "Marca - Equipo",
-        PetName = "Nombre del paciente",
-        OwnerName = "Nombre del tutor",
-        ReferringVet = "Médico tratante",
-        CreatedBy = "Responsable",
-        Interpretation = interpretation ?? (results is null ? "Interpretación del resultado." : null),
+        Title = string.IsNullOrWhiteSpace(title) ? Strings.T("EXAM TITLE") : title,
+        Method = method ?? Strings.T("Brand - Machine"),
+        PetName = Strings.T("Patient name"),
+        OwnerName = Strings.T("Owner name"),
+        ReferringVet = Strings.T("Referring vet"),
+        CreatedBy = Strings.T("Responsible"),
+        Interpretation = interpretation ?? (results is null ? Strings.T("Interpretation of the result.") : null),
         Sections = sections ?? new ExamReportSectionsDto { PatientData = true, Method = true, Interpretation = true },
         Results = results ??
         [
-            new ExamReportResultDto { Name = "Parámetro", Value = "Resultado", Unit = "Unidad", Reference = "Valor de referencia" },
-            new ExamReportResultDto { Name = "Parámetro con barra", Value = "4.1", Unit = "Unidad", Reference = "3.5 - 5.8", BarMin = 3.5m, BarMax = 5.8m },
-            new ExamReportResultDto { Name = "Fuera de rango", Value = "6.4", Unit = "Unidad", Reference = "3.5 - 5.8", BarMin = 3.5m, BarMax = 5.8m, Abnormal = true, Direction = ResultDirection.High }
+            new ExamReportResultDto { Name = Strings.T("Parameter"), Value = Strings.T("Result"), Unit = Strings.T("Unit"), Reference = Strings.T("Reference value") },
+            new ExamReportResultDto { Name = Strings.T("Parameter with bar"), Value = "4.1", Unit = Strings.T("Unit"), Reference = "3.5 - 5.8", BarMin = 3.5m, BarMax = 5.8m },
+            new ExamReportResultDto { Name = Strings.T("Out of range"), Value = "6.4", Unit = Strings.T("Unit"), Reference = "3.5 - 5.8", BarMin = 3.5m, BarMax = 5.8m, Abnormal = true, Direction = ResultDirection.High }
         ]
     };
 
@@ -277,7 +277,7 @@
         static string Part(string? text) => string.Join("-", (text ?? string.Empty).ToUpperInvariant()
             .Split([' ', '/', '\\', ':', '*', '?', '"', '<', '>', '|', '.'], StringSplitOptions.RemoveEmptyEntries));
         var patient = string.Join("-", new[] { Part(report.PetName), Part(report.OwnerLastName) }.Where(p => p.Length > 0));
-        return $"INFORME-{Part(report.ExamName ?? report.Title)}_{patient}_{report.ReceivedOn:dd-MM-yyyy}";
+        return $"{Part(Strings.T("REPORT"))}-{Part(report.ExamName ?? report.Title)}_{patient}_{report.ReceivedOn:dd-MM-yyyy}";
     }
 
     /// <summary>The paper as a CSS @page size, so the print dialog uses exactly the sheet's paper.</summary>
@@ -286,10 +286,12 @@
     private double PageWidth => Settings.Paper == PaperSize.A4 ? 210 : 215.9;
     private double PageHeight => Settings.Paper == PaperSize.A4 ? 297 : 279.4;
     private static string Mm(double value) => value.ToString(CultureInfo.InvariantCulture);
+    /// <summary>Printed labels and values are upper case: the same texts as the screens, upper-cased.</summary>
+    private static string Upper(string text) => text.ToUpper(CultureInfo.CurrentCulture);
     private bool HasHeader => LogoUrl is not null || Settings.HeaderLines.Count > 0;
     private static bool HasBar(ExamReportResultDto line) => line is { BarMin: { } min, BarMax: { } max } && max > min;
     private bool HasPrevious => Report.Sections.PreviousResult && (Report.PreviousReceivedOn is not null || Placeholder);
-    private string PreviousHeader => Report.PreviousReceivedOn?.ToString("dd/MM/yyyy") ?? "DD/MM/AAAA";
+    private string PreviousHeader => Report.PreviousReceivedOn?.ToString("dd/MM/yyyy") ?? Upper(L["dd/mm/yyyy"]);
     /// <summary>Exams read without a reference (e.g. cortisol samples judged together by the rules) drop the column.</summary>
     private bool HasReference => Report.Results.Any(r => !string.IsNullOrWhiteSpace(r.Reference) || HasBar(r));
     // Parameter, result, unit, [reference (with the bar under it)], [previous result].
@@ -367,10 +369,10 @@
             var marks = Report.Results.Select(Mark).ToHashSet();
             var parts = new[]
             {
-                marks.Contains("↑") ? "↑ Sobre el rango" : null,
-                marks.Contains("↓") ? "↓ Bajo el rango" : null,
-                marks.Contains("*") ? "* Fuera de la referencia" : null,
-                Report.Results.Any(r => r.Abnormal) ? "En rojo: resultado alterado" : null
+                marks.Contains("↑") ? L["↑ Above the range"].Value : null,
+                marks.Contains("↓") ? L["↓ Below the range"].Value : null,
+                marks.Contains("*") ? L["* Outside the reference"].Value : null,
+                Report.Results.Any(r => r.Abnormal) ? L["In red: abnormal result"].Value : null
             }.OfType<string>().ToList();
             return parts.Count == 0 ? null : string.Join(" · ", parts);
         }
@@ -481,13 +483,13 @@
         {
             var species = Report.Species switch
             {
-                Species.Dog => "Canino",
-                Species.Cat => "Felino",
-                Species.Bird => "Ave",
-                Species.Fish => "Pez",
-                Species.Reptile => "Reptil",
+                Species.Dog => L["Canine"],
+                Species.Cat => L["Feline"],
+                Species.Bird => L["Bird"],
+                Species.Fish => L["Fish"],
+                Species.Reptile => L["Reptile"],
                 Species.Unknown => null,
-                _ => Report.Species.ToString()
+                _ => Report.Species.ToText()
             };
             return string.Join(" – ", new[] { species, Report.Breed }.Where(s => !string.IsNullOrWhiteSpace(s))).ToUpperInvariant();
         }
@@ -499,16 +501,16 @@
         get
         {
             var method = Report.Sections.Method && !string.IsNullOrWhiteSpace(Report.Method) ? Report.Method : null;
-            var lot = !string.IsNullOrWhiteSpace(Report.LotNumber) ? $"LOTE: {Report.LotNumber}"
-                : Placeholder && Report.Sections.LotNumber ? "LOTE: N° DE LOTE" : null;
+            var lot = !string.IsNullOrWhiteSpace(Report.LotNumber) ? L["LOT: {0}", Report.LotNumber].Value
+                : Placeholder && Report.Sections.LotNumber ? L["LOT: LOT NUMBER"].Value : null;
             return method is null && lot is null ? null : string.Join(" · ", new[] { method, lot }.Where(s => s is not null));
         }
     }
 
     private string? SexName => Report.Sex switch
     {
-        Sex.Female => "HEMBRA",
-        Sex.Male => "MACHO",
+        Sex.Female => Upper(L["Female"]),
+        Sex.Male => Upper(L["Male"]),
         _ => null
     };
 
@@ -524,13 +526,13 @@
             if (months < 0)
                 return null;
             var (years, rest) = (months / 12, months % 12);
-            var yearsText = years == 1 ? "1 AÑO" : $"{years} AÑOS";
-            var monthsText = rest == 1 ? "1 MES" : $"{rest} MESES";
+            var yearsText = years == 1 ? L["1 YEAR"].Value : L["{0} YEARS", years].Value;
+            var monthsText = rest == 1 ? L["1 MONTH"].Value : Upper(L["{0} months", rest]);
             return (years, rest) switch
             {
                 (0, _) => monthsText,
                 (_, 0) => yearsText,
-                _ => $"{yearsText} Y {monthsText}"
+                _ => L["{0} AND {1}", yearsText, monthsText].Value
             };
         }
     }

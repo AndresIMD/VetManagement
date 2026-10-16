@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Hosting.Internal;
 using Microsoft.Extensions.Logging.Abstractions;
+using VetManagement.Api.Authorization;
 using VetManagement.Api.Payments;
 using VetManagement.Application.Payments;
 using VetManagement.Infrastructure.Payments;
@@ -122,6 +123,20 @@ public class PaymentsSetupTests
         var build = () => Build(Environments.Production, [.. settings]);
 
         build.Should().Throw<InvalidOperationException>();
+    }
+
+    [Fact]
+    public void Production_WithoutScheduling_NeedsNoProvider()
+    {
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Modules:Enabled:0"] = "Inventory", ["Modules:Enabled:1"] = "Clients", ["Modules:Enabled:2"] = "Exams"
+        }).Build();
+        var services = new ServiceCollection().AddLogging();
+        services.AddPaymentGateway(configuration, new HostingEnvironment { EnvironmentName = Environments.Production },
+            new EnabledModules(configuration));
+
+        services.BuildServiceProvider().GetRequiredService<IPaymentGateway>().Name.Should().Be("None");
     }
 
     [Fact]

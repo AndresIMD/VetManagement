@@ -9,8 +9,8 @@
             TitleColor="@TitleColor"
             IsLoading="@isLoading"
             IsValid="true"
-            PrimaryText="Save"
-            PrimaryLoadingText="Saving..."
+            PrimaryText="@L["Save"]"
+            PrimaryLoadingText="@L["Saving..."]"
             OnPrimaryClick="SaveAsync"
             OnCancelClick="OnCancelRequested">
     @if (_dataLoading)
@@ -24,13 +24,13 @@
     {
         <MudForm @ref="form" Model="_current">
             <MudGrid>
-                <MudItem xs="12" sm="6"><MudTextField Label="Name" @bind-Value="_current.Name" Required="true" /></MudItem>
-                <MudItem xs="12" sm="6"><MudTextField Label="Contact" @bind-Value="_current.ContactName" /></MudItem>
-                <MudItem xs="12" sm="6"><MudTextField Label="Phone" @bind-Value="_current.Phone" /></MudItem>
-                <MudItem xs="12" sm="6"><MudTextField Label="Email" @bind-Value="_current.Email" /></MudItem>
-                <MudItem xs="12"><MudTextField Label="Address" @bind-Value="_current.Address" /></MudItem>
-                <MudItem xs="12"><MudTextField Label="Notes" @bind-Value="_current.Notes" /></MudItem>
-                <MudItem xs="12" sm="6"><MudNumericField T="int?" Label="Default ETA (days)" @bind-Value="_current.DefaultTurnaroundDays" /></MudItem>
+                <MudItem xs="12" sm="6"><MudTextField Label="@L["Name"]" @bind-Value="_current.Name" Required="true" /></MudItem>
+                <MudItem xs="12" sm="6"><MudTextField Label="@L["Contact"]" @bind-Value="_current.ContactName" /></MudItem>
+                <MudItem xs="12" sm="6"><MudTextField Label="@L["Phone"]" @bind-Value="_current.Phone" /></MudItem>
+                <MudItem xs="12" sm="6"><MudTextField Label="@L["Email"]" @bind-Value="_current.Email" /></MudItem>
+                <MudItem xs="12"><MudTextField Label="@L["Address"]" @bind-Value="_current.Address" /></MudItem>
+                <MudItem xs="12"><MudTextField Label="@L["Notes"]" @bind-Value="_current.Notes" /></MudItem>
+                <MudItem xs="12" sm="6"><MudNumericField T="int?" Label="@L["Default turnaround (days)"]" @bind-Value="_current.DefaultTurnaroundDays" /></MudItem>
             </MudGrid>
         </MudForm>
     }
@@ -72,18 +72,18 @@
             if (_current.Id == 0)
             {
                 await LabsService.AddAsync(_current);
-                Snackbar.Add("Laboratory created.", Severity.Success);
+                Snackbar.Add(L["Laboratory created."], Severity.Success);
             }
             else
             {
                 await LabsService.UpdateAsync(_current);
-                Snackbar.Add("Laboratory updated.", Severity.Success);
+                Snackbar.Add(L["Laboratory updated."], Severity.Success);
             }
             MudDialog.Close(DialogResult.Ok(_current));
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error saving the laboratory: {ex.Message}", Severity.Error);
+            Snackbar.Add(L["Error saving the laboratory: {0}", ex.Message], Severity.Error);
         }
         finally
         {
@@ -99,10 +99,10 @@
             var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = false };
             var parameters = new DialogParameters<Components.Modals.Common.ConfirmModal>
             {
-                { x => x.Title, "Discard changes" },
-                { x => x.Message, "There are unsaved changes. Do you want to exit without saving?" },
-                { x => x.ButtonConfirmText, "Exit" },
-                { x => x.ButtonCancelText, "Continue editing" },
+                { x => x.Title, L["Discard changes"].Value },
+                { x => x.Message, L["There are unsaved changes. Do you want to exit without saving?"].Value },
+                { x => x.ButtonConfirmText, L["Exit"].Value },
+                { x => x.ButtonCancelText, L["Keep editing"].Value },
                 { x => x.TitleIcon, Icons.Material.Filled.Warning },
                 { x => x.TitleColor, Color.Warning }
             };

@@ -6,6 +6,7 @@ using VetManagement.Api.Authorization;
 using VetManagement.Api.Services;
 using VetManagement.Application.Services;
 using VetManagement.Domain.Enums;
+using VetManagement.Domain.Localization;
 
 namespace VetManagement.Api.Controllers.Setup;
 
@@ -26,7 +27,7 @@ public class SetupController(UserManager<IdentityUser> userManager, RoleManager<
 
         var existingAdmins = await userManager.GetUsersInRoleAsync("Admin");
         if (existingAdmins.Count > 0)
-            return BadRequest("Admin already exists.");
+            return BadRequest(Texts.T("Admin already exists."));
 
         // Validate bootstrap token header (X-Setup-Token)
         if (!Request.Headers.TryGetValue("X-Setup-Token", out var tokenHeader))

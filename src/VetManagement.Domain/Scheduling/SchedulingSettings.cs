@@ -1,4 +1,5 @@
 using VetManagement.Domain.Enums;
+using VetManagement.Domain.Localization;
 
 namespace VetManagement.Domain.Scheduling;
 
@@ -28,44 +29,44 @@ public class SchedulingSettings
         var errors = new List<string>();
 
         if (!TimeZoneInfo.TryFindSystemTimeZoneById(TimeZone, out _))
-            errors.Add($"Unknown time zone '{TimeZone}'.");
-        if (string.IsNullOrWhiteSpace(ClinicName)) errors.Add("ClinicName is required (clients see it in emails).");
+            errors.Add(Texts.T("Unknown time zone '{0}'.", TimeZone));
+        if (string.IsNullOrWhiteSpace(ClinicName)) errors.Add(Texts.T("ClinicName is required (clients see it in emails)."));
         if (!System.Text.RegularExpressions.Regex.IsMatch(Branding.PrimaryColor ?? "", "^#[0-9A-Fa-f]{6}$"))
-            errors.Add("Branding.PrimaryColor must be a hex color like #1565C0.");
+            errors.Add(Texts.T("Branding.PrimaryColor must be a hex color like #1565C0."));
         if (Branding.LogoUrl is { Length: > 0 } logo && !(Uri.TryCreate(logo, UriKind.Absolute, out var logoUri) && logoUri.Scheme == Uri.UriSchemeHttps))
-            errors.Add("Branding.LogoUrl must be an absolute https URL.");
-        if (Booking.MinNoticeMinutes < 0) errors.Add("Booking.MinNoticeMinutes must be 0 or more.");
-        if (Booking.HorizonDays < 1) errors.Add("Booking.HorizonDays must be at least 1.");
-        if (Booking.SlotStepMinutes < 5) errors.Add("Booking.SlotStepMinutes must be at least 5.");
-        if (Cancellation.ClientDeadlineHours < 0) errors.Add("Cancellation.ClientDeadlineHours must be 0 or more.");
-        if (Payment.PendingPaymentHoldMinutes < 1) errors.Add("Payment.PendingPaymentHoldMinutes must be at least 1.");
-        if (Notifications.ReminderHoursBefore < 1) errors.Add("Notifications.ReminderHoursBefore must be at least 1.");
+            errors.Add(Texts.T("Branding.LogoUrl must be an absolute https URL."));
+        if (Booking.MinNoticeMinutes < 0) errors.Add(Texts.T("Booking.MinNoticeMinutes must be 0 or more."));
+        if (Booking.HorizonDays < 1) errors.Add(Texts.T("Booking.HorizonDays must be at least 1."));
+        if (Booking.SlotStepMinutes < 5) errors.Add(Texts.T("Booking.SlotStepMinutes must be at least 5."));
+        if (Cancellation.ClientDeadlineHours < 0) errors.Add(Texts.T("Cancellation.ClientDeadlineHours must be 0 or more."));
+        if (Payment.PendingPaymentHoldMinutes < 1) errors.Add(Texts.T("Payment.PendingPaymentHoldMinutes must be at least 1."));
+        if (Notifications.ReminderHoursBefore < 1) errors.Add(Texts.T("Notifications.ReminderHoursBefore must be at least 1."));
 
-        AddDuplicates(errors, "service", Services.Select(s => s.Code));
-        AddDuplicates(errors, "resource", Resources.Select(r => r.Code));
+        AddDuplicates(errors, Texts.T("service"), Services.Select(s => s.Code));
+        AddDuplicates(errors, Texts.T("resource"), Resources.Select(r => r.Code));
         var resourceCodes = Resources.Select(r => r.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         foreach (var s in Services)
         {
             if (string.IsNullOrWhiteSpace(s.Code) || string.IsNullOrWhiteSpace(s.Name))
-                errors.Add("Every service needs a Code and a Name.");
-            if (s.DurationMinutes < 5) errors.Add($"Service '{s.Code}': DurationMinutes must be at least 5.");
-            if (s.BufferMinutes < 0) errors.Add($"Service '{s.Code}': BufferMinutes must be 0 or more.");
-            if (s.Price < 0) errors.Add($"Service '{s.Code}': Price must be 0 or more.");
-            if (s.DepositPercent is < 0 or > 100) errors.Add($"Service '{s.Code}': DepositPercent must be between 0 and 100.");
-            if (s.ResourceCodes.Count == 0) errors.Add($"Service '{s.Code}': needs at least one resource.");
+                errors.Add(Texts.T("Every service needs a Code and a Name."));
+            if (s.DurationMinutes < 5) errors.Add(Texts.T("Service '{0}': DurationMinutes must be at least 5.", s.Code));
+            if (s.BufferMinutes < 0) errors.Add(Texts.T("Service '{0}': BufferMinutes must be 0 or more.", s.Code));
+            if (s.Price < 0) errors.Add(Texts.T("Service '{0}': Price must be 0 or more.", s.Code));
+            if (s.DepositPercent is < 0 or > 100) errors.Add(Texts.T("Service '{0}': DepositPercent must be between 0 and 100.", s.Code));
+            if (s.ResourceCodes.Count == 0) errors.Add(Texts.T("Service '{0}': needs at least one resource.", s.Code));
             foreach (var code in s.ResourceCodes.Where(c => !resourceCodes.Contains(c)))
-                errors.Add($"Service '{s.Code}': unknown resource '{code}'.");
+                errors.Add(Texts.T("Service '{0}': unknown resource '{1}'.", s.Code, code));
         }
 
         foreach (var r in Resources)
         {
             if (string.IsNullOrWhiteSpace(r.Code) || string.IsNullOrWhiteSpace(r.Name))
-                errors.Add("Every resource needs a Code and a Name.");
+                errors.Add(Texts.T("Every resource needs a Code and a Name."));
             if (r.ReleaseThresholdPercent is < 1 or > 100)
-                errors.Add($"Resource '{r.Code}': ReleaseThresholdPercent must be between 1 and 100.");
+                errors.Add(Texts.T("Resource '{0}': ReleaseThresholdPercent must be between 1 and 100.", r.Code));
             if (r.Weekly.GroupBy(d => d.Day).Any(g => g.Count() > 1))
-                errors.Add($"Resource '{r.Code}': each day of the week may appear only once.");
+                errors.Add(Texts.T("Resource '{0}': each day of the week may appear only once.", r.Code));
             foreach (var day in r.Weekly)
                 ValidateBlocks(errors, $"Resource '{r.Code}' {day.Day}", day.Blocks);
         }
@@ -73,14 +74,14 @@ public class SchedulingSettings
         foreach (var e in Exceptions)
         {
             var label = $"Exception {e.From:yyyy-MM-dd}..{e.To:yyyy-MM-dd}";
-            if (e.To < e.From) errors.Add($"{label}: To is before From.");
+            if (e.To < e.From) errors.Add(Texts.T("{0}: To is before From.", label));
             if (e.ResourceCode is not null && !resourceCodes.Contains(e.ResourceCode))
-                errors.Add($"{label}: unknown resource '{e.ResourceCode}'.");
+                errors.Add(Texts.T("{0}: unknown resource '{1}'.", label, e.ResourceCode));
             if (e.Kind == ScheduleExceptionKind.Absence && e.ResourceCode is null)
-                errors.Add($"{label}: an Absence must name a resource (use Closed for the whole clinic).");
+                errors.Add(Texts.T("{0}: an Absence must name a resource (use Closed for the whole clinic).", label));
             if (e.Kind == ScheduleExceptionKind.CustomHours)
             {
-                if (e.Blocks.Count == 0) errors.Add($"{label}: CustomHours needs at least one block.");
+                if (e.Blocks.Count == 0) errors.Add(Texts.T("{0}: CustomHours needs at least one block.", label));
                 ValidateBlocks(errors, label, e.Blocks);
             }
         }
@@ -92,19 +93,19 @@ public class SchedulingSettings
     {
         foreach (var b in blocks)
         {
-            if (b.End <= b.Start) errors.Add($"{label}: block {b.Start}-{b.End} must end after it starts.");
-            if (b.MaxParallel < 1) errors.Add($"{label}: block {b.Start}-{b.End} needs MaxParallel of at least 1.");
+            if (b.End <= b.Start) errors.Add(Texts.T("{0}: block {1}-{2} must end after it starts.", label, b.Start, b.End));
+            if (b.MaxParallel < 1) errors.Add(Texts.T("{0}: block {1}-{2} needs MaxParallel of at least 1.", label, b.Start, b.End));
         }
         var ordered = blocks.OrderBy(b => b.Start).ToList();
         for (var i = 1; i < ordered.Count; i++)
             if (ordered[i].Start < ordered[i - 1].End)
-                errors.Add($"{label}: blocks {ordered[i - 1].Start}-{ordered[i - 1].End} and {ordered[i].Start}-{ordered[i].End} overlap.");
+                errors.Add(Texts.T("{0}: blocks {1}-{2} and {3}-{4} overlap.", label, ordered[i - 1].Start, ordered[i - 1].End, ordered[i].Start, ordered[i].End));
     }
 
     private static void AddDuplicates(List<string> errors, string what, IEnumerable<string> codes)
     {
         foreach (var dup in codes.GroupBy(c => c, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1))
-            errors.Add($"Duplicate {what} code '{dup.Key}'.");
+            errors.Add(Texts.T("Duplicate {0} code '{1}'.", what, dup.Key));
     }
 }
 

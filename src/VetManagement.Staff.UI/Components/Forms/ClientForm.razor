@@ -5,22 +5,22 @@
     <MudForm @ref="_mudForm" Model="ClientModel">
         <MudGrid>
             <MudItem xs="12" sm="6">
-                <MudTextField Label="First Name" @bind-Value="ClientModel.Name" For="@(() => ClientModel.Name)" Required="true" />
+                <MudTextField Label="@L["First name"]" @bind-Value="ClientModel.Name" For="@(() => ClientModel.Name)" Required="true" />
             </MudItem>
             <MudItem xs="12" sm="6">
-                <MudTextField Label="Last Name" @bind-Value="ClientModel.LastName" For="@(() => ClientModel.LastName)" />
+                <MudTextField Label="@L["Last name"]" @bind-Value="ClientModel.LastName" For="@(() => ClientModel.LastName)" />
             </MudItem>
             <MudItem xs="12" sm="6">
-                <MudTextField Label="Tax ID" @bind-Value="ClientModel.TaxId" For="@(() => ClientModel.TaxId)" Required="true" />
+                <MudTextField Label="@L["Tax ID"]" @bind-Value="ClientModel.TaxId" For="@(() => ClientModel.TaxId)" Required="true" />
             </MudItem>
             <MudItem xs="12" sm="6">
-                <MudTextField Label="Address" @bind-Value="ClientModel.Address" For="@(() => ClientModel.Address)" />
+                <MudTextField Label="@L["Address"]" @bind-Value="ClientModel.Address" For="@(() => ClientModel.Address)" />
             </MudItem>
             <MudItem xs="12" sm="6">
-                <MudNumericField T="int" Label="Phone" @bind-Value="ClientModel.PhoneNumber" For="@(() => ClientModel.PhoneNumber)" Required="true" />
+                <MudNumericField T="int" Label="@L["Phone"]" @bind-Value="ClientModel.PhoneNumber" For="@(() => ClientModel.PhoneNumber)" Required="true" />
             </MudItem>
             <MudItem xs="12" sm="6">
-                <MudTextField Label="Email" @bind-Value="ClientModel.Email" For="@(() => ClientModel.Email)" />
+                <MudTextField Label="@L["Email"]" @bind-Value="ClientModel.Email" For="@(() => ClientModel.Email)" />
             </MudItem>
         </MudGrid>
         @if (_mudForm != null && _mudForm.Errors?.Any() == true)
@@ -36,8 +36,8 @@
         }
         <MudDivider Class="my-5" />
         <MudStack Row="true" Spacing="2" Justify="Justify.FlexEnd">
-            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="OnCancel">Cancel</MudButton>
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@(_mudForm is not null && !_mudForm.IsValid)">Save</MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="OnCancel">@L["Cancel"]</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@(_mudForm is not null && !_mudForm.IsValid)">@L["Save"]</MudButton>
         </MudStack>
     </MudForm>
 </MudPaper>

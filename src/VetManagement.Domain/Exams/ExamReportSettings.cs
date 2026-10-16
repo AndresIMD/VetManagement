@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using VetManagement.Domain.Enums;
+using VetManagement.Domain.Localization;
 
 namespace VetManagement.Domain.Exams;
 
@@ -28,7 +29,7 @@ public class ExamReportSettings
     /// <summary>Clinic details printed at the bottom (name, tax id, address, phone).</summary>
     public List<string> FooterLines { get; set; } = [];
 
-    public string Disclaimer { get; set; } = "El resultado de este examen no constituye diagnóstico, por favor consulte con su médico tratante.";
+    public string Disclaimer { get; set; } = Texts.T("The result of this exam is not a diagnosis; please consult your referring vet.");
 
     /// <summary>Font of the whole report; one of <see cref="Fonts"/>, which every Windows PC has.</summary>
     public string FontFamily { get; set; } = "Segoe UI";
@@ -67,20 +68,20 @@ public class ExamReportSettings
     {
         var errors = new List<string>();
         if (MarginsMm.Top is < 0 or > 60 || MarginsMm.Right is < 0 or > 60 || MarginsMm.Bottom is < 0 or > 60 || MarginsMm.Left is < 0 or > 60)
-            errors.Add("Margins must be between 0 and 60 mm.");
+            errors.Add(Texts.T("Margins must be between 0 and 60 mm."));
         if (BackgroundOpacity is < 0.05 or > 1)
-            errors.Add("BackgroundOpacity must be between 0.05 and 1.");
+            errors.Add(Texts.T("BackgroundOpacity must be between 0.05 and 1."));
         if (LogoHeightMm is < 10 or > 60 || LogoWidthMm is < 10 or > 150)
-            errors.Add("The logo must be 10–60 mm high and 10–150 mm wide.");
+            errors.Add(Texts.T("The logo must be 10–60 mm high and 10–150 mm wide."));
         if (!IsColor(AccentColor) || !IsColor(HeaderColor))
-            errors.Add("Colours must be written as #RRGGBB.");
+            errors.Add(Texts.T("Colours must be written as #RRGGBB."));
         if (!Fonts.Contains(FontFamily))
-            errors.Add($"FontFamily must be one of: {string.Join(", ", Fonts)}.");
+            errors.Add(Texts.T("FontFamily must be one of: {0}.", string.Join(", ", Fonts)));
         if (HeaderLines.Count > 6 || FooterLines.Count > 8)
-            errors.Add("Use at most 6 header lines and 8 footer lines.");
+            errors.Add(Texts.T("Use at most 6 header lines and 8 footer lines."));
 
         foreach (var examId in Templates.GroupBy(t => t.ExamId).Where(g => g.Count() > 1).Select(g => g.Key))
-            errors.Add($"Exam {examId} has more than one report template.");
+            errors.Add(Texts.T("Exam {0} has more than one report template.", examId));
         foreach (var template in Templates)
             errors.AddRange(template.Validate());
         return errors;
@@ -130,49 +131,49 @@ public class ExamReportTemplate
     {
         var errors = new List<string>();
         var name = string.IsNullOrWhiteSpace(Title) ? $"Exam {ExamId}" : Title;
-        if (ExamId <= 0) errors.Add($"Template '{name}': ExamId is required.");
-        if (string.IsNullOrWhiteSpace(Title)) errors.Add($"Template for exam {ExamId}: Title is required.");
-        if (Parameters.Count == 0) errors.Add($"Template '{name}': add at least one parameter.");
+        if (ExamId <= 0) errors.Add(Texts.T("Template '{0}': ExamId is required.", name));
+        if (string.IsNullOrWhiteSpace(Title)) errors.Add(Texts.T("Template for exam {0}: Title is required.", ExamId));
+        if (Parameters.Count == 0) errors.Add(Texts.T("Template '{0}': add at least one parameter.", name));
         foreach (var code in Parameters.GroupBy(p => p.Code, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1).Select(g => g.Key))
-            errors.Add($"Template '{name}': duplicate parameter code '{code}'.");
+            errors.Add(Texts.T("Template '{0}': duplicate parameter code '{1}'.", name, code));
         foreach (var p in Parameters)
         {
             if (string.IsNullOrWhiteSpace(p.Code) || string.IsNullOrWhiteSpace(p.Name))
-                errors.Add($"Template '{name}': every parameter needs a Code and a Name.");
+                errors.Add(Texts.T("Template '{0}': every parameter needs a Code and a Name.", name));
             foreach (var band in p.Bands)
             {
                 if (band.Min is { } min && band.Max is { } max && min > max)
-                    errors.Add($"Template '{name}', parameter '{p.Code}': a band's Min is greater than its Max.");
+                    errors.Add(Texts.T("Template '{0}', parameter '{1}': a band's Min is greater than its Max.", name, p.Code));
                 if (band.Min is null && band.Max is null)
-                    errors.Add($"Template '{name}', parameter '{p.Code}': a band needs a Min, a Max or both.");
+                    errors.Add(Texts.T("Template '{0}', parameter '{1}': a band needs a Min, a Max or both.", name, p.Code));
             }
             if (p.Ranges.Any(r => r.Min is { } min && r.Max is { } max && min > max))
-                errors.Add($"Template '{name}', parameter '{p.Code}': a normal range's Min is greater than its Max.");
+                errors.Add(Texts.T("Template '{0}', parameter '{1}': a normal range's Min is greater than its Max.", name, p.Code));
             if (p.Reference == ReferenceDisplay.Text && string.IsNullOrWhiteSpace(p.ReferenceText))
-                errors.Add($"Template '{name}', parameter '{p.Code}': write the reference text, or show the range instead.");
+                errors.Add(Texts.T("Template '{0}', parameter '{1}': write the reference text, or show the range instead.", name, p.Code));
             if (p.Kind == ReportParameterKind.Text && p.Bands.Count > 0)
-                errors.Add($"Template '{name}', parameter '{p.Code}': text parameters have no bands.");
+                errors.Add(Texts.T("Template '{0}', parameter '{1}': text parameters have no bands.", name, p.Code));
             if (p.AbnormalOptions.Any(a => !p.Options.Contains(a, StringComparer.OrdinalIgnoreCase)))
-                errors.Add($"Template '{name}', parameter '{p.Code}': abnormal results must be among its options.");
+                errors.Add(Texts.T("Template '{0}', parameter '{1}': abnormal results must be among its options.", name, p.Code));
         }
 
         bool IsNumber(string? code) => FindParameter(code ?? string.Empty) is { Kind: ReportParameterKind.Number };
         foreach (var (rule, index) in Rules.Select((r, i) => (r, i + 1)))
         {
             if (string.IsNullOrWhiteSpace(rule.Label))
-                errors.Add($"Template '{name}', rule {index}: write what it means.");
+                errors.Add(Texts.T("Template '{0}', rule {1}: write what it means.", name, index));
             if (rule.Conditions.Count == 0)
-                errors.Add($"Template '{name}', rule {index}: add at least one condition.");
+                errors.Add(Texts.T("Template '{0}', rule {1}: add at least one condition.", name, index));
             if (rule.Conditions.Any(c => !IsNumber(c.Code) || (!string.IsNullOrWhiteSpace(c.PercentOf) && !IsNumber(c.PercentOf))))
-                errors.Add($"Template '{name}', rule {index}: conditions must use number parameters of this template.");
+                errors.Add(Texts.T("Template '{0}', rule {1}: conditions must use number parameters of this template.", name, index));
         }
 
         if (Sections.CriteriaTable && (Criteria.Columns.Count == 0 || Criteria.Rows.Count == 0))
-            errors.Add($"Template '{name}': the criteria table needs at least one column and one row.");
+            errors.Add(Texts.T("Template '{0}': the criteria table needs at least one column and one row.", name));
         if (Criteria.Columns.Count > CriteriaTable.MaxColumns || Criteria.Rows.Count > CriteriaTable.MaxRows)
-            errors.Add($"Template '{name}': the criteria table has at most {CriteriaTable.MaxColumns} columns and {CriteriaTable.MaxRows} rows.");
+            errors.Add(Texts.T("Template '{0}': the criteria table has at most {1} columns and {2} rows.", name, CriteriaTable.MaxColumns, CriteriaTable.MaxRows));
         if (Criteria.Rows.Any(r => r.Cells.Count != Criteria.Columns.Count))
-            errors.Add($"Template '{name}': every row of the criteria table needs one cell per column.");
+            errors.Add(Texts.T("Template '{0}': every row of the criteria table needs one cell per column.", name));
         return errors;
     }
 }

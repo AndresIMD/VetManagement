@@ -2,6 +2,7 @@ using System.Text.Json;
 using VetManagement.Application.Contracts.Persistence;
 using VetManagement.Application.Contracts.Services;
 using VetManagement.Application.Inventory;
+using VetManagement.Domain.Localization;
 using VetManagement.Domain.Enums;
 using VetManagement.Domain.Inventory;
 using VetManagement.Application.Common;
@@ -118,7 +119,7 @@ public class InventoryMovementService(IUnitOfWork unitOfWork, IRealtimeNotificat
                 Type = moveType,
                 Quantity = Math.Abs(amount),
                 Date = DateTime.UtcNow,
-                Reason = string.IsNullOrWhiteSpace(reason) ? InventoryReasons.QUICK_ADJUSTMENT : reason,
+                Reason = string.IsNullOrWhiteSpace(reason) ? Texts.T(InventoryReasons.QUICK_ADJUSTMENT) : reason,
                 Responsible = userName
             });
 
@@ -183,7 +184,7 @@ public class InventoryMovementService(IUnitOfWork unitOfWork, IRealtimeNotificat
                     Type = isIngress ? DomainInventoryMovementType.MassiveStockIngress : DomainInventoryMovementType.MassiveStockEgress,
                     Quantity = appliedQuantity,
                     Date = DateTime.UtcNow,
-                    Reason = isIngress ? InventoryReasons.MASSIVE_INGRESS : InventoryReasons.MASSIVE_EGRESS,
+                    Reason = Texts.T(isIngress ? InventoryReasons.MASSIVE_INGRESS : InventoryReasons.MASSIVE_EGRESS),
                     Responsible = userName
                 });
 

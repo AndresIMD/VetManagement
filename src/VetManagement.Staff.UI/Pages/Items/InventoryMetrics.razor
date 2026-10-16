@@ -10,17 +10,17 @@
 @using VetManagement.Staff.UI.Models.Inventory
 @using VetManagement.Staff.UI.Services.Api
 
-<PageTitle>Inventory Metrics</PageTitle>
+<PageTitle>@L["Inventory Metrics"]</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
-    <PageHeader Title="Inventory Metrics" Icon="@Icons.Material.Filled.ShowChart" />
+    <PageHeader Title="@L["Inventory Metrics"]" Icon="@Icons.Material.Filled.ShowChart" />
 
     <MudPaper Class="pa-6 mb-4 elevation-3 rounded-lg app-surface">
         <MudGrid>
             <MudItem xs="12" md="6">
                 <MudAutocomplete T="Item"
                                  @ref="_itemSelector"
-                                 Label="Select items"
+                                 Label="@L["Select items"]"
                                  Variant="Variant.Outlined"
                                  Value="_tempSelectedItem"
                                  ValueChanged="OnItemPicked"
@@ -34,36 +34,36 @@
                                  AdornmentIcon="@Icons.Material.Filled.Inventory2" />
             </MudItem>
             <MudItem xs="12" sm="6" md="3">
-                <MudDatePicker Date="_from" DateChanged="OnFromChanged" Label="From" Variant="Variant.Outlined" Clearable="true" />
+                <MudDatePicker Date="_from" DateChanged="OnFromChanged" Label="@L["From"]" Variant="Variant.Outlined" Clearable="true" />
             </MudItem>
             <MudItem xs="12" sm="6" md="3">
-                <MudDatePicker Date="_to" DateChanged="OnToChanged" Label="To" Variant="Variant.Outlined" Clearable="true" />
+                <MudDatePicker Date="_to" DateChanged="OnToChanged" Label="@L["To"]" Variant="Variant.Outlined" Clearable="true" />
             </MudItem>
             <MudItem xs="12" sm="12" md="6">
                 <MudStack Row="true" Spacing="1">
-                    <MudButton Variant="Variant.Outlined" Color="@MudBlazor.Color.Primary" OnClick="@(() => SetPreset(Preset.Today))">Today</MudButton>
-                    <MudButton Variant="Variant.Outlined" Color="@MudBlazor.Color.Primary" OnClick="@(() => SetPreset(Preset.Last7))">7 days</MudButton>
-                    <MudButton Variant="Variant.Outlined" Color="@MudBlazor.Color.Primary" OnClick="@(() => SetPreset(Preset.Last30))">30 days</MudButton>
-                    <MudButton Variant="Variant.Outlined" Color="@MudBlazor.Color.Primary" OnClick="@(() => SetPreset(Preset.Last12Months))">12 months</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="@MudBlazor.Color.Primary" OnClick="@(() => SetPreset(Preset.Today))">@L["Today"]</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="@MudBlazor.Color.Primary" OnClick="@(() => SetPreset(Preset.Last7))">@L["7 days"]</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="@MudBlazor.Color.Primary" OnClick="@(() => SetPreset(Preset.Last30))">@L["30 days"]</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="@MudBlazor.Color.Primary" OnClick="@(() => SetPreset(Preset.Last12Months))">@L["12 months"]</MudButton>
                 </MudStack>
             </MudItem>
             <MudItem xs="12" md="3" Class="d-flex align-center">
                 <MudStack Row="true" Spacing="1">
-                    <MudButton Color="@MudBlazor.Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Refresh" OnClick="LoadChartAsync">Refresh</MudButton>
-                    <MudButton Color="@MudBlazor.Color.Info" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.DoneAll" OnClick="SelectAllAndLoad">All</MudButton>
+                    <MudButton Color="@MudBlazor.Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Refresh" OnClick="LoadChartAsync">@L["Refresh"]</MudButton>
+                    <MudButton Color="@MudBlazor.Color.Info" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.DoneAll" OnClick="SelectAllAndLoad">@L["All"]</MudButton>
                 </MudStack>
             </MudItem>
 
             <MudItem xs="12">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                    <MudText Typo="Typo.subtitle2">Selected items</MudText>
-                    <MudButton Color="Color.Error" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ClearAll" Disabled="@(!_selectedItems.Any())" OnClick="@ClearAllSelected">Clear all</MudButton>
+                    <MudText Typo="Typo.subtitle2">@L["Selected items"]</MudText>
+                    <MudButton Color="Color.Error" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ClearAll" Disabled="@(!_selectedItems.Any())" OnClick="@ClearAllSelected">@L["Clear all"]</MudButton>
                 </MudStack>
 
                 <ActiveFilterChips Chips="@BuildSelectedChips()" />
                 @if (!_selectedItems.Any())
                 {
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">No items selected.</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">@L["No items selected."]</MudText>
                 }
             </MudItem>
         </MudGrid>
@@ -75,7 +75,7 @@
     }
     else if (_series.Count == 0 || _xAxisLabels.Length == 0)
     {
-        <MudAlert Severity="Severity.Info" Dense="true">No data to display.</MudAlert>
+        <MudAlert Severity="Severity.Info" Dense="true">@L["No data to display."]</MudAlert>
     }
     else
     {
@@ -216,11 +216,11 @@
         _xAxisLabels = buckets.Select(b => grouping switch
         {
             Grouping.Hour => b.ToString("H") + ":00",
-            Grouping.Day => $"{b:dd}/{GenericConstants.MONTH_ABBREVIATIONS_ES[b.Month - 1]}",
-            Grouping.Week => $"W{ISOWeek.GetWeekOfYear(b)} {b:yy}",
-            Grouping.Month => GenericConstants.MONTH_ABBREVIATIONS_ES[b.Month - 1],
+            Grouping.Day => $"{b:dd}/{CultureInfo.CurrentCulture.DateTimeFormat.GetAbbreviatedMonthName(b.Month)}",
+            Grouping.Week => L["W{0} {1}", ISOWeek.GetWeekOfYear(b), b.ToString("yy")].Value,
+            Grouping.Month => CultureInfo.CurrentCulture.DateTimeFormat.GetAbbreviatedMonthName(b.Month),
             Grouping.Year => b.ToString("yyyy"),
-            _ => $"{b:dd}/{GenericConstants.MONTH_ABBREVIATIONS_ES[b.Month - 1]}"
+            _ => $"{b:dd}/{CultureInfo.CurrentCulture.DateTimeFormat.GetAbbreviatedMonthName(b.Month)}"
         }).ToArray();
 
         var perItem = selectedIds.ToDictionary(id => id, _ => new double[buckets.Count]);
@@ -307,7 +307,7 @@
                 OnClear = async () => { await RemoveItemFromSelection(it.Id); }
             });
 
-    private string GetItemName(int id) => _selectedItems.FirstOrDefault(i => i.Id == id)?.Name ?? $"Item {id}";
+    private string GetItemName(int id) => _selectedItems.FirstOrDefault(i => i.Id == id)?.Name ?? L["Item {0}", id].Value;
 
     private class ItemComparer : IEqualityComparer<Item>
     {

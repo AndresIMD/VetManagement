@@ -25,6 +25,9 @@ builder.WebHost.ConfigureKestrel(options =>
     options.Limits.RequestHeadersTimeout = TimeSpan.FromSeconds(30);
 });
 
+// The clinic's language for what the API writes to people: validation errors, client emails, default settings.
+VetManagement.Domain.Localization.Texts.UseCulture(builder.Configuration["Localization:Culture"]);
+
 // User secrets are loaded by CreateBuilder in Development only. Loading them in every Debug build
 // (as before) let a developer's secrets override test/production configuration.
 
@@ -173,12 +176,13 @@ builder.Services.AddScoped<VetManagement.Application.Billing.BillingService>();
 builder.Services.AddScoped<VetManagement.Application.Clinical.ClinicalSettingsService>();
 builder.Services.AddScoped<VetManagement.Application.Clinical.ClinicalService>();
 builder.Services.AddScoped<VetManagement.Application.Reports.ReportsService>();
-builder.Services.AddSingleton(new EnabledModules(builder.Configuration));
+var enabledModules = new EnabledModules(builder.Configuration);
+builder.Services.AddSingleton(enabledModules);
 builder.Services.AddScoped<VetManagement.Application.Exams.ExamReportSettingsService>();
 builder.Services.AddScoped<VetManagement.Application.Exams.ExamReportService>();
 builder.Services.AddScoped<VetManagement.Application.ClientPortal.ClientPortalService>();
 builder.Services.AddScoped<VetManagement.Api.TestData.TestDataService>();
-builder.Services.AddPaymentGateway(builder.Configuration, builder.Environment);
+builder.Services.AddPaymentGateway(builder.Configuration, builder.Environment, enabledModules);
 builder.Services.AddScoped<VetManagement.Application.Contracts.Services.IEmailSender, SmtpEmailSender>();
 builder.Services.AddSingleton(TimeProvider.System);
 

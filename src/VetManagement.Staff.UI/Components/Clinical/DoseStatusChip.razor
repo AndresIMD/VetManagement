@@ -13,10 +13,8 @@
 
     private string Label => Status switch
     {
-        PreventiveStatus.DueSoon => "Due soon",
-        PreventiveStatus.UpToDate => "Up to date",
-        PreventiveStatus.NoRepeat => "Single dose",
-        PreventiveStatus.Superseded => "Replaced",
-        _ => Status.ToString()
+        PreventiveStatus.NoRepeat => L["Single dose"],
+        PreventiveStatus.Superseded => L["Replaced"],
+        _ => Status.ToText()
     };
 }

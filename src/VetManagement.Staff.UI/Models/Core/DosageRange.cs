@@ -5,7 +5,7 @@ namespace VetManagement.Staff.UI.Models.Core;
 public class DosageRange(float min, float max) : IValidatableObject
 {
 
-    [Range(0, float.MaxValue, ErrorMessage = "The minimum dose must be 0 or greater.")]
+    [Range(0, float.MaxValue, ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.MinDoseNotNegative))]
     public float Min { get; set; } = min;
     public float Max { get; set; } = max;
 

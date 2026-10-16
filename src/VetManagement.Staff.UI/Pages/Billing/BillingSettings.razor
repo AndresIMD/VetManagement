@@ -5,19 +5,17 @@
 @inject BillingApiService BillingApi
 @attribute [Authorize(Policy = "Billing.Manage")]
 
-<PageTitle>Billing Settings</PageTitle>
+<PageTitle>@L["Billing Settings"]</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
-    <PageHeader Title="Billing Settings" Icon="@Icons.Material.Filled.PointOfSale" />
+    <PageHeader Title="@L["Billing Settings"]" Icon="@Icons.Material.Filled.PointOfSale" />
 
     <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3">
-        The clinic's billing policy: payment methods (rename them, turn them on or off, mark the ones counted
-        in the cash drawer), the largest discount staff can give without an administrator, and whether selling
-        a product takes it out of inventory. Never change a method's <code>code</code> once it was used.
-        See <code>docs/modules/BILLING.md</code>.
+        @L["The clinic's billing policy: payment methods (rename them, turn them on or off, mark the ones counted in the cash drawer), the largest discount staff can give without an administrator, and whether selling a product takes it out of inventory. Never change a method's code once it was used."]
+        @L["See {0} for every field.", "docs/modules/BILLING.md"]
     </MudAlert>
 
-    <SettingsJsonEditor Load="LoadAsync" Save="SaveAsync" SavedMessage="Billing settings saved." Lines="24" />
+    <SettingsJsonEditor Load="LoadAsync" Save="SaveAsync" SavedMessage="@L["Billing settings saved."]" Lines="24" />
 </MudContainer>
 
 @code {

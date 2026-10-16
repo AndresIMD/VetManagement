@@ -8,7 +8,9 @@
     <AssemblyName>VetManagement.Staff.Web</AssemblyName>
     <UserSecretsId>aa903c23-0dc5-4366-bbbf-8dbcd8f2658c</UserSecretsId>
     <BlazorWebAssemblyEnableLinking>true</BlazorWebAssemblyEnableLinking>
-    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- The clinic's culture (config.json "Culture") sets texts and date/number formats: needs globalization data. -->
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>
   </PropertyGroup>
 
   <!-- Disable debug symbols in Development to avoid GitHub rate limiting -->

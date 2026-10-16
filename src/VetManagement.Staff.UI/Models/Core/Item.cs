@@ -38,35 +38,35 @@ public class Item
 
     public int Id { get; set; }
 
-    [Required(ErrorMessage = GenericConstants.REQUIRED_FIELD_ERROR)]
+    [Required(ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.Required))]
     public string Name { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = GenericConstants.REQUIRED_FIELD_ERROR)]
+    [Required(ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.Required))]
     public ItemType Type { get; set; }
 
     public string? Brand { get; set; }
 
     public string? Description { get; set; }
 
-    [Required(ErrorMessage = GenericConstants.REQUIRED_FIELD_ERROR)]
+    [Required(ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.Required))]
     public int Stock { get; set; }
 
-    [Required(ErrorMessage = GenericConstants.REQUIRED_FIELD_ERROR)]
-    [Range(0, int.MaxValue, ErrorMessage = "The selling price must be 0 or greater.")]
+    [Required(ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.Required))]
+    [Range(0, int.MaxValue, ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.SellPriceNotNegative))]
     public int SellPrice { get; set; }
 
-    [Required(ErrorMessage = GenericConstants.REQUIRED_FIELD_ERROR)]
-    [Range(0, int.MaxValue, ErrorMessage = "The purchase price must be 0 or greater.")]
+    [Required(ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.Required))]
+    [Range(0, int.MaxValue, ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.BuyPriceNotNegative))]
     public int BuyPrice { get; set; }
 
-    [Required(ErrorMessage = GenericConstants.REQUIRED_FIELD_ERROR)]
+    [Required(ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.Required))]
     [MaxLength(100)]
     public string Barcode { get; set; } = string.Empty;
 
     [MaxLength(100)]
     public string? BrandBarcode { get; set; }
 
-    [Range(0, int.MaxValue, ErrorMessage = "The low stock threshold must be 0 or greater.")]
+    [Range(0, int.MaxValue, ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.LowStockThresholdNotNegative))]
     public int LowStockThreshold { get; set; } = 5;
 
     public static Item GetEmpty()

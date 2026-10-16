@@ -5,23 +5,23 @@
 @inject IDialogService DialogService
 @attribute [Authorize(Policy = "ExternalLabs.Read")]
 
-<PageTitle>External Labs</PageTitle>
+<PageTitle>@L["External Labs"]</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
-    <PageHeader Title="External Labs" Icon="@Icons.Material.Filled.Biotech" />
+    <PageHeader Title="@L["External Labs"]" Icon="@Icons.Material.Filled.Biotech" />
 
     <MudStack Row="true" Spacing="2" Class="mb-3" Justify="Justify.FlexEnd">
-        <MudButton Color="Color.Success" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.AddBox" OnClick="ShowAddModal">New lab</MudButton>
+        <MudButton Color="Color.Success" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.AddBox" OnClick="ShowAddModal">@L["New lab"]</MudButton>
     </MudStack>
 
     <MudTable Items="_labs" Dense="true" Hover="true" Bordered="true" Striped="true">
         <HeaderContent>
-            <MudTh>Name</MudTh>
-            <MudTh>Contact</MudTh>
-            <MudTh>Phone</MudTh>
-            <MudTh>Email</MudTh>
-            <MudTh>Default ETA</MudTh>
-            <MudTh style="width:140px; text-align:right;">Actions</MudTh>
+            <MudTh>@L["Name"]</MudTh>
+            <MudTh>@L["Contact"]</MudTh>
+            <MudTh>@L["Phone"]</MudTh>
+            <MudTh>@L["Email"]</MudTh>
+            <MudTh>@L["Default turnaround (days)"]</MudTh>
+            <MudTh style="width:140px; text-align:right;">@L["Actions"]</MudTh>
         </HeaderContent>
         <RowTemplate Context="lab">
             <MudTd>@lab.Name</MudTd>
@@ -54,7 +54,7 @@
         var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
         var parameters = new DialogParameters<Components.Modals.Exams.ExternalLabEditModal>
         {
-            { x => x.Title, "New lab" },
+            { x => x.Title, L["New lab"].Value },
             { x => x.TitleIcon, Icons.Material.Filled.Biotech },
             { x => x.TitleColor, Color.Success }
         };
@@ -70,7 +70,7 @@
         var parameters = new DialogParameters<Components.Modals.Exams.ExternalLabEditModal>
         {
             { x => x.Initial, entity },
-            { x => x.Title, "Edit lab" },
+            { x => x.Title, L["Edit lab"].Value },
             { x => x.TitleIcon, Icons.Material.Filled.Edit },
             { x => x.TitleColor, Color.Primary }
         };
@@ -85,10 +85,10 @@
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = false };
         var parameters = new DialogParameters<Components.Modals.Common.ConfirmModal>
         {
-            { x => x.Title, "Delete lab" },
-            { x => x.Message, $"Delete '{entity.Name}'?" },
-            { x => x.ButtonConfirmText, "Delete" },
-            { x => x.ButtonCancelText, "Cancel" },
+            { x => x.Title, L["Delete lab"].Value },
+            { x => x.Message, L["Delete '{0}'?", entity.Name].Value },
+            { x => x.ButtonConfirmText, L["Delete"].Value },
+            { x => x.ButtonCancelText, L["Cancel"].Value },
             { x => x.TitleIcon, Icons.Material.Filled.Delete },
             { x => x.TitleColor, Color.Error }
         };
@@ -97,7 +97,7 @@
         if (result is { Canceled: false })
         {
             await LabsService.DeleteAsync(entity.Id);
-            Snackbar.Add("Lab deleted.", Severity.Success);
+            Snackbar.Add(L["Lab deleted."], Severity.Success);
             await LoadAsync();
         }
     }

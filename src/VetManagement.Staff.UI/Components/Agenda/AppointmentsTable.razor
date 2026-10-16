@@ -9,11 +9,11 @@ else
 {
     <MudTable Items="Items" Dense="true" Hover="true" Elevation="0">
         <HeaderContent>
-            <MudTh>@(ShowDate ? "Date" : "Time")</MudTh>
-            <MudTh>Service</MudTh>
-            <MudTh>Vet / room</MudTh>
-            <MudTh>Owner · pet</MudTh>
-            <MudTh>Status</MudTh>
+            <MudTh>@(ShowDate ? L["Date"] : L["Time"])</MudTh>
+            <MudTh>@L["Service"]</MudTh>
+            <MudTh>@L["Vet / room"]</MudTh>
+            <MudTh>@L["Owner · pet"]</MudTh>
+            <MudTh>@L["Status"]</MudTh>
             <MudTh></MudTh>
         </HeaderContent>
         <RowTemplate>
@@ -28,39 +28,39 @@ else
                 }
             </MudTd>
             <MudTd>
-                <MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)">@context.Status</MudChip>
+                <MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)">@context.Status.ToText()</MudChip>
                 @if (context.IsOverbooked)
                 {
-                    <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined">Overbooked</MudChip>
+                    <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined">@L["Overbooked"]</MudChip>
                 }
                 @if (context.Source == AppointmentSource.Online)
                 {
-                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">Online</MudChip>
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@L["Online"]</MudChip>
                 }
             </MudTd>
             <MudTd Style="white-space: nowrap;">
                 @if (context.PetId is int petId)
                 {
-                    <MudTooltip Text="Clinical record">
+                    <MudTooltip Text="@L["Clinical record"]">
                         <MudIconButton Icon="@Icons.Material.Filled.MedicalInformation" Size="Size.Small" Color="Color.Primary"
                                        Href="@($"clinical/pets/{petId}?appointment={context.Id}&reason={Uri.EscapeDataString(Catalog.ServiceName(context.ServiceCode))}")" />
                     </MudTooltip>
                 }
                 @if (CanCharge && context.Status is AppointmentStatus.Confirmed or AppointmentStatus.Completed)
                 {
-                    <MudTooltip Text="Charge">
+                    <MudTooltip Text="@L["Charge"]">
                         <MudIconButton Icon="@Icons.Material.Filled.PointOfSale" Size="Size.Small" Color="Color.Success" OnClick="() => OnCharge.InvokeAsync(context)" />
                     </MudTooltip>
                 }
                 @if (CanBook && context.Status is AppointmentStatus.Confirmed or AppointmentStatus.NeedsReschedule)
                 {
-                    <MudTooltip Text="Reschedule">
+                    <MudTooltip Text="@L["Reschedule"]">
                         <MudIconButton Icon="@Icons.Material.Filled.EditCalendar" Size="Size.Small" OnClick="() => OnReschedule.InvokeAsync(context)" />
                     </MudTooltip>
                 }
                 @if (CanBook && context.Status is AppointmentStatus.Confirmed or AppointmentStatus.NeedsReschedule or AppointmentStatus.PendingPayment)
                 {
-                    <MudTooltip Text="Cancel">
+                    <MudTooltip Text="@L["Cancel"]">
                         <MudIconButton Icon="@Icons.Material.Filled.EventBusy" Size="Size.Small" Color="Color.Error" OnClick="() => OnCancel.InvokeAsync(context)" />
                     </MudTooltip>
                 }
@@ -74,7 +74,7 @@ else
     [Parameter] public AgendaCatalog Catalog { get; set; } = default!;
     [Parameter] public bool CanBook { get; set; }
     [Parameter] public bool ShowDate { get; set; }
-    [Parameter] public string EmptyText { get; set; } = "No appointments.";
+    [Parameter] public string EmptyText { get; set; } = Strings.T("No appointments.");
     [Parameter] public EventCallback<AppointmentDto> OnReschedule { get; set; }
     [Parameter] public EventCallback<AppointmentDto> OnCancel { get; set; }
     /// <summary>Shows the charge button (opens the appointment's sale).</summary>
