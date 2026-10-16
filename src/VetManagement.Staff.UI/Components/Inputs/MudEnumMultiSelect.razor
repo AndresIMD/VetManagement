@@ -9,7 +9,7 @@
     @foreach (var value in _availableValues)
     {
         <MudSelectItem T="TEnum" Value="@value">
-            @value.GetDisplayString()
+            @value.ToText()
         </MudSelectItem>
     }
 </MudSelect>
@@ -81,13 +81,13 @@
     private string GetMultiSelectionText(IReadOnlyList<string> selectedTexts)
     {
         if (selectedTexts.Count == 0)
-            return "All";
+            return L["All"];
 
         if (selectedTexts.Count == 1)
             return selectedTexts[0];
 
         if (selectedTexts.Count == _availableValues.Count)
-            return "All";
+            return L["All"];
 
         return $"{selectedTexts.Count} selected";
     }

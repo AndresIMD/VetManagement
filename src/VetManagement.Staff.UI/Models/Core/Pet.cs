@@ -22,28 +22,28 @@ public class Pet
 
     public int OwnerId { get; set; }
 
-    [Required(ErrorMessage = GenericConstants.REQUIRED_FIELD_ERROR)]
+    [Required(ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.Required))]
     public required string Name { get; set; }
 
-    [Required(ErrorMessage = GenericConstants.REQUIRED_FIELD_ERROR)]
+    [Required(ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.Required))]
     public Sex Sex { get; set; }
 
-    [Required(ErrorMessage = GenericConstants.REQUIRED_FIELD_ERROR)]
+    [Required(ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.Required))]
     public Species Species { get; set; } = Species.Unknown;
 
-    [Required(ErrorMessage = GenericConstants.REQUIRED_FIELD_ERROR)]
+    [Required(ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.Required))]
     public required string Breed { get; set; }
 
-    [Required(ErrorMessage = GenericConstants.REQUIRED_FIELD_ERROR)]
+    [Required(ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.Required))]
     public DateTime Birthdate { get; set; }
 
-    [Required(ErrorMessage = GenericConstants.REQUIRED_FIELD_ERROR)]
+    [Required(ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.Required))]
     public int Age { get; set; }
 
-    [Required(ErrorMessage = GenericConstants.REQUIRED_FIELD_ERROR)]
+    [Required(ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.Required))]
     public float Weight { get; set; }
 
-    [Required(ErrorMessage = GenericConstants.REQUIRED_FIELD_ERROR)]
+    [Required(ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.Required))]
     public ReproductiveStatus ReproductiveStatus { get; set; }
 
     public int ChipId { get; set; }

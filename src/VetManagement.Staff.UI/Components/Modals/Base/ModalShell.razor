@@ -59,12 +59,12 @@
     [Parameter] public bool IsLoading { get; set; }
     [Parameter] public bool IsValid { get; set; } = true;
     [Parameter] public bool PrimaryDisabled { get; set; } = false;
-    [Parameter] public string PrimaryText { get; set; } = "Save";
-    [Parameter] public string PrimaryLoadingText { get; set; } = "Saving...";
+    [Parameter] public string PrimaryText { get; set; } = Strings.T("Save");
+    [Parameter] public string PrimaryLoadingText { get; set; } = Strings.T("Saving...");
     [Parameter] public Color PrimaryColor { get; set; } = Color.Primary;
     [Parameter] public EventCallback OnPrimaryClick { get; set; }
 
-    [Parameter] public string CancelText { get; set; } = "Cancel";
+    [Parameter] public string CancelText { get; set; } = Strings.T("Cancel");
     [Parameter] public Color CancelColor { get; set; } = Color.Secondary;
     [Parameter] public EventCallback OnCancelClick { get; set; }
 

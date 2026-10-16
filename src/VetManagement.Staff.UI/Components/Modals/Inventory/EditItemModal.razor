@@ -9,8 +9,8 @@
             TitleColor="@TitleColor"
             IsLoading="@isLoading"
             IsValid="@isValid"
-            PrimaryText="Save"
-            PrimaryLoadingText="Saving..."
+            PrimaryText="@L["Save"]"
+            PrimaryLoadingText="@L["Saving..."]"
             OnPrimaryClick="HandleValidSubmit"
             OnCancelClick="OnCancelRequested">
     <ItemForm ItemModel="ItemModel"
@@ -61,7 +61,7 @@
         {
             if (ItemDTO == null)
             {
-                Snackbar.Add("Item to edit was not found.", Severity.Error);
+                Snackbar.Add(L["Item to edit was not found."], Severity.Error);
                 MudDialog.Cancel();
                 return;
             }
@@ -69,19 +69,19 @@
             var obj = await ItemsService.GetItemByIdAsync(ItemDTO.Id);
             if (obj == null)
             {
-                Snackbar.Add("Item to edit was not found.", Severity.Error);
+                Snackbar.Add(L["Item to edit was not found."], Severity.Error);
                 MudDialog.Cancel();
                 return;
             }
 
             var editedObj = BuildEditedObject(obj);
             await ItemsService.UpdateItemAsync(editedObj);
-            Snackbar.Add("Item updated successfully.", Severity.Success);
+            Snackbar.Add(L["Item updated successfully."], Severity.Success);
             MudDialog.Close(DialogResult.Ok(editedObj));
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error updating item: {ex.Message}", Severity.Error);
+            Snackbar.Add(L["Error updating item: {0}", ex.Message], Severity.Error);
         }
         finally
         {
@@ -96,10 +96,10 @@
             var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = false };
             var parameters = new DialogParameters<Components.Modals.Common.ConfirmModal>
             {
-                { x => x.Title, "Discard changes" },
-                { x => x.Message, "There are unsaved changes. Do you want to exit without saving?" },
-                { x => x.ButtonConfirmText, "Exit" },
-                { x => x.ButtonCancelText, "Keep editing" },
+                { x => x.Title, L["Discard changes"].Value },
+                { x => x.Message, L["There are unsaved changes. Do you want to exit without saving?"].Value },
+                { x => x.ButtonConfirmText, L["Exit"].Value },
+                { x => x.ButtonCancelText, L["Keep editing"].Value },
                 { x => x.TitleIcon, Icons.Material.Filled.Warning },
                 { x => x.TitleColor, Color.Warning }
             };

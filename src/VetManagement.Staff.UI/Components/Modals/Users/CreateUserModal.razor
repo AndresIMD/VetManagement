@@ -8,39 +8,39 @@
 
 <MudDialog>
     <DialogContent>
-        <MudText Typo="Typo.h6" Class="mb-2">Create New User</MudText>
+        <MudText Typo="Typo.h6" Class="mb-2">@L["Create new user"]</MudText>
         <MudForm @ref="form" @bind-IsValid="success" @bind-Errors="errors">
-            <MudTextField @bind-Value="model.UserName" Label="Username" Required="true" RequiredError="Username is required." Class="mb-2" />
-            <MudTextField @bind-Value="model.Email" Label="Email" Required="true" RequiredError="Email is required." Validation="@(new Func<string, string>(ValidateEmail))" Class="mb-2" />
-            <MudTextField @bind-Value="model.Password" Label="Password"
+            <MudTextField @bind-Value="model.UserName" Label="@L["Username"]" Required="true" RequiredError="@L["Username is required."]" Class="mb-2" />
+            <MudTextField @bind-Value="model.Email" Label="@L["Email"]" Required="true" RequiredError="@L["Email is required."]" Validation="@(new Func<string, string>(ValidateEmail))" Class="mb-2" />
+            <MudTextField @bind-Value="model.Password" Label="@L["Password"]"
                           InputType="@PasswordInput"
                           Required="true"
-                          RequiredError="Password is required."
-                          HelperText="Must be at least 8 characters, with uppercase, lowercase, and a number."
+                          RequiredError="@L["Password is required"]"
+                          HelperText="@L["Must be at least 8 characters, with uppercase, lowercase, and a number."]"
                           Validation="@(new Func<string, IEnumerable<string>>(PasswordStrength))"
                           Class="mb-2"
                           Adornment="Adornment.End"
                           AdornmentIcon="@PasswordInputIcon"
                           OnAdornmentClick="TogglePasswordVisibility"
-                          AdornmentAriaLabel="Show/Hide password" />
-            <MudTextField @bind-Value="repeatPassword" Label="Repeat Password"
+                          AdornmentAriaLabel="@L["Show/Hide password"]" />
+            <MudTextField @bind-Value="repeatPassword" Label="@L["Repeat password"]"
                           InputType="@PasswordInput"
                           Required="true"
-                          RequiredError="Repeat the password."
-                          HelperText="Repeat the password."
+                          RequiredError="@L["Repeat the password."]"
+                          HelperText="@L["Repeat the password."]"
                           Validation="@(new Func<string, string>(PasswordMatch))"
                           Class="mb-2"
                           Adornment="Adornment.End"
                           AdornmentIcon="@PasswordInputIcon"
                           OnAdornmentClick="TogglePasswordVisibility"
-                          AdornmentAriaLabel="Show/Hide password" />
+                          AdornmentAriaLabel="@L["Show/Hide password"]" />
             <MudSelect T="string"
                        SelectedValues="@model.Roles"
                        SelectedValuesChanged="@(v => OnRolesChanged(v))"
-                       Label="Roles" Required="true" MultiSelection="true" Class="mb-2">
+                       Label="@L["Roles"]" Required="true" MultiSelection="true" Class="mb-2">
                 @foreach (var role in Roles)
                 {
-                    <MudSelectItem Value="@role">@role</MudSelectItem>
+                    <MudSelectItem Value="@role">@L[role]</MudSelectItem>
                 }
             </MudSelect>
         </MudForm>
@@ -51,14 +51,14 @@
             @if (loading)
             {
                 <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="mr-2" />
-                <span>Creating...</span>
+                <span>@L["Creating..."]</span>
             }
             else
             {
-                <span>Create</span>
+                <span>@L["Create"]</span>
             }
         </MudButton>
-        <MudButton Color="Color.Secondary" OnClick="Cancel" Disabled="@loading">Cancel</MudButton>
+        <MudButton Color="Color.Secondary" OnClick="Cancel" Disabled="@loading">@L["Cancel"]</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -98,34 +98,34 @@
     {
         if (string.IsNullOrWhiteSpace(pw))
         {
-            yield return "Password is required.";
+            yield return L["Password is required"];
             yield break;
         }
         if (pw.Length < 8)
-            yield return "Password must be at least 8 characters long.";
+            yield return L["Password must be at least 8 characters long."];
         if (!Regex.IsMatch(pw, @"[A-Z]"))
-            yield return "Password must contain at least one uppercase letter.";
+            yield return L["Password must contain at least one uppercase letter."];
         if (!Regex.IsMatch(pw, @"[a-z]"))
-            yield return "Password must contain at least one lowercase letter.";
+            yield return L["Password must contain at least one lowercase letter."];
         if (!Regex.IsMatch(pw, @"[0-9]"))
-            yield return "Password must contain at least one number.";
+            yield return L["Password must contain at least one number."];
     }
 
     private string PasswordMatch(string arg)
     {
         if (model.Password != arg)
-            return "Passwords do not match.";
+            return L["Passwords do not match."];
         return string.Empty;
     }
 
     private string ValidateEmail(string email)
     {
         if (string.IsNullOrWhiteSpace(email))
-            return "Email is required.";
+            return L["Email is required."];
         
         var attr = new EmailAddressAttribute();
         if (!attr.IsValid(email))
-            return "Email is not valid.";
+            return L["Invalid email format."];
         
         return string.Empty;
     }
@@ -148,12 +148,12 @@
 
         if (successResult)
         {
-            Snackbar.Add($"User '{model.UserName}' created successfully.", Severity.Success);
+            Snackbar.Add(L["User '{0}' created successfully.", model.UserName], Severity.Success);
             MudDialog.Close(DialogResult.Ok(true));
         }
         else
         {
-            Snackbar.Add($"Error creating user: {error}", Severity.Error);
+            Snackbar.Add(L["Error creating user: {0}", error ?? ""], Severity.Error);
         }
     }
 

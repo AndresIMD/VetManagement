@@ -1,6 +1,6 @@
 # VetManagement — Project State
 
-**Last updated:** 2026-10-14 · **Branch:** feature/lab-reports-modules-roles · **Tests:** 289 (+3 on SQL Server)
+**Last updated:** 2026-10-16 · **Branch:** feature/lab-reports-modules-roles · **Tests:** 299 (+3 on SQL Server)
 
 Product model: one generic staff CRM sold to many clinics; each clinic has its own deployment and database, its
 own branded public site, and configures every business policy itself (admin-editable settings).
@@ -24,6 +24,7 @@ How the code is organised: [`docs/architecture/ARCHITECTURE.md`](docs/architectu
 | — | ✅ | Exam reports: per-exam templates with normal ranges (↓/↑), interpretation bands, multi-value interpretation rules, reference column and IDEXX-style bars, previous result column, highlighted qualitative results, reports for unregistered (typed) patients; clinic branding (logo, background, font, footer); multi-page print / save PDF — [EXAM_REPORTS.md](docs/modules/EXAM_REPORTS.md) |
 | — | ✅ | Legacy SPLabHybrid data migration script — [DEPLOYMENT.md](docs/DEPLOYMENT.md#moving-a-clinic-from-the-legacy-splabhybrid-app-san-pablo) |
 | — | ✅ | Test data page for development (Administration → Test Data) — [guide](docs/guides/TEST_DATA.md) |
+| — | ✅ | Language per clinic: staff UI, printed reports, server messages, client emails and default settings in the clinic's language (English and Spanish, Chilean terms on top); the booking portal is still Spanish only — [DEPLOYMENT.md](docs/DEPLOYMENT.md) |
 
 ## Blocked on the clinic (not code)
 

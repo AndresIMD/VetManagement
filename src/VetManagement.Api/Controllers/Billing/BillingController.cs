@@ -7,6 +7,7 @@ using VetManagement.Application.Configuration;
 using VetManagement.Contracts.Billing;
 using VetManagement.Domain.Billing;
 using VetManagement.Domain.Enums;
+using VetManagement.Domain.Localization;
 
 namespace VetManagement.Api.Controllers.Billing;
 
@@ -20,7 +21,7 @@ public class BillingController(BillingService service, BillingSettingsService se
         var today = await service.TodayAsync();
         var (start, end) = (from ?? today, to ?? from ?? today);
         if (end < start || end.DayNumber - start.DayNumber > 92)
-            return ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["to"] = ["Use a range of at most 92 days."] }));
+            return ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["to"] = [Texts.T("Use a range of at most 92 days.")] }));
 
         var rate = await TaxRateAsync();
         return Ok((await service.ListAsync(start, end, status)).Select(s => MapToDto(s, rate)).ToList());
@@ -52,7 +53,7 @@ public class BillingController(BillingService service, BillingSettingsService se
             BillingStatus.Done => Ok(new ChargeVisitResponse(result.SaleIds)),
             BillingStatus.NotFound => NotFound(),
             BillingStatus.Conflict => Conflict(new ProblemDetails { Title = result.Error, Status = StatusCodes.Status409Conflict, Extensions = { ["saleIds"] = result.SaleIds } }),
-            _ => ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["charge"] = [result.Error ?? "Invalid request."] }))
+            _ => ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["charge"] = [result.Error ?? Texts.T("Invalid request.")] }))
         };
     }
 
@@ -130,7 +131,7 @@ public class BillingController(BillingService service, BillingSettingsService se
             return ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["settings"] = [ex.Message] }));
         }
         if (settings is null)
-            return ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["settings"] = ["Settings are required."] }));
+            return ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["settings"] = [Texts.T("Settings are required.")] }));
 
         var result = await settingsService.UpdateAsync(settings, document.Version, GetUserName());
         return result.Status switch
@@ -138,8 +139,8 @@ public class BillingController(BillingService service, BillingSettingsService se
             SettingsUpdateStatus.Saved => Ok(new { version = result.Version }),
             SettingsUpdateStatus.Conflict => Conflict(new ProblemDetails
             {
-                Title = "The settings were changed by someone else.",
-                Detail = $"Reload the latest version ({result.Version}) and apply your changes again.",
+                Title = Texts.T("The settings were changed by someone else."),
+                Detail = Texts.T("Reload the latest version ({0}) and apply your changes again.", result.Version),
                 Status = StatusCodes.Status409Conflict
             }),
             _ => ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["settings"] = [.. result.Errors] }))
@@ -151,7 +152,7 @@ public class BillingController(BillingService service, BillingSettingsService se
         BillingStatus.Done => Ok(new { id = result.Id }),
         BillingStatus.NotFound => NotFound(),
         BillingStatus.Conflict => Conflict(new ProblemDetails { Title = result.Error, Status = StatusCodes.Status409Conflict, Extensions = { ["id"] = result.Id } }),
-        _ => ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["sale"] = [result.Error ?? "Invalid request."] }))
+        _ => ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["sale"] = [result.Error ?? Texts.T("Invalid request.")] }))
     };
 
     private async Task<int> TaxRateAsync() => (await settingsService.GetAsync()).Settings.Tax.RatePercent;

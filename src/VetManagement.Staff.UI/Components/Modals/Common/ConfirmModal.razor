@@ -6,7 +6,7 @@
             IsLoading="false"
             IsValid="true"
             PrimaryText="@ButtonConfirmText"
-            PrimaryLoadingText="Processing..."
+            PrimaryLoadingText="@L["Processing..."]"
             PrimaryColor="@TitleColor"
             CancelText="@ButtonCancelText"
             ActionsClass="w-100 d-flex justify-center pa-3"
@@ -18,9 +18,9 @@
 </ModalShell>
 
 @code {
-    [Parameter] public string Message { get; set; } = "Are you sure you want to continue?";
-    [Parameter] public string ButtonConfirmText { get; set; } = "Accept";
-    [Parameter] public string ButtonCancelText { get; set; } = "Cancel";
+    [Parameter] public string Message { get; set; } = Strings.T("Are you sure you want to continue?");
+    [Parameter] public string ButtonConfirmText { get; set; } = Strings.T("Accept");
+    [Parameter] public string ButtonCancelText { get; set; } = Strings.T("Cancel");
 
     private void Confirm() => MudDialog.Close(DialogResult.Ok(true));
 }

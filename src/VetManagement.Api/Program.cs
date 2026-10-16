@@ -25,6 +25,9 @@ builder.WebHost.ConfigureKestrel(options =>
     options.Limits.RequestHeadersTimeout = TimeSpan.FromSeconds(30);
 });
 
+// The clinic's language for what the API writes to people: validation errors, client emails, default settings.
+VetManagement.Domain.Localization.Texts.UseCulture(builder.Configuration["Localization:Culture"]);
+
 // User secrets are loaded by CreateBuilder in Development only. Loading them in every Debug build
 // (as before) let a developer's secrets override test/production configuration.
 

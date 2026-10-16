@@ -4,6 +4,7 @@ using VetManagement.Application.Contracts.Services;
 using VetManagement.Application.Inventory;
 using VetManagement.Domain.Enums;
 using VetManagement.Domain.Medical;
+using VetManagement.Domain.Localization;
 
 namespace VetManagement.Application.Services;
 
@@ -95,7 +96,7 @@ public class MedicalVisitService(IUnitOfWork unitOfWork, IRealtimeNotificationSe
             foreach (var supply in await unitOfWork.VisitSupplies.FindAsync(s => s.VisitId == id))
             {
                 if (supply.StockDeducted)
-                    await Stock.MoveAsync(unitOfWork, supply.ItemId, supply.Quantity, InventoryMovementType.Ingress, $"Visit #{id} deleted", userName, DateTime.UtcNow);
+                    await Stock.MoveAsync(unitOfWork, supply.ItemId, supply.Quantity, InventoryMovementType.Ingress, Texts.T("Visit #{0} deleted", id), userName, DateTime.UtcNow);
                 unitOfWork.VisitSupplies.Remove(supply);
             }
 

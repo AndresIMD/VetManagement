@@ -3,6 +3,7 @@ using MudBlazor;
 using VetManagement.Staff.UI.Components.Modals.Common;
 using VetManagement.Staff.UI.Models.Core;
 using VetManagement.Staff.UI.Models.DTOs;
+using VetManagement.Staff.UI.Resources;
 
 namespace VetManagement.Staff.UI.Components.Modals.Inventory;
 
@@ -12,7 +13,7 @@ public partial class MassiveIngressModal : MassiveBaseModal<InventoryMassUpdateD
 
     protected override void OnInitialized()
     {
-        Title = "Massive ingress";
+        Title = Strings.T("Mass ingress");
         TitleIcon = Icons.Material.Filled.Upload;
         TitleColor = Color.Success;
         base.OnInitialized();
@@ -70,10 +71,10 @@ public partial class MassiveIngressModal : MassiveBaseModal<InventoryMassUpdateD
 
                 var confirmParams = new DialogParameters
                 {
-                    ["Title"] = "Create new product",
-                    ["Message"] = $"The code {currentBarcode} doesn't exist. Do you want to create a new product?"
+                    ["Title"] = Strings.T("Create new product"),
+                    ["Message"] = Strings.T("The code {0} doesn't exist. Do you want to create a new product?", currentBarcode)
                 };
-                var confirmModal = await DialogService.ShowAsync<ConfirmModal>("Confirm", confirmParams);
+                var confirmModal = await DialogService.ShowAsync<ConfirmModal>(Strings.T("Confirm"), confirmParams);
                 var confirmResult = await confirmModal.Result;
 
                 if (confirmResult is not null && !confirmResult.Canceled)
@@ -82,7 +83,7 @@ public partial class MassiveIngressModal : MassiveBaseModal<InventoryMassUpdateD
                     {
                         [nameof(CreateItemModal.BarcodeReadonly)] = true
                     };
-                    var createModal = await DialogService.ShowAsync<CreateItemModal>("New product", createParams);
+                    var createModal = await DialogService.ShowAsync<CreateItemModal>(Strings.T("New product"), createParams);
                     var createResult = await createModal.Result;
                     if (createResult is not null && !createResult.Canceled && createResult.Data is Item created)
                     {

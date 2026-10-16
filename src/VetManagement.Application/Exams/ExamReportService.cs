@@ -6,6 +6,7 @@ using VetManagement.Domain.Clients;
 using VetManagement.Domain.Configuration;
 using VetManagement.Domain.Enums;
 using VetManagement.Domain.Exams;
+using VetManagement.Domain.Localization;
 
 namespace VetManagement.Application.Exams;
 
@@ -173,7 +174,7 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
         {
             var pet = await unitOfWork.Pets.GetByIdAsNoTrackingAsync(petId);
             if (pet is null)
-                return Invalid("The pet doesn't exist.");
+                return Invalid(Texts.T("The pet doesn't exist."));
             report.PetId = pet.Id;
             report.Patient = null;
             species = pet.Species;
@@ -195,26 +196,26 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
             species = patient.Species;
         }
         else
-            return Invalid("Choose a registered pet or type the patient's name.");
+            return Invalid(Texts.T("Choose a registered pet or type the patient's name."));
 
         var exam = await unitOfWork.Exams.GetByIdAsNoTrackingAsync(input.ExamId);
         if (exam is null)
-            return Invalid("The exam doesn't exist.");
+            return Invalid(Texts.T("The exam doesn't exist."));
         var template = (await settingsService.GetAsync()).Settings.FindTemplate(exam.Id);
         if (template is null)
             return Invalid($"'{exam.Name}' has no report template yet: set it up in the exam catalog.");
         if (input.ReceivedOn == default)
-            return Invalid("The reception date is required.");
+            return Invalid(Texts.T("The reception date is required."));
 
         var unknown = input.Values.Keys.Where(code => template.FindParameter(code) is null).ToList();
         if (unknown.Count > 0)
-            return Invalid($"Unknown parameters: {string.Join(", ", unknown)}.");
+            return Invalid(Texts.T("Unknown parameters: {0}.", string.Join(", ", unknown)));
         var values = input.Values.Where(v => !string.IsNullOrWhiteSpace(v.Value))
             .ToDictionary(v => v.Key, v => v.Value.Trim(), StringComparer.OrdinalIgnoreCase);
         if (values.Count == 0)
-            return Invalid("Enter at least one result.");
+            return Invalid(Texts.T("Enter at least one result."));
         if (values.Values.Any(v => v.Length > 200))
-            return Invalid("A result can't be longer than 200 characters.");
+            return Invalid(Texts.T("A result can't be longer than 200 characters."));
 
         report.ExamId = exam.Id;
         report.Title = template.Title;

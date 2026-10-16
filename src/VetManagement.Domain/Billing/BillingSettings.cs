@@ -1,3 +1,5 @@
+using VetManagement.Domain.Localization;
+
 namespace VetManagement.Domain.Billing;
 
 /// <summary>Per-clinic billing policy, edited by the admin (see docs/modules/BILLING.md).</summary>
@@ -7,10 +9,10 @@ public class BillingSettings
 
     public List<PaymentMethodDefinition> PaymentMethods { get; set; } =
     [
-        new() { Code = "Cash", Name = "Efectivo", IsCash = true },
-        new() { Code = "Debit", Name = "Tarjeta de débito" },
-        new() { Code = "Credit", Name = "Tarjeta de crédito" },
-        new() { Code = "Transfer", Name = "Transferencia" }
+        new() { Code = "Cash", Name = Texts.T("Cash"), IsCash = true },
+        new() { Code = "Debit", Name = Texts.T("Debit card") },
+        new() { Code = "Credit", Name = Texts.T("Credit card") },
+        new() { Code = "Transfer", Name = Texts.T("Bank transfer") }
     ];
 
     /// <summary>Largest discount (% of a line) staff can give; above it needs billing management permission.</summary>
@@ -25,19 +27,19 @@ public class BillingSettings
     public List<string> Validate()
     {
         var errors = new List<string>();
-        if (MaxDiscountPercent is < 0 or > 100) errors.Add("MaxDiscountPercent must be between 0 and 100.");
-        if (Tax.RatePercent is < 0 or > 100) errors.Add("Tax.RatePercent must be between 0 and 100.");
-        if (PaymentMethods.Count(m => m.Enabled) == 0) errors.Add("Enable at least one payment method.");
+        if (MaxDiscountPercent is < 0 or > 100) errors.Add(Texts.T("MaxDiscountPercent must be between 0 and 100."));
+        if (Tax.RatePercent is < 0 or > 100) errors.Add(Texts.T("Tax.RatePercent must be between 0 and 100."));
+        if (PaymentMethods.Count(m => m.Enabled) == 0) errors.Add(Texts.T("Enable at least one payment method."));
 
         foreach (var m in PaymentMethods)
         {
             if (string.IsNullOrWhiteSpace(m.Code) || string.IsNullOrWhiteSpace(m.Name))
-                errors.Add("Every payment method needs a Code and a Name.");
+                errors.Add(Texts.T("Every payment method needs a Code and a Name."));
             if (string.Equals(m.Code, SalePayment.OnlineDepositMethod, StringComparison.OrdinalIgnoreCase))
                 errors.Add($"'{SalePayment.OnlineDepositMethod}' is reserved for deposits paid online.");
         }
         foreach (var code in PaymentMethods.GroupBy(m => m.Code, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1).Select(g => g.Key))
-            errors.Add($"Duplicate payment method code '{code}'.");
+            errors.Add(Texts.T("Duplicate payment method code '{0}'.", code));
 
         return errors;
     }

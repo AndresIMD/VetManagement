@@ -5,11 +5,11 @@
 @inject ISnackbar Snackbar
 @attribute [Authorize(Policy = "Exams.Update")]
 
-<PageTitle>Report Design</PageTitle>
+<PageTitle>@L["Report Design"]</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mx-auto px-2 mt-8">
-    <PageHeader Title="Report Design"
-                Subtitle="How every exam report looks. What each report contains is set per exam in the exam catalog."
+    <PageHeader Title="@L["Report Design"]"
+                Subtitle="@L["How every exam report looks. What each report contains is set per exam in the exam catalog."]"
                 Icon="@Icons.Material.Filled.DesignServices" />
 
     @if (_settings is null)
@@ -27,108 +27,98 @@
         <MudGrid>
             <MudItem xs="12" lg="5">
                 <MudPaper Class="pa-4 mb-3" Elevation="1">
-                    <MudText Typo="Typo.h6" Class="mb-2">Images</MudText>
+                    <MudText Typo="Typo.h6" Class="mb-2">@L["Images"]</MudText>
                     <MudStack Spacing="3">
                         <div>
-                            <MudText Typo="Typo.subtitle2">Logo</MudText>
+                            <MudText Typo="Typo.subtitle2">@L["Logo"]</MudText>
                             <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
                                 <label
                                     class="mud-button-root mud-button mud-button-outlined mud-button-outlined-primary mud-button-outlined-size-small mud-ripple"
                                     style="cursor:pointer">
-                                    Upload
+                                    @L["Upload"]
                                     <InputFile OnChange="e => UploadAsync(e, ClinicImageKind.ReportLogo)"
                                                accept="image/png,image/jpeg,image/webp" style="display:none" />
                                 </label>
                                 @if (_logo is not null)
                                 {
                                     <MudButton Size="Size.Small" Color="Color.Error"
-                                               OnClick="() => RemoveAsync(ClinicImageKind.ReportLogo)">Remove</MudButton>
+                                               OnClick="() => RemoveAsync(ClinicImageKind.ReportLogo)">@L["Remove"]</MudButton>
                                 }
                             </MudStack>
-                            <MudCheckBox T="bool" @bind-Value="_settings.LogoKeepRatio" Label="Keep the logo's proportions" Dense="true" />
+                            <MudCheckBox T="bool" @bind-Value="_settings.LogoKeepRatio" Label="@L["Keep the logo's proportions"]" Dense="true" />
                             <MudSlider T="int" @bind-Value="_settings.LogoHeightMm" Min="10" Max="60" Step="1">
-                                Logo height: @_settings.LogoHeightMm mm
+                                @L["Logo height: {0} mm", _settings.LogoHeightMm]
                             </MudSlider>
                             @if (!_settings.LogoKeepRatio)
                             {
                                 <MudSlider T="int" @bind-Value="_settings.LogoWidthMm" Min="10" Max="150" Step="1">
-                                    Logo width: @_settings.LogoWidthMm mm
+                                    @L["Logo width: {0} mm", _settings.LogoWidthMm]
                                 </MudSlider>
                             }
                         </div>
                         <div>
-                            <MudText Typo="Typo.subtitle2">Background / frame</MudText>
+                            <MudText Typo="Typo.subtitle2">@L["Background / frame"]</MudText>
                             <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
                                 <label
                                     class="mud-button-root mud-button mud-button-outlined mud-button-outlined-primary mud-button-outlined-size-small mud-ripple"
                                     style="cursor:pointer">
-                                    Upload
+                                    @L["Upload"]
                                     <InputFile OnChange="e => UploadAsync(e, ClinicImageKind.ReportBackground)"
                                                accept="image/png,image/jpeg,image/webp" style="display:none" />
                                 </label>
                                 @if (_background is not null)
                                 {
                                     <MudButton Size="Size.Small" Color="Color.Error"
-                                               OnClick="() => RemoveAsync(ClinicImageKind.ReportBackground)">Remove</MudButton>
+                                               OnClick="() => RemoveAsync(ClinicImageKind.ReportBackground)">@L["Remove"]</MudButton>
                                 }
                             </MudStack>
-                            <MudSelect T="BackgroundArea" Label="Background covers" @bind-Value="_settings.BackgroundArea" Class="mt-2" Dense="true">
-                                <MudSelectItem Value="BackgroundArea.Page">The whole page (frame, letterhead)</MudSelectItem>
-                                <MudSelectItem Value="BackgroundArea.ResultsBox">Only the results box (watermark behind the results)</MudSelectItem>
+                            <MudSelect T="BackgroundArea" Label="@L["Background covers"]" @bind-Value="_settings.BackgroundArea" Class="mt-2" Dense="true">
+                                <MudSelectItem Value="BackgroundArea.Page">@L["The whole page (frame, letterhead)"]</MudSelectItem>
+                                <MudSelectItem Value="BackgroundArea.ResultsBox">@L["Only the results box (watermark behind the results)"]</MudSelectItem>
                             </MudSelect>
                             <MudCheckBox T="bool" @bind-Value="_settings.BackgroundKeepRatio" Dense="true"
-                                         Label="Keep the image's proportions (otherwise it is stretched to fill the area)" />
+                                         Label="@L["Keep the image's proportions (otherwise it is stretched to fill the area)"]" />
                             @if (_settings.BackgroundKeepRatio)
                             {
                                 <MudStack Row="true" Spacing="2">
-                                    <MudSelect T="ImageFit" Label="Fit to" @bind-Value="_settings.BackgroundFit" Dense="true">
-                                        <MudSelectItem Value="ImageFit.Width">Width</MudSelectItem>
-                                        <MudSelectItem Value="ImageFit.Height">Height</MudSelectItem>
+                                    <MudSelect T="ImageFit" Label="@L["Fit to"]" @bind-Value="_settings.BackgroundFit" Dense="true">
+                                        <MudSelectItem Value="ImageFit.Width">@L["Width"]</MudSelectItem>
+                                        <MudSelectItem Value="ImageFit.Height">@L["Height"]</MudSelectItem>
                                     </MudSelect>
-                                    <MudSelect T="ImageAlign" Label="Aligned to" @bind-Value="_settings.BackgroundAlign" Dense="true">
-                                        <MudSelectItem Value="ImageAlign.Start">@(_settings.BackgroundFit == ImageFit.Width ? "Top" : "Left")</MudSelectItem>
-                                        <MudSelectItem Value="ImageAlign.Center">Center</MudSelectItem>
-                                        <MudSelectItem Value="ImageAlign.End">@(_settings.BackgroundFit == ImageFit.Width ? "Bottom" : "Right")</MudSelectItem>
+                                    <MudSelect T="ImageAlign" Label="@L["Aligned to"]" @bind-Value="_settings.BackgroundAlign" Dense="true">
+                                        <MudSelectItem Value="ImageAlign.Start">@(_settings.BackgroundFit == ImageFit.Width ? L["Top"] : L["Left"])</MudSelectItem>
+                                        <MudSelectItem Value="ImageAlign.Center">@L["Center"]</MudSelectItem>
+                                        <MudSelectItem Value="ImageAlign.End">@(_settings.BackgroundFit == ImageFit.Width ? L["Bottom"] : L["Right"])</MudSelectItem>
                                     </MudSelect>
                                 </MudStack>
                             }
                             <MudSlider T="double" @bind-Value="_settings.BackgroundOpacity" Min="0.05" Max="1" Step="0.05"
                                        Class="mt-2">
-                                Background strength: @((_settings.BackgroundOpacity * 100).ToString("0"))% (lower it to turn
-                                the image into a watermark)
+                                @L["Background strength: {0}% (lower it to turn the image into a watermark)", (_settings.BackgroundOpacity * 100).ToString("0")]
                             </MudSlider>
                         </div>
                         <MudAlert Severity="Severity.Info" Dense="true" NoIcon="true">
-                            <b>For your designer</b> (images up to 3 MB, PNG, JPEG or WebP):
+                            <b>@L["For your designer"]</b> @L["(images up to 3 MB, PNG, JPEG or WebP):"]
                             <ul class="mt-1 mb-0">
-                                <li><b>Logo:</b> PNG with a transparent background, about 1200 × 400 px. Printed top left at
-                                    the height chosen above.</li>
-                                    <li><b>Background:</b> a full page, portrait, @BackgroundPixels px (300 dpi; half that is
-                                        fine for a lighter file).
-                                        It is stretched to the whole sheet (or to the results box, when chosen above). Keep
-                                        text and strong colours out of the content area:
-                                        @_settings.MarginsMm.Top mm from the top, @_settings.MarginsMm.Bottom mm from the
-                                        bottom,
-                                        @_settings.MarginsMm.Left mm left and @_settings.MarginsMm.Right mm right are free for
-                                        frames or artwork.
-                                        A watermark should be light: results are printed on top of it.</li>
-                                        <li><b>Colours:</b> the two bars below use your brand colours as #RRGGBB.</li>
-                                    </ul>
+                                <li><b>@L["Logo:"]</b> @L["PNG with a transparent background, about 1200 × 400 px. Printed top left at the height chosen above."]</li>
+                                <li><b>@L["Background:"]</b> @L["a full page, portrait, {0} px (300 dpi; half that is fine for a lighter file). It is stretched to the whole sheet (or to the results box, when chosen above). Keep text and strong colours out of the content area: {1} mm from the top, {2} mm from the bottom, {3} mm left and {4} mm right are free for frames or artwork. A watermark should be light: results are printed on top of it.", BackgroundPixels, _settings.MarginsMm.Top, _settings.MarginsMm.Bottom, _settings.MarginsMm.Left, _settings.MarginsMm.Right]</li>
+                                <li><b>@L["Colours:"]</b> @L["the two bars below use your brand colours as #RRGGBB."]</li>
+                            </ul>
                                 </MudAlert>
                             </MudStack>
                         </MudPaper>
 
                         <MudPaper Class="pa-4 mb-3" Elevation="1">
-                            <MudText Typo="Typo.h6" Class="mb-2">Page</MudText>
+                            <MudText Typo="Typo.h6" Class="mb-2">@L["Page"]</MudText>
                             <MudGrid>
                                 <MudItem xs="12" sm="6">
-                                    <MudSelect T="PaperSize" Label="Paper" @bind-Value="_settings.Paper">
-                                        <MudSelectItem Value="PaperSize.Letter">Letter (21.6 × 27.9 cm)</MudSelectItem>
+                                    <MudSelect T="PaperSize" Label="@L["Paper"]" @bind-Value="_settings.Paper">
+                                        <MudSelectItem Value="PaperSize.Letter">@L["Letter (21.6 × 27.9 cm)"]</MudSelectItem>
                                         <MudSelectItem Value="PaperSize.A4">A4 (21 × 29.7 cm)</MudSelectItem>
                                     </MudSelect>
                                 </MudItem>
                                 <MudItem xs="12" sm="6">
-                                    <MudSelect T="string" Label="Font" @bind-Value="_settings.FontFamily">
+                                    <MudSelect T="string" Label="@L["Font"]" @bind-Value="_settings.FontFamily">
                                         @foreach (var font in ExamReportSettings.Fonts)
                                         {
                                             <MudSelectItem Value="@font"><span style="font-family:'@font'">@font</span></MudSelectItem>
@@ -136,47 +126,47 @@
                                     </MudSelect>
                                 </MudItem>
                                 <MudItem xs="6" sm="3">
-                                    <MudText Typo="Typo.caption">Patient bar</MudText>
+                                    <MudText Typo="Typo.caption">@L["Patient bar"]</MudText>
                                     <input type="color" @bind="_settings.HeaderColor"
                                            style="width:100%;height:36px;border:0;background:none" />
                                 </MudItem>
                                 <MudItem xs="6" sm="3">
-                                    <MudText Typo="Typo.caption">Result bar</MudText>
+                                    <MudText Typo="Typo.caption">@L["Result bar"]</MudText>
                                     <input type="color" @bind="_settings.AccentColor"
                                            style="width:100%;height:36px;border:0;background:none" />
                                 </MudItem>
                                 <MudItem xs="3">
-                                    <MudNumericField T="int" Label="Top (mm)" @bind-Value="_settings.MarginsMm.Top" Min="0"
+                                    <MudNumericField T="int" Label="@L["Top (mm)"]" @bind-Value="_settings.MarginsMm.Top" Min="0"
                                                      Max="60" />
                                 </MudItem>
                                 <MudItem xs="3">
-                                    <MudNumericField T="int" Label="Right" @bind-Value="_settings.MarginsMm.Right" Min="0"
+                                    <MudNumericField T="int" Label="@L["Right"]" @bind-Value="_settings.MarginsMm.Right" Min="0"
                                                      Max="60" />
                                 </MudItem>
                                 <MudItem xs="3">
-                                    <MudNumericField T="int" Label="Bottom" @bind-Value="_settings.MarginsMm.Bottom" Min="0"
+                                    <MudNumericField T="int" Label="@L["Bottom"]" @bind-Value="_settings.MarginsMm.Bottom" Min="0"
                                                      Max="60" />
                                 </MudItem>
                                 <MudItem xs="3">
-                                    <MudNumericField T="int" Label="Left" @bind-Value="_settings.MarginsMm.Left" Min="0" Max="60" />
+                                    <MudNumericField T="int" Label="@L["Left"]" @bind-Value="_settings.MarginsMm.Left" Min="0" Max="60" />
                                 </MudItem>
                                 <MudItem xs="12">
-                                    <MudTextField T="string" Label="Header lines (next to the logo, one per line)" Lines="2"
+                                    <MudTextField T="string" Label="@L["Header lines (next to the logo, one per line)"]" Lines="2"
                                                   Value="@string.Join("\n", _settings.HeaderLines)"
                                                   ValueChanged="v => _settings.HeaderLines = Lines(v)" />
                                 </MudItem>
                                 <MudItem xs="12">
-                                    <MudTextField T="string" Label="Footer lines (clinic name, tax id, address, phone...)" Lines="4"
+                                    <MudTextField T="string" Label="@L["Footer lines (clinic name, tax id, address, phone...)"]" Lines="4"
                                                   Value="@string.Join("\n", _settings.FooterLines)"
                                                   ValueChanged="v => _settings.FooterLines = Lines(v)" />
                                 </MudItem>
                                 <MudItem xs="12">
-                                    <MudTextField Label="Note under the footer" @bind-Value="_settings.Disclaimer" Lines="2" />
+                                    <MudTextField Label="@L["Note under the footer"]" @bind-Value="_settings.Disclaimer" Lines="2" />
                                 </MudItem>
                             </MudGrid>
                             <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-3">
                                 <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_saving" OnClick="SaveAsync">
-                                    Save</MudButton>
+                                    @L["Save"]</MudButton>
                                 </MudStack>
                             </MudPaper>
                         </MudItem>
@@ -228,14 +218,14 @@
         }
         _error = null;
         _version = result.Body?.GetProperty("version").GetInt32() ?? _version + 1;
-        Snackbar.Add("Report design saved.", Severity.Success);
+        Snackbar.Add(L["Report design saved."], Severity.Success);
     }
 
     private async Task UploadAsync(InputFileChangeEventArgs e, ClinicImageKind kind)
     {
         if (e.File.Size > MAX_IMAGE_BYTES)
         {
-            _error = "The image must be 3 MB or smaller.";
+            _error = L["The image must be 3 MB or smaller."];
             return;
         }
         using var buffer = new MemoryStream();
@@ -247,7 +237,7 @@
             return;
         }
         await ReloadImageAsync(kind);
-        Snackbar.Add("Image saved.", Severity.Success);
+        Snackbar.Add(L["Image saved."], Severity.Success);
     }
 
     private async Task RemoveAsync(ClinicImageKind kind)

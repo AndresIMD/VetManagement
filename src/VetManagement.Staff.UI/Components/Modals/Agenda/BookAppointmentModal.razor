@@ -7,8 +7,8 @@
             TitleColor="@(Slot is null ? Color.Warning : Color.Primary)"
             IsLoading="@isLoading"
             IsValid="@CanSave"
-            PrimaryText="Book"
-            PrimaryLoadingText="Booking..."
+            PrimaryText="@L["Book"]"
+            PrimaryLoadingText="@L["Booking..."]"
             OnPrimaryClick="BookAsync"
             OnCancelClick="OnCancel">
     <MudGrid>
@@ -20,14 +20,14 @@
                     @Catalog.ResourceName(Slot.ResourceCode) · @Slot.StartUtc.ToLocalTime().ToString("dddd dd MMM yyyy, HH:mm")
                     @if (Slot.IsOverflow)
                     {
-                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Class="ml-2">Overflow block</MudChip>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Class="ml-2">@L["Overflow block"]</MudChip>
                     }
                 </MudText>
             }
             else
             {
                 <MudAlert Severity="Severity.Warning" Dense="true" Class="mt-1">
-                    Overbooking: books this time even if the resource is full or outside its hours.
+                    @L["Overbooking: books this time even if the resource is full or outside its hours."]
                 </MudAlert>
             }
         </MudItem>
@@ -35,23 +35,23 @@
         @if (Slot is null)
         {
             <MudItem xs="12" sm="4">
-                <MudSelect T="string" Label="Vet / room" @bind-Value="_resourceCode" Required="true">
+                <MudSelect T="string" Label="@L["Vet / room"]" @bind-Value="_resourceCode" Required="true">
                     @foreach (var resource in ServiceResources)
                     {
                         <MudSelectItem Value="@resource">@Catalog.ResourceName(resource)</MudSelectItem>
                     }
                 </MudSelect>
             </MudItem>
-            <MudItem xs="6" sm="4"><MudDatePicker Label="Date" @bind-Date="_date" Required="true" /></MudItem>
-            <MudItem xs="6" sm="4"><MudTimePicker Label="Time" @bind-Time="_time" AmPm="false" Required="true" /></MudItem>
+            <MudItem xs="6" sm="4"><MudDatePicker Label="@L["Date"]" @bind-Date="_date" Required="true" /></MudItem>
+            <MudItem xs="6" sm="4"><MudTimePicker Label="@L["Time"]" @bind-Time="_time" AmPm="false" Required="true" /></MudItem>
         }
 
-        <MudItem xs="12" sm="6"><MudTextField Label="Owner name" @bind-Value="_ownerName" Required="true" Immediate="true" /></MudItem>
-        <MudItem xs="12" sm="6"><MudTextField Label="Pet name" @bind-Value="_petName" /></MudItem>
-        <MudItem xs="12" sm="4"><MudTextField Label="RUT" @bind-Value="_ownerTaxId" /></MudItem>
-        <MudItem xs="12" sm="4"><MudTextField Label="Phone" @bind-Value="_ownerPhone" /></MudItem>
-        <MudItem xs="12" sm="4"><MudTextField Label="Email" @bind-Value="_ownerEmail" /></MudItem>
-        <MudItem xs="12"><MudTextField Label="Notes" @bind-Value="_notes" Lines="2" /></MudItem>
+        <MudItem xs="12" sm="6"><MudTextField Label="@L["Owner name"]" @bind-Value="_ownerName" Required="true" Immediate="true" /></MudItem>
+        <MudItem xs="12" sm="6"><MudTextField Label="@L["Pet name"]" @bind-Value="_petName" /></MudItem>
+        <MudItem xs="12" sm="4"><MudTextField Label="@L["Tax ID"]" @bind-Value="_ownerTaxId" /></MudItem>
+        <MudItem xs="12" sm="4"><MudTextField Label="@L["Phone"]" @bind-Value="_ownerPhone" /></MudItem>
+        <MudItem xs="12" sm="4"><MudTextField Label="@L["Email"]" @bind-Value="_ownerEmail" /></MudItem>
+        <MudItem xs="12"><MudTextField Label="@L["Notes"]" @bind-Value="_notes" Lines="2" /></MudItem>
     </MudGrid>
 </ModalShell>
 
@@ -75,7 +75,7 @@
 
     protected override void OnInitialized()
     {
-        Title = Slot is null ? "Overbook appointment" : "Book appointment";
+        Title = Slot is null ? L["Overbook appointment"] : L["Book appointment"];
         _resourceCode = ServiceResources.FirstOrDefault();
     }
 
@@ -104,7 +104,7 @@
                 Snackbar.Add(result.Error!, Severity.Error);
                 return;
             }
-            Snackbar.Add("Appointment booked.", Severity.Success);
+            Snackbar.Add(L["Appointment booked."], Severity.Success);
             MudDialog.Close(DialogResult.Ok(result.Id));
         }
         finally

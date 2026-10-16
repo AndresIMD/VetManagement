@@ -4,6 +4,7 @@ using VetManagement.Application.Scheduling;
 using VetManagement.Contracts.Scheduling;
 using VetManagement.Domain.Enums;
 using VetManagement.Domain.Scheduling;
+using VetManagement.Domain.Localization;
 
 namespace VetManagement.Api.Controllers.Scheduling;
 
@@ -16,7 +17,7 @@ public class AppointmentsController(AppointmentService service) : ApiControllerB
     public async Task<ActionResult<List<AvailableSlotDto>>> GetAvailabilityAsync([FromQuery(Name = "service")] string serviceCode, [FromQuery] DateOnly from, [FromQuery] DateOnly to)
     {
         if (to < from || to.DayNumber - from.DayNumber > 62)
-            return ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["to"] = ["Use a range of at most 62 days."] }));
+            return ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["to"] = [Texts.T("Use a range of at most 62 days.")] }));
 
         var slots = await service.GetAvailabilityAsync(serviceCode, from, to, BookingAudience.Staff);
         return slots is null
@@ -56,11 +57,11 @@ public class AppointmentsController(AppointmentService service) : ApiControllerB
         BookingStatus.NotFound => NotFound(),
         BookingStatus.SlotUnavailable => Conflict(new ProblemDetails
         {
-            Title = "That time is no longer available.",
-            Detail = "Pick another slot, or book it as overbooking (sobrecupo).",
+            Title = Texts.T("That time is no longer available."),
+            Detail = Texts.T("Pick another slot, or book it as overbooking (sobrecupo)."),
             Status = StatusCodes.Status409Conflict
         }),
-        _ => ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["appointment"] = [result.Error ?? "Invalid request."] }))
+        _ => ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["appointment"] = [result.Error ?? Texts.T("Invalid request.")] }))
     };
 
     private static AppointmentDto MapToDto(Appointment a) => new()

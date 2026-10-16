@@ -7,6 +7,7 @@ using VetManagement.Application.Services;
 using VetManagement.Domain.Billing;
 using VetManagement.Domain.Enums;
 using VetManagement.Domain.Inventory;
+using VetManagement.Domain.Localization;
 
 namespace VetManagement.Application.Billing;
 
@@ -82,7 +83,7 @@ public class BillingService(
     {
         var settings = (await billingSettings.GetAsync()).Settings;
         if (!settings.Enabled)
-            return new BillingResult(BillingStatus.Invalid, Error: "Billing is disabled for this clinic.");
+            return new BillingResult(BillingStatus.Invalid, Error: Texts.T("Billing is disabled for this clinic."));
 
         var agenda = (await schedulingSettings.GetAsync()).Settings;
         var now = clock.GetUtcNow().UtcDateTime;
@@ -107,9 +108,9 @@ public class BillingService(
                 if (appointment is null)
                     return new BillingResult(BillingStatus.NotFound);
                 if (await unitOfWork.Sales.GetActiveByAppointmentAsync(appointmentId) is { } existing)
-                    return new BillingResult(BillingStatus.Conflict, existing.Id, "This appointment already has a sale.");
+                    return new BillingResult(BillingStatus.Conflict, existing.Id, Texts.T("This appointment already has a sale."));
                 if (appointment.Status is AppointmentStatus.Cancelled or AppointmentStatus.PendingPayment)
-                    return new BillingResult(BillingStatus.Invalid, Error: $"A {appointment.Status} appointment can't be charged.");
+                    return new BillingResult(BillingStatus.Invalid, Error: Texts.T("A {0} appointment can't be charged.", Texts.T(appointment.Status.ToString())));
 
                 sale.AppointmentId = appointmentId;
                 sale.ClientId ??= appointment.ClientId;
@@ -142,7 +143,7 @@ public class BillingService(
             if (sale.CustomerName.Length == 0 && sale.ClientId is int clientId && await unitOfWork.Clients.GetByIdAsync(clientId) is { } client)
                 sale.CustomerName = $"{client.Name} {client.LastName}".Trim();
             if (sale.CustomerName.Length == 0)
-                return new BillingResult(BillingStatus.Invalid, Error: "Enter the customer's name or pick a client.");
+                return new BillingResult(BillingStatus.Invalid, Error: Texts.T("Enter the customer's name or pick a client."));
 
             await unitOfWork.Sales.AddAsync(sale);
             await unitOfWork.SaveChangesAsync();
@@ -204,9 +205,9 @@ public class BillingService(
     {
         var settings = (await billingSettings.GetAsync()).Settings;
         if (!settings.Enabled)
-            return new VisitChargeResult(BillingStatus.Invalid, [], "Billing is disabled for this clinic.");
+            return new VisitChargeResult(BillingStatus.Invalid, [], Texts.T("Billing is disabled for this clinic."));
         if (selections.Count == 0)
-            return new VisitChargeResult(BillingStatus.Invalid, [], "Pick at least one item to charge.");
+            return new VisitChargeResult(BillingStatus.Invalid, [], Texts.T("Pick at least one item to charge."));
 
         var now = clock.GetUtcNow().UtcDateTime;
         var today = await BusinessDateAsync(now);
@@ -217,7 +218,7 @@ public class BillingService(
             if (preview is null)
                 return new VisitChargeResult(BillingStatus.NotFound, []);
             if (preview.ExistingSales.Count > 0)
-                return new VisitChargeResult(BillingStatus.Conflict, preview.ExistingSales.Select(s => s.Id).ToList(), "This visit was already charged.");
+                return new VisitChargeResult(BillingStatus.Conflict, preview.ExistingSales.Select(s => s.Id).ToList(), Texts.T("This visit was already charged."));
 
             var chosen = new List<VisitChargeLine>();
             foreach (var selection in selections)
@@ -241,7 +242,7 @@ public class BillingService(
                     PetId = visit.PatientId,
                     ClientId = pet?.OwnerId,
                     CustomerName = preview.CustomerName,
-                    Notes = groups.Count > 1 ? (group[0].TaxExempt ? "Exento de IVA" : "Afecto a IVA") : null,
+                    Notes = groups.Count > 1 ? (group[0].TaxExempt ? Texts.T("VAT exempt") : Texts.T("Subject to VAT")) : null,
                     BusinessDate = today,
                     CreatedAtUtc = now,
                     CreatedBy = userName
@@ -317,7 +318,7 @@ public class BillingService(
                 case SaleLineKind.Service:
                     var service = agenda.Services.FirstOrDefault(s => string.Equals(s.Code, request.ServiceCode, StringComparison.OrdinalIgnoreCase));
                     if (service is null)
-                        return new BillingResult(BillingStatus.Invalid, Error: $"Unknown service '{request.ServiceCode}'.");
+                        return new BillingResult(BillingStatus.Invalid, Error: Texts.T("Unknown service '{0}'.", request.ServiceCode));
                     line.ServiceCode = service.Code;
                     if (line.Description.Length == 0) line.Description = service.Name;
                     line.UnitPrice = request.UnitPrice ?? service.Price;
@@ -326,18 +327,18 @@ public class BillingService(
                 case SaleLineKind.Product:
                     var item = request.ItemId is int itemId ? await unitOfWork.Items.GetByIdAsync(itemId) : null;
                     if (item is null)
-                        return new BillingResult(BillingStatus.Invalid, Error: "Pick an inventory item for a product line.");
+                        return new BillingResult(BillingStatus.Invalid, Error: Texts.T("Pick an inventory item for a product line."));
                     line.ItemId = item.Id;
                     if (line.Description.Length == 0) line.Description = item.Name;
                     line.UnitPrice = request.UnitPrice ?? item.SellPrice;
                     var alreadyInSale = sale.Lines.Where(l => l.ItemId == item.Id && !l.SkipStock).Sum(l => l.Quantity);
                     if (settings.DeductStockOnSale && alreadyInSale + line.Quantity > item.Stock)
-                        return new BillingResult(BillingStatus.Invalid, Error: $"Only {item.Stock - alreadyInSale} of '{item.Name}' left in stock.");
+                        return new BillingResult(BillingStatus.Invalid, Error: Texts.T("Only {0} of '{1}' left in stock.", item.Stock - alreadyInSale, item.Name));
                     break;
 
                 default:
                     if (request.UnitPrice is null)
-                        return new BillingResult(BillingStatus.Invalid, Error: "Enter the price.");
+                        return new BillingResult(BillingStatus.Invalid, Error: Texts.T("Enter the price."));
                     break;
             }
 
@@ -345,7 +346,7 @@ public class BillingService(
 
             if (!canExceedDiscount && line.Discount * 100L > line.Gross * (long)settings.MaxDiscountPercent)
                 return new BillingResult(BillingStatus.Invalid,
-                    Error: $"Discounts above {settings.MaxDiscountPercent}% need an administrator.");
+                    Error: Texts.T("Discounts above {0}% need an administrator.", settings.MaxDiscountPercent));
 
             if (sale.AddLine(line) is { } error)
                 return new BillingResult(BillingStatus.Invalid, Error: error);
@@ -367,7 +368,7 @@ public class BillingService(
             if (sale is null)
                 return new BillingResult(BillingStatus.NotFound);
             if (sale.RemoveLine(lineId) is { } error)
-                return new BillingResult(error == "Line not found." ? BillingStatus.NotFound : BillingStatus.Invalid, Error: error);
+                return new BillingResult(error == Texts.T("Line not found.") ? BillingStatus.NotFound : BillingStatus.Invalid, Error: error);
 
             await unitOfWork.SaveChangesAsync();
             return new BillingResult(BillingStatus.Done, saleId);
@@ -384,7 +385,7 @@ public class BillingService(
         var settings = (await billingSettings.GetAsync()).Settings;
         var definition = settings.FindMethod(method);
         if (definition is not { Enabled: true })
-            return new BillingResult(BillingStatus.Invalid, Error: $"Payment method '{method}' is not enabled.");
+            return new BillingResult(BillingStatus.Invalid, Error: Texts.T("Payment method '{0}' is not enabled.", method));
 
         var now = clock.GetUtcNow().UtcDateTime;
         var today = await BusinessDateAsync(now);
@@ -395,7 +396,7 @@ public class BillingService(
             if (sale is null)
                 return new BillingResult(BillingStatus.NotFound);
             if (await IsClosedAsync(today))
-                return new BillingResult(BillingStatus.Invalid, Error: $"The cash for {today:yyyy-MM-dd} is already closed.");
+                return new BillingResult(BillingStatus.Invalid, Error: Texts.T("The cash for {0:yyyy-MM-dd} is already closed.", today));
 
             var error = sale.AddPayment(new SalePayment
             {
@@ -432,7 +433,7 @@ public class BillingService(
                 return new BillingResult(BillingStatus.NotFound);
             foreach (var date in sale.Payments.Select(p => p.BusinessDate).Distinct())
                 if (await IsClosedAsync(date))
-                    return new BillingResult(BillingStatus.Invalid, Error: $"It has payments in a closed day ({date:yyyy-MM-dd}).");
+                    return new BillingResult(BillingStatus.Invalid, Error: Texts.T("It has payments in a closed day ({0:yyyy-MM-dd}).", date));
 
             if (sale.Void(reason, userName, now) is { } error)
                 return new BillingResult(BillingStatus.Invalid, Error: error);
@@ -462,14 +463,14 @@ public class BillingService(
         var settings = (await billingSettings.GetAsync()).Settings;
         var now = clock.GetUtcNow().UtcDateTime;
         if (date > await BusinessDateAsync(now))
-            return new BillingResult(BillingStatus.Invalid, Error: "A future day can't be closed.");
+            return new BillingResult(BillingStatus.Invalid, Error: Texts.T("A future day can't be closed."));
         if (countedCash < 0)
-            return new BillingResult(BillingStatus.Invalid, Error: "The counted cash can't be negative.");
+            return new BillingResult(BillingStatus.Invalid, Error: Texts.T("The counted cash can't be negative."));
 
         var result = await unitOfWork.ExecuteExclusiveAsync(LockKey, async () =>
         {
             if (await IsClosedAsync(date))
-                return new BillingResult(BillingStatus.Conflict, Error: $"{date:yyyy-MM-dd} is already closed.");
+                return new BillingResult(BillingStatus.Conflict, Error: Texts.T("{0:yyyy-MM-dd} is already closed.", date));
 
             var summary = Summarize(date, await unitOfWork.Sales.GetPaymentsAsync(date, date), settings, null);
             var close = new CashClose
@@ -499,7 +500,7 @@ public class BillingService(
             .Select(g =>
             {
                 var definition = settings.FindMethod(g.Key);
-                var name = g.Key == SalePayment.OnlineDepositMethod ? "Abono online" : definition?.Name ?? g.Key;
+                var name = g.Key == SalePayment.OnlineDepositMethod ? Texts.T("Online deposit") : definition?.Name ?? g.Key;
                 return new MethodTotal(g.Key, name, definition?.IsCash == true, g.Sum(p => p.Amount), g.Count());
             })
             .OrderBy(t => t.Method)
@@ -515,7 +516,7 @@ public class BillingService(
         // An item deleted from the catalog since has nothing to move.
         foreach (var line in sale.Lines.Where(l => l.Kind == SaleLineKind.Product && l.ItemId is not null && !l.SkipStock))
             await Stock.MoveAsync(unitOfWork, line.ItemId!.Value, line.Quantity, type,
-                type == InventoryMovementType.Egress ? $"Sale #{sale.Id}" : $"Sale #{sale.Id} voided", userName, nowUtc);
+                type == InventoryMovementType.Egress ? Texts.T("Sale #{0}", sale.Id) : Texts.T("Sale #{0} voided", sale.Id), userName, nowUtc);
         sale.StockDeducted = type == InventoryMovementType.Egress;
     }
 

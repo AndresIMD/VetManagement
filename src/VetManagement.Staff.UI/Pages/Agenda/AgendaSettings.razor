@@ -6,19 +6,17 @@
 @inject ISnackbar Snackbar
 @attribute [Authorize(Policy = "Scheduling.Manage")]
 
-<PageTitle>Agenda Settings</PageTitle>
+<PageTitle>@L["Agenda Settings"]</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
-    <PageHeader Title="Agenda Settings" Icon="@Icons.Material.Filled.EditCalendar" />
+    <PageHeader Title="@L["Agenda Settings"]" Icon="@Icons.Material.Filled.EditCalendar" />
 
     <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3">
-        Every policy of the clinic's agenda lives in this document: services (each one enabled or disabled),
-        vets and rooms with their weekly blocks, holidays and absences, booking, cancellation, refund and
-        notification rules. Set <code>"enabled": true</code> when the real values are in place.
-        See <code>docs/modules/SCHEDULING.md</code> for every field.
+        @L["Every policy of the clinic's agenda lives in this document: services (each one enabled or disabled), vets and rooms with their weekly blocks, holidays and absences, booking, cancellation, refund and notification rules. Set \"enabled\": true when the real values are in place."]
+        @L["See {0} for every field.", "docs/modules/SCHEDULING.md"]
     </MudAlert>
 
-    <SettingsJsonEditor Load="LoadAsync" Save="SaveAsync" Saved="OnSaved" SavedMessage="Agenda settings saved." />
+    <SettingsJsonEditor Load="LoadAsync" Save="SaveAsync" Saved="OnSaved" SavedMessage="@L["Agenda settings saved."]" />
 </MudContainer>
 
 @code {
@@ -32,6 +30,6 @@
     {
         var needReschedule = result.Body?.TryGetProperty("appointmentsNeedingReschedule", out var n) == true ? n.GetInt32() : 0;
         if (needReschedule > 0)
-            Snackbar.Add($"{needReschedule} appointment(s) fall on a closed day or absence and need rescheduling (see Agenda).", Severity.Warning);
+            Snackbar.Add(L["{0} appointment(s) fall on a closed day or absence and need rescheduling (see Agenda).", needReschedule], Severity.Warning);
     }
 }

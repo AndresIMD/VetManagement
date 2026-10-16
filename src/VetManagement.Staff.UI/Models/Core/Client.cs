@@ -7,23 +7,23 @@ public class Client(string name, string lastName, string taxId, string address, 
 {
     public int Id { get; set; }
 
-    [Required(ErrorMessage = GenericConstants.REQUIRED_FIELD_ERROR)]
+    [Required(ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.Required))]
     public string Name { get; set; } = name;
 
-    [Required(ErrorMessage = GenericConstants.REQUIRED_FIELD_ERROR)]
+    [Required(ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.Required))]
     public string LastName { get; set; } = lastName;
 
-    [Required(ErrorMessage = GenericConstants.REQUIRED_FIELD_ERROR)]
+    [Required(ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.Required))]
     public string TaxId { get; set; } = taxId;
 
-    [Required(ErrorMessage = GenericConstants.REQUIRED_FIELD_ERROR)]
+    [Required(ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.Required))]
     public string Address { get; set; } = address;
 
-    [Required(ErrorMessage = GenericConstants.REQUIRED_FIELD_ERROR)]
+    [Required(ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.Required))]
     public int PhoneNumber { get; set; } = phoneNumber;
 
-    [Required(ErrorMessage = GenericConstants.REQUIRED_FIELD_ERROR)]
-    [EmailAddress(ErrorMessage = "Invalid email format.")]
+    [Required(ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.Required))]
+    [EmailAddress(ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.InvalidEmail))]
     public string Email { get; set; } = email;
 
     public List<Pet> Pets { get; set; } = [];

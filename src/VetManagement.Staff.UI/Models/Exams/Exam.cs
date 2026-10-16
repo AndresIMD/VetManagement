@@ -8,24 +8,24 @@ public class Exam
 {
     public int Id { get; set; }
 
-    [Required(ErrorMessage = GenericConstants.REQUIRED_FIELD_ERROR)]
+    [Required(ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.Required))]
     public string Name { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = GenericConstants.REQUIRED_FIELD_ERROR)]
+    [Required(ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.Required))]
     public string Brand { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = GenericConstants.REQUIRED_FIELD_ERROR)]
+    [Required(ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.Required))]
     public string Machine { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = GenericConstants.REQUIRED_FIELD_ERROR)]
+    [Required(ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.Required))]
     public SampleType SampleType { get; set; }
 
-    [Required(ErrorMessage = GenericConstants.REQUIRED_FIELD_ERROR)]
+    [Required(ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.Required))]
     public SampleContainer SampleContainer { get; set; }
 
-    [Range(0, int.MaxValue, ErrorMessage = "The price cannot be less than 0.")]
+    [Range(0, int.MaxValue, ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.PriceNotNegative))]
     public int BuyPrice { get; set; }
 
-    [Range(0, int.MaxValue, ErrorMessage = "The price cannot be less than 0.")]
+    [Range(0, int.MaxValue, ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.PriceNotNegative))]
     public int SellPrice { get; set; }
 }

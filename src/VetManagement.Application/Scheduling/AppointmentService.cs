@@ -3,6 +3,7 @@ using VetManagement.Application.Contracts.Persistence;
 using VetManagement.Application.Services;
 using VetManagement.Domain.Enums;
 using VetManagement.Domain.Scheduling;
+using VetManagement.Domain.Localization;
 
 namespace VetManagement.Application.Scheduling;
 
@@ -124,7 +125,7 @@ public class AppointmentService(IUnitOfWork unitOfWork, SchedulingSettingsServic
             if (appointment is null)
                 return new BookingResult(BookingStatus.NotFound);
             if (appointment.Status is not (AppointmentStatus.Confirmed or AppointmentStatus.NeedsReschedule))
-                return new BookingResult(BookingStatus.Invalid, Error: $"A {appointment.Status} appointment can't be moved.");
+                return new BookingResult(BookingStatus.Invalid, Error: Texts.T("A {0} appointment can't be moved.", Texts.T(appointment.Status.ToString())));
 
             var service = AgendaRules.FindBookableService(settings, appointment.ServiceCode, resourceCode, out var error);
             if (service is null)
@@ -157,7 +158,7 @@ public class AppointmentService(IUnitOfWork unitOfWork, SchedulingSettingsServic
         if (appointment is null)
             return new BookingResult(BookingStatus.NotFound);
         if (appointment.Status is AppointmentStatus.Cancelled or AppointmentStatus.Completed or AppointmentStatus.NoShow)
-            return new BookingResult(BookingStatus.Invalid, Error: $"A {appointment.Status} appointment can't be cancelled.");
+            return new BookingResult(BookingStatus.Invalid, Error: Texts.T("A {0} appointment can't be cancelled.", Texts.T(appointment.Status.ToString())));
 
         appointment.Status = AppointmentStatus.Cancelled;
         appointment.CancelledAtUtc = clock.GetUtcNow().UtcDateTime;

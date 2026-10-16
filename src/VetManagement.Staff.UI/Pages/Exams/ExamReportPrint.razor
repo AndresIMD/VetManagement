@@ -8,12 +8,12 @@
 @inject NavigationManager Navigation
 @attribute [Authorize(Policy = "ExamsPerformed.Read")]
 
-<PageTitle>Exam Report</PageTitle>
+<PageTitle>@L["Lab report"]</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-6">
     @if (_notFound)
     {
-        <MudAlert Severity="Severity.Warning">Report #@Id was not found.</MudAlert>
+        <MudAlert Severity="Severity.Warning">@L["Report #{0} was not found.", Id]</MudAlert>
     }
     else if (_report is null || _settings is null)
     {
@@ -22,33 +22,33 @@
     else
     {
         <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mb-3">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Print" OnClick="PrintAsync">Print / Save PDF</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Print" OnClick="PrintAsync">@L["Print / Save PDF"]</MudButton>
             <AuthorizeView Policy="ExamsPerformed.Update">
-                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Edit" Href="@($"exam-reports/{Id}/edit")">Correct</MudButton>
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Edit" Href="@($"exam-reports/{Id}/edit")">@L["Correct"]</MudButton>
             </AuthorizeView>
             <AuthorizeView Policy="ExamsPerformed.Create">
-                <MudTooltip Text="Another exam for this patient, with its data already filled in">
-                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.PostAdd" Href="@($"exam-reports/new?fromReport={Id}")">New report for this patient</MudButton>
+                <MudTooltip Text="@L["Another exam for this patient, with its data already filled in"]">
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.PostAdd" Href="@($"exam-reports/new?fromReport={Id}")">@L["New report for this patient"]</MudButton>
                 </MudTooltip>
             </AuthorizeView>
             @if (_report.PetId is int petId)
             {
                 @* Typed patients aren't registered, so they have no clinical record. *@
                 <AuthorizeView Policy="Medical.Read">
-                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.MedicalInformation" Href="@($"clinical/pets/{petId}")">Clinical record</MudButton>
+                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.MedicalInformation" Href="@($"clinical/pets/{petId}")">@L["Clinical record"]</MudButton>
                 </AuthorizeView>
             }
             else if (_report.CanRegisterPatient)
             {
                 @* The typed patient is kept as a provisional client, hidden from searches until registered here. *@
                 <AuthorizeView Policy="ClientsPets.Create">
-                    <MudTooltip Text="Make this patient and owner a client, then complete their details">
-                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.PersonAdd" Disabled="_registering" OnClick="RegisterPatientAsync">Register as client</MudButton>
+                    <MudTooltip Text="@L["Make this patient and owner a client, then complete their details"]">
+                        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.PersonAdd" Disabled="_registering" OnClick="RegisterPatientAsync">@L["Register as client"]</MudButton>
                     </MudTooltip>
                 </AuthorizeView>
             }
             <MudSpacer />
-            <MudText Typo="Typo.body2" Color="Color.Secondary">To send it, choose "Save as PDF" in the print dialog and attach the file.</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">@L["To send it, choose \"Save as PDF\" in the print dialog and attach the file."]</MudText>
         </MudStack>
 
         <div class="d-flex justify-center pb-8" style="overflow-x:auto">
@@ -85,13 +85,13 @@
     {
         var parameters = new DialogParameters<ConfirmModal>
         {
-            { x => x.Title, "Register as client" },
-            { x => x.Message, $"Add {_report!.PetName} and {_report.OwnerName ?? "its owner"} to the clients? You'll then complete their details (tax ID, phone, email) in the client screen." },
-            { x => x.ButtonConfirmText, "Register" },
-            { x => x.ButtonCancelText, "Cancel" },
+            { x => x.Title, L["Register as client"].Value },
+            { x => x.Message, L["Add {0} and {1} to the clients? You'll then complete their details (tax ID, phone, email) in the client screen.", _report!.PetName, _report.OwnerName ?? L["its owner"]].Value },
+            { x => x.ButtonConfirmText, L["Register"].Value },
+            { x => x.ButtonCancelText, L["Cancel"].Value },
             { x => x.TitleIcon, Icons.Material.Filled.PersonAdd }
         };
-        var dialog = await DialogService.ShowAsync<ConfirmModal>("Register as client", parameters, new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall });
+        var dialog = await DialogService.ShowAsync<ConfirmModal>(L["Register as client"], parameters, new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall });
         if (await dialog.Result is not { Canceled: false })
             return;
 
@@ -100,10 +100,10 @@
         _registering = false;
         if (!result.Ok || result.Id is not int clientId)
         {
-            Snackbar.Add(result.Error ?? "The patient could not be registered.", Severity.Error);
+            Snackbar.Add(result.Error ?? L["The patient could not be registered."], Severity.Error);
             return;
         }
-        Snackbar.Add("Registered. Complete the client's details.", Severity.Success);
+        Snackbar.Add(L["Registered. Complete the client's details."], Severity.Success);
         Navigation.NavigateTo($"client-search?clientId={clientId}");
     }
 

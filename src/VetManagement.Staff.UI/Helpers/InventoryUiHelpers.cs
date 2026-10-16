@@ -1,4 +1,5 @@
 using MudBlazor;
+using VetManagement.Staff.UI.Resources;
 
 namespace VetManagement.Staff.UI.Helpers;
 
@@ -23,9 +24,9 @@ public static class InventoryUiHelpers
     /// <returns>Localized alert label.</returns>
     public static string GetAlertLabel(string alert) => alert switch
     {
-        "low" => "Alert: Low Stock",
-        "zero" => "Alert: Out of Stock",
-        _ => $"Alert: {alert}"
+        "low" => Strings.T("Alert: Low Stock"),
+        "zero" => Strings.T("Alert: Out of Stock"),
+        _ => Strings.T("Alert: {0}", alert)
     };
 
     /// <summary>

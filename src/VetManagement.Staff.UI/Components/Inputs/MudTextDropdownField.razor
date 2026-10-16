@@ -69,7 +69,7 @@
     [Parameter, EditorRequired] public Func<string?, CancellationToken, Task<IEnumerable<TItem>>>? SearchFunc { get; set; }
     [Parameter, EditorRequired] public Func<TItem?, string>? ToStringFunc { get; set; }
     [Parameter] public RenderFragment<TItem>? ItemTemplate { get; set; }
-    [Parameter] public string? Label { get; set; } = "Search...";
+    [Parameter] public string? Label { get; set; } = Strings.T("Search...");
     [Parameter] public string? Placeholder { get; set; }
     [Parameter] public Variant Variant { get; set; } = Variant.Outlined;
     [Parameter] public bool Clearable { get; set; } = true;
@@ -82,9 +82,9 @@
     [Parameter] public int MinCharacters { get; set; } = 2;
     [Parameter] public int? MaxItems { get; set; } = 20;
     [Parameter] public bool FullWidth { get; set; }
-    [Parameter] public string LoadingText { get; set; } = "Searching...";
-    [Parameter] public string NoItemsText { get; set; } = "No matches found";
-    [Parameter] public string EmptyText { get; set; } = "Type to search...";
+    [Parameter] public string LoadingText { get; set; } = Strings.T("Searching...");
+    [Parameter] public string NoItemsText { get; set; } = Strings.T("No matches found");
+    [Parameter] public string EmptyText { get; set; } = Strings.T("Type to search...");
     [Parameter] public string? Class { get; set; }
     [Parameter] public string? Style { get; set; }
     [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }

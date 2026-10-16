@@ -6,7 +6,7 @@
 @if (_errors.Count > 0)
 {
     <MudAlert Severity="Severity.Error" Class="mb-3">
-        <MudText Typo="Typo.subtitle2">The settings were not saved:</MudText>
+        <MudText Typo="Typo.subtitle2">@L["The settings were not saved:"]</MudText>
         <ul class="mb-0">
             @foreach (var error in _errors)
             {
@@ -23,11 +23,11 @@
 else
 {
     <MudStack Row="true" Spacing="2" Class="mb-2" AlignItems="AlignItems.Center">
-        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">Version @_version</MudChip>
+        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@L["Version {0}", _version]</MudChip>
         <MudSpacer />
-        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="LoadAsync" Disabled="_saving">Reload</MudButton>
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="LoadAsync" Disabled="_saving">@L["Reload"]</MudButton>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveAsync" Disabled="_saving">
-            @(_saving ? "Saving..." : "Save")
+            @(_saving ? L["Saving..."] : L["Save"])
         </MudButton>
     </MudStack>
 
@@ -41,7 +41,7 @@ else
     [Parameter, EditorRequired] public Func<int, JsonElement, Task<ApiResult>> Save { get; set; } = default!;
     /// <summary>Runs after a successful save, before reloading (e.g. extra warnings from the response).</summary>
     [Parameter] public EventCallback<ApiResult> Saved { get; set; }
-    [Parameter] public string SavedMessage { get; set; } = "Settings saved.";
+    [Parameter] public string SavedMessage { get; set; } = Strings.T("Settings saved.");
     [Parameter] public int Lines { get; set; } = 32;
 
     private string _json = string.Empty;
@@ -76,7 +76,7 @@ else
         }
         catch (JsonException ex)
         {
-            _errors = [$"The text is not valid JSON: {ex.Message}"];
+            _errors = [L["The text is not valid JSON: {0}", ex.Message]];
             return;
         }
 

@@ -44,6 +44,16 @@ public class StaffLocalizationTests : IDisposable
     }
 
     [Fact]
+    public void ChileanSpanish_OverridesOnlyItsOwnTerms()
+    {
+        var chile = Build("es-CL").GetRequiredService<IStringLocalizer<Strings>>();
+        chile["Tax ID"].Value.Should().Be("RUT");
+        chile["Log in"].Value.Should().Be("Ingresar");
+
+        Build("es-MX").GetRequiredService<IStringLocalizer<Strings>>()["Tax ID"].Value.Should().Be("Identificación fiscal");
+    }
+
+    [Fact]
     public void AMissingTranslation_ShowsTheEnglishKey()
         => Build("es-CL").GetRequiredService<IStringLocalizer<Strings>>()["Some text nobody translated"].Value
             .Should().Be("Some text nobody translated");
@@ -67,7 +77,8 @@ public class StaffLocalizationTests : IDisposable
         var entries = XDocument.Load(file).Root!.Elements("data")
             .Select(d => (Key: (string)d.Attribute("name")!, Value: (string?)d.Element("value"))).ToList();
 
-        entries.GroupBy(e => e.Key).Where(g => g.Count() > 1).Select(g => g.Key).Should().BeEmpty();
+        // Keys that differ only in case collide when the resources are compiled: one of them is dropped.
+        entries.GroupBy(e => e.Key, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1).Select(g => g.Key).Should().BeEmpty();
         entries.Where(e => string.IsNullOrWhiteSpace(e.Value)).Select(e => e.Key).Should().BeEmpty();
     }
 }

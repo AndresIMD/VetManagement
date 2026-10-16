@@ -11,7 +11,7 @@
         @if (IsLoading)
         {
             <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
-            <MudText>Loading history...</MudText>
+            <MudText>@L["Loading history..."]</MudText>
         }
         else
         {
@@ -20,21 +20,21 @@
             </MudStack>
             <MudTable Items="Movements" Dense="true" Hover="true" Class="mt-2">
                 <HeaderContent>
-                    <MudTh>Date</MudTh>
-                    <MudTh>Type</MudTh>
-                    <MudTh>Quantity</MudTh>
-                    <MudTh>Reason</MudTh>
-                    <MudTh>Responsible</MudTh>
+                    <MudTh>@L["Date"]</MudTh>
+                    <MudTh>@L["Type"]</MudTh>
+                    <MudTh>@L["Quantity"]</MudTh>
+                    <MudTh>@L["Reason"]</MudTh>
+                    <MudTh>@L["Responsible"]</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd DataLabel="Date">@context.Date.ToString("dd/MM/yyyy")</MudTd>
-                    <MudTd DataLabel="Type">@context.Type</MudTd>
-                    <MudTd DataLabel="Quantity">@context.Quantity</MudTd>
-                    <MudTd DataLabel="Reason">@context.Reason</MudTd>
-                    <MudTd DataLabel="Responsible">@context.Responsible</MudTd>
+                    <MudTd DataLabel="@L["Date"]">@context.Date.ToString("dd/MM/yyyy")</MudTd>
+                    <MudTd DataLabel="@L["Type"]">@context.Type.ToText()</MudTd>
+                    <MudTd DataLabel="@L["Quantity"]">@context.Quantity</MudTd>
+                    <MudTd DataLabel="@L["Reason"]">@context.Reason</MudTd>
+                    <MudTd DataLabel="@L["Responsible"]">@context.Responsible</MudTd>
                 </RowTemplate>
                 <NoRecordsContent>
-                    <MudTd Class="text-center">No movements recorded.</MudTd>
+                    <MudTd Class="text-center">@L["No movements recorded."]</MudTd>
                 </NoRecordsContent>
             </MudTable>
         }
@@ -49,7 +49,7 @@
 
     private RenderFragment Footer => __builder =>
     {
-        <MudButton Color="Color.Secondary" Variant="Variant.Outlined" OnClick="OnCancel">Close</MudButton>;
+        <MudButton Color="Color.Secondary" Variant="Variant.Outlined" OnClick="OnCancel">@L["Close"]</MudButton>;
     };
 
     protected override async Task OnInitializedAsync()

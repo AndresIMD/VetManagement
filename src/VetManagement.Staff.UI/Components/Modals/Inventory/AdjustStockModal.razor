@@ -7,17 +7,17 @@
             TitleColor="@TitleColor"
             IsLoading="@isLoading"
             IsValid="@isValid"
-            PrimaryText="Save"
-            PrimaryLoadingText="Saving..."
+            PrimaryText="@L["Save"]"
+            PrimaryLoadingText="@L["Saving..."]"
             PrimaryDisabled="@(AdjustAmount == 0)"
             OnPrimaryClick="OnSave"
             OnCancelClick="OnCancelRequested">
     <MudForm @ref="_form" @bind-IsValid="isValid">
         <MudStack Spacing="2">
-            <MudText Typo="Typo.subtitle2" Class="mb-2">Adjust stock of <b>@Item?.Name</b></MudText>
+            <MudText Typo="Typo.subtitle2" Class="mb-2">@L["Adjust stock of"] <b>@Item?.Name</b></MudText>
             <NumericStepper Value="@AdjustAmount" ValueChanged="OnAdjustAmountChanged" Min="@(-(Item?.Stock ?? 0))" Max="100" Step="1" />
-            <MudText Typo="Typo.caption" Color="Color.Secondary">Current stock: @Item?.Stock</MudText>
-            <MudTextField Label="Reason" @bind-Value="AdjustReason" Variant="Variant.Outlined"/>
+            <MudText Typo="Typo.caption" Color="Color.Secondary">@L["Current stock: {0}", Item?.Stock ?? 0]</MudText>
+            <MudTextField Label="@L["Reason"]" @bind-Value="AdjustReason" Variant="Variant.Outlined"/>
         </MudStack>
     </MudForm>
 </ModalShell>
@@ -48,12 +48,12 @@
             }
 
             await InventoryService.AdjustStockAsync(itemId.Value, AdjustAmount, AdjustReason);
-            Snackbar.Add("Stock adjusted.", Severity.Success);
+            Snackbar.Add(L["Stock adjusted."], Severity.Success);
             MudDialog.Close(DialogResult.Ok(true));
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error adjusting stock: {ex.Message}", Severity.Error);
+            Snackbar.Add(L["Error adjusting stock: {0}", ex.Message], Severity.Error);
         }
         finally
         {
@@ -78,10 +78,10 @@
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = false };
         var parameters = new DialogParameters<Components.Modals.Common.ConfirmModal>
         {
-            { x => x.Title, "Discard changes" },
-            { x => x.Message, "There are unsaved changes. Do you want to exit without saving?" },
-            { x => x.ButtonConfirmText, "Exit" },
-            { x => x.ButtonCancelText, "Continue editing" },
+            { x => x.Title, L["Discard changes"].Value },
+            { x => x.Message, L["There are unsaved changes. Do you want to exit without saving?"].Value },
+            { x => x.ButtonConfirmText, L["Exit"].Value },
+            { x => x.ButtonCancelText, L["Keep editing"].Value },
             { x => x.TitleIcon, Icons.Material.Filled.Warning },
             { x => x.TitleColor, Color.Warning }
         };

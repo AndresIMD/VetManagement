@@ -2,21 +2,21 @@
 @inherits ModalBase<CancelAppointmentRequest>
 @inject SchedulingApiService SchedulingApi
 
-<ModalShell Title="Cancel appointment"
+<ModalShell Title="@L["Cancel appointment"]"
             TitleIcon="@Icons.Material.Filled.EventBusy"
             TitleColor="Color.Error"
             IsLoading="@isLoading"
-            PrimaryText="Cancel appointment"
-            PrimaryLoadingText="Cancelling..."
+            PrimaryText="@L["Cancel appointment"]"
+            PrimaryLoadingText="@L["Cancelling..."]"
             PrimaryColor="Color.Error"
-            CancelText="Keep it"
+            CancelText="@L["Keep it"]"
             OnPrimaryClick="CancelAppointmentAsync"
             OnCancelClick="OnCancel">
     <MudText Typo="Typo.body2" Class="mb-2">
         @Appointment.OwnerName@(string.IsNullOrWhiteSpace(Appointment.PetName) ? "" : $" · {Appointment.PetName}") ·
         @Appointment.StartUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")
     </MudText>
-    <MudTextField Label="Reason (optional)" @bind-Value="_reason" Lines="2" MaxLength="500" />
+    <MudTextField Label="@L["Reason (optional)"]" @bind-Value="_reason" Lines="2" MaxLength="500" />
 </ModalShell>
 
 @code {
@@ -35,7 +35,7 @@
                 Snackbar.Add(result.Error!, Severity.Error);
                 return;
             }
-            Snackbar.Add("Appointment cancelled.", Severity.Success);
+            Snackbar.Add(L["Appointment cancelled."], Severity.Success);
             MudDialog.Close(DialogResult.Ok(true));
         }
         finally

@@ -5,26 +5,26 @@
         <MudDatePicker @bind-Date="SelectedMonth"
                        DateFormat="MM/yyyy"
                        PickerVariant="PickerVariant.Static"
-                       Label="Month"
+                       Label="@L["Month"]"
                        OpenTo="OpenTo.Month"
                        Views="PickerViews.Year | PickerViews.Month" />
     </MudStack>
     @if (MonthlySummary.Count == 0)
     {
-        <MudAlert Severity="Severity.Info">No movements for this month.</MudAlert>
+        <MudAlert Severity="Severity.Info">@L["No movements for this month."]</MudAlert>
     }
     else
     {
         <MudTable T="ItemMonthlySummary" Items="MonthlySummary">
             <HeaderContent>
-                <MudTh>Item</MudTh>
+                <MudTh>@L["Item"]</MudTh>
                 @for (int d = 1; d <= DateTime.DaysInMonth(SelectedMonth.Year, SelectedMonth.Month); d++)
                 {
                     <MudTh>@d</MudTh>
                 }
             </HeaderContent>
             <RowTemplate>
-                <MudTd DataLabel="Item">@context.Name</MudTd>
+                <MudTd DataLabel="@L["Item"]">@context.Name</MudTd>
                 @for (int d = 1; d <= DateTime.DaysInMonth(SelectedMonth.Year, SelectedMonth.Month); d++)
                 {
                     <MudTd DataLabel="@d">

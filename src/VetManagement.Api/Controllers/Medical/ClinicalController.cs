@@ -5,6 +5,7 @@ using VetManagement.Application.Clinical;
 using VetManagement.Application.Configuration;
 using VetManagement.Contracts.Clinical;
 using VetManagement.Domain.Clinical;
+using VetManagement.Domain.Localization;
 
 namespace VetManagement.Api.Controllers.Medical;
 
@@ -74,7 +75,7 @@ public class ClinicalController(ClinicalService service, ClinicalSettingsService
     public async Task<ActionResult<List<DueDoseDto>>> GetDueAsync([FromQuery] int days = 30)
     {
         if (days is < 0 or > 365)
-            return ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["days"] = ["Use 0 to 365 days."] }));
+            return ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["days"] = [Texts.T("Use 0 to 365 days.")] }));
 
         return Ok((await service.GetDueAsync(days)).Select(d => new DueDoseDto
         {
@@ -108,7 +109,7 @@ public class ClinicalController(ClinicalService service, ClinicalSettingsService
             return ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["settings"] = [ex.Message] }));
         }
         if (settings is null)
-            return ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["settings"] = ["Settings are required."] }));
+            return ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["settings"] = [Texts.T("Settings are required.")] }));
 
         var result = await settingsService.UpdateAsync(settings, document.Version, GetUserName());
         return result.Status switch
@@ -116,8 +117,8 @@ public class ClinicalController(ClinicalService service, ClinicalSettingsService
             SettingsUpdateStatus.Saved => Ok(new { version = result.Version }),
             SettingsUpdateStatus.Conflict => Conflict(new ProblemDetails
             {
-                Title = "The settings were changed by someone else.",
-                Detail = $"Reload the latest version ({result.Version}) and apply your changes again.",
+                Title = Texts.T("The settings were changed by someone else."),
+                Detail = Texts.T("Reload the latest version ({0}) and apply your changes again.", result.Version),
                 Status = StatusCodes.Status409Conflict
             }),
             _ => ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["settings"] = [.. result.Errors] }))
@@ -128,7 +129,7 @@ public class ClinicalController(ClinicalService service, ClinicalSettingsService
     {
         ClinicalStatus.Done => Ok(new { id = result.Id }),
         ClinicalStatus.NotFound => NotFound(),
-        _ => ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["dose"] = [result.Error ?? "Invalid request."] }))
+        _ => ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["dose"] = [result.Error ?? Texts.T("Invalid request.")] }))
     };
 
     private static PreventiveDoseDto MapDose(PreventiveDose d, Domain.Enums.PreventiveStatus status) => new()

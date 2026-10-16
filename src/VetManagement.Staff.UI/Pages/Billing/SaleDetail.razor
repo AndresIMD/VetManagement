@@ -7,11 +7,11 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @attribute [Authorize(Policy = "Billing.Read")]
 
-<PageTitle>Sale #@Id</PageTitle>
+<PageTitle>@L["Sale #{0}", Id]</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
-    <PageHeader Title="@($"Sale #{Id}")" Icon="@Icons.Material.Filled.Receipt" />
-    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" Href="billing" Class="mb-2">Sales</MudButton>
+    <PageHeader Title="@L["Sale #{0}", Id]" Icon="@Icons.Material.Filled.Receipt" />
+    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" Href="billing" Class="mb-2">@L["Sales"]</MudButton>
 
     @if (_sale is null)
     {
@@ -25,25 +25,25 @@
                 <SaleStatusChip Status="_sale.Status" />
                 <MudText Typo="Typo.body2" Color="Color.Secondary">@_sale.CreatedAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm") · @_sale.CreatedBy</MudText>
                 <MudSpacer />
-                <MudText Typo="Typo.h6">Total @Money.Clp(_sale.Total)</MudText>
+                <MudText Typo="Typo.h6">@L["Total {0}", Money.Clp(_sale.Total)]</MudText>
                 @if (_sale.TaxableTotal > 0 || _sale.ExemptTotal > 0)
                 {
                     <MudText Typo="Typo.caption" Color="Color.Secondary">
                         @if (_sale.TaxableTotal > 0)
                         {
-                            <span>Taxed @Money.Clp(_sale.TaxableTotal) (net @Money.Clp(_sale.TaxableNet) + VAT @_sale.TaxRatePercent% @Money.Clp(_sale.Vat))</span>
+                            <span>@L["Taxed {0} (net {1} + VAT {2}% {3})", Money.Clp(_sale.TaxableTotal), Money.Clp(_sale.TaxableNet), _sale.TaxRatePercent, Money.Clp(_sale.Vat)]</span>
                         }
                         @if (_sale.ExemptTotal > 0)
                         {
-                            <span> · Exempt @Money.Clp(_sale.ExemptTotal)</span>
+                            <span> · @L["Exempt {0}", Money.Clp(_sale.ExemptTotal)]</span>
                         }
                     </MudText>
                 }
-                <MudText Typo="Typo.h6" Color="@(_sale.Balance > 0 ? Color.Warning : Color.Success)">Balance @Money.Clp(_sale.Balance)</MudText>
+                <MudText Typo="Typo.h6" Color="@(_sale.Balance > 0 ? Color.Warning : Color.Success)">@L["Balance {0}", Money.Clp(_sale.Balance)]</MudText>
             </MudStack>
             @if (_sale.Status == SaleStatus.Voided)
             {
-                <MudAlert Severity="Severity.Error" Dense="true" Class="mt-2">Voided: @_sale.VoidReason</MudAlert>
+                <MudAlert Severity="Severity.Error" Dense="true" Class="mt-2">@L["Voided: {0}", _sale.VoidReason ?? ""]</MudAlert>
             }
         </MudPaper>
 
@@ -53,15 +53,15 @@
         }
 
         <MudPaper Class="pa-3 mb-3" Elevation="1">
-            <MudText Typo="Typo.h6" Class="mb-2">Items</MudText>
+            <MudText Typo="Typo.h6" Class="mb-2">@L["Items"]</MudText>
             <MudTable Items="_sale.Lines" Dense="true" Elevation="0">
                 <HeaderContent>
-                    <MudTh>Description</MudTh>
-                    <MudTh>Kind</MudTh>
-                    <MudTh Style="text-align:right">Qty</MudTh>
-                    <MudTh Style="text-align:right">Price</MudTh>
-                    <MudTh Style="text-align:right">Discount</MudTh>
-                    <MudTh Style="text-align:right">Total</MudTh>
+                    <MudTh>@L["Description"]</MudTh>
+                    <MudTh>@L["Kind"]</MudTh>
+                    <MudTh Style="text-align:right">@L["Qty"]</MudTh>
+                    <MudTh Style="text-align:right">@L["Price"]</MudTh>
+                    <MudTh Style="text-align:right">@L["Discount"]</MudTh>
+                    <MudTh Style="text-align:right">@L["Total"]</MudTh>
                     @if (CanEdit)
                     {
                         <MudTh />
@@ -72,10 +72,10 @@
                         @context.Description
                         @if (context.TaxExempt)
                         {
-                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">VAT exempt</MudChip>
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@L["VAT exempt"]</MudChip>
                         }
                     </MudTd>
-                    <MudTd>@context.Kind</MudTd>
+                    <MudTd>@context.Kind.ToText()</MudTd>
                     <MudTd Style="text-align:right">@context.Quantity</MudTd>
                     <MudTd Style="text-align:right">@Money.Clp(context.UnitPrice)</MudTd>
                     <MudTd Style="text-align:right">@(context.Discount > 0 ? Money.Clp(-context.Discount) : "")</MudTd>
@@ -87,23 +87,23 @@
                         </MudTd>
                     }
                 </RowTemplate>
-                <NoRecordsContent><MudText Typo="Typo.body2" Color="Color.Secondary">No items yet.</MudText></NoRecordsContent>
+                <NoRecordsContent><MudText Typo="Typo.body2" Color="Color.Secondary">@L["No items yet."]</MudText></NoRecordsContent>
             </MudTable>
 
             @if (CanEdit)
             {
                 <MudDivider Class="my-3" />
                 <MudStack Row="true" Spacing="2" AlignItems="AlignItems.End" Wrap="Wrap.Wrap">
-                    <MudSelect T="SaleLineKind" @bind-Value="_line.Kind" Label="Kind" Style="max-width: 130px;">
+                    <MudSelect T="SaleLineKind" @bind-Value="_line.Kind" Label="@L["Kind"]" Style="max-width: 130px;">
                         @foreach (var kind in Enum.GetValues<SaleLineKind>())
                         {
-                            <MudSelectItem Value="kind">@kind</MudSelectItem>
+                            <MudSelectItem Value="kind">@kind.ToText()</MudSelectItem>
                         }
                     </MudSelect>
                     @switch (_line.Kind)
                     {
                         case SaleLineKind.Service:
-                            <MudSelect T="string" @bind-Value="_line.ServiceCode" Label="Service" Style="min-width: 220px;">
+                            <MudSelect T="string" @bind-Value="_line.ServiceCode" Label="@L["Service"]" Style="min-width: 220px;">
                                 @foreach (var service in _services)
                                 {
                                     <MudSelectItem Value="@service.Code">@service.Name</MudSelectItem>
@@ -111,35 +111,35 @@
                             </MudSelect>
                             break;
                         case SaleLineKind.Product:
-                            <MudAutocomplete T="InventoryItemDTO" @bind-Value="_product" Label="Product" SearchFunc="SearchItemsAsync"
-                                             ToStringFunc="@(i => i is null ? "" : $"{i.Name} ({i.Stock} in stock · {Money.Clp(i.SellPrice)})")"
+                            <MudAutocomplete T="InventoryItemDTO" @bind-Value="_product" Label="@L["Product"]" SearchFunc="SearchItemsAsync"
+                                             ToStringFunc="@(i => i is null ? "" : L["{0} ({1} in stock · {2})", i.Name, i.Stock, Money.Clp(i.SellPrice)].Value)"
                                              DebounceInterval="300" MinCharacters="2" Style="min-width: 300px;" />
                             break;
                         default:
-                            <MudTextField T="string" @bind-Value="_line.Description" Label="Description" Style="min-width: 220px;" />
+                            <MudTextField T="string" @bind-Value="_line.Description" Label="@L["Description"]" Style="min-width: 220px;" />
                             break;
                     }
-                    <MudNumericField T="int" @bind-Value="_line.Quantity" Label="Qty" Min="1" Style="max-width: 80px;" />
-                    <MudNumericField T="int?" @bind-Value="_line.UnitPrice" Label="@(_line.Kind == SaleLineKind.Other ? "Price" : "Price (catalog)")" Min="0" Style="max-width: 140px;" />
-                    <MudNumericField T="int" @bind-Value="_line.Discount" Label="Discount $" Min="0" Style="max-width: 120px;" />
-                    <MudSelect T="bool?" @bind-Value="_line.TaxExempt" Label="VAT" Style="max-width: 130px;">
-                        <MudSelectItem T="bool?" Value="null">Default</MudSelectItem>
-                        <MudSelectItem T="bool?" Value="false">Taxed</MudSelectItem>
-                        <MudSelectItem T="bool?" Value="true">Exempt</MudSelectItem>
+                    <MudNumericField T="int" @bind-Value="_line.Quantity" Label="@L["Qty"]" Min="1" Style="max-width: 80px;" />
+                    <MudNumericField T="int?" @bind-Value="_line.UnitPrice" Label="@(_line.Kind == SaleLineKind.Other ? L["Price"] : L["Price (catalog)"])" Min="0" Style="max-width: 140px;" />
+                    <MudNumericField T="int" @bind-Value="_line.Discount" Label="@L["Discount $"]" Min="0" Style="max-width: 120px;" />
+                    <MudSelect T="bool?" @bind-Value="_line.TaxExempt" Label="@L["VAT"]" Style="max-width: 130px;">
+                        <MudSelectItem T="bool?" Value="null">@L["Default"]</MudSelectItem>
+                        <MudSelectItem T="bool?" Value="false">@L["Taxed"]</MudSelectItem>
+                        <MudSelectItem T="bool?" Value="true">@L["Exempt"]</MudSelectItem>
                     </MudSelect>
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="AddLineAsync" Disabled="_busy">Add</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="AddLineAsync" Disabled="_busy">@L["Add"]</MudButton>
                 </MudStack>
             }
         </MudPaper>
 
         <MudPaper Class="pa-3 mb-3" Elevation="1">
-            <MudText Typo="Typo.h6" Class="mb-2">Payments</MudText>
+            <MudText Typo="Typo.h6" Class="mb-2">@L["Payments"]</MudText>
             <MudTable Items="_sale.Payments" Dense="true" Elevation="0">
                 <HeaderContent>
-                    <MudTh>Method</MudTh>
-                    <MudTh>Reference</MudTh>
-                    <MudTh>Received</MudTh>
-                    <MudTh Style="text-align:right">Amount</MudTh>
+                    <MudTh>@L["Method"]</MudTh>
+                    <MudTh>@L["Reference"]</MudTh>
+                    <MudTh>@L["Received"]</MudTh>
+                    <MudTh Style="text-align:right">@L["Amount"]</MudTh>
                 </HeaderContent>
                 <RowTemplate>
                     <MudTd>@MethodName(context.Method)</MudTd>
@@ -147,22 +147,22 @@
                     <MudTd>@context.ReceivedAtUtc.ToLocalTime().ToString("dd MMM HH:mm") · @context.ReceivedBy</MudTd>
                     <MudTd Style="text-align:right">@Money.Clp(context.Amount)</MudTd>
                 </RowTemplate>
-                <NoRecordsContent><MudText Typo="Typo.body2" Color="Color.Secondary">No payments yet.</MudText></NoRecordsContent>
+                <NoRecordsContent><MudText Typo="Typo.body2" Color="Color.Secondary">@L["No payments yet."]</MudText></NoRecordsContent>
             </MudTable>
 
             @if (_sale.Status == SaleStatus.Open && _canCharge && _sale.Balance > 0)
             {
                 <MudDivider Class="my-3" />
                 <MudStack Row="true" Spacing="2" AlignItems="AlignItems.End" Wrap="Wrap.Wrap">
-                    <MudSelect T="string" @bind-Value="_payment.Method" Label="Method" Style="min-width: 200px;">
+                    <MudSelect T="string" @bind-Value="_payment.Method" Label="@L["Method"]" Style="min-width: 200px;">
                         @foreach (var method in _methods.Where(m => m.Enabled))
                         {
                             <MudSelectItem Value="@method.Code">@method.Name</MudSelectItem>
                         }
                     </MudSelect>
-                    <MudNumericField T="int" @bind-Value="_payment.Amount" Label="Amount" Min="1" Max="_sale.Balance" Style="max-width: 160px;" />
-                    <MudTextField T="string" @bind-Value="_payment.Reference" Label="Voucher / reference" Style="max-width: 200px;" />
-                    <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Payments" OnClick="AddPaymentAsync" Disabled="_busy">Take payment</MudButton>
+                    <MudNumericField T="int" @bind-Value="_payment.Amount" Label="@L["Amount"]" Min="1" Max="_sale.Balance" Style="max-width: 160px;" />
+                    <MudTextField T="string" @bind-Value="_payment.Reference" Label="@L["Voucher / reference"]" Style="max-width: 200px;" />
+                    <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Payments" OnClick="AddPaymentAsync" Disabled="_busy">@L["Take payment"]</MudButton>
                 </MudStack>
             }
         </MudPaper>
@@ -171,11 +171,11 @@
         {
             <MudPaper Class="pa-3" Elevation="1">
                 <MudStack Row="true" Spacing="2" AlignItems="AlignItems.End">
-                    <MudTextField T="string" @bind-Value="_voidReason" Label="Reason to void" Style="min-width: 300px;" Immediate="true" />
+                    <MudTextField T="string" @bind-Value="_voidReason" Label="@L["Reason to void"]" Style="min-width: 300px;" Immediate="true" />
                     <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Filled.Block"
-                               Disabled="@(string.IsNullOrWhiteSpace(_voidReason) || _busy)" OnClick="VoidAsync">Void sale</MudButton>
+                               Disabled="@(string.IsNullOrWhiteSpace(_voidReason) || _busy)" OnClick="VoidAsync">@L["Void sale"]</MudButton>
                 </MudStack>
-                <MudText Typo="Typo.caption" Color="Color.Secondary">Products go back to stock. Days already closed can't be changed.</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">@L["Products go back to stock. Days already closed can't be changed."]</MudText>
             </MudPaper>
         }
     }
@@ -233,7 +233,7 @@
     }
 
     private string MethodName(string code) => code == "OnlineDeposit"
-        ? "Abono online"
+        ? L["Online deposit"]
         : _methods.FirstOrDefault(m => string.Equals(m.Code, code, StringComparison.OrdinalIgnoreCase))?.Name ?? code;
 
     private async Task<IEnumerable<InventoryItemDTO>> SearchItemsAsync(string text, CancellationToken ct)
@@ -258,9 +258,9 @@
         Method = _payment.Method ?? "",
         Amount = _payment.Amount,
         Reference = _payment.Reference
-    }), () => Snackbar.Add("Payment registered.", Severity.Success));
+    }), () => Snackbar.Add(L["Payment registered."], Severity.Success));
 
-    private Task VoidAsync() => RunAsync(() => BillingApi.VoidAsync(Id, _voidReason!), () => Snackbar.Add("Sale voided.", Severity.Warning));
+    private Task VoidAsync() => RunAsync(() => BillingApi.VoidAsync(Id, _voidReason!), () => Snackbar.Add(L["Sale voided."], Severity.Warning));
 
     private async Task RunAsync(Func<Task<ApiResult>> call, Action? onSuccess = null)
     {

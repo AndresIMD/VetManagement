@@ -74,9 +74,9 @@ public class AppointmentNotificationsTests : IClassFixture<CustomWebAppFactory>
 
             var email = EmailsTo("confirm@mail.cl").Should().ContainSingle().Subject;
             var local = TimeZoneInfo.ConvertTimeFromUtc(slot.StartUtc, TimeZoneInfo.FindSystemTimeZoneById("America/Santiago"));
-            email.Subject.Should().Be("Confirmación de tu hora – San Pablo Vet Clinic");
-            email.Body.Should().Contain("Hola Ana Lopez").And.Contain("Consulta especialista").And.Contain($"Hora: {local:HH:mm}")
-                .And.Contain("miércoles").And.Contain("Paciente: Luna").And.Contain("+56 2 2345 6789");
+            email.Subject.Should().Be("Your appointment is confirmed – San Pablo Vet Clinic");
+            email.Body.Should().Contain("Hello Ana Lopez").And.Contain("Consulta especialista").And.Contain($"Time: {local:HH:mm}")
+                .And.Contain("Wednesday").And.Contain("Patient: Luna").And.Contain("+56 2 2345 6789");
         }
         finally { Serial.Release(); }
     }
@@ -111,12 +111,12 @@ public class AppointmentNotificationsTests : IClassFixture<CustomWebAppFactory>
 
             (await _admin.PostAsJsonAsync($"/api/scheduling/appointments/{id}/reschedule", new { later.ResourceCode, later.StartUtc })).StatusCode.Should().Be(HttpStatusCode.OK);
             (await _admin.PostAsJsonAsync($"/api/scheduling/appointments/{id}/cancel", new { Reason = "Vet sick" })).StatusCode.Should().Be(HttpStatusCode.OK);
-            EmailsTo("changes@mail.cl").Select(e => e.Subject).Should().Contain(s => s.StartsWith("Tu hora cambió")).And.Contain(s => s.StartsWith("Tu hora fue cancelada"));
+            EmailsTo("changes@mail.cl").Select(e => e.Subject).Should().Contain(s => s.StartsWith("Your appointment changed")).And.Contain(s => s.StartsWith("Your appointment was cancelled"));
 
             await ConfigureAsync(changes: false);
             var (id2, _, _) = await BookAsync(4, "quiet@mail.cl");
             (await _admin.PostAsJsonAsync($"/api/scheduling/appointments/{id2}/cancel", new { Reason = "x" })).StatusCode.Should().Be(HttpStatusCode.OK);
-            EmailsTo("quiet@mail.cl").Should().OnlyContain(e => e.Subject.StartsWith("Confirmación"));
+            EmailsTo("quiet@mail.cl").Should().OnlyContain(e => e.Subject.StartsWith("Your appointment is confirmed"));
         }
         finally { Serial.Release(); }
     }
@@ -136,7 +136,7 @@ public class AppointmentNotificationsTests : IClassFixture<CustomWebAppFactory>
             await service.SendDueRemindersAsync();
             await service.SendDueRemindersAsync();
 
-            EmailsTo("reminder@mail.cl").Should().ContainSingle(e => e.Subject.StartsWith("Recordatorio"), "a reminder is sent only once");
+            EmailsTo("reminder@mail.cl").Should().ContainSingle(e => e.Subject.StartsWith("Appointment reminder"), "a reminder is sent only once");
         }
         finally { Serial.Release(); }
     }

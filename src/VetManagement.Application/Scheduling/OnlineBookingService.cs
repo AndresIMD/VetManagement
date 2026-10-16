@@ -6,6 +6,7 @@ using VetManagement.Application.Services;
 using VetManagement.Domain.Clients;
 using VetManagement.Domain.Enums;
 using VetManagement.Domain.Scheduling;
+using VetManagement.Domain.Localization;
 
 namespace VetManagement.Application.Scheduling;
 
@@ -59,19 +60,19 @@ public class OnlineBookingService(
     {
         var settings = (await settingsService.GetAsync()).Settings;
         if (!settings.Enabled)
-            return Invalid("Online booking is not available.");
+            return Invalid(Texts.T("Online booking is not available."));
         var service = AgendaRules.FindBookableService(settings, request.ServiceCode, request.ResourceCode, out var error);
         if (service is null || !service.AllowOnlineBooking)
             return Invalid(error ?? $"Service '{request.ServiceCode}' can't be booked online.");
         if (!Rut.TryParse(request.OwnerTaxId, out var rut))
-            return Invalid("The RUT is not valid.");
+            return Invalid(Texts.T("The RUT is not valid."));
         if (!IsValidEmail(request.OwnerEmail))
-            return Invalid("The email address is not valid.");
+            return Invalid(Texts.T("The email address is not valid."));
         var phoneDigits = new string(request.OwnerPhone.Where(char.IsAsciiDigit).ToArray());
         if (phoneDigits.Length is < 8 or > 15)
-            return Invalid("The phone number is not valid.");
+            return Invalid(Texts.T("The phone number is not valid."));
         if (string.IsNullOrWhiteSpace(request.OwnerFirstName) || string.IsNullOrWhiteSpace(request.OwnerLastName) || string.IsNullOrWhiteSpace(request.PetName))
-            return Invalid("Name, last name and pet name are required.");
+            return Invalid(Texts.T("Name, last name and pet name are required."));
 
         var now = clock.GetUtcNow().UtcDateTime;
         var deposit = service.Price * service.DepositPercent / 100;
@@ -149,7 +150,7 @@ public class OnlineBookingService(
         var confirmation = aborted ? null : await payments.ConfirmAsync(paymentToken);
         if (confirmation is not { Outcome: PaymentOutcome.Approved } || confirmation.Amount != appointment.DepositAmount)
         {
-            await CancelUnpaidAsync(appointment, aborted ? "Payment cancelled by the client" : $"Payment not approved ({confirmation?.Detail})");
+            await CancelUnpaidAsync(appointment, aborted ? Texts.T("Payment cancelled by the client") : Texts.T("Payment not approved ({0})", confirmation?.Detail));
             return appointment.PublicToken;
         }
 
@@ -169,7 +170,7 @@ public class OnlineBookingService(
         {
             var refunded = await payments.RefundAsync(paymentToken, confirmation.Amount);
             appointment.DepositStatus = refunded ? DepositStatus.Refunded : DepositStatus.RefundRequested;
-            await CancelUnpaidAsync(appointment, "Paid after the hold expired and the slot was taken; deposit refunded");
+            await CancelUnpaidAsync(appointment, Texts.T("Paid after the hold expired and the slot was taken; deposit refunded"));
             return appointment.PublicToken;
         }
 
@@ -216,7 +217,7 @@ public class OnlineBookingService(
         appointment.Status = AppointmentStatus.Cancelled;
         appointment.CancelledAtUtc = now;
         appointment.CancelledBy = Actor;
-        appointment.CancelReason = "Cancelled by the client";
+        appointment.CancelReason = Texts.T("Cancelled by the client");
         await unitOfWork.SaveChangesAsync();
         await audit.LogAsync("Appointment", appointment.Id, AuditActionType.Delete, $"Cancelled by the client; deposit {appointment.DepositStatus}", Actor);
         return new OnlineCancelResult(OnlineCancelStatus.Cancelled, appointment.DepositStatus);
@@ -227,7 +228,7 @@ public class OnlineBookingService(
     {
         var expired = await unitOfWork.Appointments.GetExpiredPaymentHoldsAsync(clock.GetUtcNow().UtcDateTime);
         foreach (var appointment in expired)
-            await CancelUnpaidAsync(appointment, "Payment not completed in time");
+            await CancelUnpaidAsync(appointment, Texts.T("Payment not completed in time"));
         return expired.Count;
     }
 
@@ -261,7 +262,7 @@ public class OnlineBookingService(
         var pet = client.Pets.FirstOrDefault(p => string.Equals(p.Name, request.PetName.Trim(), StringComparison.OrdinalIgnoreCase));
         if (pet is null)
         {
-            pet = new Pet { OwnerId = client.Id, Name = request.PetName.Trim(), Species = request.PetSpecies, Breed = "No informada" };
+            pet = new Pet { OwnerId = client.Id, Name = request.PetName.Trim(), Species = request.PetSpecies, Breed = Texts.T("Not given") };
             await unitOfWork.Pets.AddAsync(pet);
             await unitOfWork.SaveChangesAsync();
         }

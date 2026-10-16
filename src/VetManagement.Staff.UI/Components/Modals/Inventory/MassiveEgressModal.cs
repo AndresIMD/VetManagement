@@ -1,6 +1,7 @@
 using MudBlazor;
 using VetManagement.Staff.UI.Models.Core;
 using VetManagement.Staff.UI.Models.DTOs;
+using VetManagement.Staff.UI.Resources;
 
 namespace VetManagement.Staff.UI.Components.Modals.Inventory;
 
@@ -11,7 +12,7 @@ public class MassiveEgressModal : MassiveBaseModal<InventoryMassUpdateDTO>
 
     protected override void OnInitialized()
     {
-        Title = "Massive Withdrawal";
+        Title = Strings.T("Mass egress");
         TitleIcon = Icons.Material.Filled.Download;
         TitleColor = Color.Error;
         base.OnInitialized();
@@ -52,12 +53,12 @@ public class MassiveEgressModal : MassiveBaseModal<InventoryMassUpdateDTO>
         {
             if (value > stock)
             {
-                _errorMessage = $"You cannot withdraw more than {stock} units for '{item.Name}'.";
+                _errorMessage = Strings.T("You cannot withdraw more than {0} units of '{1}'.", stock, item.Name);
                 item.Quantity = stock;
             }
             else if (stock <= 0)
             {
-                _errorMessage = $"No stock available for '{item.Name}'.";
+                _errorMessage = Strings.T("No stock available for '{0}'.", item.Name);
                 item.Quantity = 0;
             }
             else
@@ -88,7 +89,7 @@ public class MassiveEgressModal : MassiveBaseModal<InventoryMassUpdateDTO>
         {
             if (i.Stock <= 0)
             {
-                reason = $"No stock available for '{i.Name}'.";
+                reason = Strings.T("No stock available for '{0}'.", i.Name);
                 return false;
             }
         }
@@ -102,12 +103,12 @@ public class MassiveEgressModal : MassiveBaseModal<InventoryMassUpdateDTO>
         {
             var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = false };
             await DialogService.ShowAsync<Components.Modals.Common.ConfirmModal>(
-                "Stock Error",
+                Strings.T("Stock error"),
                 new DialogParameters<Components.Modals.Common.ConfirmModal>
                 {
-                    { x => x.Title, "Stock Error" },
+                    { x => x.Title, Strings.T("Stock error") },
                     { x => x.Message, _errorMessage },
-                    { x => x.ButtonConfirmText, "OK" },
+                    { x => x.ButtonConfirmText, Strings.T("OK") },
                     { x => x.ButtonCancelText, string.Empty }
                 },
                 options

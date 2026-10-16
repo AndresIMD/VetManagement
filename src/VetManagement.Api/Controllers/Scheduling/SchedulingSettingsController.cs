@@ -5,6 +5,7 @@ using VetManagement.Application.Configuration;
 using VetManagement.Application.Scheduling;
 using VetManagement.Contracts.Scheduling;
 using VetManagement.Domain.Scheduling;
+using VetManagement.Domain.Localization;
 
 namespace VetManagement.Api.Controllers.Scheduling;
 
@@ -38,7 +39,7 @@ public class SchedulingSettingsController(SchedulingSettingsService service, App
             return ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["settings"] = [ex.Message] }));
         }
         if (settings is null)
-            return ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["settings"] = ["Settings are required."] }));
+            return ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["settings"] = [Texts.T("Settings are required.")] }));
 
         var result = await service.UpdateAsync(settings, document.Version, GetUserName());
         return result.Status switch
@@ -46,8 +47,8 @@ public class SchedulingSettingsController(SchedulingSettingsService service, App
             SettingsUpdateStatus.Saved => Ok(new { version = result.Version, appointmentsNeedingReschedule = await appointments.FlagAffectedByExceptionsAsync(GetUserName()) }),
             SettingsUpdateStatus.Conflict => Conflict(new ProblemDetails
             {
-                Title = "The settings were changed by someone else.",
-                Detail = $"Reload the latest version ({result.Version}) and apply your changes again.",
+                Title = Texts.T("The settings were changed by someone else."),
+                Detail = Texts.T("Reload the latest version ({0}) and apply your changes again.", result.Version),
                 Status = StatusCodes.Status409Conflict
             }),
             _ => ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { ["settings"] = [.. result.Errors] }))

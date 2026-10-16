@@ -7,10 +7,10 @@
 @inject NavigationManager Navigation
 @attribute [Authorize(Policy = "Exams.Update")]
 
-<PageTitle>Report Template</PageTitle>
+<PageTitle>@L["Report template"]</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mx-auto px-2 mt-8">
-    <PageHeader Title="Report Template" Subtitle="@_examName" Icon="@Icons.Material.Filled.Tune" />
+    <PageHeader Title="@L["Report template"]" Subtitle="@_examName" Icon="@Icons.Material.Filled.Tune" />
 
     @if (_template is null)
     {
@@ -26,20 +26,20 @@
         <MudGrid>
             <MudItem xs="12" lg="6">
                 <MudPaper Class="pa-4 mb-3" Elevation="1">
-                    <MudTextField Label="Title printed on the result bar" @bind-Value="_template.Title" Placeholder="PRUEBA cPL" />
-                    <MudText Typo="Typo.subtitle2" Class="mt-3">Print on this report</MudText>
+                    <MudTextField Label="@L["Title printed on the result bar"]" @bind-Value="_template.Title" Placeholder="@L["TEST {0}", "cPL"]" />
+                    <MudText Typo="Typo.subtitle2" Class="mt-3">@L["Print on this report"]</MudText>
                     <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="0">
-                        <MudCheckBox T="bool" @bind-Value="_template.Sections.PatientData" Label="Patient and owner data" />
-                        <MudCheckBox T="bool" @bind-Value="_template.Sections.Interpretation" Label="Interpretation" />
-                        <MudCheckBox T="bool" @bind-Value="_template.Sections.Method" Label="Method (brand - machine)" />
-                        <MudCheckBox T="bool" @bind-Value="_template.Sections.ReportedBy" Label="Issued by (staff member)" />
-                        <MudCheckBox T="bool" @bind-Value="_template.Sections.DirectionArrows" Label="↑ / ↓ arrows on values outside the normal range" />
-                        <MudCheckBox T="bool" @bind-Value="_template.Sections.PreviousResult" Label="Previous result column (the pet's last report of this exam, headed by its date)" />
+                        <MudCheckBox T="bool" @bind-Value="_template.Sections.PatientData" Label="@L["Patient and owner data"]" />
+                        <MudCheckBox T="bool" @bind-Value="_template.Sections.Interpretation" Label="@L["Interpretation"]" />
+                        <MudCheckBox T="bool" @bind-Value="_template.Sections.Method" Label="@L["Method (brand - machine)"]" />
+                        <MudCheckBox T="bool" @bind-Value="_template.Sections.ReportedBy" Label="@L["Issued by (staff member)"]" />
+                        <MudCheckBox T="bool" @bind-Value="_template.Sections.DirectionArrows" Label="@L["↑ / ↓ arrows on values outside the normal range"]" />
+                        <MudCheckBox T="bool" @bind-Value="_template.Sections.PreviousResult" Label="@L["Previous result column (the pet's last report of this exam, headed by its date)"]" />
                     </MudStack>
-                    <MudText Typo="Typo.subtitle2" Class="mt-3">Ask in the report form</MudText>
-                    <MudCheckBox T="bool" @bind-Value="_template.Sections.LotNumber" Label="Lot number of the test kit or reagent (printed in the method bar)" />
+                    <MudText Typo="Typo.subtitle2" Class="mt-3">@L["Ask in the report form"]</MudText>
+                    <MudCheckBox T="bool" @bind-Value="_template.Sections.LotNumber" Label="@L["Lot number of the test kit or reagent (printed in the method bar)"]" />
                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                        The form only shows what this exam needs: patient, exam, reception date, referring vet, these fields and the parameters.
+                        @L["The form only shows what this exam needs: patient, exam, reception date, referring vet, these fields and the parameters."]
                     </MudText>
                 </MudPaper>
 
@@ -49,20 +49,20 @@
                     <MudPaper Class="pa-4 mb-3" Elevation="1">
                         <MudGrid Spacing="2">
                             <MudItem xs="12" sm="5">
-                                <MudTextField Label="Parameter" @bind-Value="p.Name" Placeholder="cPL" OnBlur="_ => FillCode(p)" />
+                                <MudTextField Label="@L["Parameter"]" @bind-Value="p.Name" Placeholder="cPL" OnBlur="_ => FillCode(p)" />
                             </MudItem>
                             <MudItem xs="6" sm="3">
-                                <MudSelect T="ReportParameterKind" Label="Type" @bind-Value="p.Kind">
-                                    <MudSelectItem Value="ReportParameterKind.Number">Number</MudSelectItem>
-                                    <MudSelectItem Value="ReportParameterKind.Text">Text</MudSelectItem>
+                                <MudSelect T="ReportParameterKind" Label="@L["Type"]" @bind-Value="p.Kind">
+                                    <MudSelectItem Value="ReportParameterKind.Number">@L["Number"]</MudSelectItem>
+                                    <MudSelectItem Value="ReportParameterKind.Text">@L["Text"]</MudSelectItem>
                                 </MudSelect>
                             </MudItem>
                             <MudItem xs="6" sm="3">
-                                <MudAutocomplete T="string" Label="Unit" @bind-Value="p.Unit" SearchFunc="SearchUnitsAsync"
+                                <MudAutocomplete T="string" Label="@L["Unit"]" @bind-Value="p.Unit" SearchFunc="SearchUnitsAsync"
                                                  CoerceValue="true" CoerceText="false" Clearable="true" Placeholder="ng/mL" />
                             </MudItem>
                             <MudItem xs="12" sm="1" Class="d-flex align-center justify-end">
-                                <MudTooltip Text="Remove parameter">
+                                <MudTooltip Text="@L["Remove parameter"]">
                                     <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => _template.Parameters.Remove(p)" />
                                 </MudTooltip>
                             </MudItem>
@@ -70,16 +70,16 @@
                             @if (p.Kind == ReportParameterKind.Text)
                             {
                                 <MudItem xs="12">
-                                    <MudTextField T="string" Label="Options (optional, separated by ;)" Placeholder="DEA 1.1 Positivo; DEA 1.1 Negativo"
+                                    <MudTextField T="string" Label="@L["Options (optional, separated by ;)"]" Placeholder="@L["DEA 1.1 Positive; DEA 1.1 Negative"]"
                                                   Value="@string.Join("; ", p.Options)"
                                                   ValueChanged="v => SetOptions(p, v)" />
                                 </MudItem>
                                 @if (p.Options.Count > 0)
                                 {
                                     <MudItem xs="12">
-                                        <MudSelect T="string" Label="Abnormal results (print in red)" MultiSelection="true" Clearable="true"
+                                        <MudSelect T="string" Label="@L["Abnormal results (print in red)"]" MultiSelection="true" Clearable="true"
                                                    SelectedValues="p.AbnormalOptions" SelectedValuesChanged="v => p.AbnormalOptions = v.ToList()"
-                                                   HelperText="E.g. 'Positivo' in a SNAP or PCR test. Leave empty when no value is abnormal (blood types).">
+                                                   HelperText="@L["E.g. 'Positivo' in a SNAP or PCR test. Leave empty when no value is abnormal (blood types)."]">
                                             @foreach (var option in p.Options)
                                             {
                                                 <MudSelectItem Value="@option">@option</MudSelectItem>
@@ -91,7 +91,7 @@
                                 {
                                     <MudItem xs="12">
                                         <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                            All parameters are text: the report prints each result highlighted (no unit or reference columns).
+                                            @L["All parameters are text: the report prints each result highlighted (no unit or reference columns)."]
                                         </MudText>
                                     </MudItem>
                                 }
@@ -99,80 +99,77 @@
                             else
                             {
                                 <MudItem xs="12" sm="4">
-                                    <MudSelect T="ReferenceDisplay" Label="Reference column" @bind-Value="p.Reference">
-                                        <MudSelectItem Value="ReferenceDisplay.Range">Normal range</MudSelectItem>
-                                        <MudSelectItem Value="ReferenceDisplay.Text">Written text</MudSelectItem>
-                                        <MudSelectItem Value="ReferenceDisplay.None">Nothing</MudSelectItem>
+                                    <MudSelect T="ReferenceDisplay" Label="@L["Reference column"]" @bind-Value="p.Reference">
+                                        <MudSelectItem Value="ReferenceDisplay.Range">@L["Normal range"]</MudSelectItem>
+                                        <MudSelectItem Value="ReferenceDisplay.Text">@L["Written text"]</MudSelectItem>
+                                        <MudSelectItem Value="ReferenceDisplay.None">@L["Nothing"]</MudSelectItem>
                                     </MudSelect>
                                 </MudItem>
                                 <MudItem xs="12" sm="8" Class="d-flex align-center">
                                     @if (p.Reference == ReferenceDisplay.Text)
                                     {
-                                        <MudTextField Label="Text printed as reference" @bind-Value="p.ReferenceText" Placeholder="Sin rango de referencia" />
+                                        <MudTextField Label="@L["Text printed as reference"]" @bind-Value="p.ReferenceText" Placeholder="@L["No reference range"]" />
                                     }
                                     else
                                     {
-                                        <MudCheckBox T="bool" @bind-Value="p.ShowBar" Label="Show bar (value drawn against the normal range)" />
+                                        <MudCheckBox T="bool" @bind-Value="p.ShowBar" Label="@L["Show bar (value drawn against the normal range)"]" />
                                     }
                                 </MudItem>
 
                                 <MudItem xs="12">
-                                    <MudText Typo="Typo.subtitle2">Normal range</MudText>
+                                    <MudText Typo="Typo.subtitle2">@L["Normal range"]</MudText>
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        Values outside it print in red (with ↑ or ↓ when the arrows are on). Leave it empty if the parameter has no range. A range for one species replaces the one for all.
+                                        @L["Values outside it print in red (with ↑ or ↓ when the arrows are on). Leave it empty if the parameter has no range. A range for one species replaces the one for all."]
                                     </MudText>
                                     @foreach (var range in p.Ranges)
                                     {
                                         var r = range;
                                         <MudGrid Spacing="1" Class="mt-1">
                                             <MudItem xs="6" sm="3">
-                                                <MudSelect T="Species?" Label="Species" @bind-Value="r.Species" Dense="true">
-                                                    <MudSelectItem T="Species?" Value="null">All</MudSelectItem>
+                                                <MudSelect T="Species?" Label="@L["Species"]" @bind-Value="r.Species" Dense="true">
+                                                    <MudSelectItem T="Species?" Value="null">@L["All"]</MudSelectItem>
                                                     @foreach (var species in SpeciesOptions)
                                                     {
-                                                        <MudSelectItem T="Species?" Value="species">@species</MudSelectItem>
+                                                        <MudSelectItem T="Species?" Value="species">@species.ToText()</MudSelectItem>
                                                     }
                                                 </MudSelect>
                                             </MudItem>
-                                            <MudItem xs="3" sm="3"><MudNumericField T="decimal?" Label="Min" @bind-Value="r.Min" HideSpinButtons="true" /></MudItem>
-                                            <MudItem xs="3" sm="3"><MudNumericField T="decimal?" Label="Max" @bind-Value="r.Max" HideSpinButtons="true" /></MudItem>
+                                            <MudItem xs="3" sm="3"><MudNumericField T="decimal?" Label="@L["Min"]" @bind-Value="r.Min" HideSpinButtons="true" /></MudItem>
+                                            <MudItem xs="3" sm="3"><MudNumericField T="decimal?" Label="@L["Max"]" @bind-Value="r.Max" HideSpinButtons="true" /></MudItem>
                                             <MudItem xs="12" sm="3" Class="d-flex align-center">
                                                 <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="() => p.Ranges.Remove(r)" />
                                             </MudItem>
                                         </MudGrid>
                                     }
                                     <MudButton Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" Class="mt-1" OnClick="() => p.Ranges.Add(new ReferenceRange())">
-                                        @(p.Ranges.Count == 0 ? "Add normal range" : "Add range for a species")
+                                        @(p.Ranges.Count == 0 ? L["Add normal range"] : L["Add range for a species"])
                                     </MudButton>
                                 </MudItem>
 
                                 <MudItem xs="12">
-                                    <MudText Typo="Typo.subtitle2">Interpretation (optional)</MudText>
+                                    <MudText Typo="Typo.subtitle2">@L["Interpretation (optional)"]</MudText>
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        Name what a value means, e.g. ≤ 200 "Normal", 200 – 399.9 "Zona gris", ≥ 400 "Consistente con pancreatitis".
-                                        Limits included; the first band that contains the value is used and its meaning becomes the automatic
-                                        interpretation. Tick <b>Abnormal</b> on bands that are not normal results: a value there prints in red with *,
-                                        even inside the normal range.
+                                        @L["Name what a value means, e.g. ≤ 200 \"Normal\", 200 – 399.9 \"Zona gris\", ≥ 400 \"Consistente con pancreatitis\". Limits included; the first band that contains the value is used and its meaning becomes the automatic interpretation. Tick Abnormal on bands that are not normal results: a value there prints in red with *, even inside the normal range."]
                                     </MudText>
                                     @foreach (var band in p.Bands)
                                     {
                                         var b = band;
                                         <MudGrid Spacing="1" Class="mt-1">
                                             <MudItem xs="6" sm="2">
-                                                <MudSelect T="Species?" Label="Species" @bind-Value="b.Species" Dense="true">
-                                                    <MudSelectItem T="Species?" Value="null">All</MudSelectItem>
+                                                <MudSelect T="Species?" Label="@L["Species"]" @bind-Value="b.Species" Dense="true">
+                                                    <MudSelectItem T="Species?" Value="null">@L["All"]</MudSelectItem>
                                                     @foreach (var species in SpeciesOptions)
                                                     {
-                                                        <MudSelectItem T="Species?" Value="species">@species</MudSelectItem>
+                                                        <MudSelectItem T="Species?" Value="species">@species.ToText()</MudSelectItem>
                                                     }
                                                 </MudSelect>
                                             </MudItem>
-                                            <MudItem xs="3" sm="2"><MudNumericField T="decimal?" Label="From" @bind-Value="b.Min" HideSpinButtons="true" /></MudItem>
-                                            <MudItem xs="3" sm="2"><MudNumericField T="decimal?" Label="To" @bind-Value="b.Max" HideSpinButtons="true" /></MudItem>
-                                            <MudItem xs="8" sm="3"><MudTextField Label="Meaning" @bind-Value="b.Label" Placeholder="Zona gris" /></MudItem>
+                                            <MudItem xs="3" sm="2"><MudNumericField T="decimal?" Label="@L["From"]" @bind-Value="b.Min" HideSpinButtons="true" /></MudItem>
+                                            <MudItem xs="3" sm="2"><MudNumericField T="decimal?" Label="@L["To"]" @bind-Value="b.Max" HideSpinButtons="true" /></MudItem>
+                                            <MudItem xs="8" sm="3"><MudTextField Label="@L["Meaning"]" @bind-Value="b.Label" Placeholder="@L["Grey zone"]" /></MudItem>
                                             <MudItem xs="3" sm="2" Class="d-flex align-center">
-                                                <MudTooltip Text="A value in this band prints in red with * (not a normal result)">
-                                                    <MudCheckBox T="bool" @bind-Value="b.Abnormal" Color="Color.Warning" Label="Abnormal" Dense="true" />
+                                                <MudTooltip Text="@L["A value in this band prints in red with * (not a normal result)"]">
+                                                    <MudCheckBox T="bool" @bind-Value="b.Abnormal" Color="Color.Warning" Label="@L["Abnormal"]" Dense="true" />
                                                 </MudTooltip>
                                             </MudItem>
                                             <MudItem xs="1" Class="d-flex align-center">
@@ -180,15 +177,15 @@
                                             </MudItem>
                                         </MudGrid>
                                     }
-                                    <MudButton Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" Class="mt-1" OnClick="() => p.Bands.Add(new InterpretationBand())">Add band</MudButton>
+                                    <MudButton Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" Class="mt-1" OnClick="() => p.Bands.Add(new InterpretationBand())">@L["Add band"]</MudButton>
                                 </MudItem>
                             }
                             <MudItem xs="12" sm="5">
                                 @if (p.Kind == ReportParameterKind.Text && p.Options.Count > 0)
                                 {
-                                    <MudSelect T="string" Label="Try a value" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true"
+                                    <MudSelect T="string" Label="@L["Try a value"]" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true"
                                                Value="@_samples.GetValueOrDefault(p)" ValueChanged="v => _samples[p] = v"
-                                               HelperText="Not saved: shows the result in the preview.">
+                                               HelperText="@L["Not saved: shows the result in the preview."]">
                                         @foreach (var option in p.Options)
                                         {
                                             <MudSelectItem Value="@option">@option</MudSelectItem>
@@ -197,16 +194,16 @@
                                 }
                                 else
                                 {
-                                    <MudTextField T="string" Label="Try a value" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                                    <MudTextField T="string" Label="@L["Try a value"]" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
                                                   Value="@_samples.GetValueOrDefault(p)" ValueChanged="v => _samples[p] = v"
-                                                  HelperText="Not saved: shows the result in the preview." />
+                                                  HelperText="@L["Not saved: shows the result in the preview."]" />
                                 }
                             </MudItem>
                             <MudItem xs="12" sm="3">
-                                <MudSelect T="Species" Label="As species" @bind-Value="_sampleSpecies" Margin="Margin.Dense" Variant="Variant.Outlined">
+                                <MudSelect T="Species" Label="@L["As species"]" @bind-Value="_sampleSpecies" Margin="Margin.Dense" Variant="Variant.Outlined">
                                     @foreach (var species in SpeciesOptions)
                                     {
-                                        <MudSelectItem Value="species">@species</MudSelectItem>
+                                        <MudSelectItem Value="species">@species.ToText()</MudSelectItem>
                                     }
                                 </MudSelect>
                             </MudItem>
@@ -217,11 +214,9 @@
                 @if (NumberParameters.Count >= 2)
                 {
                     <MudPaper Class="pa-4 mb-3" Elevation="1">
-                        <MudText Typo="Typo.subtitle2">Interpretation from several values (optional)</MudText>
+                        <MudText Typo="Typo.subtitle2">@L["Interpretation from several values (optional)"]</MudText>
                         <MudText Typo="Typo.caption" Color="Color.Secondary">
-                            For exams read as a whole, e.g. cortisol at 0, 4 and 8 h. Rules are checked from the top; the first one whose
-                            conditions all hold gives the automatic interpretation. If none holds, the bands' meanings are used.
-                            A condition compares a value with a number, or with a percentage of another value (e.g. 4 h &lt; 50 % of basal).
+                            @L["For exams read as a whole, e.g. cortisol at 0, 4 and 8 h. Rules are checked from the top; the first one whose conditions all hold gives the automatic interpretation. If none holds, the bands' meanings are used. A condition compares a value with a number, or with a percentage of another value (e.g. 4 h < 50 % of basal)."]
                         </MudText>
                         @foreach (var rule in _template.Rules)
                         {
@@ -232,7 +227,7 @@
                                     var c = condition;
                                     <MudGrid Spacing="1">
                                         <MudItem xs="6" sm="3">
-                                            <MudSelect T="string" Label="@(rl.Conditions.IndexOf(c) == 0 ? "If" : "and")" @bind-Value="c.Code" Dense="true">
+                                            <MudSelect T="string" Label="@(rl.Conditions.IndexOf(c) == 0 ? L["If"] : L["and"])" @bind-Value="c.Code" Dense="true">
                                                 @foreach (var p in NumberParameters)
                                                 {
                                                     <MudSelectItem Value="@p.Code">@p.Name</MudSelectItem>
@@ -240,20 +235,20 @@
                                             </MudSelect>
                                         </MudItem>
                                         <MudItem xs="6" sm="2">
-                                            <MudSelect T="RuleOperator" Label="is" @bind-Value="c.Operator" Dense="true">
+                                            <MudSelect T="RuleOperator" Label="@L["is"]" @bind-Value="c.Operator" Dense="true">
                                                 @foreach (var op in Enum.GetValues<RuleOperator>())
                                                 {
-                                                    <MudSelectItem Value="op">@op.GetDisplayString()</MudSelectItem>
+                                                    <MudSelectItem Value="op">@op.ToText()</MudSelectItem>
                                                 }
                                             </MudSelect>
                                         </MudItem>
-                                        <MudItem xs="5" sm="2"><MudNumericField T="decimal" Label="Value" @bind-Value="c.Value" HideSpinButtons="true" /></MudItem>
+                                        <MudItem xs="5" sm="2"><MudNumericField T="decimal" Label="@L["Value"]" @bind-Value="c.Value" HideSpinButtons="true" /></MudItem>
                                         <MudItem xs="6" sm="4">
-                                            <MudSelect T="string" Label="of" @bind-Value="c.PercentOf" Dense="true">
-                                                <MudSelectItem T="string" Value="null">(the number itself)</MudSelectItem>
+                                            <MudSelect T="string" Label="@L["of"]" @bind-Value="c.PercentOf" Dense="true">
+                                                <MudSelectItem T="string" Value="null">@L["(the number itself)"]</MudSelectItem>
                                                 @foreach (var p in NumberParameters.Where(p => p.Code != c.Code))
                                                 {
-                                                    <MudSelectItem Value="@p.Code">% of @p.Name</MudSelectItem>
+                                                    <MudSelectItem Value="@p.Code">@L["% of {0}", p.Name]</MudSelectItem>
                                                 }
                                             </MudSelect>
                                         </MudItem>
@@ -262,35 +257,34 @@
                                         </MudItem>
                                     </MudGrid>
                                 }
-                                <MudButton Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" OnClick="() => rl.Conditions.Add(NewCondition())">Add condition</MudButton>
+                                <MudButton Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" OnClick="() => rl.Conditions.Add(NewCondition())">@L["Add condition"]</MudButton>
                                 <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-1">
-                                    <MudTextField Label="Then the interpretation is" @bind-Value="rl.Label" Placeholder="Compatible con hiperadrenocorticismo hipofisario" />
-                                    <MudTooltip Text="Move up">
+                                    <MudTextField Label="@L["Then the interpretation is"]" @bind-Value="rl.Label" Placeholder="@L["Consistent with pituitary-dependent hyperadrenocorticism"]" />
+                                    <MudTooltip Text="@L["Move up"]">
                                         <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward" Size="Size.Small" Disabled="@(_template.Rules.IndexOf(rl) == 0)" OnClick="() => MoveUp(rl)" />
                                     </MudTooltip>
-                                    <MudTooltip Text="Remove rule">
+                                    <MudTooltip Text="@L["Remove rule"]">
                                         <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => _template.Rules.Remove(rl)" />
                                     </MudTooltip>
                                 </MudStack>
                             </MudPaper>
                         }
                         <MudButton Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" Class="mt-2"
-                                   OnClick="() => _template.Rules.Add(new InterpretationRule { Conditions = [NewCondition()] })">Add rule</MudButton>
+                                   OnClick="() => _template.Rules.Add(new InterpretationRule { Conditions = [NewCondition()] })">@L["Add rule"]</MudButton>
                     </MudPaper>
                 }
 
                 <MudPaper Class="pa-4 mb-3" Elevation="1">
                     <MudCheckBox T="bool" Value="_template.Sections.CriteriaTable" ValueChanged="SetCriteriaTable"
-                                 Label="Print a criteria table under the results (e.g. the manufacturer's interpretation table)" />
+                                 Label="@L["Print a criteria table under the results (e.g. the manufacturer's interpretation table)"]" />
                     @if (_template.Sections.CriteriaTable)
                     {
                         var table = _template.Criteria;
                         <MudText Typo="Typo.caption" Color="Color.Secondary">
-                            Printed as written, for the reader. The automatic interpretation still comes from the rules above.
-                            A line break inside a cell prints as a new line.
+                            @L["Printed as written, for the reader. The automatic interpretation still comes from the rules above. A line break inside a cell prints as a new line."]
                         </MudText>
-                        <MudTextField Label="Table title (optional)" @bind-Value="table.Title" MaxLength="200"
-                                      Placeholder="Prueba de supresión con dexametasona a dosis baja" />
+                        <MudTextField Label="@L["Table title (optional)"]" @bind-Value="table.Title" MaxLength="200"
+                                      Placeholder="@L["Low-dose dexamethasone suppression test"]" />
                         <div style="overflow-x:auto" class="mt-2">
                             <table style="border-collapse:collapse;width:100%">
                                 <tr>
@@ -299,7 +293,7 @@
                                         var column = i;
                                         <td style="min-width:140px;padding:2px;vertical-align:bottom">
                                             <MudStack Row="true" AlignItems="AlignItems.End" Spacing="0">
-                                                <MudTextField T="string" Label="@($"Column {column + 1}")" Value="table.Columns[column]"
+                                                <MudTextField T="string" Label="@L["Column {0}", column + 1]" Value="table.Columns[column]"
                                                               ValueChanged="v => table.Columns[column] = v" Variant="Variant.Filled" />
                                                 <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" Disabled="table.Columns.Count == 1"
                                                                OnClick="() => RemoveColumn(column)" />
@@ -329,21 +323,21 @@
                         </div>
                         <MudStack Row="true" Spacing="1" Class="mt-2">
                             <MudButton Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" Disabled="table.Rows.Count >= CriteriaTable.MaxRows"
-                                       OnClick="() => table.Rows.Add(new CriteriaRow { Cells = table.Columns.Select(_ => string.Empty).ToList() })">Add row</MudButton>
+                                       OnClick="() => table.Rows.Add(new CriteriaRow { Cells = table.Columns.Select(_ => string.Empty).ToList() })">@L["Add row"]</MudButton>
                             <MudButton Size="Size.Small" StartIcon="@Icons.Material.Filled.ViewColumn" Disabled="table.Columns.Count >= CriteriaTable.MaxColumns"
-                                       OnClick="AddColumn">Add column</MudButton>
+                                       OnClick="AddColumn">@L["Add column"]</MudButton>
                         </MudStack>
                     }
                 </MudPaper>
 
                 <MudStack Row="true" Spacing="2" Class="mb-8">
-                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="() => _template.Parameters.Add(NewParameter())">Add parameter</MudButton>
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="() => _template.Parameters.Add(NewParameter())">@L["Add parameter"]</MudButton>
                     <MudSpacer />
                     @if (_exists)
                     {
-                        <MudButton Color="Color.Error" OnClick="RemoveTemplateAsync">Remove template</MudButton>
+                        <MudButton Color="Color.Error" OnClick="RemoveTemplateAsync">@L["Remove template"]</MudButton>
                     }
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_saving" OnClick="SaveAsync">Save template</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_saving" OnClick="SaveAsync">@L["Save template"]</MudButton>
                 </MudStack>
             </MudItem>
 
@@ -381,7 +375,7 @@
         var exam = (await ExamsApi.GetAllExamsAsync() ?? []).FirstOrDefault(e => e.Id == ExamId);
         if (exam is null)
         {
-            _error = $"Exam #{ExamId} was not found.";
+            _error = L["Exam #{0} was not found.", ExamId];
             return;
         }
         _examName = exam.Name;
@@ -392,7 +386,7 @@
         _template = _settings.FindTemplate(ExamId) ?? new ExamReportTemplate
         {
             ExamId = ExamId,
-            Title = $"PRUEBA {exam.Name}",
+            Title = L["TEST {0}", exam.Name],
             Parameters = [NewParameter(exam.Name)]
         };
         foreach (var p in _template.Parameters)
@@ -449,7 +443,7 @@
         var table = _template.Criteria;
         if (!on || table.Columns.Count > 0)
             return;
-        table.Columns = NumberParameters.Select(p => p.Name).Take(CriteriaTable.MaxColumns - 1).Append("Interpretación").ToList();
+        table.Columns = NumberParameters.Select(p => p.Name).Take(CriteriaTable.MaxColumns - 1).Append(L["Interpretation"].Value).ToList();
         table.Rows = [new CriteriaRow { Cells = table.Columns.Select(_ => string.Empty).ToList() }];
     }
 
@@ -528,14 +522,14 @@
         }
         _settings!.Templates.RemoveAll(t => t.ExamId == ExamId);
         _settings.Templates.Add(_template);
-        await SaveSettingsAsync("Template saved.");
+        await SaveSettingsAsync(L["Template saved."]);
         _exists = _error is null;
     }
 
     private async Task RemoveTemplateAsync()
     {
         _settings!.Templates.RemoveAll(t => t.ExamId == ExamId);
-        await SaveSettingsAsync("Template removed.");
+        await SaveSettingsAsync(L["Template removed."]);
         if (_error is null)
             Navigation.NavigateTo("exams");
     }

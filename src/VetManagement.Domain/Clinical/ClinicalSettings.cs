@@ -1,4 +1,5 @@
 using VetManagement.Domain.Enums;
+using VetManagement.Domain.Localization;
 
 namespace VetManagement.Domain.Clinical;
 
@@ -8,11 +9,11 @@ public class ClinicalSettings
     /// <summary>Starting protocols; placeholders each clinic's vets adjust to their own schedule.</summary>
     public List<PreventiveProtocol> Protocols { get; set; } =
     [
-        new() { Code = "rabies", Name = "Antirrábica", Kind = PreventiveKind.Vaccine, IntervalDays = 365 },
-        new() { Code = "dog-multiple", Name = "Óctuple / Séxtuple", Kind = PreventiveKind.Vaccine, Species = Species.Dog, IntervalDays = 365 },
-        new() { Code = "cat-triple", Name = "Triple felina", Kind = PreventiveKind.Vaccine, Species = Species.Cat, IntervalDays = 365 },
-        new() { Code = "deworm-internal", Name = "Desparasitación interna", Kind = PreventiveKind.Deworming, IntervalDays = 90 },
-        new() { Code = "deworm-external", Name = "Desparasitación externa", Kind = PreventiveKind.Deworming, IntervalDays = 30 }
+        new() { Code = "rabies", Name = Texts.T("Rabies"), Kind = PreventiveKind.Vaccine, IntervalDays = 365 },
+        new() { Code = "dog-multiple", Name = Texts.T("Canine multivalent (6- or 8-way)"), Kind = PreventiveKind.Vaccine, Species = Species.Dog, IntervalDays = 365 },
+        new() { Code = "cat-triple", Name = Texts.T("Feline triple"), Kind = PreventiveKind.Vaccine, Species = Species.Cat, IntervalDays = 365 },
+        new() { Code = "deworm-internal", Name = Texts.T("Internal deworming"), Kind = PreventiveKind.Deworming, IntervalDays = 90 },
+        new() { Code = "deworm-external", Name = Texts.T("External deworming"), Kind = PreventiveKind.Deworming, IntervalDays = 30 }
     ];
 
     public PreventiveReminderSettings Reminders { get; set; } = new();
@@ -26,17 +27,17 @@ public class ClinicalSettings
     public List<string> Validate()
     {
         var errors = new List<string>();
-        if (Reminders.DaysBefore is < 0 or > 90) errors.Add("Reminders.DaysBefore must be between 0 and 90.");
-        if (ClientPortal.LinkValidMinutes is < 5 or > 1440) errors.Add("ClientPortal.LinkValidMinutes must be between 5 and 1440.");
+        if (Reminders.DaysBefore is < 0 or > 90) errors.Add(Texts.T("Reminders.DaysBefore must be between 0 and 90."));
+        if (ClientPortal.LinkValidMinutes is < 5 or > 1440) errors.Add(Texts.T("ClientPortal.LinkValidMinutes must be between 5 and 1440."));
         foreach (var p in Protocols)
         {
             if (string.IsNullOrWhiteSpace(p.Code) || string.IsNullOrWhiteSpace(p.Name))
-                errors.Add("Every protocol needs a Code and a Name.");
+                errors.Add(Texts.T("Every protocol needs a Code and a Name."));
             if (p.IntervalDays is < 0 or > 3650)
-                errors.Add($"Protocol '{p.Code}': IntervalDays must be between 0 (no repeat) and 3650.");
+                errors.Add(Texts.T("Protocol '{0}': IntervalDays must be between 0 (no repeat) and 3650.", p.Code));
         }
         foreach (var code in Protocols.GroupBy(p => p.Code, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1).Select(g => g.Key))
-            errors.Add($"Duplicate protocol code '{code}'.");
+            errors.Add(Texts.T("Duplicate protocol code '{0}'.", code));
         return errors;
     }
 

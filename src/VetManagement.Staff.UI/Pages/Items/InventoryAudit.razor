@@ -12,30 +12,30 @@
 @using VetManagement.Staff.UI.Models.Audit
 @using VetManagement.Staff.UI.Models.DTOs
 
-<PageTitle>Inventory History</PageTitle>
+<PageTitle>@L["Inventory History"]</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
-    <PageHeader Title="Inventory Audit" Icon="@Icons.Material.Filled.HistoryEdu" />
+    <PageHeader Title="@L["Inventory Audit"]" Icon="@Icons.Material.Filled.HistoryEdu" />
     <FilterPanel ActiveFilterCount="@GetActiveFilterCount()" OnClear="ClearFilters" IsLoading="false">
         <MudItem xs="12" sm="6" md="3">
-            <MudTextField @bind-Value="FilterItemName" Label="Search item name..." Variant="Variant.Outlined"
+            <MudTextField @bind-Value="FilterItemName" Label="@L["Search item name..."]" Variant="Variant.Outlined"
                 Clearable="true" Immediate="true" DebounceInterval="400" Adornment="Adornment.Start"
                 AdornmentIcon="@Icons.Material.Filled.Search" />
         </MudItem>
         <MudItem xs="12" sm="6" md="3">
-            <MudTextField @bind-Value="FilterResponsible" Label="Responsible / User" Variant="Variant.Outlined"
+            <MudTextField @bind-Value="FilterResponsible" Label="@L["Responsible / User"]" Variant="Variant.Outlined"
                 Clearable="true" Immediate="true" DebounceInterval="400" Adornment="Adornment.Start"
                 AdornmentIcon="@Icons.Material.Filled.Person" />
         </MudItem>
         <MudItem xs="12" sm="6" md="3">
             <MudEnumMultiSelect TEnum="AuditActionType" SelectedItems="@FilterActions"
                 SelectedItemsChanged="@(actions => FilterActions = actions)"
-                AllowedValues="@AuditActionHelper.GetInventoryActions()" Label="Type / Action"
+                AllowedValues="@AuditActionHelper.GetInventoryActions()" Label="@L["Type / Action"]"
                 Variant="Variant.Outlined" Adornment="Adornment.Start"
                 AdornmentIcon="@Icons.Material.Filled.FilterAlt" />
         </MudItem>
         <MudItem xs="12" sm="6" md="3">
-            <DateRangeFilter @bind-DateRange="FilterDateRange" Label="Date Range" />
+            <DateRangeFilter @bind-DateRange="FilterDateRange" Label="@L["Date Range"]" />
         </MudItem>
     </FilterPanel>
 </MudContainer>
@@ -45,22 +45,22 @@
         FixedHeader="true" Dense="true">
         <ToolBarContent></ToolBarContent>
         <HeaderContent>
-            <MudTh Style="width: 150px;">Date</MudTh>
-            <MudTh Style="width: 120px;">Action</MudTh>
-            <MudTh Style="width: 150px;">User</MudTh>
-            <MudTh Style="width: 150px;">Item</MudTh>
-            <MudTh>Changes</MudTh>
+            <MudTh Style="width: 150px;">@L["Date"]</MudTh>
+            <MudTh Style="width: 120px;">@L["Action"]</MudTh>
+            <MudTh Style="width: 150px;">@L["User"]</MudTh>
+            <MudTh Style="width: 150px;">@L["Item"]</MudTh>
+            <MudTh>@L["Changes"]</MudTh>
         </HeaderContent>
         <RowTemplate>
-            <MudTd DataLabel="Date">@context.Date.ToString("dd/MM/yyyy HH:mm")</MudTd>
-            <MudTd DataLabel="Action">
+            <MudTd DataLabel="@L["Date"]">@context.Date.ToString("dd/MM/yyyy HH:mm")</MudTd>
+            <MudTd DataLabel="@L["Action"]">
                 <MudChip T="string" Size="Size.Small" Color="GetActionColor(context.Action)" Variant="Variant.Text">
-                    @context.Action.GetDisplayString()
+                    @context.Action.ToText()
                 </MudChip>
             </MudTd>
-            <MudTd DataLabel="User">@context.User</MudTd>
-            <MudTd DataLabel="Item">@GetItemName(context.EntityId)</MudTd>
-            <MudTd DataLabel="Changes">
+            <MudTd DataLabel="@L["User"]">@context.User</MudTd>
+            <MudTd DataLabel="@L["Item"]">@GetItemName(context.EntityId)</MudTd>
+            <MudTd DataLabel="@L["Changes"]">
                 <AuditChangesDisplay RawChanges="@context.Changes" />
             </MudTd>
         </RowTemplate>
@@ -68,15 +68,15 @@
             <MudStack AlignItems="AlignItems.Center" Spacing="3" Class="pa-8">
                 <MudIcon Icon="@Icons.Material.Outlined.SearchOff" Size="Size.Large" Color="Color.Secondary"
                     Style="font-size: 4rem;" />
-                <MudText Typo="Typo.h6" Color="Color.Secondary">No audit logs found</MudText>
+                <MudText Typo="Typo.h6" Color="Color.Secondary">@L["No audit logs found"]</MudText>
                 <MudText Typo="Typo.body2" Color="Color.Tertiary" Align="Align.Center">
                     @if (GetActiveFilterCount() > 0)
                     {
-                        <text>Try adjusting your filters or clear them to see all logs.</text>
+                        @L["Try adjusting your filters or clear them to see all logs."]
                     }
                     else
                     {
-                        <text>No audit records are available for this inventory.</text>
+                        @L["No audit records are available for this inventory."]
                     }
                 </MudText>
             </MudStack>

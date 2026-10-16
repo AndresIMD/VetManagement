@@ -1,5 +1,6 @@
 using VetManagement.Application.Contracts.Persistence;
 using VetManagement.Domain.Scheduling;
+using VetManagement.Domain.Localization;
 
 namespace VetManagement.Application.Scheduling;
 
@@ -14,10 +15,10 @@ public class AgendaRules(IUnitOfWork unitOfWork, TimeProvider clock)
         error = null;
         var service = settings.Services.FirstOrDefault(s => string.Equals(s.Code, serviceCode, StringComparison.OrdinalIgnoreCase));
         if (service is null || !service.Enabled)
-            error = $"Service '{serviceCode}' is not available.";
+            error = Texts.T("Service '{0}' is not available.", serviceCode);
         else if (!service.ResourceCodes.Contains(resourceCode, StringComparer.OrdinalIgnoreCase)
                  || settings.Resources.All(r => !r.Enabled || !string.Equals(r.Code, resourceCode, StringComparison.OrdinalIgnoreCase)))
-            error = $"Resource '{resourceCode}' can't perform '{serviceCode}'.";
+            error = Texts.T("Resource '{0}' can't perform '{1}'.", resourceCode, serviceCode);
         return error is null ? service : null;
     }
 

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VetManagement.Application.Reports;
 using VetManagement.Contracts.Reports;
+using VetManagement.Domain.Localization;
 
 namespace VetManagement.Api.Controllers.Reports;
 
@@ -16,7 +17,7 @@ public class ReportsController(ReportsService service) : ApiControllerBase
         if (to < from || to.DayNumber - from.DayNumber >= ReportsService.MaxDays)
             return ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]>
             {
-                ["to"] = [$"Use a range of at most {ReportsService.MaxDays} days, ending on or after the start."]
+                ["to"] = [Texts.T("Use a range of at most {0} days, ending on or after the start.", ReportsService.MaxDays)]
             }));
 
         var r = await service.GetSummaryAsync(from, to);

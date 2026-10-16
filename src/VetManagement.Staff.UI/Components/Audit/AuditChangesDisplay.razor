@@ -106,7 +106,8 @@ else
 
     private string FormatFieldName(string fieldName)
     {
-        return Regex.Replace(fieldName, "([a-z])([A-Z])", "$1 $2");
+        // "LowStockThreshold" -> "Low stock threshold", the key of its translation.
+        return L[Regex.Replace(fieldName, "(?<=[a-z])([A-Z])", m => " " + m.Value.ToLowerInvariant())];
     }
 
     private class ChangeItem

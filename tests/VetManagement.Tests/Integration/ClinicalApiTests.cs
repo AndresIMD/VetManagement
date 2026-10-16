@@ -61,7 +61,7 @@ public class ClinicalApiTests : IClassFixture<CustomWebAppFactory>
         await IdOf(await _employee.PostAsJsonAsync($"/api/clinical/pets/{petId}/doses", new { ProtocolCode = "rabies", AppliedOn = first, BatchNumber = "L-1" }));
         var history = await HistoryAsync(petId);
         var dose = history.Doses.Single();
-        dose.ProductName.Should().Be("Antirrábica");
+        dose.ProductName.Should().Be("Rabies");
         dose.Kind.Should().Be(PreventiveKind.Vaccine);
         dose.NextDueOn.Should().Be(first.AddDays(365));
         dose.Status.Should().Be(PreventiveStatus.Overdue);
@@ -120,7 +120,7 @@ public class ClinicalApiTests : IClassFixture<CustomWebAppFactory>
 
         var sent = _factory.Emails.Sent.Where(e => e.To == email).ToList();
         sent.Should().ContainSingle();
-        sent[0].Body.Should().Contain("Antirrábica").And.Contain("Luna");
+        sent[0].Body.Should().Contain("Rabies").And.Contain("Luna");
         (await HistoryAsync(petId)).Doses.Should().Contain(d => d.ProtocolCode == "rabies" && d.ReminderSentAtUtc != null);
     }
 

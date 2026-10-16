@@ -1,4 +1,5 @@
 using VetManagement.Application.Payments;
+using VetManagement.Domain.Localization;
 
 namespace VetManagement.Infrastructure.Payments;
 
@@ -20,5 +21,5 @@ public class NoPaymentGateway : IPaymentGateway
         => throw Off();
 
     private static InvalidOperationException Off()
-        => new("Online payments are off: the Scheduling module is disabled for this clinic.");
+        => new(Texts.T("Online payments are off: the Scheduling module is disabled for this clinic."));
 }

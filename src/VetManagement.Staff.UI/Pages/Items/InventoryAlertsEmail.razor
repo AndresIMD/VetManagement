@@ -6,74 +6,74 @@
 @inject InventoryAlertsApiService SchedulesApi
 @inject ISnackbar Snackbar
 
-<PageTitle>Inventory Email Alerts</PageTitle>
+<PageTitle>@L["Inventory Email Alerts"]</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="mx-auto px-2 mt-8">
-    <PageHeader Title="Send inventory alerts by email" Icon="@Icons.Material.Filled.Email" />
+    <PageHeader Title="@L["Send inventory alerts by email"]" Icon="@Icons.Material.Filled.Email" />
 
     <MudPaper Class="pa-4 app-surface" Elevation="1">
         <MudStack Spacing="2">
             <MudGrid>
                 <MudItem xs="12">
                     <MudAlert Severity="Severity.Info" Dense="true">
-                        An email will be generated listing items that are "Low stock" and/or "Out of stock". Items with threshold0 will only appear in "Out of stock".
+                        @L["An email will be generated listing items that are \"Low stock\" and/or \"Out of stock\". Items with threshold 0 will only appear in \"Out of stock\"."]
                     </MudAlert>
                 </MudItem>
                 <MudItem xs="12">
                     <MudTabs>
-                        <MudTabPanel Text="Manual">
-                            <MudText Typo="Typo.subtitle2">Recipients</MudText>
-                            <MudTextField Label="To (comma separated)" @bind-Value="To" Variant="Variant.Outlined" />
-                            <MudTextField Label="CC (optional, comma separated)" @bind-Value="Cc" Variant="Variant.Outlined" Class="mt-2" />
-                            <MudTextField Label="Subject" @bind-Value="Subject" Variant="Variant.Outlined" Class="mt-2" />
+                        <MudTabPanel Text="@L["Manual"]">
+                            <MudText Typo="Typo.subtitle2">@L["Recipients"]</MudText>
+                            <MudTextField Label="@L["To (comma separated)"]" @bind-Value="To" Variant="Variant.Outlined" />
+                            <MudTextField Label="@L["CC (optional, comma separated)"]" @bind-Value="Cc" Variant="Variant.Outlined" Class="mt-2" />
+                            <MudTextField Label="@L["Subject"]" @bind-Value="Subject" Variant="Variant.Outlined" Class="mt-2" />
                             <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Class="mt-2">
                                 <MudSwitch T="bool" @bind-Checked="IncludeLowStock" Color="Color.Warning" />
-                                <MudText>Include "Low stock"</MudText>
+                                <MudText>@L["Include \"Low stock\""]</MudText>
                                 <MudSwitch T="bool" @bind-Checked="IncludeOutOfStock" Color="Color.Error" Class="ml-4" />
-                                <MudText>Include "Out of stock"</MudText>
+                                <MudText>@L["Include \"Out of stock\""]</MudText>
                             </MudStack>
-                            <MudText Typo="Typo.subtitle2" Class="mt-3">Preview</MudText>
+                            <MudText Typo="Typo.subtitle2" Class="mt-3">@L["Preview"]</MudText>
                             <MudTextField Value="@BodyPreview" Variant="Variant.Outlined" Lines="10" ReadOnly="true" FullWidth="true" />
                             <MudStack Row="true" Spacing="2" Class="mt-2">
-                                <MudButton Color="Color.Primary" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ContentCopy" OnClick="CopyToClipboard" Disabled="@(string.IsNullOrWhiteSpace(BodyPreview))">Copy</MudButton>
-                                <MudButton Color="Color.Primary" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Send" OnClick="SendEmailAsync" Disabled="@(string.IsNullOrWhiteSpace(To) || string.IsNullOrWhiteSpace(BodyPreview))">Send</MudButton>
-                                <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Email" OnClick="OpenEmailClient" Disabled="@(string.IsNullOrWhiteSpace(To) || string.IsNullOrWhiteSpace(BodyPreview))">Open email client</MudButton>
+                                <MudButton Color="Color.Primary" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ContentCopy" OnClick="CopyToClipboard" Disabled="@(string.IsNullOrWhiteSpace(BodyPreview))">@L["Copy"]</MudButton>
+                                <MudButton Color="Color.Primary" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Send" OnClick="SendEmailAsync" Disabled="@(string.IsNullOrWhiteSpace(To) || string.IsNullOrWhiteSpace(BodyPreview))">@L["Send"]</MudButton>
+                                <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Email" OnClick="OpenEmailClient" Disabled="@(string.IsNullOrWhiteSpace(To) || string.IsNullOrWhiteSpace(BodyPreview))">@L["Open email client"]</MudButton>
                             </MudStack>
                         </MudTabPanel>
-                        <MudTabPanel Text="Schedule">
+                        <MudTabPanel Text="@L["Schedule"]">
                             <MudStack Spacing="2">
                                 <MudSwitch T="bool" @bind-Checked="ScheduleEnabled" Color="Color.Primary" />
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">Enable weekly automatic send</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">@L["Enable weekly automatic send"]</MudText>
                                 <MudGrid>
                                     <MudItem xs="12" sm="6">
-                                        <MudSelect T="int" Label="Day of week" @bind-Value="ScheduleDay">
-                                            <MudSelectItem Value="0">Sunday</MudSelectItem>
-                                            <MudSelectItem Value="1">Monday</MudSelectItem>
-                                            <MudSelectItem Value="2">Tuesday</MudSelectItem>
-                                            <MudSelectItem Value="3">Wednesday</MudSelectItem>
-                                            <MudSelectItem Value="4">Thursday</MudSelectItem>
-                                            <MudSelectItem Value="5">Friday</MudSelectItem>
-                                            <MudSelectItem Value="6">Saturday</MudSelectItem>
+                                        <MudSelect T="int" Label="@L["Day of week"]" @bind-Value="ScheduleDay">
+                                            <MudSelectItem Value="0">@L["Sunday"]</MudSelectItem>
+                                            <MudSelectItem Value="1">@L["Monday"]</MudSelectItem>
+                                            <MudSelectItem Value="2">@L["Tuesday"]</MudSelectItem>
+                                            <MudSelectItem Value="3">@L["Wednesday"]</MudSelectItem>
+                                            <MudSelectItem Value="4">@L["Thursday"]</MudSelectItem>
+                                            <MudSelectItem Value="5">@L["Friday"]</MudSelectItem>
+                                            <MudSelectItem Value="6">@L["Saturday"]</MudSelectItem>
                                         </MudSelect>
                                     </MudItem>
                                     <MudItem xs="12" sm="6">
-                                        <MudTimePicker Label="Time" @bind-Time="ScheduleTime" AmPm="false" />
+                                        <MudTimePicker Label="@L["Time"]" @bind-Time="ScheduleTime" AmPm="false" />
                                     </MudItem>
                                 </MudGrid>
-                                <MudTextField Label="To (comma separated)" @bind-Value="ScheduleTo" Variant="Variant.Outlined" />
-                                <MudTextField Label="CC (optional)" @bind-Value="ScheduleCc" Variant="Variant.Outlined" />
-                                <MudTextField Label="Subject" @bind-Value="ScheduleSubject" Variant="Variant.Outlined" />
+                                <MudTextField Label="@L["To (comma separated)"]" @bind-Value="ScheduleTo" Variant="Variant.Outlined" />
+                                <MudTextField Label="@L["CC (optional)"]" @bind-Value="ScheduleCc" Variant="Variant.Outlined" />
+                                <MudTextField Label="@L["Subject"]" @bind-Value="ScheduleSubject" Variant="Variant.Outlined" />
                                 <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
                                     <MudSwitch T="bool" @bind-Checked="ScheduleIncludeLow" Color="Color.Warning" />
-                                    <MudText>Include "Low stock"</MudText>
+                                    <MudText>@L["Include \"Low stock\""]</MudText>
                                     <MudSwitch T="bool" @bind-Checked="ScheduleIncludeZero" Color="Color.Error" Class="ml-4" />
-                                    <MudText>Include "Out of stock"</MudText>
+                                    <MudText>@L["Include \"Out of stock\""]</MudText>
                                 </MudStack>
                                 <MudStack Row="true" Spacing="2" Class="mt-2">
-                                    <MudButton Color="Color.Success" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveScheduleAsync">Save schedule</MudButton>
+                                    <MudButton Color="Color.Success" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveScheduleAsync">@L["Save schedule"]</MudButton>
                                     @if (LastSent.HasValue)
                                     {
-                                        <MudText Typo="Typo.caption" Color="Color.Secondary">Last sent: @LastSent.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">@L["Last sent: {0}", LastSent.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")]</MudText>
                                     }
                                 </MudStack>
                             </MudStack>
@@ -94,7 +94,7 @@
     // Manual
     private string To { get; set; } = string.Empty;
     private string Cc { get; set; } = string.Empty;
-    private string Subject { get; set; } = "Inventory alerts";
+    private string Subject { get; set; } = Strings.T("Inventory alerts");
     private bool IncludeLowStock { get; set; } = true;
     private bool IncludeOutOfStock { get; set; } = true;
 
@@ -104,7 +104,7 @@
     private TimeSpan? ScheduleTime { get; set; } = new TimeSpan(9, 0, 0);
     private string ScheduleTo { get; set; } = string.Empty;
     private string? ScheduleCc { get; set; }
-    private string ScheduleSubject { get; set; } = "Inventory alerts";
+    private string ScheduleSubject { get; set; } = Strings.T("Inventory alerts");
     private bool ScheduleIncludeLow { get; set; } = true;
     private bool ScheduleIncludeZero { get; set; } = true;
     private DateTime? LastSent { get; set; }
@@ -200,8 +200,8 @@
     {
         var lines = new List<string>
         {
-            $"Date: {DateTime.Now:dd/MM/yyyy HH:mm}",
-            "System: Inventory Alerts",
+            L["Date: {0}", DateTime.Now.ToString("dd/MM/yyyy HH:mm")],
+            L["System: Inventory alerts"],
             ""
         };
 
@@ -220,14 +220,14 @@
 
     private void AddLowStockSection(List<string> lines)
     {
-        lines.Add("Low stock:");
-        lines.AddRange(_lowStock.Select(i => $"- {i.Name} (Stock: {i.Stock})"));
+        lines.Add(L["Low stock:"]);
+        lines.AddRange(_lowStock.Select(i => "- " + L["{0} (Stock: {1})", i.Name, i.Stock]));
         lines.Add("");
     }
 
     private void AddOutOfStockSection(List<string> lines)
     {
-        lines.Add("Out of stock:");
+        lines.Add(L["Out of stock:"]);
         lines.AddRange(_outOfStock.Select(i => $"- {i.Name}"));
         lines.Add("");
     }
@@ -256,11 +256,11 @@
         try
         {
             await AlertsService.SendInventoryEmailAsync(To, string.IsNullOrWhiteSpace(Cc) ? null : Cc, Subject, BodyPreview);
-            Snackbar.Add("Email sent.", Severity.Success);
+            Snackbar.Add(L["Email sent."], Severity.Success);
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error sending email: {ex.Message}", Severity.Error);
+            Snackbar.Add(L["Error sending email: {0}", ex.Message], Severity.Error);
         }
     }
 
@@ -283,11 +283,11 @@
             LastSentUtc: LastSent
             );
             await SchedulesApi.SaveScheduleAsync(dto);
-            Snackbar.Add("Schedule saved.", Severity.Success);
+            Snackbar.Add(L["Schedule saved."], Severity.Success);
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error saving schedule: {ex.Message}", Severity.Error);
+            Snackbar.Add(L["Error saving schedule: {0}", ex.Message], Severity.Error);
         }
     }
 

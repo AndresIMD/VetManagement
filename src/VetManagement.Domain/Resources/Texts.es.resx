@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Spanish texts of the server. name = the English text used in the code, value = Spanish. -->
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name=" at {0}" xml:space="preserve"><value> al {0}</value></data>
+  <data name=" by calling {0}" xml:space="preserve"><value> llamando al {0}</value></data>
+  <data name="{0:yyyy-MM-dd} is already closed." xml:space="preserve"><value>El {0:yyyy-MM-dd} ya está cerrado.</value></data>
+  <data name="{0}: an Absence must name a resource (use Closed for the whole clinic)." xml:space="preserve"><value>{0}: una Absence debe indicar un recurso (usa Closed para toda la clínica).</value></data>
+  <data name="{0}: block {1}-{2} must end after it starts." xml:space="preserve"><value>{0}: el bloque {1}-{2} debe terminar después de empezar.</value></data>
+  <data name="{0}: block {1}-{2} needs MaxParallel of at least 1." xml:space="preserve"><value>{0}: el bloque {1}-{2} necesita MaxParallel de al menos 1.</value></data>
+  <data name="{0}: blocks {1}-{2} and {3}-{4} overlap." xml:space="preserve"><value>{0}: los bloques {1}-{2} y {3}-{4} se superponen.</value></data>
+  <data name="{0}: CustomHours needs at least one block." xml:space="preserve"><value>{0}: CustomHours necesita al menos un bloque.</value></data>
+  <data name="{0}: To is before From." xml:space="preserve"><value>{0}: To es anterior a From.</value></data>
+  <data name="{0}: unknown resource '{1}'." xml:space="preserve"><value>{0}: recurso desconocido '{1}'.</value></data>
+  <data name="• Date: {0}" xml:space="preserve"><value>• Fecha: {0}</value></data>
+  <data name="• Patient: {0}" xml:space="preserve"><value>• Paciente: {0}</value></data>
+  <data name="• Service: {0}" xml:space="preserve"><value>• Servicio: {0}</value></data>
+  <data name="• Time: {0}" xml:space="preserve"><value>• Hora: {0}</value></data>
+  <data name="• With: {0}" xml:space="preserve"><value>• Atiende: {0}</value></data>
+  <data name="A {0} appointment can't be cancelled." xml:space="preserve"><value>Una cita en estado {0} no se puede cancelar.</value></data>
+  <data name="A {0} appointment can't be charged." xml:space="preserve"><value>Una cita en estado {0} no se puede cobrar.</value></data>
+  <data name="A {0} appointment can't be moved." xml:space="preserve"><value>Una cita en estado {0} no se puede mover.</value></data>
+  <data name="A future day can't be closed." xml:space="preserve"><value>No se puede cerrar un día futuro.</value></data>
+  <data name="A product line needs an inventory item." xml:space="preserve"><value>Una línea de producto necesita un producto del inventario.</value></data>
+  <data name="A reason is required to void a sale." xml:space="preserve"><value>Se necesita un motivo para anular una venta.</value></data>
+  <data name="A result can't be longer than 200 characters." xml:space="preserve"><value>Un resultado no puede tener más de 200 caracteres.</value></data>
+  <data name="A subject must be specified." xml:space="preserve"><value>Debes indicar un asunto.</value></data>
+  <data name="A 'To' recipient must be specified." xml:space="preserve"><value>Debes indicar un destinatario.</value></data>
+  <data name="Admin already exists." xml:space="preserve"><value>El administrador ya existe.</value></data>
+  <data name="Appointment reminder – {0}" xml:space="preserve"><value>Recordatorio de tu hora – {0}</value></data>
+  <data name="BackgroundOpacity must be between 0.05 and 1." xml:space="preserve"><value>BackgroundOpacity debe estar entre 0,05 y 1.</value></data>
+  <data name="Bank transfer" xml:space="preserve"><value>Transferencia</value></data>
+  <data name="Billing is disabled for this clinic." xml:space="preserve"><value>Las ventas están desactivadas en esta clínica.</value></data>
+  <data name="Book your appointment{0}." xml:space="preserve"><value>Agenda tu hora{0}.</value></data>
+  <data name="Booking.HorizonDays must be at least 1." xml:space="preserve"><value>Booking.HorizonDays debe ser al menos 1.</value></data>
+  <data name="Booking.MinNoticeMinutes must be 0 or more." xml:space="preserve"><value>Booking.MinNoticeMinutes debe ser 0 o más.</value></data>
+  <data name="Booking.SlotStepMinutes must be at least 5." xml:space="preserve"><value>Booking.SlotStepMinutes debe ser al menos 5.</value></data>
+  <data name="Branding.LogoUrl must be an absolute https URL." xml:space="preserve"><value>Branding.LogoUrl debe ser una URL https absoluta.</value></data>
+  <data name="Branding.PrimaryColor must be a hex color like #1565C0." xml:space="preserve"><value>Branding.PrimaryColor debe ser un color hexadecimal como #1565C0.</value></data>
+  <data name="Cancellation.ClientDeadlineHours must be 0 or more." xml:space="preserve"><value>Cancellation.ClientDeadlineHours debe ser 0 o más.</value></data>
+  <data name="Cancelled by the client" xml:space="preserve"><value>Cancelada por el cliente</value></data>
+  <data name="Canine multivalent (6- or 8-way)" xml:space="preserve"><value>Óctuple / Séxtuple</value></data>
+  <data name="Cash" xml:space="preserve"><value>Efectivo</value></data>
+  <data name="Choose a registered pet or type the patient's name." xml:space="preserve"><value>Elige una mascota registrada o escribe el nombre del paciente.</value></data>
+  <data name="ClientPortal.LinkValidMinutes must be between 5 and 1440." xml:space="preserve"><value>ClientPortal.LinkValidMinutes debe estar entre 5 y 1440.</value></data>
+  <data name="ClinicName is required (clients see it in emails)." xml:space="preserve"><value>ClinicName es obligatorio (los clientes lo ven en los correos).</value></data>
+  <data name="Colours must be written as #RRGGBB." xml:space="preserve"><value>Los colores deben escribirse como #RRGGBB.</value></data>
+  <data name="Contact us to book a new one." xml:space="preserve"><value>Contáctanos para agendar una nueva.</value></data>
+  <data name="Could not adjust stock." xml:space="preserve"><value>No se pudo ajustar el stock.</value></data>
+  <data name="Could not assign role." xml:space="preserve"><value>No se pudo asignar el rol.</value></data>
+  <data name="Could not remove role." xml:space="preserve"><value>No se pudo quitar el rol.</value></data>
+  <data name="Credit card" xml:space="preserve"><value>Tarjeta de crédito</value></data>
+  <data name="Debit card" xml:space="preserve"><value>Tarjeta de débito</value></data>
+  <data name="Discounts above {0}% need an administrator." xml:space="preserve"><value>Los descuentos sobre {0}% requieren un administrador.</value></data>
+  <data name="Dose #{0} deleted" xml:space="preserve"><value>Dosis #{0} eliminada</value></data>
+  <data name="Dose for pet #{0}" xml:space="preserve"><value>Dosis para la mascota #{0}</value></data>
+  <data name="Duplicate {0} code '{1}'." xml:space="preserve"><value>Código de {0} duplicado: '{1}'.</value></data>
+  <data name="Duplicate payment method code '{0}'." xml:space="preserve"><value>Código de medio de pago duplicado: '{0}'.</value></data>
+  <data name="Duplicate protocol code '{0}'." xml:space="preserve"><value>Código de protocolo duplicado: '{0}'.</value></data>
+  <data name="Email is already in use." xml:space="preserve"><value>El correo ya está en uso.</value></data>
+  <data name="Email sent successfully." xml:space="preserve"><value>Correo enviado correctamente.</value></data>
+  <data name="Enable at least one payment method." xml:space="preserve"><value>Activa al menos un medio de pago.</value></data>
+  <data name="Enter at least one result." xml:space="preserve"><value>Ingresa al menos un resultado.</value></data>
+  <data name="Enter the customer's name or pick a client." xml:space="preserve"><value>Escribe el nombre del cliente o elige uno.</value></data>
+  <data name="Enter the price." xml:space="preserve"><value>Ingresa el precio.</value></data>
+  <data name="Every payment method needs a Code and a Name." xml:space="preserve"><value>Cada medio de pago necesita Code y Name.</value></data>
+  <data name="Every protocol needs a Code and a Name." xml:space="preserve"><value>Cada protocolo necesita Code y Name.</value></data>
+  <data name="Every resource needs a Code and a Name." xml:space="preserve"><value>Cada recurso necesita Code y Name.</value></data>
+  <data name="Every service needs a Code and a Name." xml:space="preserve"><value>Cada servicio necesita Code y Name.</value></data>
+  <data name="Exam {0} has more than one report template." xml:space="preserve"><value>El examen {0} tiene más de una plantilla de informe.</value></data>
+  <data name="External deworming" xml:space="preserve"><value>Desparasitación externa</value></data>
+  <data name="Feline triple" xml:space="preserve"><value>Triple felina</value></data>
+  <data name="FontFamily must be one of: {0}." xml:space="preserve"><value>FontFamily debe ser una de: {0}.</value></data>
+  <data name="Hello {0}," xml:space="preserve"><value>Hola {0},</value></data>
+  <data name="If you need to change or cancel your appointment, contact us{0}." xml:space="preserve"><value>Si necesitas cambiar o cancelar tu hora, contáctanos{0}.</value></data>
+  <data name="Internal deworming" xml:space="preserve"><value>Desparasitación interna</value></data>
+  <data name="Invalid credentials." xml:space="preserve"><value>Credenciales inválidas.</value></data>
+  <data name="Invalid item data." xml:space="preserve"><value>Datos del producto inválidos.</value></data>
+  <data name="Invalid request." xml:space="preserve"><value>Solicitud inválida.</value></data>
+  <data name="Invalid update data." xml:space="preserve"><value>Datos de actualización inválidos.</value></data>
+  <data name="It has payments in a closed day ({0:yyyy-MM-dd})." xml:space="preserve"><value>Tiene pagos en un día cerrado ({0:yyyy-MM-dd}).</value></data>
+  <data name="It's too late to cancel online." xml:space="preserve"><value>Ya es tarde para cancelar en línea.</value></data>
+  <data name="Line not found." xml:space="preserve"><value>No se encontró la línea.</value></data>
+  <data name="Margins must be between 0 and 60 mm." xml:space="preserve"><value>Los márgenes deben estar entre 0 y 60 mm.</value></data>
+  <data name="MaxDiscountPercent must be between 0 and 100." xml:space="preserve"><value>MaxDiscountPercent debe estar entre 0 y 100.</value></data>
+  <data name="Name, last name and pet name are required." xml:space="preserve"><value>Nombre, apellido y nombre de la mascota son obligatorios.</value></data>
+  <data name="No items updated." xml:space="preserve"><value>No se actualizó ningún producto.</value></data>
+  <data name="Not given" xml:space="preserve"><value>No informada</value></data>
+  <data name="Notifications.ReminderHoursBefore must be at least 1." xml:space="preserve"><value>Notifications.ReminderHoursBefore debe ser al menos 1.</value></data>
+  <data name="Online booking is not available." xml:space="preserve"><value>La reserva en línea no está disponible.</value></data>
+  <data name="Online deposit" xml:space="preserve"><value>Abono online</value></data>
+  <data name="Online payments are off: the Scheduling module is disabled for this clinic." xml:space="preserve"><value>Los pagos en línea están desactivados: el módulo de Agenda no está habilitado en esta clínica.</value></data>
+  <data name="Only {0} of '{1}' left in stock." xml:space="preserve"><value>Solo quedan {0} de '{1}' en stock.</value></data>
+  <data name="Only open sales can be changed." xml:space="preserve"><value>Solo se pueden modificar ventas abiertas.</value></data>
+  <data name="Only open sales take payments." xml:space="preserve"><value>Solo las ventas abiertas aceptan pagos.</value></data>
+  <data name="Paid after the hold expired and the slot was taken; deposit refunded" xml:space="preserve"><value>Pagada después de que venció la reserva y la hora fue tomada; abono devuelto</value></data>
+  <data name="Payment cancelled by the client" xml:space="preserve"><value>Pago cancelado por el cliente</value></data>
+  <data name="Payment method '{0}' is not enabled." xml:space="preserve"><value>El medio de pago '{0}' no está activo.</value></data>
+  <data name="Payment not approved ({0})" xml:space="preserve"><value>Pago no aprobado ({0})</value></data>
+  <data name="Payment not completed in time" xml:space="preserve"><value>El pago no se completó a tiempo</value></data>
+  <data name="Payment.PendingPaymentHoldMinutes must be at least 1." xml:space="preserve"><value>Payment.PendingPaymentHoldMinutes debe ser al menos 1.</value></data>
+  <data name="Pick a protocol or enter the product name." xml:space="preserve"><value>Elige un protocolo o escribe el nombre del producto.</value></data>
+  <data name="Pick an inventory item for a product line." xml:space="preserve"><value>Elige un producto del inventario para una línea de producto.</value></data>
+  <data name="Pick another slot, or book it as overbooking (sobrecupo)." xml:space="preserve"><value>Elige otra hora o agéndala como sobrecupo.</value></data>
+  <data name="Pick at least one item to charge." xml:space="preserve"><value>Elige al menos un ítem para cobrar.</value></data>
+  <data name="Please contact the clinic." xml:space="preserve"><value>Por favor contacta a la clínica.</value></data>
+  <data name="Please pick another time." xml:space="preserve"><value>Por favor elige otra hora.</value></data>
+  <data name="Protocol '{0}': IntervalDays must be between 0 (no repeat) and 3650." xml:space="preserve"><value>Protocolo '{0}': IntervalDays debe estar entre 0 (sin repetición) y 3650.</value></data>
+  <data name="Quantity must be at least 1." xml:space="preserve"><value>La cantidad debe ser al menos 1.</value></data>
+  <data name="Rabies" xml:space="preserve"><value>Antirrábica</value></data>
+  <data name="Reload the latest version ({0}) and apply your changes again." xml:space="preserve"><value>Recarga la última versión ({0}) y vuelve a aplicar tus cambios.</value></data>
+  <data name="Reminder: {0} for {1} – {2}" xml:space="preserve"><value>Recordatorio: {0} de {1} – {2}</value></data>
+  <data name="Reminders.DaysBefore must be between 0 and 90." xml:space="preserve"><value>Reminders.DaysBefore debe estar entre 0 y 90.</value></data>
+  <data name="Resource '{0}' can't perform '{1}'." xml:space="preserve"><value>El recurso '{0}' no puede realizar '{1}'.</value></data>
+  <data name="Resource '{0}': each day of the week may appear only once." xml:space="preserve"><value>Recurso '{0}': cada día de la semana puede aparecer solo una vez.</value></data>
+  <data name="Resource '{0}': ReleaseThresholdPercent must be between 1 and 100." xml:space="preserve"><value>Recurso '{0}': ReleaseThresholdPercent debe estar entre 1 y 100.</value></data>
+  <data name="Role '{0}' does not exist." xml:space="preserve"><value>El rol '{0}' no existe.</value></data>
+  <data name="Sale #{0}" xml:space="preserve"><value>Venta #{0}</value></data>
+  <data name="Sale #{0} voided" xml:space="preserve"><value>Venta #{0} anulada</value></data>
+  <data name="Service '{0}' is not available." xml:space="preserve"><value>El servicio '{0}' no está disponible.</value></data>
+  <data name="Service '{0}': BufferMinutes must be 0 or more." xml:space="preserve"><value>Servicio '{0}': BufferMinutes debe ser 0 o más.</value></data>
+  <data name="Service '{0}': DepositPercent must be between 0 and 100." xml:space="preserve"><value>Servicio '{0}': DepositPercent debe estar entre 0 y 100.</value></data>
+  <data name="Service '{0}': DurationMinutes must be at least 5." xml:space="preserve"><value>Servicio '{0}': DurationMinutes debe ser al menos 5.</value></data>
+  <data name="Service '{0}': needs at least one resource." xml:space="preserve"><value>Servicio '{0}': necesita al menos un recurso.</value></data>
+  <data name="Service '{0}': Price must be 0 or more." xml:space="preserve"><value>Servicio '{0}': Price debe ser 0 o más.</value></data>
+  <data name="Service '{0}': unknown resource '{1}'." xml:space="preserve"><value>Servicio '{0}': recurso desconocido '{1}'.</value></data>
+  <data name="Settings are required." xml:space="preserve"><value>La configuración es obligatoria.</value></data>
+  <data name="Subject to VAT" xml:space="preserve"><value>Afecto a IVA</value></data>
+  <data name="Tax.RatePercent must be between 0 and 100." xml:space="preserve"><value>Tax.RatePercent debe estar entre 0 y 100.</value></data>
+  <data name="Template '{0}', parameter '{1}': a band needs a Min, a Max or both." xml:space="preserve"><value>Plantilla '{0}', parámetro '{1}': una franja necesita un mínimo, un máximo o ambos.</value></data>
+  <data name="Template '{0}', parameter '{1}': a band's Min is greater than its Max." xml:space="preserve"><value>Plantilla '{0}', parámetro '{1}': el mínimo de una franja es mayor que su máximo.</value></data>
+  <data name="Template '{0}', parameter '{1}': a normal range's Min is greater than its Max." xml:space="preserve"><value>Plantilla '{0}', parámetro '{1}': el mínimo de un rango normal es mayor que su máximo.</value></data>
+  <data name="Template '{0}', parameter '{1}': abnormal results must be among its options." xml:space="preserve"><value>Plantilla '{0}', parámetro '{1}': los resultados alterados deben estar entre sus opciones.</value></data>
+  <data name="Template '{0}', parameter '{1}': text parameters have no bands." xml:space="preserve"><value>Plantilla '{0}', parámetro '{1}': los parámetros de texto no tienen franjas.</value></data>
+  <data name="Template '{0}', parameter '{1}': write the reference text, or show the range instead." xml:space="preserve"><value>Plantilla '{0}', parámetro '{1}': escribe el texto de referencia o muestra el rango.</value></data>
+  <data name="Template '{0}', rule {1}: add at least one condition." xml:space="preserve"><value>Plantilla '{0}', regla {1}: agrega al menos una condición.</value></data>
+  <data name="Template '{0}', rule {1}: conditions must use number parameters of this template." xml:space="preserve"><value>Plantilla '{0}', regla {1}: las condiciones deben usar parámetros numéricos de esta plantilla.</value></data>
+  <data name="Template '{0}', rule {1}: write what it means." xml:space="preserve"><value>Plantilla '{0}', regla {1}: escribe qué significa.</value></data>
+  <data name="Template '{0}': add at least one parameter." xml:space="preserve"><value>Plantilla '{0}': agrega al menos un parámetro.</value></data>
+  <data name="Template '{0}': duplicate parameter code '{1}'." xml:space="preserve"><value>Plantilla '{0}': código de parámetro duplicado '{1}'.</value></data>
+  <data name="Template '{0}': every parameter needs a Code and a Name." xml:space="preserve"><value>Plantilla '{0}': cada parámetro necesita código y nombre.</value></data>
+  <data name="Template '{0}': every row of the criteria table needs one cell per column." xml:space="preserve"><value>Plantilla '{0}': cada fila de la tabla de criterios necesita una celda por columna.</value></data>
+  <data name="Template '{0}': ExamId is required." xml:space="preserve"><value>Plantilla '{0}': ExamId es obligatorio.</value></data>
+  <data name="Template '{0}': the criteria table has at most {1} columns and {2} rows." xml:space="preserve"><value>Plantilla '{0}': la tabla de criterios admite como máximo {1} columnas y {2} filas.</value></data>
+  <data name="Template '{0}': the criteria table needs at least one column and one row." xml:space="preserve"><value>Plantilla '{0}': la tabla de criterios necesita al menos una columna y una fila.</value></data>
+  <data name="Template for exam {0}: Title is required." xml:space="preserve"><value>Plantilla del examen {0}: el título es obligatorio.</value></data>
+  <data name="That time is no longer available." xml:space="preserve"><value>Esa hora ya no está disponible.</value></data>
+  <data name="That time was just taken." xml:space="preserve"><value>Esa hora acaba de ser tomada.</value></data>
+  <data name="The amount exceeds the balance ({0})." xml:space="preserve"><value>El monto supera el saldo ({0}).</value></data>
+  <data name="The amount must be greater than 0." xml:space="preserve"><value>El monto debe ser mayor que 0.</value></data>
+  <data name="The application date can't be in the future." xml:space="preserve"><value>La fecha de aplicación no puede ser futura.</value></data>
+  <data name="The cash for {0:yyyy-MM-dd} is already closed." xml:space="preserve"><value>La caja del {0:yyyy-MM-dd} ya está cerrada.</value></data>
+  <data name="The counted cash can't be negative." xml:space="preserve"><value>El efectivo contado no puede ser negativo.</value></data>
+  <data name="The data was modified by someone else." xml:space="preserve"><value>Otra persona modificó los datos.</value></data>
+  <data name="The discount must be between 0 and the line amount." xml:space="preserve"><value>El descuento debe estar entre 0 y el monto de la línea.</value></data>
+  <data name="The email address is not valid." xml:space="preserve"><value>El correo no es válido.</value></data>
+  <data name="The email body cannot be empty." xml:space="preserve"><value>El cuerpo del correo no puede estar vacío.</value></data>
+  <data name="The exam doesn't exist." xml:space="preserve"><value>El examen no existe.</value></data>
+  <data name="The inventory item doesn't exist." xml:space="preserve"><value>El producto del inventario no existe.</value></data>
+  <data name="The line needs a description." xml:space="preserve"><value>La línea necesita una descripción.</value></data>
+  <data name="The link works for {0} minutes. If you didn't ask for it, ignore this email." xml:space="preserve"><value>El enlace funciona durante {0} minutos. Si no lo pediste, ignora este correo.</value></data>
+  <data name="The logo must be 10–60 mm high and 10–150 mm wide." xml:space="preserve"><value>El logo debe medir 10–60 mm de alto y 10–150 mm de ancho.</value></data>
+  <data name="The next dose must be after the application date." xml:space="preserve"><value>La próxima dosis debe ser posterior a la fecha de aplicación.</value></data>
+  <data name="The pet doesn't exist." xml:space="preserve"><value>La mascota no existe.</value></data>
+  <data name="The phone number is not valid." xml:space="preserve"><value>El teléfono no es válido.</value></data>
+  <data name="The price can't be negative." xml:space="preserve"><value>El precio no puede ser negativo.</value></data>
+  <data name="The reception date is required." xml:space="preserve"><value>La fecha de recepción es obligatoria.</value></data>
+  <data name="The result of this exam is not a diagnosis; please consult your referring vet." xml:space="preserve"><value>El resultado de este examen no constituye diagnóstico, por favor consulte con su médico tratante.</value></data>
+  <data name="The RUT is not valid." xml:space="preserve"><value>El RUT no es válido.</value></data>
+  <data name="The sale is already voided." xml:space="preserve"><value>La venta ya está anulada.</value></data>
+  <data name="The settings were changed by someone else." xml:space="preserve"><value>Otra persona cambió la configuración.</value></data>
+  <data name="The total can't go below what was already paid." xml:space="preserve"><value>El total no puede quedar bajo lo ya pagado.</value></data>
+  <data name="This appointment already has a sale." xml:space="preserve"><value>Esta cita ya tiene una venta.</value></data>
+  <data name="This booking can no longer be cancelled." xml:space="preserve"><value>Esta reserva ya no se puede cancelar.</value></data>
+  <data name="This is a reminder of your upcoming appointment:" xml:space="preserve"><value>Te recordamos tu próxima hora:</value></data>
+  <data name="This is a reminder that {1}'s next dose of {0} is due on {2}." xml:space="preserve"><value>Te recordamos que la próxima dosis de {0} de {1} corresponde el {2}.</value></data>
+  <data name="This is a reminder that {1}'s next dose of {0} was due on {2}." xml:space="preserve"><value>Te recordamos que la próxima dosis de {0} de {1} estaba programada para el {2}.</value></data>
+  <data name="This visit was already charged." xml:space="preserve"><value>Esta visita ya se cobró.</value></data>
+  <data name="To see your pets' record (vaccines, visits and upcoming appointments) open this link:" xml:space="preserve"><value>Para ver la ficha de tus mascotas (vacunas, atenciones y próximas horas) abre este enlace:</value></data>
+  <data name="Unknown parameters: {0}." xml:space="preserve"><value>Parámetros desconocidos: {0}.</value></data>
+  <data name="Unknown protocol '{0}'." xml:space="preserve"><value>Protocolo desconocido '{0}'.</value></data>
+  <data name="Unknown service '{0}'." xml:space="preserve"><value>Servicio desconocido '{0}'.</value></data>
+  <data name="Unknown time zone '{0}'." xml:space="preserve"><value>Zona horaria desconocida '{0}'.</value></data>
+  <data name="Use 0 to 365 days." xml:space="preserve"><value>Usa de 0 a 365 días.</value></data>
+  <data name="Use a range of at most 31 days." xml:space="preserve"><value>Usa un rango de 31 días como máximo.</value></data>
+  <data name="Use a range of at most 62 days." xml:space="preserve"><value>Usa un rango de 62 días como máximo.</value></data>
+  <data name="Use a range of at most 92 days." xml:space="preserve"><value>Usa un rango de 92 días como máximo.</value></data>
+  <data name="Use a range of at most {0} days, ending on or after the start." xml:space="preserve"><value>Usa un rango de {0} días como máximo, que termine el mismo día del inicio o después.</value></data>
+  <data name="Use at most 6 header lines and 8 footer lines." xml:space="preserve"><value>Usa como máximo 6 líneas de encabezado y 8 de pie.</value></data>
+  <data name="User created successfully." xml:space="preserve"><value>Usuario creado correctamente.</value></data>
+  <data name="Username already exists." xml:space="preserve"><value>El usuario ya existe.</value></data>
+  <data name="VAT exempt" xml:space="preserve"><value>Exento de IVA</value></data>
+  <data name="Visit #{0}" xml:space="preserve"><value>Visita #{0}</value></data>
+  <data name="Visit #{0} deleted" xml:space="preserve"><value>Visita #{0} eliminada</value></data>
+  <data name="Visit #{0} supply removed" xml:space="preserve"><value>Insumo quitado de la visita #{0}</value></data>
+  <data name="We had to move your appointment. The new date is:" xml:space="preserve"><value>Tuvimos que mover tu hora. La nueva fecha es:</value></data>
+  <data name="We're sorry to tell you that your appointment was cancelled:" xml:space="preserve"><value>Lamentamos informarte que tu hora fue cancelada:</value></data>
+  <data name="You must assign at least one role." xml:space="preserve"><value>Debes asignar al menos un rol.</value></data>
+  <data name="Your access to your pets' record – {0}" xml:space="preserve"><value>Tu acceso a la ficha de tus mascotas – {0}</value></data>
+  <data name="Your appointment changed – {0}" xml:space="preserve"><value>Tu hora cambió – {0}</value></data>
+  <data name="Your appointment is booked:" xml:space="preserve"><value>Tu hora quedó agendada:</value></data>
+  <data name="Your appointment is confirmed – {0}" xml:space="preserve"><value>Confirmación de tu hora – {0}</value></data>
+  <data name="Your appointment was cancelled – {0}" xml:space="preserve"><value>Tu hora fue cancelada – {0}</value></data>
+  <data name="PendingPayment" xml:space="preserve"><value>pago pendiente</value></data>
+  <data name="Confirmed" xml:space="preserve"><value>confirmada</value></data>
+  <data name="NeedsReschedule" xml:space="preserve"><value>por reagendar</value></data>
+  <data name="Completed" xml:space="preserve"><value>completada</value></data>
+  <data name="Cancelled" xml:space="preserve"><value>cancelada</value></data>
+  <data name="NoShow" xml:space="preserve"><value>no asistió</value></data>
+  <data name="Quick stock adjustment" xml:space="preserve"><value>Ajuste rápido de stock</value></data>
+  <data name="Update via item edit" xml:space="preserve"><value>Actualización al editar el producto</value></data>
+  <data name="Item deletion" xml:space="preserve"><value>Eliminación del producto</value></data>
+  <data name="Massive Ingress" xml:space="preserve"><value>Ingreso masivo</value></data>
+  <data name="Massive Egress" xml:space="preserve"><value>Egreso masivo</value></data>
+  <data name="service" xml:space="preserve"><value>servicio</value></data>
+  <data name="resource" xml:space="preserve"><value>recurso</value></data>
+</root>

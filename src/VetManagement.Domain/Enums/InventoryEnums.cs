@@ -43,9 +43,9 @@ public enum StockStatus
     None,
     [DisplayString("In Stock")]
     InStock,
-    [DisplayString("Low Stock")]
+    [DisplayString("Low stock")]
     LowStock,
-    [DisplayString("Out of Stock")]
+    [DisplayString("Out of stock")]
     OutOfStock,
     [DisplayString("Reserved")]
     Reserved
@@ -58,9 +58,9 @@ public enum StockAlertFilter
 {
     [DisplayString("None")]
     None = 0,
-    [DisplayString("Low Stock")]
+    [DisplayString("Low stock")]
     LowStock = 1,
-    [DisplayString("Out of Stock")]
+    [DisplayString("Out of stock")]
     OutOfStock = 2
 }
 

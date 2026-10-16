@@ -13,7 +13,7 @@
         <MudGrid>
             <MudItem xs="12" md="10">
                 <MudTextField @ref="barcodeInput"
-                              Label="Scan or enter the barcode"
+                              Label="@L["Scan or enter the barcode"]"
                               @bind-Value="barcode"
                               Immediate="true"
                               OnKeyDown="OnBarcodeKeyDown"
@@ -23,7 +23,7 @@
                               AdornmentIcon="@Icons.Material.Filled.QrCodeScanner" />
             </MudItem>
             <MudItem xs="12" md="2" Class="d-flex align-center justify-end">
-                <MudTooltip Text="Clear">
+                <MudTooltip Text="@L["Clear"]">
                     <MudIconButton Icon="@Icons.Material.Filled.Clear" Color="Color.Secondary" Variant="Variant.Outlined" OnClick="Clear" Disabled="@string.IsNullOrEmpty(barcode)" />
                 </MudTooltip>
             </MudItem>
@@ -44,7 +44,7 @@
 
     private RenderFragment Footer => __builder =>
     {
-        <MudButton Color="Color.Secondary" Variant="Variant.Outlined" OnClick="OnCancelRequested">Cancel</MudButton>;
+        <MudButton Color="Color.Secondary" Variant="Variant.Outlined" OnClick="OnCancelRequested">@L["Cancel"]</MudButton>;
     };
 
     private async Task OnBarcodeKeyDown(KeyboardEventArgs e)
@@ -54,7 +54,7 @@
             var item = await ItemsApiService.GetItemByBarcodeAsync(barcode);
             if (item == null)
             {
-                errorMessage = $"No item found with the barcode '{barcode}'.";
+                errorMessage = L["No item was found with the barcode '{0}'.", barcode];
 
                 await Clear();
                 return;
@@ -84,10 +84,10 @@
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = false };
         var parameters = new DialogParameters<Components.Modals.Common.ConfirmModal>
         {
-            { x => x.Title, "Discard changes" },
-            { x => x.Message, "There are unsaved changes. Do you want to exit without saving?" },
-            { x => x.ButtonConfirmText, "Exit" },
-            { x => x.ButtonCancelText, "Keep editing" },
+            { x => x.Title, L["Discard changes"].Value },
+            { x => x.Message, L["There are unsaved changes. Do you want to exit without saving?"].Value },
+            { x => x.ButtonConfirmText, L["Exit"].Value },
+            { x => x.ButtonCancelText, L["Keep editing"].Value },
             { x => x.TitleIcon, Icons.Material.Filled.Warning },
             { x => x.TitleColor, Color.Warning }
         };

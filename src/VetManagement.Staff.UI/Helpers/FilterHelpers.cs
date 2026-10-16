@@ -1,6 +1,7 @@
 using VetManagement.Staff.UI.Components.Filters;
 using VetManagement.Domain.Enums;
 using MudBlazor;
+using VetManagement.Staff.UI.Resources;
 
 namespace VetManagement.Staff.UI.Helpers;
 
@@ -25,7 +26,7 @@ public static class FilterHelpers
         {
             chips.Add(new FilterChipModel
             {
-                Label = $"Search: {searchText}",
+                Label = Strings.T("Search: {0}", searchText),
                 Color = Color.Primary,
                 OnClear = onClearSearch ?? (() => { })
             });
@@ -35,7 +36,7 @@ public static class FilterHelpers
         {
             chips.Add(new FilterChipModel
             {
-                Label = $"User: {responsibleUser}",
+                Label = Strings.T("User: {0}", responsibleUser),
                 Color = Color.Secondary,
                 OnClear = onClearResponsible ?? (() => { })
             });
@@ -45,7 +46,7 @@ public static class FilterHelpers
         {
             chips.Add(new FilterChipModel
             {
-                Label = $"From: {fromDate.Value:dd/MM/yyyy}",
+                Label = Strings.T("From: {0}", fromDate.Value.ToString("d")),
                 Color = Color.Tertiary,
                 OnClear = onClearFromDate ?? (() => { })
             });
@@ -55,7 +56,7 @@ public static class FilterHelpers
         {
             chips.Add(new FilterChipModel
             {
-                Label = $"To: {toDate.Value:dd/MM/yyyy}",
+                Label = Strings.T("To: {0}", toDate.Value.ToString("d")),
                 Color = Color.Tertiary,
                 OnClear = onClearToDate ?? (() => { })
             });
@@ -65,7 +66,7 @@ public static class FilterHelpers
         {
             chips.Add(new FilterChipModel
             {
-                Label = $"{enumLabel}: {enumFilter.GetDisplayString()}",
+                Label = $"{Strings.T(enumLabel)}: {enumFilter.ToText()}",
                 Color = Color.Info,
                 OnClear = onClearEnum ?? (() => { })
             });

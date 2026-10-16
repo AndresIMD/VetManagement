@@ -95,7 +95,7 @@ public class ClientPortalTests : IClassFixture<CustomWebAppFactory>
             portal.ClientName.Should().Be("Marta Rojas");
             var pet = portal.Pets.Single();
             pet.Name.Should().Be("Nala");
-            pet.Doses.Single().ProductName.Should().Be("Triple felina");
+            pet.Doses.Single().ProductName.Should().Be("Feline triple");
             pet.Visits.Single().Diagnosis.Should().Be("Sana");
             portal.Upcoming.Single().ServiceName.Should().Be("Consulta general");
 
