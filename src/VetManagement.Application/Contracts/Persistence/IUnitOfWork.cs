@@ -18,6 +18,8 @@ public interface IUnitOfWork : IDisposable
 
     IExternalLabRepository ExternalLabs { get; }
 
+    ILabMachineRepository LabMachines { get; }
+
     IMedicalVisitRepository MedicalVisits { get; }
     IClinicSettingRepository ClinicSettings { get; }
     IAppointmentRepository Appointments { get; }

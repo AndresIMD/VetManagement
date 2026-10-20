@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using VetManagement.Domain.Enums;
 using VetManagement.Domain.Localization;
@@ -26,8 +27,28 @@ public class ExamReportSettings
     /// <summary>Lines next to the logo, e.g. "LABORATORIO" and the address.</summary>
     public List<string> HeaderLines { get; set; } = [];
 
-    /// <summary>Clinic details printed at the bottom (name, tax id, address, phone).</summary>
-    public List<string> FooterLines { get; set; } = [];
+    /// <summary>
+    /// Clinic details printed at the bottom (name, tax id, address, phone), written as a paragraph: each line prints as
+    /// written, an empty line leaves a gap and **text** prints in bold (see <see cref="ReportText"/>).
+    /// </summary>
+    public string Footer { get; set; } = string.Empty;
+
+    public const int MaxFooterLines = 12;
+    public const int MaxFooterLength = 1000;
+
+    /// <summary>
+    /// Earlier documents kept the footer as a list of lines, the first one in bold: read into <see cref="Footer"/>, never written.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<string>? FooterLines
+    {
+        get => null;
+        set
+        {
+            if (value is { Count: > 0 } && string.IsNullOrWhiteSpace(Footer))
+                Footer = string.Join("\n", value.Select((line, i) => i == 0 ? $"{ReportText.BOLD}{line}{ReportText.BOLD}" : line));
+        }
+    }
 
     public string Disclaimer { get; set; } = Texts.T("The result of this exam is not a diagnosis; please consult your referring vet.");
 
@@ -77,8 +98,10 @@ public class ExamReportSettings
             errors.Add(Texts.T("Colours must be written as #RRGGBB."));
         if (!Fonts.Contains(FontFamily))
             errors.Add(Texts.T("FontFamily must be one of: {0}.", string.Join(", ", Fonts)));
-        if (HeaderLines.Count > 6 || FooterLines.Count > 8)
-            errors.Add(Texts.T("Use at most 6 header lines and 8 footer lines."));
+        if (HeaderLines.Count > 6 || ReportText.Lines(Footer).Length > MaxFooterLines)
+            errors.Add(Texts.T("Use at most 6 header lines and {0} footer lines.", MaxFooterLines));
+        if (Footer.Length > MaxFooterLength)
+            errors.Add(Texts.T("The footer can be at most {0} characters long.", MaxFooterLength));
 
         foreach (var examId in Templates.GroupBy(t => t.ExamId).Where(g => g.Count() > 1).Select(g => g.Key))
             errors.Add(Texts.T("Exam {0} has more than one report template.", examId));

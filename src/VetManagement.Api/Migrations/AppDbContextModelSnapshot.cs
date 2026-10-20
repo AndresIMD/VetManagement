@@ -17,7 +17,7 @@ namespace VetManagement.Api.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.10")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -950,6 +950,32 @@ namespace VetManagement.Api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ExternalLabs");
+                });
+
+            modelBuilder.Entity("VetManagement.Domain.Exams.LabMachine", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Brand")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Brand", "Model")
+                        .IsUnique();
+
+                    b.ToTable("LabMachines");
                 });
 
             modelBuilder.Entity("VetManagement.Domain.Inventory.InventoryMovement", b =>

@@ -26,6 +26,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
 
     // New exam-related entities
     public DbSet<ExternalLab> ExternalLabs { get; set; }
+    public DbSet<LabMachine> LabMachines { get; set; }
     public DbSet<ExamRequestItem> ExamRequestItems { get; set; }
 
     // New medical visits
@@ -194,6 +195,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         .WithMany()
         .HasForeignKey(i => i.ExternalLabId)
         .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<LabMachine>(e =>
+        {
+            e.Property(m => m.Brand).HasMaxLength(100);
+            e.Property(m => m.Model).HasMaxLength(100);
+            e.HasIndex(m => new { m.Brand, m.Model }).IsUnique();
+        });
 
         // Map Attributes (Dictionary<string,string>) as JSON with a value comparer
         var dictComparer = new ValueComparer<Dictionary<string, string>>(

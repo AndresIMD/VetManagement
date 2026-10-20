@@ -17,6 +17,7 @@ public class UnitOfWork(AppDbContext context) : IUnitOfWork
     private IInventoryMovementRepository? _inventoryMovements;
     private IAuditLogRepository? _auditLogs;
     private IExternalLabRepository? _externalLabs;
+    private ILabMachineRepository? _labMachines;
     private IMedicalVisitRepository? _medicalVisits;
     private IClinicSettingRepository? _clinicSettings;
     private IAppointmentRepository? _appointments;
@@ -43,6 +44,8 @@ public class UnitOfWork(AppDbContext context) : IUnitOfWork
     public IAuditLogRepository AuditLogs => _auditLogs ??= new AuditLogRepository(context);
 
     public IExternalLabRepository ExternalLabs => _externalLabs ??= new ExternalLabRepository(context);
+
+    public ILabMachineRepository LabMachines => _labMachines ??= new LabMachineRepository(context);
 
     public IMedicalVisitRepository MedicalVisits => _medicalVisits ??= new MedicalVisitRepository(context);
 

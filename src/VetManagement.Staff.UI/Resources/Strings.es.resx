@@ -611,14 +611,9 @@
   <data name="Bottom" xml:space="preserve"><value>Abajo</value></data>
   <data name="Right" xml:space="preserve"><value>Derecha</value></data>
   <data name="Background strength: {0}% (lower it to turn the image into a watermark)" xml:space="preserve"><value>Intensidad del fondo: {0}% (bájala para convertir la imagen en marca de agua)</value></data>
-  <data name="For your designer" xml:space="preserve"><value>Para tu diseñador</value></data>
-  <data name="(images up to 3 MB, PNG, JPEG or WebP):" xml:space="preserve"><value>(imágenes de hasta 3 MB, PNG, JPEG o WebP):</value></data>
   <data name="Logo:" xml:space="preserve"><value>Logo:</value></data>
-  <data name="PNG with a transparent background, about 1200 × 400 px. Printed top left at the height chosen above." xml:space="preserve"><value>PNG con fondo transparente, de unos 1200 × 400 px. Se imprime arriba a la izquierda, con el alto elegido arriba.</value></data>
   <data name="Background:" xml:space="preserve"><value>Fondo:</value></data>
-  <data name="a full page, portrait, {0} px (300 dpi; half that is fine for a lighter file). It is stretched to the whole sheet (or to the results box, when chosen above). Keep text and strong colours out of the content area: {1} mm from the top, {2} mm from the bottom, {3} mm left and {4} mm right are free for frames or artwork. A watermark should be light: results are printed on top of it." xml:space="preserve"><value>una página completa, vertical, de {0} px (300 dpi; la mitad sirve para un archivo más liviano). Se estira a toda la hoja (o al recuadro de resultados, si se eligió arriba). Deja el texto y los colores fuertes fuera del área de contenido: {1} mm desde arriba, {2} mm desde abajo, {3} mm a la izquierda y {4} mm a la derecha quedan libres para marcos o diseño. Una marca de agua debe ser suave: los resultados se imprimen encima.</value></data>
   <data name="Colours:" xml:space="preserve"><value>Colores:</value></data>
-  <data name="the two bars below use your brand colours as #RRGGBB." xml:space="preserve"><value>las dos barras de abajo usan los colores de tu marca, en formato #RRGGBB.</value></data>
   <data name="Page" xml:space="preserve"><value>Página</value></data>
   <data name="Paper" xml:space="preserve"><value>Papel</value></data>
   <data name="Letter (21.6 × 27.9 cm)" xml:space="preserve"><value>Carta (21,6 × 27,9 cm)</value></data>
@@ -627,7 +622,6 @@
   <data name="Result bar" xml:space="preserve"><value>Barra de resultados</value></data>
   <data name="Top (mm)" xml:space="preserve"><value>Arriba (mm)</value></data>
   <data name="Header lines (next to the logo, one per line)" xml:space="preserve"><value>Líneas del encabezado (junto al logo, una por línea)</value></data>
-  <data name="Footer lines (clinic name, tax id, address, phone...)" xml:space="preserve"><value>Líneas del pie (nombre de la clínica, identificación fiscal, dirección, teléfono...)</value></data>
   <data name="Note under the footer" xml:space="preserve"><value>Nota bajo el pie</value></data>
   <data name="Report design saved." xml:space="preserve"><value>Diseño del informe guardado.</value></data>
   <data name="The image must be 3 MB or smaller." xml:space="preserve"><value>La imagen debe pesar 3 MB o menos.</value></data>
@@ -1123,4 +1117,46 @@
   <data name="{0}% vs. previous period" xml:space="preserve"><value>{0}% vs. período anterior</value></data>
   <data name="Items moved" xml:space="preserve"><value>Productos con movimiento</value></data>
   <data name="{0} movements in the period" xml:space="preserve"><value>{0} movimientos en el período</value></data>
+  <data name="Add them in Lab Machines." xml:space="preserve"><value>Agrégalos en Equipos de laboratorio.</value></data>
+  <data name="Could not delete the machine." xml:space="preserve"><value>No se pudo eliminar el equipo.</value></data>
+  <data name="Could not save the machine." xml:space="preserve"><value>No se pudo guardar el equipo.</value></data>
+  <data name="Delete '{0} {1}' from the list?" xml:space="preserve"><value>¿Eliminar «{0} {1}» de la lista?</value></data>
+  <data name="Delete machine" xml:space="preserve"><value>Eliminar equipo</value></data>
+  <data name="Edit machine" xml:space="preserve"><value>Editar equipo</value></data>
+  <data name="Enter the brand." xml:space="preserve"><value>Ingresa la marca.</value></data>
+  <data name="Enter the model." xml:space="preserve"><value>Ingresa el modelo.</value></data>
+  <data name="Exams run on it: move them to another machine before deleting it." xml:space="preserve"><value>Hay exámenes que usan este equipo: cámbialos a otro equipo antes de eliminarlo.</value></data>
+  <data name="Lab Machines" xml:space="preserve"><value>Equipos de laboratorio</value></data>
+  <data name="Machine deleted." xml:space="preserve"><value>Equipo eliminado.</value></data>
+  <data name="Machine saved." xml:space="preserve"><value>Equipo guardado.</value></data>
+  <data name="Machine saved. {0} exams now show the new name." xml:space="preserve"><value>Equipo guardado. {0} exámenes muestran ahora el nuevo nombre.</value></data>
+  <data name="Model" xml:space="preserve"><value>Modelo</value></data>
+  <data name="New machine" xml:space="preserve"><value>Nuevo equipo</value></data>
+  <data name="No machines match the search." xml:space="preserve"><value>Ningún equipo coincide con la búsqueda.</value></data>
+  <data name="No machines yet. Add the brands and models of the lab's analysers." xml:space="preserve"><value>Aún no hay equipos. Agrega las marcas y modelos de los analizadores del laboratorio.</value></data>
+  <data name="Not used" xml:space="preserve"><value>Sin uso</value></data>
+  <data name="Search by brand or model..." xml:space="preserve"><value>Buscar por marca o modelo...</value></data>
+  <data name="The brands and models the exam catalog picks from." xml:space="preserve"><value>Las marcas y modelos que se eligen en el catálogo de exámenes.</value></data>
+  <data name="There are no lab machines yet." xml:space="preserve"><value>Aún no hay equipos de laboratorio.</value></data>
+  <data name="e.g. Catalyst One, ProCyte Dx, Vcheck V200" xml:space="preserve"><value>p. ej. Catalyst One, ProCyte Dx, Vcheck V200</value></data>
+  <data name="{0} catalog exams run on this machine and will show the new name. Issued reports keep theirs." xml:space="preserve"><value>{0} exámenes del catálogo usan este equipo y mostrarán el nuevo nombre. Los informes ya emitidos conservan el suyo.</value></data>
+  <data name="Footer (clinic name, tax id, address, phone...)" xml:space="preserve"><value>Pie de página (nombre de la clínica, identificación fiscal, dirección, teléfono...)</value></data>
+  <data name="Bold (Ctrl+B): select the text first, or place the cursor on a line" xml:space="preserve"><value>Negrita (Ctrl+B): selecciona primero el texto, o deja el cursor en una línea</value></data>
+  <data name="Bold" xml:space="preserve"><value>Negrita</value></data>
+  <data name="Each line prints as written and an empty line leaves a gap. **Text** between double asterisks prints in bold." xml:space="preserve"><value>Cada línea se imprime tal como la escribes y una línea vacía deja un espacio. El **texto** entre dobles asteriscos se imprime en negrita.</value></data>
+  <data name="Leave it empty if the note is already part of the footer." xml:space="preserve"><value>Déjala vacía si la nota ya está en el pie de página.</value></data>
+  <data name="Recommended image specifications" xml:space="preserve"><value>Especificaciones recomendadas para las imágenes</value></data>
+  <data name="(up to 3 MB; PNG, JPEG or WebP):" xml:space="preserve"><value>(hasta 3 MB; PNG, JPEG o WebP):</value></data>
+  <data name="PNG with a transparent background, approximately 1200 × 400 px. Printed at the top left, at the height set above." xml:space="preserve"><value>PNG con fondo transparente, de aproximadamente 1200 × 400 px. Se imprime en la esquina superior izquierda, con la altura definida arriba.</value></data>
+  <data name="full portrait page of {0} px (300 dpi; 150 dpi is enough for a lighter file). It covers the whole sheet, or the results box when that option is selected. The content area should stay free of text and strong colours; the margins ({1} mm top, {2} mm bottom, {3} mm left, {4} mm right) can hold frames or artwork. Watermarks should be light, since results are printed over them." xml:space="preserve"><value>página completa en orientación vertical, de {0} px (300 dpi; con 150 dpi basta para un archivo más liviano). Cubre toda la hoja, o el recuadro de resultados si se elige esa opción. El área de contenido debe quedar libre de textos y colores intensos; los márgenes ({1} mm arriba, {2} mm abajo, {3} mm a la izquierda y {4} mm a la derecha) pueden llevar marcos o diseños. Las marcas de agua deben ser suaves, ya que los resultados se imprimen sobre ellas.</value></data>
+  <data name="the two bars below use the clinic's brand colours, in #RRGGBB format." xml:space="preserve"><value>las dos barras de abajo usan los colores institucionales de la clínica, en formato #RRGGBB.</value></data>
+  <data name="Plasma" xml:space="preserve"><value>Plasma</value></data>
+  <data name="Serum" xml:space="preserve"><value>Suero</value></data>
+  <data name="Supernatant" xml:space="preserve"><value>Sobrenadante</value></data>
+  <data name="Red tube" xml:space="preserve"><value>Tubo rojo</value></data>
+  <data name="Light blue tube" xml:space="preserve"><value>Tubo celeste</value></data>
+  <data name="Green tube" xml:space="preserve"><value>Tubo verde</value></data>
+  <data name="Yellow tube" xml:space="preserve"><value>Tubo amarillo</value></data>
+  <data name="Lavender tube" xml:space="preserve"><value>Tubo lila</value></data>
+  <data name="When the first word is in capitals, the whole title prints in capitals." xml:space="preserve"><value>Si la primera palabra está en mayúsculas, todo el título se imprime en mayúsculas.</value></data>
 </root>

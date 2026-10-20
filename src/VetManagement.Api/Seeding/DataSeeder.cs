@@ -234,6 +234,11 @@ public class DataSeeder(
         foreach (var exam in exams)
             await unitOfWork.Exams.AddAsync(exam);
 
+        // The exam form offers the machines on this list.
+        var listed = (await unitOfWork.LabMachines.GetAllAsync()).Select(m => (m.Brand, m.Model)).ToHashSet();
+        foreach (var machine in exams.Select(e => (e.Brand, Model: e.Machine)).Distinct().Where(m => !listed.Contains(m)))
+            await unitOfWork.LabMachines.AddAsync(new LabMachine { Brand = machine.Brand, Model = machine.Model });
+
         await unitOfWork.SaveChangesAsync();
         logger.LogInformation("Exams seeded successfully.");
     }

@@ -174,6 +174,7 @@ builder.Services.AddScoped<VetManagement.Application.Services.AuditService>();
 builder.Services.AddScoped<VetManagement.Application.Services.ExamService>();
 builder.Services.AddScoped<VetManagement.Application.Services.ExamPerformedService>();
 builder.Services.AddScoped<VetManagement.Application.Services.ExternalLabService>();
+builder.Services.AddScoped<VetManagement.Application.Exams.LabMachineService>();
 builder.Services.AddScoped<VetManagement.Application.Services.ClientPetService>();
 builder.Services.AddScoped<VetManagement.Application.Services.MedicalVisitService>();
 builder.Services.AddSingleton(new VetManagement.Application.Scheduling.SchedulingDefaults(

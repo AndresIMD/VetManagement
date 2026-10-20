@@ -3,6 +3,7 @@
 @using VetManagement.Domain.Exams
 @inject ExamReportsApiService ReportsApi
 @inject ISnackbar Snackbar
+@inject IJSRuntime Js
 @attribute [Authorize(Policy = "Exams.Update")]
 
 <PageTitle>@L["Report Design"]</PageTitle>
@@ -98,11 +99,11 @@
                             </MudSlider>
                         </div>
                         <MudAlert Severity="Severity.Info" Dense="true" NoIcon="true">
-                            <b>@L["For your designer"]</b> @L["(images up to 3 MB, PNG, JPEG or WebP):"]
+                            <b>@L["Recommended image specifications"]</b> @L["(up to 3 MB; PNG, JPEG or WebP):"]
                             <ul class="mt-1 mb-0">
-                                <li><b>@L["Logo:"]</b> @L["PNG with a transparent background, about 1200 × 400 px. Printed top left at the height chosen above."]</li>
-                                <li><b>@L["Background:"]</b> @L["a full page, portrait, {0} px (300 dpi; half that is fine for a lighter file). It is stretched to the whole sheet (or to the results box, when chosen above). Keep text and strong colours out of the content area: {1} mm from the top, {2} mm from the bottom, {3} mm left and {4} mm right are free for frames or artwork. A watermark should be light: results are printed on top of it.", BackgroundPixels, _settings.MarginsMm.Top, _settings.MarginsMm.Bottom, _settings.MarginsMm.Left, _settings.MarginsMm.Right]</li>
-                                <li><b>@L["Colours:"]</b> @L["the two bars below use your brand colours as #RRGGBB."]</li>
+                                <li><b>@L["Logo:"]</b> @L["PNG with a transparent background, approximately 1200 × 400 px. Printed at the top left, at the height set above."]</li>
+                                <li><b>@L["Background:"]</b> @L["full portrait page of {0} px (300 dpi; 150 dpi is enough for a lighter file). It covers the whole sheet, or the results box when that option is selected. The content area should stay free of text and strong colours; the margins ({1} mm top, {2} mm bottom, {3} mm left, {4} mm right) can hold frames or artwork. Watermarks should be light, since results are printed over them.", BackgroundPixels, _settings.MarginsMm.Top, _settings.MarginsMm.Bottom, _settings.MarginsMm.Left, _settings.MarginsMm.Right]</li>
+                                <li><b>@L["Colours:"]</b> @L["the two bars below use the clinic's brand colours, in #RRGGBB format."]</li>
                             </ul>
                                 </MudAlert>
                             </MudStack>
@@ -156,12 +157,23 @@
                                                   ValueChanged="v => _settings.HeaderLines = Lines(v)" />
                                 </MudItem>
                                 <MudItem xs="12">
-                                    <MudTextField T="string" Label="@L["Footer lines (clinic name, tax id, address, phone...)"]" Lines="4"
-                                                  Value="@string.Join("\n", _settings.FooterLines)"
-                                                  ValueChanged="v => _settings.FooterLines = Lines(v)" />
+                                    @* data-bold-markup: Ctrl+B toggles bold in the field (text-format.js). *@
+                                    <div id="report-footer" data-bold-markup>
+                                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                            <MudText Typo="Typo.caption">@L["Footer (clinic name, tax id, address, phone...)"]</MudText>
+                                            <MudTooltip Text="@L["Bold (Ctrl+B): select the text first, or place the cursor on a line"]">
+                                                <MudIconButton Icon="@Icons.Material.Filled.FormatBold" Size="Size.Small" OnClick="BoldFooterAsync"
+                                                               aria-label="@L["Bold"]" />
+                                            </MudTooltip>
+                                        </MudStack>
+                                        <MudTextField @bind-Value="_settings.Footer" Variant="Variant.Outlined" Lines="7" Immediate="true"
+                                                      DebounceInterval="250" MaxLength="ExamReportSettings.MaxFooterLength"
+                                                      HelperText="@L["Each line prints as written and an empty line leaves a gap. **Text** between double asterisks prints in bold."]" />
+                                    </div>
                                 </MudItem>
                                 <MudItem xs="12">
-                                    <MudTextField Label="@L["Note under the footer"]" @bind-Value="_settings.Disclaimer" Lines="2" />
+                                    <MudTextField Label="@L["Note under the footer"]" @bind-Value="_settings.Disclaimer" Lines="2"
+                                                  HelperText="@L["Leave it empty if the note is already part of the footer."]" />
                                 </MudItem>
                             </MudGrid>
                             <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-3">
@@ -205,6 +217,8 @@
 
     private static List<string> Lines(string? text)
         => (text ?? string.Empty).Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList();
+
+    private async Task BoldFooterAsync() => await Js.InvokeVoidAsync("appText.bold", "report-footer");
 
     private async Task SaveAsync()
     {

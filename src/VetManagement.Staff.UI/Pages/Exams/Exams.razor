@@ -40,14 +40,14 @@
         <HeaderContent>
             <MudTh style="width:25%">@L["Name"]</MudTh>
             <MudTh style="width:20%">@L["Brand"]</MudTh>
-            <MudTh style="width:20%">@L["Machine"]</MudTh>
+            <MudTh style="width:20%">@L["Model"]</MudTh>
             <MudTh style="width:15%">@L["Cost"]</MudTh>
             <MudTh style="width:20%; text-align:right">@L["Actions"]</MudTh>
         </HeaderContent>
         <RowTemplate Context="exam">
             <MudTd DataLabel="@L["Name"]">@exam.Name</MudTd>
             <MudTd DataLabel="@L["Brand"]">@exam.Brand</MudTd>
-            <MudTd DataLabel="@L["Machine"]">@exam.Machine</MudTd>
+            <MudTd DataLabel="@L["Model"]">@exam.Machine</MudTd>
             <MudTd DataLabel="@L["Cost"]">$@exam.BuyPrice</MudTd>
             <MudTd DataLabel="@L["Actions"]" Class="text-end">
                 <MudStack Row="true" Spacing="1" Justify="Justify.FlexEnd">

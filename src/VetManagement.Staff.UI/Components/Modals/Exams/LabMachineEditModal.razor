@@ -1,0 +1,76 @@
+@using System.Text.Json
+@using VetManagement.Contracts.Exams
+@using VetManagement.Staff.UI.Services.Api
+@inject ISnackbar Snackbar
+@inject ExamApiService ExamApi
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="_valid">
+            @* A brand already on the list can be picked, or a new one typed. *@
+            <MudAutocomplete T="string" @bind-Value="_brand" Label="@L["Brand"]" SearchFunc="SearchBrands" CoerceValue="true" CoerceText="false"
+                             Required="true" RequiredError="@L["Enter the brand."]" MaxLength="100" Class="mb-2" />
+            <MudTextField @bind-Value="_model" Label="@L["Model"]" Immediate="true" Required="true" RequiredError="@L["Enter the model."]" MaxLength="100"
+                          HelperText="@L["e.g. Catalyst One, ProCyte Dx, Vcheck V200"]" Class="mb-2" />
+        </MudForm>
+        @if (Machine is { ExamCount: > 0 })
+        {
+            <MudAlert Severity="Severity.Info" Dense="true" Class="mt-2">
+                @L["{0} catalog exams run on this machine and will show the new name. Issued reports keep theirs.", Machine.ExamCount]
+            </MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Secondary" OnClick="() => MudDialog.Cancel()" Disabled="@_saving">@L["Cancel"]</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveAsync" Disabled="@_saving">@L["Save"]</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = default!;
+    /// <summary>The machine to edit; null to add one.</summary>
+    [Parameter] public LabMachineDto? Machine { get; set; }
+    /// <summary>Brands already on the list, offered while typing.</summary>
+    [Parameter] public List<string> Brands { get; set; } = [];
+
+    private MudForm? _form;
+    private string? _brand;
+    private string? _model;
+    private bool _valid;
+    private bool _saving;
+
+    protected override void OnInitialized()
+    {
+        _brand = Machine?.Brand;
+        _model = Machine?.Model;
+    }
+
+    private Task<IEnumerable<string>> SearchBrands(string? text, CancellationToken _)
+        => Task.FromResult(string.IsNullOrWhiteSpace(text)
+            ? Brands.AsEnumerable()
+            : Brands.Where(b => b.Contains(text.Trim(), StringComparison.OrdinalIgnoreCase)));
+
+    private async Task SaveAsync()
+    {
+        await _form!.ValidateAsync();
+        if (!_form.IsValid)
+            return;
+        _saving = true;
+        var request = new LabMachineRequest { Brand = _brand?.Trim() ?? string.Empty, Model = _model?.Trim() ?? string.Empty };
+        var result = Machine is null
+            ? await ExamApi.AddLabMachineAsync(request)
+            : await ExamApi.UpdateLabMachineAsync(Machine.Id, request);
+        _saving = false;
+        if (!result.Ok)
+        {
+            Snackbar.Add(result.Error ?? L["Could not save the machine."], Severity.Error);
+            return;
+        }
+
+        var examsUpdated = result.Body is { ValueKind: JsonValueKind.Object } body && body.TryGetProperty("examsUpdated", out var n) ? n.GetInt32() : 0;
+        Snackbar.Add(examsUpdated > 0
+            ? L["Machine saved. {0} exams now show the new name.", examsUpdated]
+            : L["Machine saved."], Severity.Success);
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}

@@ -25,6 +25,8 @@ public static class ApiRouteConstants
     // Exams
     public const string EXAMS = "api/exams";
     public const string EXAM_BY_ID = "api/exams/{0}";
+    public const string LAB_MACHINES = "api/lab-machines";
+    public const string LAB_MACHINE_BY_ID = "api/lab-machines/{0}";
 
     // Medical Visits
     public const string MEDICAL_VISITS = "api/medical-visits";

@@ -141,6 +141,7 @@
             Children = new List<MenuItem>
             {
                 new MenuItem { Title = "Exam Catalog", Href = "exams", RequiredPerms = new[] { "exams.update" } },
+                new MenuItem { Title = "Lab Machines", Href = "lab-machines", RequiredPerms = new[] { "exams.update" } },
                 // Lab staff work on Lab Reports; requests are made by clinicians and followed up by the lab supervisor.
                 new MenuItem { Title = "Requests", Href = "exam-requests", RequiredPerms = new[] { "medical.read", "exams.update" } },
                 new MenuItem { Title = "Lab Reports", Href = "exam-reports", RequiredPerms = new[] { "examsperformed.read" } },

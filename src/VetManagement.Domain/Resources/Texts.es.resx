@@ -197,7 +197,6 @@
   <data name="Use a range of at most 62 days." xml:space="preserve"><value>Usa un rango de 62 días como máximo.</value></data>
   <data name="Use a range of at most 92 days." xml:space="preserve"><value>Usa un rango de 92 días como máximo.</value></data>
   <data name="Use a range of at most {0} days, ending on or after the start." xml:space="preserve"><value>Usa un rango de {0} días como máximo, que termine el mismo día del inicio o después.</value></data>
-  <data name="Use at most 6 header lines and 8 footer lines." xml:space="preserve"><value>Usa como máximo 6 líneas de encabezado y 8 de pie.</value></data>
   <data name="User created successfully." xml:space="preserve"><value>Usuario creado correctamente.</value></data>
   <data name="Username already exists." xml:space="preserve"><value>El usuario ya existe.</value></data>
   <data name="VAT exempt" xml:space="preserve"><value>Exento de IVA</value></data>
@@ -239,4 +238,9 @@
   <data name="The user name '{0}' is invalid: use only letters, digits and - . _ @ +" xml:space="preserve"><value>El nombre de usuario '{0}' no es válido: usa solo letras, números y - . _ @ +</value></data>
   <data name="You can't block or delete your own account." xml:space="preserve"><value>No puedes bloquear ni eliminar tu propia cuenta.</value></data>
   <data name="Compare at most {0} items at a time." xml:space="preserve"><value>Compara como máximo {0} productos a la vez.</value></data>
+  <data name="'{0} {1}' is already on the list." xml:space="preserve"><value>«{0} {1}» ya está en la lista.</value></data>
+  <data name="Enter the brand and the model." xml:space="preserve"><value>Ingresa la marca y el modelo.</value></data>
+  <data name="{0} catalog exams run on this machine. Move them to another machine first." xml:space="preserve"><value>{0} exámenes del catálogo usan este equipo. Cámbialos a otro equipo primero.</value></data>
+  <data name="Use at most 6 header lines and {0} footer lines." xml:space="preserve"><value>Usa como máximo 6 líneas de encabezado y {0} de pie de página.</value></data>
+  <data name="The footer can be at most {0} characters long." xml:space="preserve"><value>El pie de página puede tener como máximo {0} caracteres.</value></data>
 </root>

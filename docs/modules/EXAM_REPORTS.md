@@ -7,7 +7,7 @@ Staff web → Exams → **Lab Reports** (issue, view, print), **Report Design** 
 
 | Piece | Where | Who edits it |
 |---|---|---|
-| Branding: paper (Letter/A4), margins, font, two bar colours, header lines, footer lines, disclaimer, background strength and area (whole page or results box), background stretched or keeping its proportions (fit to width/height, aligned start/centre/end), logo height (and width when its proportions aren't kept) | settings document `exam-reports` (`ExamReportSettings`) | `exams.update` |
+| Branding: paper (Letter/A4), margins, font, two bar colours, header lines, footer (a paragraph: each line as written, an empty line for a gap, `**bold**`), disclaimer, background strength and area (whole page or results box), background stretched or keeping its proportions (fit to width/height, aligned start/centre/end), logo height (and width when its proportions aren't kept) | settings document `exam-reports` (`ExamReportSettings`) | `exams.update` |
 | Logo and background images (one each, PNG/JPEG/WebP, ≤ 3 MB) | table `ClinicImages` | `exams.update` |
 | Template of a catalog exam: title, printed blocks, parameters with unit, normal ranges, reference column, bar, options, interpretation bands; interpretation rules | same settings document, `Templates[]` keyed by `ExamId` | `exams.update` |
 | Issued report: registered pet or typed patient, exam, reception date, referring vet, optional lot number, values, interpretation | table `ExamReports` | `examsperformed.create` / `.update` / `.delete` |

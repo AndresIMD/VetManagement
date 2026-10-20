@@ -449,6 +449,57 @@ public class ExamReportsApiTests : IClassFixture<CustomWebAppFactory>
     }
 
     [Fact]
+    public void FooterMarkup_KeepsGaps_AndPrintsDoubleAsterisksInBold()
+    {
+        ReportText.Lines("\r\n**Clínica Demo**\r\nRUT: 11.111.111-1\r\n\r\n  Calle 1  \n\n").Should().Equal("**Clínica Demo**", "RUT: 11.111.111-1", "", "Calle 1");
+        ReportText.Lines("  ").Should().BeEmpty();
+
+        ReportText.Spans("Fono: **+56 9 1234 5678** - **24 h**").Should().Equal(
+            new ReportTextSpan("Fono: ", false), new ReportTextSpan("+56 9 1234 5678", true), new ReportTextSpan(" - ", false), new ReportTextSpan("24 h", true));
+        ReportText.Spans("5 ** 2").Should().Equal(new ReportTextSpan("5 ", false), new ReportTextSpan("** 2", false));
+    }
+
+    [Theory]
+    [InlineData("EXAMEN Gases en sangre", "EXAMEN GASES EN SANGRE")]
+    [InlineData("PRUEBA Coagulación", "PRUEBA COAGULACIÓN")]
+    [InlineData(" Panel de coagulación ", "Panel de coagulación")]
+    [InlineData("T4 total", "T4 total")]
+    [InlineData("", "")]
+    public void Title_StartingInCapitals_PrintsAllInCapitals(string title, string printed)
+        => ReportText.Title(title).Should().Be(printed);
+
+    [Fact]
+    public void Footer_SavedAsLines_IsReadAsAParagraph_WithTheNameInBold()
+    {
+        var settings = SettingsJson.Deserialize<ExamReportSettings>("""{ "footerLines": ["Clínica Demo", "Calle 1"] }""");
+
+        settings.Footer.Should().Be("**Clínica Demo**\nCalle 1");
+        SettingsJson.Serialize(settings).Should().NotContain("footerLines");
+        SettingsJson.Deserialize<ExamReportSettings>("""{ "footer": "Nueva", "footerLines": ["Vieja"] }""").Footer.Should().Be("Nueva");
+
+        settings.Footer = string.Join("\n", Enumerable.Repeat("x", ExamReportSettings.MaxFooterLines + 1));
+        settings.Validate().Should().ContainSingle().Which.Should().Contain("footer lines");
+    }
+
+    [Fact]
+    public async Task Footer_KeepsItsLineBreaks_AndBold_WhenSaved()
+    {
+        const string footer = "**CLÍNICA DEMO**\nRUT: 11.111.111-1\n\nEl resultado no es un diagnóstico.\nFono: **+56 9 1234 5678**";
+        var document = (await _admin.GetFromJsonAsync<ExamReportSettingsDocument>("/api/exam-reports/settings"))!;
+        var settings = document.Settings.Deserialize<ExamReportSettings>(SettingsJson.Options)!;
+        settings.Footer = footer;
+
+        (await _admin.PutAsJsonAsync("/api/exam-reports/settings", new ExamReportSettingsDocument
+        {
+            Version = document.Version,
+            Settings = JsonSerializer.SerializeToElement(settings, SettingsJson.Options)
+        })).EnsureSuccessStatusCode();
+
+        var saved = (await _admin.GetFromJsonAsync<ExamReportSettingsDocument>("/api/exam-reports/settings"))!;
+        saved.Settings.Deserialize<ExamReportSettings>(SettingsJson.Options)!.Footer.Should().Be(footer);
+    }
+
+    [Fact]
     public async Task ExamWithoutTemplate_OrUnknownParameter_IsRejected()
     {
         var (petId, examId) = await AddPetAndExamAsync(Species.Dog);

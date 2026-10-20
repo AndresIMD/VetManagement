@@ -26,7 +26,8 @@
         <MudGrid>
             <MudItem xs="12" lg="6">
                 <MudPaper Class="pa-4 mb-3" Elevation="1">
-                    <MudTextField Label="@L["Title printed on the result bar"]" @bind-Value="_template.Title" Placeholder="@L["TEST {0}", "cPL"]" />
+                    <MudTextField Label="@L["Title printed on the result bar"]" @bind-Value="_template.Title" Placeholder="@L["TEST {0}", "CPL"]"
+                                  HelperText="@L["When the first word is in capitals, the whole title prints in capitals."]" />
                     <MudText Typo="Typo.subtitle2" Class="mt-3">@L["Print on this report"]</MudText>
                     <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="0">
                         <MudCheckBox T="bool" @bind-Value="_template.Sections.PatientData" Label="@L["Patient and owner data"]" />
@@ -386,7 +387,7 @@
         _template = _settings.FindTemplate(ExamId) ?? new ExamReportTemplate
         {
             ExamId = ExamId,
-            Title = L["TEST {0}", exam.Name],
+            Title = L["TEST {0}", exam.Name.ToUpperInvariant()],
             Parameters = [NewParameter(exam.Name)]
         };
         foreach (var p in _template.Parameters)

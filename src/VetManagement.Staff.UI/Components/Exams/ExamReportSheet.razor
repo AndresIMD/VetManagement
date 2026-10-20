@@ -49,7 +49,8 @@
         .xr-method { align-self: center; margin-top: auto; padding: 1.4mm 6mm; border-radius: 3mm; color: #fff; font-weight: 700; }
         .xr-signed { margin-top: 4mm; text-align: right; font-size: 9.5pt; }
         .xr-footer { text-align: center; font-size: 9.5pt; }
-        .xr-footer-name { font-weight: 700; }
+        /* An empty line of the footer keeps its height, so it prints as a gap. */
+        .xr-footer-line { min-height: 1.35em; }
         .xr-disclaimer { margin-top: 1.5mm; }
         .xr-pageno { margin-top: 1.5mm; text-align: right; font-size: 8.5pt; color: #555; }
         .xr-note { font-size: 8pt; color: #666; margin-top: 1mm; }
@@ -115,7 +116,7 @@
                     {
                         @Background
                     }
-                    <div class="xr-bar" style="background:@Settings.AccentColor">@Report.Title@(first ? null : L[" (continued)"])</div>
+                    <div class="xr-bar" style="background:@Settings.AccentColor">@ReportText.Title(Report.Title)@(first ? null : L[" (continued)"])</div>
                     <div class="xr-results">
                         @if (rows.Count > 0 && Qualitative)
                         {
@@ -224,9 +225,9 @@
                 </div>
 
                 <div class="xr-footer">
-                    @for (var f = 0; f < Settings.FooterLines.Count; f++)
+                    @foreach (var footerLine in ReportText.Lines(Settings.Footer))
                     {
-                        <div class="@(f == 0 ? "xr-footer-name" : null)">@Settings.FooterLines[f]</div>
+                        <div class="xr-footer-line">@foreach (var span in ReportText.Spans(footerLine)) { if (span.Bold) { <b>@span.Text</b> } else { <text>@span.Text</text> } }</div>
                     }
                     @if (!string.IsNullOrWhiteSpace(Settings.Disclaimer))
                     {
@@ -417,7 +418,7 @@
     /// <summary>Splits the result lines into pages; the closing blocks (interpretation, method) go on the last one.</summary>
     private List<List<ExamReportResultDto>> Paginate()
     {
-        var footerMm = Settings.FooterLines.Count * LINE_MM + Lines(Settings.Disclaimer, ContentWidth) * LINE_MM + 8;
+        var footerMm = ReportText.Lines(Settings.Footer).Length * LINE_MM + Lines(Settings.Disclaimer, ContentWidth) * LINE_MM + 8;
         var frameMm = PageHeight - Settings.MarginsMm.Top - Settings.MarginsMm.Bottom
             - (HasHeader ? HeaderMm + 2 + GAP_MM : 0) - footerMm - GAP_MM
             - 26; // result bar, table header and box padding
