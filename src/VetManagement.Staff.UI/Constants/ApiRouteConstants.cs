@@ -14,6 +14,7 @@ public static class ApiRouteConstants
     public const string INVENTORY_ADJUST_STOCK = "api/inventory/movements/adjust-stock";
     public const string INVENTORY_MASS_INGRESS = "api/inventory/movements/mass-ingress";
     public const string INVENTORY_MASS_EGRESS = "api/inventory/movements/mass-egress";
+    public const string INVENTORY_METRICS = "api/inventory/metrics";
 
     // Clients & Pets
     public const string CLIENTS = "api/clientpet/clients";

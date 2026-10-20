@@ -59,6 +59,13 @@ public class InventoryMovementRepository(AppDbContext context) : Repository<Inve
             .ToListAsync();
     }
 
+    public Task<List<MovementQuantity>> GetQuantitiesAsync(DateTime fromUtc, DateTime toUtc)
+        => _context.InventoryMovements
+            .AsNoTracking()
+            .Where(m => m.Date >= fromUtc && m.Date < toUtc)
+            .Select(m => new MovementQuantity(m.ItemId, m.Type, m.Quantity, m.Date))
+            .ToListAsync();
+
     public async Task<(List<InventoryMovement> Items, int TotalCount)> GetFilteredPagedAsync(
         int page = 0,
         int pageSize = 25,

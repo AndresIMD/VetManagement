@@ -1,0 +1,33 @@
+<MudItem xs="6" md="3">
+    <MudPaper Class="pa-4 rounded-lg app-surface d-flex align-center gap-3" Elevation="1"
+              Style="@($"height: 100%;{(Href is null ? string.Empty : " cursor: pointer;")}")" @onclick="Open">
+        @* Two cards per row on a phone: the figure needs the room more than the icon. *@
+        <MudHidden Breakpoint="Breakpoint.Xs">
+            <MudAvatar Color="@Color" Variant="Variant.Filled" Size="Size.Large" Rounded="true">
+                <MudIcon Icon="@Icon" />
+            </MudAvatar>
+        </MudHidden>
+        <div style="min-width: 0;">
+            <MudText Typo="Typo.caption" Color="Color.Secondary">@Label</MudText>
+            <MudText Typo="Typo.h5" Style="font-weight: 600; line-height: 1.2;">@Value</MudText>
+            @ChildContent
+        </div>
+    </MudPaper>
+</MudItem>
+
+@code {
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Parameter] public string Label { get; set; } = string.Empty;
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public string Icon { get; set; } = Icons.Material.Filled.Insights;
+    [Parameter] public Color Color { get; set; } = Color.Primary;
+    /// <summary>The line under the figure: context, a comparison or a breakdown.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string? Href { get; set; }
+
+    private void Open()
+    {
+        if (Href is not null)
+            Navigation.NavigateTo(Href);
+    }
+}

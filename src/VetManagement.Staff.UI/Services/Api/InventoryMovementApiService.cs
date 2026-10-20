@@ -12,6 +12,17 @@ namespace VetManagement.Staff.UI.Services.Api;
 
 public class InventoryMovementApiService(HttpClient http)
 {
+    /// <summary>The stock flow of a period (clinic-local dates), or the API's message (e.g. range too long).</summary>
+    public async Task<(InventoryMetricsDto? Metrics, string? Error)> GetMetricsAsync(DateOnly from, DateOnly to, IEnumerable<int> itemIds,
+        CancellationToken cancellationToken = default)
+    {
+        var query = $"from={from:yyyy-MM-dd}&to={to:yyyy-MM-dd}" + string.Concat(itemIds.Select(id => $"&itemIds={id}"));
+        var response = await http.GetAsync($"{ApiRouteConstants.INVENTORY_METRICS}?{query}", cancellationToken);
+        if (response.IsSuccessStatusCode)
+            return (await response.Content.ReadFromJsonAsync<InventoryMetricsDto>(cancellationToken), null);
+        return (null, (await ApiResult.FromResponseAsync(response)).Error);
+    }
+
     public async Task<List<InventoryMovement>> GetMovementsByItemIdAsync(int itemId)
     {
         var response = await http.GetAsync(string.Format(ApiRouteConstants.INVENTORY_MOVEMENT_BY_ITEM, itemId));

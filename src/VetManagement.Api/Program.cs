@@ -189,6 +189,7 @@ builder.Services.AddScoped<VetManagement.Application.Billing.BillingService>();
 builder.Services.AddScoped<VetManagement.Application.Clinical.ClinicalSettingsService>();
 builder.Services.AddScoped<VetManagement.Application.Clinical.ClinicalService>();
 builder.Services.AddScoped<VetManagement.Application.Reports.ReportsService>();
+builder.Services.AddScoped<VetManagement.Application.Inventory.InventoryMetricsService>();
 var enabledModules = new EnabledModules(builder.Configuration);
 builder.Services.AddSingleton(enabledModules);
 builder.Services.AddScoped<VetManagement.Application.Exams.ExamReportSettingsService>();

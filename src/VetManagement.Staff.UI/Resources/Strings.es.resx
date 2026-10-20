@@ -1087,4 +1087,40 @@
   <data name="Password Reset" xml:space="preserve"><value>Contraseña restablecida</value></data>
   <data name="User Deleted" xml:space="preserve"><value>Usuario eliminado</value></data>
   <data name="You don't have permission to access this page." xml:space="preserve"><value>No tienes permiso para ver esta página.</value></data>
+  <data name="At this period's pace, their stock lasts less than {0} days." xml:space="preserve"><value>Al ritmo de este período, su stock dura menos de {0} días.</value></data>
+  <data name="Cost {0} · at today's prices" xml:space="preserve"><value>Costo {0} · a precios actuales</value></data>
+  <data name="Could not load the metrics. Check the connection and try again." xml:space="preserve"><value>No se pudieron cargar las métricas. Revisa la conexión e inténtalo de nuevo.</value></data>
+  <data name="Custom range" xml:space="preserve"><value>Rango personalizado</value></data>
+  <data name="Filter by items (optional)" xml:space="preserve"><value>Filtrar por productos (opcional)</value></data>
+  <data name="In" xml:space="preserve"><value>Entradas</value></data>
+  <data name="Items with the most units out in the period." xml:space="preserve"><value>Productos con más unidades salidas en el período.</value></data>
+  <data name="Lasts" xml:space="preserve"><value>Alcanza para</value></data>
+  <data name="Most used" xml:space="preserve"><value>Más usados</value></data>
+  <data name="No item runs out soon at this pace." xml:space="preserve"><value>Ningún producto se agota pronto a este ritmo.</value></data>
+  <data name="No movements in this period." xml:space="preserve"><value>No hay movimientos en este período.</value></data>
+  <data name="Nothing went out in this period." xml:space="preserve"><value>No hubo salidas en este período.</value></data>
+  <data name="Out" xml:space="preserve"><value>Salidas</value></data>
+  <data name="Over a year" xml:space="preserve"><value>Más de un año</value></data>
+  <data name="Per day" xml:space="preserve"><value>Por día</value></data>
+  <data name="Per hour" xml:space="preserve"><value>Por hora</value></data>
+  <data name="Per month" xml:space="preserve"><value>Por mes</value></data>
+  <data name="Per week" xml:space="preserve"><value>Por semana</value></data>
+  <data name="Period" xml:space="preserve"><value>Período</value></data>
+  <data name="Running out" xml:space="preserve"><value>Por agotarse</value></data>
+  <data name="Show on the chart" xml:space="preserve"><value>Mostrar en el gráfico</value></data>
+  <data name="Stock alerts" xml:space="preserve"><value>Alertas de stock</value></data>
+  <data name="Units in" xml:space="preserve"><value>Unidades ingresadas</value></data>
+  <data name="Units in and out" xml:space="preserve"><value>Entradas y salidas de unidades</value></data>
+  <data name="Units out" xml:space="preserve"><value>Unidades salidas</value></data>
+  <data name="Units out per item" xml:space="preserve"><value>Unidades salidas por producto</value></data>
+  <data name="Up to {0} items, each drawn as its own line. Without any, the figures cover the whole inventory." xml:space="preserve"><value>Hasta {0} productos, cada uno con su propia línea. Sin ninguno, las cifras cubren todo el inventario.</value></data>
+  <data name="Value of what went out" xml:space="preserve"><value>Valor de las salidas</value></data>
+  <data name="Week of {0}" xml:space="preserve"><value>Semana del {0}</value></data>
+  <data name="What goes out, what comes in and what will run out soon." xml:space="preserve"><value>Qué sale, qué entra y qué se agotará pronto.</value></data>
+  <data name="{0} days" xml:space="preserve"><value>{0} días</value></data>
+  <data name="{0} items moved" xml:space="preserve"><value>{0} productos con movimiento</value></data>
+  <data name="{0} movements · {1} items" xml:space="preserve"><value>{0} movimientos · {1} productos</value></data>
+  <data name="{0}% vs. previous period" xml:space="preserve"><value>{0}% vs. período anterior</value></data>
+  <data name="Items moved" xml:space="preserve"><value>Productos con movimiento</value></data>
+  <data name="{0} movements in the period" xml:space="preserve"><value>{0} movimientos en el período</value></data>
 </root>

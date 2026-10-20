@@ -1,321 +1,482 @@
 ﻿@page "/inventory-metrics"
-@inject ItemsApiService ItemsService
-@inject VetManagement.Staff.UI.Services.Api.InventoryMovementApiService MovementService
 @attribute [Authorize(Policy = "Inventory.Metrics")]
-@using System.Globalization
-@using VetManagement.Staff.UI.Components.Filters
-@using VetManagement.Staff.UI.Constants
+@implements IDisposable
+@using VetManagement.Contracts.Inventory
 @using VetManagement.Domain.Enums
-@using VetManagement.Staff.UI.Models.Core
-@using VetManagement.Staff.UI.Models.Inventory
+@using VetManagement.Staff.UI.Models.DTOs
 @using VetManagement.Staff.UI.Services.Api
+@inject ItemsApiService ItemsService
+@inject InventoryMovementApiService MovementService
+@inject IBrowserViewportService Viewport
 
 <PageTitle>@L["Inventory Metrics"]</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
-    <PageHeader Title="@L["Inventory Metrics"]" Icon="@Icons.Material.Filled.ShowChart" />
+    <PageHeader Title="@L["Inventory Metrics"]" Subtitle="@L["What goes out, what comes in and what will run out soon."]" Icon="@Icons.Material.Filled.ShowChart" />
 
-    <MudPaper Class="pa-6 mb-4 elevation-3 rounded-lg app-surface">
-        <MudGrid>
-            <MudItem xs="12" md="6">
-                <MudAutocomplete T="Item"
-                                 @ref="_itemSelector"
-                                 Label="@L["Select items"]"
-                                 Variant="Variant.Outlined"
-                                 Value="_tempSelectedItem"
-                                 ValueChanged="OnItemPicked"
-                                 Clearable="true"
-                                 CoerceText="true"
-                                 ResetValueOnEmptyText="true"
-                                 ToStringFunc="@(i => i is null ? string.Empty : i.Name)"
-                                 SearchFunc="SearchItems"
-                                 Dense="false"
-                                 Adornment="Adornment.Start"
-                                 AdornmentIcon="@Icons.Material.Filled.Inventory2" />
+    <MudPaper Class="pa-4 mb-4 rounded-lg app-surface" Elevation="1">
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="7">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">@L["Period"]</MudText>
+                <MudChipSet T="Period" SelectedValue="_period" SelectedValueChanged="OnPeriodChangedAsync" SelectionMode="SelectionMode.SingleSelection"
+                            Color="Color.Primary" Variant="Variant.Text" CheckMark="false">
+                    @foreach (var period in Periods)
+                    {
+                        <MudChip T="Period" Value="period" Text="@PeriodText(period)" />
+                    }
+                </MudChipSet>
             </MudItem>
-            <MudItem xs="12" sm="6" md="3">
-                <MudDatePicker Date="_from" DateChanged="OnFromChanged" Label="@L["From"]" Variant="Variant.Outlined" Clearable="true" />
+            <MudItem xs="12" md="5">
+                <MudDateRangePicker DateRange="_range" DateRangeChanged="OnRangeChangedAsync" Label="@L["Custom range"]" Variant="Variant.Outlined"
+                                    Margin="Margin.Dense" MaxDate="DateTime.Today" AutoClose="true" />
             </MudItem>
-            <MudItem xs="12" sm="6" md="3">
-                <MudDatePicker Date="_to" DateChanged="OnToChanged" Label="@L["To"]" Variant="Variant.Outlined" Clearable="true" />
-            </MudItem>
-            <MudItem xs="12" sm="12" md="6">
-                <MudStack Row="true" Spacing="1">
-                    <MudButton Variant="Variant.Outlined" Color="@MudBlazor.Color.Primary" OnClick="@(() => SetPreset(Preset.Today))">@L["Today"]</MudButton>
-                    <MudButton Variant="Variant.Outlined" Color="@MudBlazor.Color.Primary" OnClick="@(() => SetPreset(Preset.Last7))">@L["7 days"]</MudButton>
-                    <MudButton Variant="Variant.Outlined" Color="@MudBlazor.Color.Primary" OnClick="@(() => SetPreset(Preset.Last30))">@L["30 days"]</MudButton>
-                    <MudButton Variant="Variant.Outlined" Color="@MudBlazor.Color.Primary" OnClick="@(() => SetPreset(Preset.Last12Months))">@L["12 months"]</MudButton>
-                </MudStack>
-            </MudItem>
-            <MudItem xs="12" md="3" Class="d-flex align-center">
-                <MudStack Row="true" Spacing="1">
-                    <MudButton Color="@MudBlazor.Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Refresh" OnClick="LoadChartAsync">@L["Refresh"]</MudButton>
-                    <MudButton Color="@MudBlazor.Color.Info" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.DoneAll" OnClick="SelectAllAndLoad">@L["All"]</MudButton>
-                </MudStack>
-            </MudItem>
-
             <MudItem xs="12">
-                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                    <MudText Typo="Typo.subtitle2">@L["Selected items"]</MudText>
-                    <MudButton Color="Color.Error" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ClearAll" Disabled="@(!_selectedItems.Any())" OnClick="@ClearAllSelected">@L["Clear all"]</MudButton>
-                </MudStack>
-
-                <ActiveFilterChips Chips="@BuildSelectedChips()" />
-                @if (!_selectedItems.Any())
+                <MudAutocomplete T="InventoryItemDTO" @ref="_itemPicker" Value="_pickedItem" ValueChanged="OnItemPickedAsync" SearchFunc="SearchItemsAsync"
+                                 ToStringFunc="@(i => i?.Name ?? string.Empty)" Label="@L["Filter by items (optional)"]"
+                                 HelperText="@L["Up to {0} items, each drawn as its own line. Without any, the figures cover the whole inventory.", MaxCompared]"
+                                 Variant="Variant.Outlined" Margin="Margin.Dense" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                                 Clearable="true" ResetValueOnEmptyText="true" DebounceInterval="250" MaxItems="15" Disabled="@(_compared.Count >= MaxCompared)" />
+                @if (_compared.Count > 0)
                 {
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">@L["No items selected."]</MudText>
+                    <div class="d-flex flex-wrap align-center gap-1 mt-2">
+                        @foreach (var item in _compared)
+                        {
+                            <MudChip T="int" Value="item.Id" Text="@item.Name" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined"
+                                     OnClose="@(() => RemoveItemAsync(item.Id))" Style="max-width: 100%;" />
+                        }
+                        <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Error" StartIcon="@Icons.Material.Filled.ClearAll" OnClick="ClearItemsAsync">
+                            @L["Clear all"]
+                        </MudButton>
+                    </div>
                 }
             </MudItem>
         </MudGrid>
     </MudPaper>
 
-    @if (_loading || _selectedItems.Count == 0)
+    <div style="height: 4px;" class="mb-2">
+        @if (_loading && _metrics is not null)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" Size="Size.Small" />
+        }
+    </div>
+
+    @if (_error is not null)
     {
-        <MudSkeleton Height="400px" Width="100%" Animation="Animation.Wave" />
+        <MudAlert Severity="Severity.Error" Dense="true" Class="mb-4">@_error</MudAlert>
     }
-    else if (_series.Count == 0 || _xAxisLabels.Length == 0)
+
+    @if (_metrics is null)
     {
-        <MudAlert Severity="Severity.Info" Dense="true">@L["No data to display."]</MudAlert>
+        @if (_loading)
+        {
+            <MudGrid Class="mb-4">
+                @for (var i = 0; i < 4; i++)
+                {
+                    <MudItem xs="6" md="3"><MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="96px" Class="rounded-lg" /></MudItem>
+                }
+            </MudGrid>
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="380px" Class="rounded-lg" />
+        }
     }
     else
     {
-        <MudPaper Class="pa-4 mb-4 elevation-1 app-surface w-100" Style="width:100%">
-            <MudChart T="double"
-                      ChartType="ChartType.Line"
-                      ChartSeries="@_series"
-                      @bind-SelectedIndex="_selectedSeriesIndex"
-                      ChartLabels="@_xAxisLabels"
-                      Width="100%"
-                      Height="400px"
-                      ChartOptions="@_chartOptions"
-                      CanHideSeries />
+        var m = _metrics;
+        <MudGrid Class="mb-4">
+            <KpiCard Label="@L["Units out"]" Value="@Number(m.UnitsOut)" Icon="@Icons.Material.Filled.Logout" Color="Color.Primary">
+                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                    @if (Trend(m) is { } trend)
+                    {
+                        <MudIcon Icon="@(trend > 0 ? Icons.Material.Filled.TrendingUp : trend < 0 ? Icons.Material.Filled.TrendingDown : Icons.Material.Filled.TrendingFlat)"
+                                 Size="Size.Small" Color="Color.Secondary" />
+                        <MudText Typo="Typo.caption">@L["{0}% vs. previous period", (trend > 0 ? "+" : string.Empty) + trend]</MudText>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.caption">@L["{0} items moved", Number(m.ItemsMoved)]</MudText>
+                    }
+                </MudStack>
+            </KpiCard>
+            <KpiCard Label="@L["Units in"]" Value="@Number(m.UnitsIn)" Icon="@Icons.Material.Filled.Login" Color="Color.Success">
+                <MudText Typo="Typo.caption">@L["{0} movements · {1} items", Number(m.Movements), Number(m.ItemsMoved)]</MudText>
+            </KpiCard>
+            @if (m.SaleValueOut > 0 || m.CostValueOut > 0)
+            {
+                <KpiCard Label="@L["Value of what went out"]" Value="@Money.Clp(m.SaleValueOut)" Icon="@Icons.Material.Filled.Payments" Color="Color.Info">
+                    <MudText Typo="Typo.caption">@L["Cost {0} · at today's prices", Money.Clp(m.CostValueOut)]</MudText>
+                </KpiCard>
+            }
+            else
+            {
+                @* Items without prices: a value of $0 says nothing, how many items moved does. *@
+                <KpiCard Label="@L["Items moved"]" Value="@Number(m.ItemsMoved)" Icon="@Icons.Material.Filled.Inventory2" Color="Color.Info">
+                    <MudText Typo="Typo.caption">@L["{0} movements in the period", Number(m.Movements)]</MudText>
+                </KpiCard>
+            }
+            <KpiCard Label="@L["Stock alerts"]" Value="@Number(m.OutOfStock + m.LowStock)" Icon="@Icons.Material.Filled.Warning"
+                     Color="@(m.OutOfStock > 0 ? Color.Error : m.LowStock > 0 ? Color.Warning : Color.Success)"
+                     Href="@(m.OutOfStock + m.LowStock == 0 ? null : m.OutOfStock > 0 ? "inventory-items?alert=zero" : "inventory-items?alert=low")">
+                <MudText Typo="Typo.caption">@L["{0} low stock · {1} out of stock", Number(m.LowStock), Number(m.OutOfStock)]</MudText>
+            </KpiCard>
+        </MudGrid>
+
+        <MudPaper Class="pa-4 mb-4 rounded-lg app-surface" Elevation="1">
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mb-2">
+                <div>
+                    <MudText Typo="Typo.h6">@(m.Series.Count > 0 ? L["Units out per item"] : L["Units in and out"])</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">@GroupingText(m.Grouping) · @RangeText(m)</MudText>
+                </div>
+                @if (m.Movements > 0)
+                {
+                    @* Own legend: the chart's one overlaps the names; a click hides or shows that series. *@
+                    <div class="d-flex flex-wrap gap-1">
+                        @for (var i = 0; i < _chartSeries.Count; i++)
+                        {
+                            var series = _chartSeries[i];
+                            var color = Palette[i % Palette.Length];
+                            <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => series.Visible = !series.Visible)"
+                                       Style="@($"text-transform: none; opacity: {(series.Visible ? "1" : "0.45")};")">
+                                <span style="@($"display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; background: {color};")"></span>
+                                @series.Name
+                            </MudButton>
+                        }
+                    </div>
+                }
+            </MudStack>
+            @if (m.Movements == 0)
+            {
+                <MudStack AlignItems="AlignItems.Center" Class="py-12">
+                    <MudIcon Icon="@Icons.Material.Filled.Inventory2" Size="Size.Large" Color="Color.Secondary" />
+                    <MudText Color="Color.Secondary">@L["No movements in this period."]</MudText>
+                </MudStack>
+            }
+            else if (m.Series.Count > 0)
+            {
+                <MudChart T="double" ChartType="ChartType.Line" ChartSeries="@_chartSeries" ChartLabels="@_chartLabels" ChartOptions="@_lineOptions"
+                          Width="100%" Height="340px" MatchBoundsToSize="true" />
+            }
+            else
+            {
+                <MudChart T="double" ChartType="ChartType.Bar" ChartSeries="@_chartSeries" ChartLabels="@_chartLabels" ChartOptions="@_barOptions"
+                          Width="100%" Height="340px" MatchBoundsToSize="true" />
+            }
         </MudPaper>
+
+        <MudGrid>
+            <MudItem xs="12" md="7">
+                <MudPaper Class="pa-4 rounded-lg app-surface" Elevation="1" Style="height: 100%;">
+                    <MudText Typo="Typo.h6">@L["Most used"]</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">@L["Items with the most units out in the period."]</MudText>
+                    @if (m.TopItems.Count == 0)
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-4">@L["Nothing went out in this period."]</MudText>
+                    }
+                    else
+                    {
+                        var max = m.TopItems.Max(i => i.UnitsOut);
+                        <div style="overflow-x: auto;" class="mt-2">
+                            <MudSimpleTable Dense="true" Hover="true" Elevation="0">
+                                <thead>
+                                    <tr>
+                                        <th>@L["Item"]</th>
+                                        <th style="text-align: right;">@L["Out"]</th>
+                                        <th style="text-align: right;">@L["In"]</th>
+                                        <th style="text-align: right;">@L["Stock"]</th>
+                                        <th style="text-align: right;">@L["Lasts"]</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in m.TopItems)
+                                    {
+                                        <tr>
+                                            <td style="min-width: 160px;">
+                                                <MudLink Href="@ItemHref(item)" Typo="Typo.body2" Underline="Underline.Hover">@item.Name</MudLink>
+                                                <MudProgressLinear Value="@(item.UnitsOut * 100.0 / max)" Color="Color.Primary" Size="Size.Small" Rounded="true" Class="mt-1" />
+                                            </td>
+                                            <td style="text-align: right; font-weight: 600;">@Number(item.UnitsOut)</td>
+                                            <td style="text-align: right;">@Number(item.UnitsIn)</td>
+                                            <td style="text-align: right;">@Number(item.Stock)</td>
+                                            <td style="text-align: right; white-space: nowrap;">@CoverChip(item)</td>
+                                            <td style="text-align: right; width: 1%;">
+                                                @if (!_compared.Any(c => c.Id == item.ItemId) && _compared.Count < MaxCompared)
+                                                {
+                                                    <MudTooltip Text="@L["Show on the chart"]">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.AddChart" Size="Size.Small" OnClick="@(() => AddItemAsync(item.ItemId, item.Name))" />
+                                                    </MudTooltip>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </MudSimpleTable>
+                        </div>
+                    }
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="5">
+                <MudPaper Class="pa-4 rounded-lg app-surface" Elevation="1" Style="height: 100%;">
+                    <MudText Typo="Typo.h6">@L["Running out"]</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">@L["At this period's pace, their stock lasts less than {0} days.", RunningOutDays]</MudText>
+                    @if (m.RunningOut.Count == 0)
+                    {
+                        <MudAlert Severity="Severity.Success" Dense="true" Class="mt-4">@L["No item runs out soon at this pace."]</MudAlert>
+                    }
+                    else
+                    {
+                        <MudSimpleTable Dense="true" Hover="true" Elevation="0" Class="mt-2">
+                            <thead>
+                                <tr>
+                                    <th>@L["Item"]</th>
+                                    <th style="text-align: right;">@L["Stock"]</th>
+                                    <th style="text-align: right;">@L["Lasts"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in m.RunningOut)
+                                {
+                                    <tr>
+                                        <td><MudLink Href="@ItemHref(item)" Typo="Typo.body2" Underline="Underline.Hover">@item.Name</MudLink></td>
+                                        <td style="text-align: right;">@Number(item.Stock)</td>
+                                        <td style="text-align: right; white-space: nowrap;">@CoverChip(item)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
     }
 </MudContainer>
 
 @code {
-    private List<Item> _allItems = new();
-    private HashSet<Item> _selectedItems = new(new ItemComparer());
-    private DateTime? _from = DateTime.Today.AddDays(-7);
-    private DateTime? _to = DateTime.Today;
-    private Grouping _grouping = Grouping.Day;
-    private bool _loading = false;
+    private const int MaxCompared = 8;
+    private const int RunningOutDays = 14;
 
-    // Chart config
-    private List<ChartSeries<double>> _series = new();
-    private string[] _xAxisLabels = Array.Empty<string>();
-    private int _selectedSeriesIndex = -1;
-    private ChartOptions _chartOptions = new();
+    private enum Period { Today, Last7, Last30, Last90, ThisMonth, Last12Months, Custom }
 
-    // Autocomplete helper
-    private Item? _tempSelectedItem;
-    private MudAutocomplete<Item>? _itemSelector;
+    private static readonly Period[] Periods = [Period.Today, Period.Last7, Period.Last30, Period.Last90, Period.ThisMonth, Period.Last12Months];
 
-    protected override async Task OnInitializedAsync()
+    // Readable on light and dark themes; the first two are "out" and "in".
+    private static readonly string[] Palette = ["#1e88e5", "#43a047", "#fb8c00", "#8e24aa", "#e53935", "#00acc1", "#6d4c41", "#3949ab"];
+
+    private Period _period = Period.Last30;
+    private DateRange _range = new(DateTime.Today.AddDays(-29), DateTime.Today);
+    private readonly List<(int Id, string Name)> _compared = [];
+    private InventoryItemDTO? _pickedItem;
+    private MudAutocomplete<InventoryItemDTO>? _itemPicker;
+
+    private InventoryMetricsDto? _metrics;
+    private string? _error;
+    private bool _loading;
+    private CancellationTokenSource? _loadCts;
+    private bool _narrow;
+
+    private List<ChartSeries<double>> _chartSeries = [];
+    private string[] _chartLabels = [];
+    private readonly BarChartOptions _barOptions = new() { ChartPalette = Palette, YAxisFormat = "0", ShowLegend = false };
+    private readonly LineChartOptions _lineOptions = new() { ChartPalette = Palette[..], YAxisFormat = "0", LineStrokeWidth = 3, ShowDataMarkers = true, ShowLegend = false };
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        _allItems = await ItemsService.GetAllItemsAsync() ?? new();
-    }
-
-    private Task<IEnumerable<Item>> SearchItems(string value, CancellationToken _)
-    {
-        if (string.IsNullOrWhiteSpace(value)) return Task.FromResult(_allItems.AsEnumerable());
-        value = value.Trim();
-        var filtered = _allItems.Where(i =>
-            (!string.IsNullOrWhiteSpace(i.Name) && i.Name.Contains(value, StringComparison.OrdinalIgnoreCase)) ||
-            (i is Drug d && !string.IsNullOrWhiteSpace(d.Compound) && d.Compound.Contains(value, StringComparison.OrdinalIgnoreCase)) ||
-            (!string.IsNullOrWhiteSpace(i.Barcode) && i.Barcode.Contains(value, StringComparison.OrdinalIgnoreCase))
-        );
-        return Task.FromResult(filtered);
-    }
-
-    private async Task OnItemPicked(Item item)
-    {
-        _tempSelectedItem = null;
-        if (item is null) { await InvokeAsync(StateHasChanged); return; }
-        if (!_selectedItems.Any(i => i.Id == item.Id)) _selectedItems.Add(item);
-        await LoadChartIfReadyAsync();
-        _ = _itemSelector?.FocusAsync();
-    }
-
-    private async Task OnFromChanged(DateTime? date)
-    {
-        _from = date; await LoadChartIfReadyAsync();
-    }
-
-    private async Task OnToChanged(DateTime? date)
-    {
-        _to = date; await LoadChartIfReadyAsync();
-    }
-
-    private async Task LoadChartIfReadyAsync()
-    {
-        if (_selectedItems.Count > 0)
-            await LoadChartAsync();
-        else
+        if (!firstRender)
+            return;
+        _narrow = await Viewport.GetCurrentBreakpointAsync() == Breakpoint.Xs;
+        if (_narrow && _metrics is not null)
         {
-            _series.Clear(); _xAxisLabels = Array.Empty<string>();
-            await InvokeAsync(StateHasChanged);
+            BuildChart(_metrics);
+            StateHasChanged();
         }
     }
 
-    private async Task SetPreset(Preset preset)
+    private string PeriodText(Period period) => period switch
+    {
+        Period.Today => L["Today"],
+        Period.Last7 => L["7 days"],
+        Period.Last30 => L["30 days"],
+        Period.Last90 => L["90 days"],
+        Period.ThisMonth => L["This month"],
+        _ => L["12 months"]
+    };
+
+    private async Task OnPeriodChangedAsync(Period period)
     {
         var today = DateTime.Today;
-        switch (preset)
+        _period = period;
+        _range = period switch
         {
-            case Preset.Today: _from = today; _to = today; _grouping = Grouping.Hour; break;
-            case Preset.Last7: _to = today; _from = today.AddDays(-6); _grouping = Grouping.Day; break;
-            case Preset.Last30: _to = today; _from = today.AddDays(-29); _grouping = Grouping.Day; break;
-            case Preset.Last12Months: _to = today; _from = today.AddMonths(-11); _grouping = Grouping.Month; break;
-        }
-        await LoadChartIfReadyAsync();
+            Period.Today => new DateRange(today, today),
+            Period.Last7 => new DateRange(today.AddDays(-6), today),
+            Period.Last30 => new DateRange(today.AddDays(-29), today),
+            Period.Last90 => new DateRange(today.AddDays(-89), today),
+            Period.ThisMonth => new DateRange(new DateTime(today.Year, today.Month, 1), today),
+            _ => new DateRange(new DateTime(today.Year, today.Month, 1).AddMonths(-11), today)
+        };
+        await LoadAsync();
     }
 
-    private async Task LoadChartAsync()
+    private async Task OnRangeChangedAsync(DateRange? range)
     {
-        _loading = true; StateHasChanged();
+        if (range?.Start is null || range.End is null)
+            return;
+        _range = range;
+        _period = Period.Custom;
+        await LoadAsync();
+    }
+
+    private async Task<IEnumerable<InventoryItemDTO>> SearchItemsAsync(string? text, CancellationToken ct)
+    {
         try
         {
-            if (_selectedItems.Count == 0) { _series.Clear(); _xAxisLabels = Array.Empty<string>(); return; }
-
-            var fromLocal = _from?.Date; var toLocal = _to?.Date;
-            DateTime? fromUtc = fromLocal.HasValue ? DateTime.SpecifyKind(fromLocal.Value, DateTimeKind.Local).ToUniversalTime() : null;
-            DateTime? toUtc = toLocal.HasValue ? DateTime.SpecifyKind(toLocal.Value.AddDays(1).AddTicks(-1), DateTimeKind.Local).ToUniversalTime() : null;
-
-            var movements = await MovementService.GetMovementsFilteredAsync(null, null, null, null, fromUtc, toUtc) ?? new List<InventoryMovement>();
-            var filtered = movements.Where(m => _selectedItems.Any(si => si.Id == m.ItemId)).ToList();
-
-            BuildTimeSeries(filtered, fromLocal, toLocal, _grouping);
+            var page = await ItemsService.GetItemsPagedAsync(text?.Trim(), ItemType.None, 0, 15, ct);
+            return page?.Items.Where(i => _compared.All(c => c.Id != i.Id)) ?? [];
         }
-        finally { _loading = false; await InvokeAsync(StateHasChanged); }
+        catch (Exception e) when (e is OperationCanceledException or HttpRequestException)
+        {
+            return [];
+        }
     }
 
-    private void BuildTimeSeries(List<InventoryMovement> data, DateTime? from, DateTime? to, Grouping grouping)
+    private async Task OnItemPickedAsync(InventoryItemDTO? item)
     {
-        var selectedIds = _selectedItems.Select(i => i.Id).ToList();
-        if (selectedIds.Count == 0) { _series.Clear(); _xAxisLabels = Array.Empty<string>(); return; }
+        _pickedItem = null;
+        if (item is null)
+            return;
+        await AddItemAsync(item.Id, item.Name);
+        if (_itemPicker is not null)
+            await _itemPicker.ClearAsync();
+    }
 
-        var (start, end) = GetDateRange(from, to, grouping);
+    private async Task AddItemAsync(int id, string name)
+    {
+        if (_compared.Count >= MaxCompared || _compared.Any(c => c.Id == id))
+            return;
+        _compared.Add((id, name));
+        await LoadAsync();
+    }
 
-        var buckets = new List<DateTime>();
-        if (grouping == Grouping.Hour)
+    private async Task RemoveItemAsync(int id)
+    {
+        _compared.RemoveAll(c => c.Id == id);
+        await LoadAsync();
+    }
+
+    private async Task ClearItemsAsync()
+    {
+        _compared.Clear();
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        // A newer filter cancels the request still running, so a slow answer never overwrites a newer one.
+        _loadCts?.Cancel();
+        _loadCts?.Dispose();
+        var cts = _loadCts = new CancellationTokenSource();
+        _loading = true;
+        try
         {
-            var hourStart = start.Date;
-            var hourEnd = end.Date == DateTime.Today ? DateTime.Today.AddHours(DateTime.Now.Hour) : end.Date.AddHours(23);
-            var cur = hourStart; while (cur <= hourEnd) { buckets.Add(cur); cur = cur.AddHours(1); }
-        }
-        else
-        {
-            var cursor = start; while (cursor <= end)
+            var (metrics, error) = await MovementService.GetMetricsAsync(
+                DateOnly.FromDateTime(_range.Start ?? DateTime.Today), DateOnly.FromDateTime(_range.End ?? DateTime.Today),
+                _compared.Select(c => c.Id), cts.Token);
+            _error = error;
+            if (metrics is not null)
             {
-                buckets.Add(cursor); cursor = grouping switch
-                { Grouping.Day => cursor.AddDays(1), Grouping.Week => cursor.AddDays(7), Grouping.Month => cursor.AddMonths(1), Grouping.Year => cursor.AddYears(1), _ => cursor.AddDays(1) };
+                _metrics = metrics;
+                BuildChart(metrics);
             }
         }
-
-        _xAxisLabels = buckets.Select(b => grouping switch
+        catch (OperationCanceledException) when (cts.IsCancellationRequested)
         {
-            Grouping.Hour => b.ToString("H") + ":00",
-            Grouping.Day => $"{b:dd}/{CultureInfo.CurrentCulture.DateTimeFormat.GetAbbreviatedMonthName(b.Month)}",
-            Grouping.Week => L["W{0} {1}", ISOWeek.GetWeekOfYear(b), b.ToString("yy")].Value,
-            Grouping.Month => CultureInfo.CurrentCulture.DateTimeFormat.GetAbbreviatedMonthName(b.Month),
-            Grouping.Year => b.ToString("yyyy"),
-            _ => $"{b:dd}/{CultureInfo.CurrentCulture.DateTimeFormat.GetAbbreviatedMonthName(b.Month)}"
-        }).ToArray();
-
-        var perItem = selectedIds.ToDictionary(id => id, _ => new double[buckets.Count]);
-        foreach (var m in data)
-        {
-            if (!perItem.ContainsKey(m.ItemId)) continue;
-            var idx = GetBucketIndex(m.Date, start, grouping); if (idx < 0 || idx >= buckets.Count) continue;
-            if (m.Type == InventoryMovementType.Egress)
-                perItem[m.ItemId][idx] += m.Quantity;
+            return;
         }
-
-        var ordered = _selectedItems.OrderBy(i => i.Name).Select(i => i.Id).ToList();
-        _series = ordered.Select(id => new ChartSeries<double>
+        catch (HttpRequestException)
         {
-            Name = GetItemName(id),
-            Data = perItem[id]
-        }).ToList();
-
-        _selectedSeriesIndex = -1;
-    }
-
-    private static (DateTime start, DateTime end) GetDateRange(DateTime? from, DateTime? to, Grouping grouping)
-    {
-        var start = from ?? DateTime.Today.AddDays(-6);
-        var end = to ?? DateTime.Today;
-        if (end < start) (start, end) = (end, start);
-        start = new DateTime(start.Year, start.Month, start.Day);
-        end = new DateTime(end.Year, end.Month, end.Day);
-        if (grouping == Grouping.Week)
-        {
-            start = StartOfIsoWeek(start);
-            end = EndOfIsoWeek(end);
+            _error = L["Could not load the metrics. Check the connection and try again."];
         }
-        return (start, end);
-    }
-
-    private static int GetBucketIndex(DateTime date, DateTime start, Grouping grouping)
-    {
-        date = grouping == Grouping.Hour ? new DateTime(date.Year, date.Month, date.Day, date.Hour, 0, 0) : new DateTime(date.Year, date.Month, date.Day);
-        return grouping switch
+        finally
         {
-            Grouping.Hour => (int)(date - start).TotalHours,
-            Grouping.Day => (int)(date - start).TotalDays,
-            Grouping.Week => (int)Math.Floor((date - start).TotalDays / 7),
-            Grouping.Month => ((date.Year - start.Year) * 12) + date.Month - start.Month,
-            Grouping.Year => date.Year - start.Year,
-            _ => (int)(date - start).TotalDays
-        };
+            if (_loadCts == cts)
+                _loading = false;
+        }
     }
 
-    private static DateTime StartOfIsoWeek(DateTime date)
+    private void BuildChart(InventoryMetricsDto m)
     {
-        int diff = (7 + (date.DayOfWeek - DayOfWeek.Monday)) % 7;
-        return date.AddDays(-diff);
+        _chartLabels = [.. m.Buckets.Select(b => BucketLabel(b.Start, m.Grouping, m.Buckets.Count))];
+        // A phone fits about eight labels; the rest stay blank so they don't pile up.
+        var every = _narrow ? (int)Math.Ceiling(_chartLabels.Length / 8.0) : 1;
+        if (every > 1)
+            _chartLabels = [.. _chartLabels.Select((label, i) => i % every == 0 ? label : string.Empty)];
+        _chartSeries = m.Series.Count > 0
+            ? [.. m.Series.Select(s => new ChartSeries<double> { Name = s.Name, Data = s.UnitsOut.Select(v => (double)v).ToArray() })]
+            :
+            [
+                new ChartSeries<double> { Name = L["Out"], Data = m.Buckets.Select(b => (double)b.UnitsOut).ToArray() },
+                new ChartSeries<double> { Name = L["In"], Data = m.Buckets.Select(b => (double)b.UnitsIn).ToArray() }
+            ];
+        // Many labels side by side overlap; tilted they fit.
+        var rotation = _chartLabels.Length / every > (_narrow ? 5 : 14) ? 45 : 0;
+        _barOptions.XAxisLabelRotation = rotation;
+        _lineOptions.XAxisLabelRotation = rotation;
+        // About five grid lines whatever the scale: 1, 2 or 5 times a power of ten.
+        var ticks = TickStep(_chartSeries.SelectMany(s => s.Data.Values).DefaultIfEmpty(0).Max());
+        _barOptions.YAxisTicks = ticks;
+        _lineOptions.YAxisTicks = ticks;
     }
 
-    private static DateTime EndOfIsoWeek(DateTime date) => StartOfIsoWeek(date).AddDays(6);
-
-    private async Task SelectAllAndLoad()
+    private static int TickStep(double max)
     {
-        _selectedItems = new HashSet<Item>(_allItems, new ItemComparer());
-        await LoadChartAsync();
-        _ = _itemSelector?.FocusAsync();
+        var rough = Math.Max(max / 5, 1);
+        var power = Math.Pow(10, Math.Floor(Math.Log10(rough)));
+        var step = (rough / power) switch { <= 1 => 1, <= 2 => 2, <= 5 => 5, _ => 10 };
+        return (int)(step * power);
     }
 
-    private async Task RemoveItemFromSelection(int id)
+    private string BucketLabel(DateTime start, MetricsGrouping grouping, int count) => grouping switch
     {
-        var toRemove = _selectedItems.FirstOrDefault(i => i.Id == id);
-        if (toRemove is not null) _selectedItems.Remove(toRemove);
-        await LoadChartIfReadyAsync();
-    }
+        MetricsGrouping.Hour => $"{start:HH}:00",
+        MetricsGrouping.Day when count <= 7 => start.ToString("ddd dd"),
+        MetricsGrouping.Day => start.ToString("dd MMM"),
+        MetricsGrouping.Week => L["Week of {0}", start.ToString("dd MMM")],
+        _ => start.ToString("MMM yy")
+    };
 
-    private async Task ClearAllSelected()
+    private string GroupingText(MetricsGrouping grouping) => grouping switch
     {
-        _selectedItems.Clear();
-        await LoadChartAsync();
-    }
+        MetricsGrouping.Hour => L["Per hour"],
+        MetricsGrouping.Day => L["Per day"],
+        MetricsGrouping.Week => L["Per week"],
+        _ => L["Per month"]
+    };
 
-    private IEnumerable<FilterChipModel> BuildSelectedChips()
-        => _selectedItems.OrderBy(i => i.Name).Select(it => new FilterChipModel
-            {
-                Label = it.Name,
-                Color = Color.Default,
-                OnClear = async () => { await RemoveItemFromSelection(it.Id); }
-            });
+    private static string RangeText(InventoryMetricsDto m)
+        => m.From == m.To ? m.From.ToString("dd MMM yyyy") : $"{m.From:dd MMM yyyy} – {m.To:dd MMM yyyy}";
 
-    private string GetItemName(int id) => _selectedItems.FirstOrDefault(i => i.Id == id)?.Name ?? L["Item {0}", id].Value;
+    /// <summary>Change of units out against the previous period of the same length; null when there is nothing to compare with.</summary>
+    private static int? Trend(InventoryMetricsDto m)
+        => m.PreviousUnitsOut == 0 ? null : (int)Math.Round((m.UnitsOut - m.PreviousUnitsOut) * 100.0 / m.PreviousUnitsOut);
 
-    private class ItemComparer : IEqualityComparer<Item>
+    private static string Number(int value) => value.ToString("#,0", System.Globalization.CultureInfo.InvariantCulture).Replace(',', '.');
+
+    private static string ItemHref(ItemFlowDto item) => $"inventory-items?q={Uri.EscapeDataString(item.Name)}";
+
+    private RenderFragment CoverChip(ItemFlowDto item) => item switch
     {
-        public bool Equals(Item? x, Item? y) => x?.Id == y?.Id;
-        public int GetHashCode(Item obj) => obj.Id.GetHashCode();
+        { DaysOfCover: null } => @<MudText Typo="Typo.caption" Color="Color.Secondary">—</MudText>,
+        { Stock: <= 0 } => @<MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Filled">@L["Out of stock"]</MudChip>,
+        { DaysOfCover: > 365 } => @<MudText Typo="Typo.caption">@L["Over a year"]</MudText>,
+        _ => @<MudChip T="string" Size="Size.Small" Variant="Variant.Outlined"
+                       Color="@(item.DaysOfCover < 7 ? Color.Error : item.DaysOfCover < RunningOutDays ? Color.Warning : Color.Default)">
+                  @L["{0} days", item.DaysOfCover!.Value.ToString(item.DaysOfCover < 10 ? "0.#" : "0")]
+              </MudChip>
+    };
+
+    public void Dispose()
+    {
+        _loadCts?.Cancel();
+        _loadCts?.Dispose();
     }
-
-    private enum Grouping { Hour, Day, Week, Month, Year }
-
-    private enum Preset { Today, Last7, Last30, Last12Months }
 }
