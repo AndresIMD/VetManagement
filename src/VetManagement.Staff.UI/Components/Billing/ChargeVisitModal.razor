@@ -43,7 +43,7 @@
                             <td><MudCheckBox T="bool" @bind-Value="row.Include" Dense="true" /></td>
                             <td>@row.Line.Description <MudText Typo="Typo.caption" Color="Color.Secondary" Inline="true">@SourceLabel(row.Line)</MudText></td>
                             <td style="text-align:right">@row.Line.Quantity</td>
-                            <td style="text-align:right; width: 130px;"><MudNumericField T="int" @bind-Value="row.UnitPrice" Min="0" Dense="true" HideSpinButtons="true" /></td>
+                            <td style="text-align:right; width: 130px;"><MudNumericField T="int" @bind-Value="row.UnitPrice" Min="0" Margin="Margin.Dense" HideSpinButtons="true" /></td>
                             <td><MudCheckBox T="bool" @bind-Value="row.TaxExempt" Dense="true" Disabled="!row.Include" /></td>
                             <td style="text-align:right">@Money.Clp(row.Line.Quantity * row.UnitPrice)</td>
                         </tr>

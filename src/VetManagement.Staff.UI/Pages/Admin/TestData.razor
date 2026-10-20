@@ -54,7 +54,7 @@
                     <MudTd>
                         <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
                             <MudNumericField T="int" Value="CountOf(context.Key)" ValueChanged="v => _counts[context.Key] = v" Min="1" Max="1000"
-                                             Dense="true" Style="max-width: 90px;" HideSpinButtons="true" />
+                                             Margin="Margin.Dense" Style="max-width: 90px;" HideSpinButtons="true" />
                             <MudButton Size="Size.Small" Variant="Variant.Filled" Color="@(context.CanCreate ? Color.Primary : Color.Default)"
                                        Disabled="_busy" OnClick="() => CreateAsync(context)">@L["Create"]</MudButton>
                         </MudStack>

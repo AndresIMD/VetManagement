@@ -27,7 +27,7 @@
             }
         </MudStack>
 
-        <MudTable TItem="UserDto" Items="@users" Loading="@_isLoading" Hover="true" Dense="true" Breakpoint="Breakpoint.Sm"
+        <MudTable T="UserDto" Items="@users" Loading="@_isLoading" Hover="true" Dense="true" Breakpoint="Breakpoint.Sm"
                   RowStyleFunc="@((u, _) => u.IsBlocked ? "opacity:0.6;" : string.Empty)">
             <HeaderContent>
                 <MudTh>@L["User"]</MudTh>

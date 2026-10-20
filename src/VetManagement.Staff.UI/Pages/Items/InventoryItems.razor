@@ -16,21 +16,7 @@
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
     <PageHeader Title="@L["Current Inventory"]" Icon="@Icons.Material.Filled.Inventory2" />
-    <MudBreadcrumbs Class="mb-2">
-        <BreadcrumbLink Href="/">@L["Home"]</BreadcrumbLink>
-        <BreadcrumbSeparator />
-        <BreadcrumbLink Href="inventory">@L["Inventory"]</BreadcrumbLink>
-        <BreadcrumbSeparator />
-        <BreadcrumbLink Disabled="true">
-            @(_alert switch
-            {
-                "low" => L["Low stock"].Value,
-                "zero" => L["Out of stock"].Value,
-                _ when !string.IsNullOrWhiteSpace(FilterNameOrCompound) => L["Filter: {0}", FilterNameOrCompound].Value,
-                _ => L["Items"].Value
-            })
-        </BreadcrumbLink>
-    </MudBreadcrumbs>
+    <MudBreadcrumbs Items="Breadcrumbs" Class="mb-2" />
     <MudPaper Class="pa-6 mb-4 elevation-3 rounded-lg app-surface">
         <MudGrid>
             <MudItem xs="12" sm="6" md="6">
@@ -140,6 +126,19 @@
 
     private string _filterNameOrCompound = string.Empty;
     private string? _alert;
+
+    private List<BreadcrumbItem> Breadcrumbs =>
+    [
+        new(L["Home"], "/"),
+        new(L["Inventory"], "inventory"),
+        new(_alert switch
+        {
+            "low" => L["Low stock"],
+            "zero" => L["Out of stock"],
+            _ when !string.IsNullOrWhiteSpace(FilterNameOrCompound) => L["Filter: {0}", FilterNameOrCompound],
+            _ => L["Items"]
+        }, null, disabled: true)
+    ];
 
     private string FilterNameOrCompound
     {
@@ -354,7 +353,7 @@
             FullWidth = true,
             CloseOnEscapeKey = false
         };
-        var dialog = await DialogService.ShowAsync<MassiveIngressModal>(null, options);
+        var dialog = await DialogService.ShowAsync<MassiveIngressModal>((string?)null, options);
         var result = await dialog.Result;
         if (result is { Canceled: false, Data: List<InventoryMassUpdateDTO> itemsList })
         {
@@ -383,7 +382,7 @@
             FullWidth = true,
             CloseOnEscapeKey = false
         };
-        var dialog = await DialogService.ShowAsync<MassiveEgressModal>(null, options);
+        var dialog = await DialogService.ShowAsync<MassiveEgressModal>((string?)null, options);
         var result = await dialog.Result;
         if (result is { Canceled: false, Data: List<InventoryMassUpdateDTO> itemsList })
         {
