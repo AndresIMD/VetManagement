@@ -33,11 +33,13 @@ public static class ApiRouteConstants
     public const string ACCOUNT_LOGIN = "api/account/login";
     public const string ACCOUNT_USER_INFO = "api/account/user-info";
     public const string ACCOUNT_CHANGE_PASSWORD = "api/account/change-password";
+    public const string ACCOUNT_REFRESH = "api/account/refresh";
 
     // User Management (Admin)
     public const string USERS_BASE = "api/admin/users";
     public const string USER_ROLES = "api/admin/users/{0}/roles";
     public const string USERS_ROLES_ALL = "api/admin/users/roles";
+    public const string USER_BY_ID = "api/admin/users/{0}";
 
     // Audit
     public const string AUDIT_LOGS_PAGED = "api/audit/logs/paged";

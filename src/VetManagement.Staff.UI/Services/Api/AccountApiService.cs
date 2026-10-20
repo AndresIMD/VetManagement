@@ -117,7 +117,8 @@ public class AccountApiService
     {
         try
         {
-            return await _http.GetFromJsonAsync<UserInfo>(ApiRouteConstants.ACCOUNT_USER_INFO);
+            var response = await SendAsync(HttpMethod.Get, ApiRouteConstants.ACCOUNT_USER_INFO);
+            return response.IsSuccessStatusCode ? await response.Content.ReadFromJsonAsync<UserInfo>() : null;
         }
         catch
         {
@@ -125,31 +126,68 @@ public class AccountApiService
         }
     }
 
-    public async Task<bool> UpdateUserInfoAsync(UpdateUserRequest request)
+    public async Task<ApiResult> UpdateUserInfoAsync(UpdateUserRequest request)
+        => await ApiResult.FromResponseAsync(await SendAsync(HttpMethod.Put, ApiRouteConstants.ACCOUNT_USER_INFO, request));
+
+    public async Task<ApiResult> ChangePasswordAsync(ChangePasswordRequest request)
     {
-        try
+        var result = await ApiResult.FromResponseAsync(await SendAsync(HttpMethod.Post, ApiRouteConstants.ACCOUNT_CHANGE_PASSWORD, request));
+        if (result.Ok)
         {
-            var response = await _http.PutAsJsonAsync(ApiRouteConstants.ACCOUNT_USER_INFO, request);
-            return response.IsSuccessStatusCode;
+            _mustChangePassword = false;
+            await RefreshAsync(); // the new token no longer asks for a password change
         }
-        catch
-        {
-            return false;
-        }
+        return result;
     }
 
-    public async Task<bool> ChangePasswordAsync(ChangePasswordRequest request)
+    /// <summary>
+    /// Replaces the stored token with one holding the user's current roles and permissions. False when the session is
+    /// over (expired, or the user was blocked or deleted); a network error keeps the current session.
+    /// </summary>
+    public async Task<bool> RefreshAsync()
     {
+        if (string.IsNullOrEmpty(await GetTokenAsync()))
+            return false;
+        HttpResponseMessage response;
         try
         {
-            var response = await _http.PostAsJsonAsync(ApiRouteConstants.ACCOUNT_CHANGE_PASSWORD, request);
-            if (response.IsSuccessStatusCode)
-                _mustChangePassword = false;
-            return response.IsSuccessStatusCode;
+            response = await SendAsync(HttpMethod.Post, ApiRouteConstants.ACCOUNT_REFRESH);
         }
-        catch
+        catch (HttpRequestException)
         {
-            return false;
+            return true;
         }
+        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            return false;
+        if (!response.IsSuccessStatusCode)
+            return true;
+
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        if (body.TryGetProperty("token", out var tokenProp) && tokenProp.GetString() is { Length: > 0 } token)
+            await SetTokenAsync(token, await IsRememberedAsync());
+        _mustChangePassword = body.TryGetProperty("mustChangePassword", out var mcp) && mcp.GetBoolean();
+        return true;
+    }
+
+    /// <summary>Whether the session was started with "remember me" (its token is kept after closing the browser).</summary>
+    private async Task<bool> IsRememberedAsync()
+    {
+#if ANDROID || IOS || WINDOWS
+        return await Task.FromResult(true);
+#else
+        return _js == null || string.IsNullOrEmpty(await _js.InvokeAsync<string?>("sessionStorage.getItem", TOKEN_KEY));
+#endif
+    }
+
+    /// <summary>Account calls with the session's token (this client has no JWT handler: login runs before there is a token).</summary>
+    private async Task<HttpResponseMessage> SendAsync(HttpMethod method, string uri, object? body = null)
+    {
+        using var request = new HttpRequestMessage(method, uri);
+        if (body != null)
+            request.Content = JsonContent.Create(body);
+        var token = await GetTokenAsync();
+        if (!string.IsNullOrEmpty(token))
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        return await _http.SendAsync(request);
     }
 }

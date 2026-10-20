@@ -21,7 +21,8 @@ public class AccountController(
     UserManager<IdentityUser> userManager,
     IConfiguration configuration,
     AuditService audit,
-    UserManagementService userManagement) : ApiControllerBase
+    UserManagementService userManagement,
+    UserAccess access) : ApiControllerBase
 {
     [HttpPost("login")]
     [AllowAnonymous]
@@ -44,8 +45,9 @@ public class AccountController(
             await userManagement.SyncClaimsForUserAsync(user);
             var userRoles = await userManager.GetRolesAsync(user);
             var userClaims = await userManager.GetClaimsAsync(user);
-            var token = GenerateJwtToken(user, userRoles, userClaims, request.RememberMe);
-            var mustChange = userClaims.Any(c => c.Type == SystemClaims.CLAIM_TYPE && c.Value == SystemClaims.MUST_CHANGE_PASSWORD);
+            var mustChange = MustChangePassword(userClaims);
+            var expires = mustChange ? DateTime.UtcNow.AddMinutes(30) : (request.RememberMe ? DateTime.UtcNow.AddDays(30) : DateTime.UtcNow.AddHours(8));
+            var token = GenerateJwtToken(user, userRoles, userClaims, expires);
             await audit.LogSecurityAsync(AuditActionType.UserLogin, user.UserName, "Login successful");
             return Ok(new { token, mustChangePassword = mustChange });
         }
@@ -54,6 +56,29 @@ public class AccountController(
 
         await audit.LogSecurityAsync(AuditActionType.UserLoginFailed, request.Username, "Invalid credentials");
         return Unauthorized(Texts.T("Invalid credentials."));
+    }
+
+    /// <summary>
+    /// A new token with the user's current roles and permissions, so the staff app's menus follow role changes without
+    /// signing in again. It expires when the current one does (the 30-minute password-change token gets the normal
+    /// 8 hours once the password is changed). Blocked or deleted users get 401 (see UserAccess).
+    /// </summary>
+    [HttpPost("refresh")]
+    [Authorize]
+    public async Task<IActionResult> RefreshAsync()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null || !long.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Exp), out var exp))
+            return Unauthorized();
+        await userManagement.SyncClaimsForUserAsync(user);
+        access.Forget(user.Id); // the next requests use the roles this token carries
+        var userRoles = await userManager.GetRolesAsync(user);
+        var userClaims = await userManager.GetClaimsAsync(user);
+        var mustChange = MustChangePassword(userClaims);
+        var expires = DateTimeOffset.FromUnixTimeSeconds(exp).UtcDateTime;
+        if (!mustChange && User.HasClaim(SystemClaims.CLAIM_TYPE, SystemClaims.MUST_CHANGE_PASSWORD))
+            expires = DateTime.UtcNow.AddHours(8);
+        return Ok(new { token = GenerateJwtToken(user, userRoles, userClaims, expires), mustChangePassword = mustChange });
     }
 
     [HttpGet("user-info")]
@@ -77,7 +102,7 @@ public class AccountController(
         var result = await userManager.UpdateAsync(user);
         if (result.Succeeded)
             return Ok();
-        return BadRequest(result.Errors);
+        return IdentityProblem(result);
     }
 
     [HttpPost("change-password")]
@@ -89,7 +114,7 @@ public class AccountController(
             return Unauthorized();
         var result = await userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
         if (!result.Succeeded)
-            return BadRequest(result.Errors);
+            return IdentityProblem(result);
         var claims = await userManager.GetClaimsAsync(user);
         var mustChange = claims.FirstOrDefault(c => c.Type == SystemClaims.CLAIM_TYPE && c.Value == SystemClaims.MUST_CHANGE_PASSWORD);
         if (mustChange != null)
@@ -100,7 +125,10 @@ public class AccountController(
         return Ok();
     }
 
-    private string GenerateJwtToken(IdentityUser user, IList<string> roles, IList<Claim> extraClaims, bool rememberMe)
+    private static bool MustChangePassword(IEnumerable<Claim> claims)
+        => claims.Any(c => c.Type == SystemClaims.CLAIM_TYPE && c.Value == SystemClaims.MUST_CHANGE_PASSWORD);
+
+    private string GenerateJwtToken(IdentityUser user, IList<string> roles, IList<Claim> extraClaims, DateTime expires)
     {
         var jwtKey = configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key is not configured.");
         var jwtIssuer = configuration["Jwt:Issuer"] ?? throw new InvalidOperationException("Jwt:Issuer is not configured.");
@@ -111,7 +139,8 @@ public class AccountController(
 
         List<Claim> claims =
         [
-            new(JwtRegisteredClaimNames.Sub, user.UserName ?? string.Empty),
+            // The user id: ASP.NET reads "sub" as the user identifier (GetUserAsync, UserAccess), so it must not be the name.
+            new(JwtRegisteredClaimNames.Sub, user.Id),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new(ClaimTypes.NameIdentifier, user.Id),
             new(ClaimTypes.Name, user.UserName ?? string.Empty)
@@ -125,9 +154,6 @@ public class AccountController(
             if (!claims.Any(x => x.Type == c.Type && x.Value == c.Value))
                 claims.Add(c);
         }
-
-        var hasMustChange = extraClaims.Any(c => c.Type == SystemClaims.CLAIM_TYPE && c.Value == SystemClaims.MUST_CHANGE_PASSWORD);
-        var expires = hasMustChange ? DateTime.UtcNow.AddMinutes(30) : (rememberMe ? DateTime.UtcNow.AddDays(30) : DateTime.UtcNow.AddHours(8));
 
         var token = new JwtSecurityToken(
             issuer: jwtIssuer,

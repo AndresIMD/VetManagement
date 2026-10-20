@@ -15,8 +15,11 @@ public static class StaffAuthorization
     {
         ["Users.Read"] = "users.read",
         ["Users.Create"] = "users.create",
+        ["Users.Update"] = "users.update",
+        ["Users.Delete"] = "users.delete",
         ["Inventory.Read"] = "inventory.read",
         ["Inventory.Delete"] = "inventory.delete",
+        ["Inventory.Metrics"] = "inventory.metrics",
         ["ClientsPets.Read"] = "clientspets.read",
         ["ClientsPets.Create"] = "clientspets.create",
         ["Audit.Read"] = "audit.read",
@@ -27,6 +30,7 @@ public static class StaffAuthorization
         ["ExamsPerformed.Update"] = "examsperformed.update",
         ["ExamsPerformed.Delete"] = "examsperformed.delete",
         ["ExternalLabs.Read"] = "externallabs.read",
+        ["ExternalLabs.Update"] = "externallabs.update",
         ["Scheduling.Read"] = "scheduling.read",
         ["Scheduling.Book"] = "scheduling.book",
         ["Scheduling.Manage"] = "scheduling.manage",
@@ -36,6 +40,7 @@ public static class StaffAuthorization
         ["Medical.Read"] = "medical.read",
         ["Clinical.Manage"] = "clinical.manage",
         ["Reports.Read"] = "reports.read",
+        ["System.SendEmail"] = "system.send-email",
         ["System.TestData"] = "system.test-data"
     };
 

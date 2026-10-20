@@ -5,6 +5,7 @@
 @inject AlertsApiService AlertsService
 @inject InventoryAlertsApiService SchedulesApi
 @inject ISnackbar Snackbar
+@attribute [Authorize(Policy = "System.SendEmail")]
 
 <PageTitle>@L["Inventory Email Alerts"]</PageTitle>
 

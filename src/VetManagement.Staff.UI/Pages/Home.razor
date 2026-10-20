@@ -3,64 +3,76 @@
 @using VetManagement.Staff.UI.Services.Api
 @inject VetManagement.Staff.UI.Services.Api.ItemsApiService ItemsService
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>@L["Home"]</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
     <PageHeader Title="@L["Main panel"]" Subtitle="@L["Quick access and system overview."]" Icon="@Icons.Material.Filled.Dashboard" />
 
-    <MudGrid>
-        <!-- Inventory Card -->
-        <MudItem xs="12" md="4">
-            <MudCard Class="h-100">
-                <MudCardHeader>
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                        <MudIcon Icon="@Icons.Material.Filled.Inventory2" Color="Color.Primary" />
-                        <MudText Typo="Typo.h6">@L["Inventory"]</MudText>
-                    </MudStack>
-                </MudCardHeader>
-                <MudDivider />
-                <MudCardContent>
-                    <MudText Typo="Typo.body2">@L["Inventory summary and quick alerts."]</MudText>
+    @if (_noAccess)
+    {
+        <MudAlert Severity="Severity.Info" Class="mb-4">@L["Your account has no roles yet. Ask an administrator to assign the roles you need."]</MudAlert>
+    }
 
-                    @if (_loading)
-                    {
-                        <MudSkeleton Height="24px" Width="60%" Class="mt-2" />
-                        <MudSkeleton Height="24px" Width="40%" Class="mt-1" />
-                    }
-                    else
-                    {
-                        @if (_outOfStockCount > 0)
+    <MudGrid>
+        @if (_canSeeInventory)
+        {
+            <!-- Inventory Card -->
+            <MudItem xs="12" md="4">
+                <MudCard Class="h-100">
+                    <MudCardHeader>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudIcon Icon="@Icons.Material.Filled.Inventory2" Color="Color.Primary" />
+                            <MudText Typo="Typo.h6">@L["Inventory"]</MudText>
+                        </MudStack>
+                    </MudCardHeader>
+                    <MudDivider />
+                    <MudCardContent>
+                        <MudText Typo="Typo.body2">@L["Inventory summary and quick alerts."]</MudText>
+    
+                        @if (_loading)
                         {
-                            <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Dense="true" Class="mt-2" OnClick="GoToOutOfStock" Style="cursor:pointer;">
-                                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                    <MudText>@L["Out of stock items! ({0})", _outOfStockCount]</MudText>
-                                    <MudButton Color="Color.Error" Variant="Variant.Outlined" Size="Size.Small">@L["View details"]</MudButton>
-                                </MudStack>
-                            </MudAlert>
+                            <MudSkeleton Height="24px" Width="60%" Class="mt-2" />
+                            <MudSkeleton Height="24px" Width="40%" Class="mt-1" />
                         }
-                        @if (_lowStockCount > 0)
+                        else
                         {
-                            <MudAlert Severity="Severity.Warning" Variant="Variant.Filled" Dense="true" Class="mt-2" OnClick="GoToLowStock" Style="cursor:pointer;">
-                                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                    <MudText>@L["Low stock items ({0})", _lowStockCount]</MudText>
-                                    <MudButton Color="Color.Warning" Variant="Variant.Outlined" Size="Size.Small">@L["View details"]</MudButton>
-                                </MudStack>
-                            </MudAlert>
+                            @if (_outOfStockCount > 0)
+                            {
+                                <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Dense="true" Class="mt-2" OnClick="GoToOutOfStock" Style="cursor:pointer;">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                        <MudText>@L["Out of stock items! ({0})", _outOfStockCount]</MudText>
+                                        <MudButton Color="Color.Error" Variant="Variant.Outlined" Size="Size.Small">@L["View details"]</MudButton>
+                                    </MudStack>
+                                </MudAlert>
+                            }
+                            @if (_lowStockCount > 0)
+                            {
+                                <MudAlert Severity="Severity.Warning" Variant="Variant.Filled" Dense="true" Class="mt-2" OnClick="GoToLowStock" Style="cursor:pointer;">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                        <MudText>@L["Low stock items ({0})", _lowStockCount]</MudText>
+                                        <MudButton Color="Color.Warning" Variant="Variant.Outlined" Size="Size.Small">@L["View details"]</MudButton>
+                                    </MudStack>
+                                </MudAlert>
+                            }
+                            @if (_outOfStockCount == 0 && _lowStockCount == 0)
+                            {
+                                <MudAlert Severity="Severity.Success" Dense="true" Class="mt-2">@L["No inventory alerts"]</MudAlert>
+                            }
                         }
-                        @if (_outOfStockCount == 0 && _lowStockCount == 0)
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Href="inventory" Color="Color.Primary" Variant="Variant.Filled">@L["Panel"]</MudButton>
+                        <MudButton Href="inventory-items" Color="Color.Primary" Variant="Variant.Text">@L["Items"]</MudButton>
+                        @if (_canSeeAudit)
                         {
-                            <MudAlert Severity="Severity.Success" Dense="true" Class="mt-2">@L["No inventory alerts"]</MudAlert>
+                            <MudButton Href="inventory-audit" Color="Color.Primary" Variant="Variant.Text">@L["Audit"]</MudButton>
                         }
-                    }
-                </MudCardContent>
-                <MudCardActions>
-                    <MudButton Href="inventory" Color="Color.Primary" Variant="Variant.Filled">@L["Panel"]</MudButton>
-                    <MudButton Href="inventory-items" Color="Color.Primary" Variant="Variant.Text">@L["Items"]</MudButton>
-                    <MudButton Href="inventory-audit" Color="Color.Primary" Variant="Variant.Text">@L["Audit"]</MudButton>
-                </MudCardActions>
-            </MudCard>
-        </MudItem>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        }
 
         <!-- Future Cards -->
     </MudGrid>
@@ -68,11 +80,24 @@
 
 @code {
     private bool _loading = true;
+    private bool _noAccess;
+    private bool _canSeeInventory;
+    private bool _canSeeAudit;
     private int _lowStockCount;
     private int _outOfStockCount;
 
     protected override async Task OnInitializedAsync()
     {
+        var user = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
+        _noAccess = !user.HasClaim(c => c.Type == "perm");
+        _canSeeInventory = user.HasClaim("perm", "inventory.read");
+        _canSeeAudit = user.HasClaim("perm", "audit.read");
+        if (!_canSeeInventory)
+        {
+            _loading = false;
+            return;
+        }
+
         _loading = true;
         var items = await ItemsService.GetAllItemsAsync();
         if (items != null)

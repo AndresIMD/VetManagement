@@ -5,10 +5,10 @@
 <MudForm @ref="_mudForm" Model="ExamModel" @bind-IsValid="IsValid" FieldChanged="OnFormFieldChanged">
     <MudGrid>
         <MudItem xs="12" sm="6">
-            <MudTextField Label="@L["Name"]" @bind-Value="ExamModel.Name" For="@(() => ExamModel.Name)" Required="true" />
+            <MudTextField Label="@L["Name"]" @bind-Value="ExamModel.Name" For="@(() => ExamModel.Name)" Required="true" RequiredError="@L["This field is required."]" />
         </MudItem>
         <MudItem xs="12" sm="6">
-            <MudSelect T="string" Label="@L["Brand"]" Value="ExamModel.Brand" ValueChanged="OnBrandChangedMud" Required="true">
+            <MudSelect T="string" Label="@L["Brand"]" Value="ExamModel.Brand" ValueChanged="OnBrandChangedMud" Required="true" RequiredError="@L["This field is required."]">
                 @foreach (var brand in Brands)
                 {
                     <MudSelectItem Value="@brand">@brand</MudSelectItem>
@@ -16,7 +16,7 @@
             </MudSelect>
         </MudItem>
         <MudItem xs="12" sm="6">
-            <MudSelect T="string" Label="@L["Machine"]" @bind-Value="ExamModel.Machine" Required="true">
+            <MudSelect T="string" Label="@L["Machine"]" @bind-Value="ExamModel.Machine" Required="true" RequiredError="@L["This field is required."]">
                 @foreach (var machine in Machines)
                 {
                     <MudSelectItem Value="@machine">@machine</MudSelectItem>
@@ -24,7 +24,8 @@
             </MudSelect>
         </MudItem>
         <MudItem xs="12" sm="6">
-            <MudSelect T="SampleType" Label="@L["Sample type"]" @bind-Value="ExamModel.SampleType" Required="true">
+            <MudSelect T="SampleType" Label="@L["Sample type"]" @bind-Value="ExamModel.SampleType" Required="true" RequiredError="@L["This field is required."]"
+                       ToStringFunc="@(v => v == SampleType.None ? string.Empty : v.ToText())" Validation="@(new Func<SampleType, string?>(v => v == SampleType.None ? L["This field is required."] : null))">
                 @foreach (var value in Enum.GetValues<SampleType>())
                 {
                     if (value == SampleType.None) { continue; }
@@ -33,7 +34,8 @@
             </MudSelect>
         </MudItem>
         <MudItem xs="12" sm="6">
-            <MudSelect T="SampleContainer" Label="@L["Container"]" @bind-Value="ExamModel.SampleContainer" Required="true">
+            <MudSelect T="SampleContainer" Label="@L["Container"]" @bind-Value="ExamModel.SampleContainer" Required="true" RequiredError="@L["This field is required."]"
+                       ToStringFunc="@(v => v == SampleContainer.None ? string.Empty : v.ToText())" Validation="@(new Func<SampleContainer, string?>(v => v == SampleContainer.None ? L["This field is required."] : null))">
                 @foreach (var value in Enum.GetValues<SampleContainer>())
                 {
                     if (value == SampleContainer.None) { continue; }
@@ -46,12 +48,6 @@
         </MudItem>
         <MudItem xs="12" sm="6">
             <MudNumericField T="int" Label="@L["Price (sell)"]" @bind-Value="ExamModel.SellPrice" For="@(() => ExamModel.SellPrice)" Step="1000" Required="true" />
-        </MudItem>
-        <MudItem xs="12">
-            <MudStack Row="true" Spacing="2">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync">@L["Save"]</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="OnCancel">@L["Cancel"]</MudButton>
-            </MudStack>
         </MudItem>
     </MudGrid>
     @if (_mudForm != null && _mudForm.Errors?.Any() == true)
@@ -72,8 +68,6 @@
     [Parameter] public List<string> Brands { get; set; } = new();
     [Parameter] public List<string> Machines { get; set; } = new();
     [Parameter] public EventCallback<string> OnBrandChangedCallback { get; set; }
-    [Parameter] public EventCallback OnValidSubmitCallback { get; set; }
-    [Parameter] public EventCallback OnCancelCallback { get; set; }
     [Parameter] public EventCallback<bool> OnDirtyChanged { get; set; }
 
     private MudForm? _mudForm;
@@ -91,22 +85,14 @@
         }
     }
 
-    private async Task SaveAsync()
+    /// <summary>Validates the fields; the modal holding the form saves (its footer has the Save and Cancel buttons).</summary>
+    public async Task<bool> ValidateAsync()
     {
         if (_mudForm is null)
-        {
-            await OnValidSubmitCallback.InvokeAsync();
-            return;
-        }
+            return true;
         await _mudForm.ValidateAsync();
-        if (_mudForm.IsValid)
-        {
-            await OnValidSubmitCallback.InvokeAsync();
-            IsDirty = false;
-        }
+        return _mudForm.IsValid;
     }
-
-    private async Task OnCancel() => await OnCancelCallback.InvokeAsync();
 
     private async Task OnBrandChangedMud(string value)
     {

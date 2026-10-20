@@ -97,6 +97,7 @@ builder.Services.AddSingleton(new VetManagement.Staff.UI.Models.Configuration.Ap
 // Authentication + Authorization (client-side)
 builder.Services.AddScoped<AuthenticationStateProvider, JwtAuthenticationStateProvider>();
 builder.Services.AddStaffAuthorization();
+builder.Services.AddScoped<SessionRefresher>();
 
 // Message handler that attaches the JWT to protected API calls
 builder.Services.AddTransient<JwtAuthorizationMessageHandler>();

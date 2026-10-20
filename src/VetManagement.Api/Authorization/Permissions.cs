@@ -15,6 +15,8 @@ public static class Permissions
         public const string CREATE = "inventory.create";
         public const string UPDATE = "inventory.update";
         public const string DELETE = "inventory.delete";
+        /// <summary>Stock metrics: consumption, value and trends (management data).</summary>
+        public const string METRICS = "inventory.metrics";
     }
 
     public static class EXAMS
@@ -67,10 +69,14 @@ public static class Permissions
         public const string READ = "users.read";
         public const string CREATE = "users.create";
         public const string MANAGE_ROLES = "users.roles.manage";
+        /// <summary>Edit, block and reset the password of other users.</summary>
+        public const string UPDATE = "users.update";
+        public const string DELETE = "users.delete";
     }
 
     public static class SYSTEM
     {
+        /// <summary>Email sending and email alerts: Admin only until a clinic has its mail set up and tested.</summary>
         public const string SEND_EMAIL = "system.send-email";
         /// <summary>Create sample data (development/test environments only).</summary>
         public const string TEST_DATA = "system.test-data";
@@ -115,7 +121,7 @@ public static class Permissions
         public const string RECEPTION = "Reception";
         public const string CLINICAL = "Clinical";
         public const string CASHIER = "Cashier";
-        /// <summary>Adds deleting and settings in the areas the user already has, plus audit and the reports dashboard.</summary>
+        /// <summary>Adds deleting, settings and management data (e.g. inventory metrics) in the areas the user already has, plus audit and the reports dashboard.</summary>
         public const string SUPERVISOR = "Supervisor";
 
         public static readonly string[] ALL = [ADMIN, INVENTORY, LABORATORY, RECEPTION, CLINICAL, CASHIER, SUPERVISOR];
@@ -128,7 +134,7 @@ public static class Permissions
     [
         new(ROLES.INVENTORY,
             [INVENTORY.READ, INVENTORY.CREATE, INVENTORY.UPDATE],
-            [INVENTORY.DELETE, SYSTEM.SEND_EMAIL]),
+            [INVENTORY.DELETE, INVENTORY.METRICS]),
         new(ROLES.LABORATORY,
             [EXAMS.READ, EXTERNAL_LABS.READ, EXAMS_PERFORMED.READ, EXAMS_PERFORMED.CREATE, EXAMS_PERFORMED.UPDATE,
              CLIENTS_PETS.READ, CLIENTS_PETS.CREATE, CLIENTS_PETS.UPDATE],
@@ -186,6 +192,7 @@ public static class Permissions
         yield return INVENTORY.CREATE;
         yield return INVENTORY.UPDATE;
         yield return INVENTORY.DELETE;
+        yield return INVENTORY.METRICS;
         yield return EXAMS.READ;
         yield return EXAMS.CREATE;
         yield return EXAMS.UPDATE;
@@ -210,6 +217,8 @@ public static class Permissions
         yield return USERS.READ;
         yield return USERS.CREATE;
         yield return USERS.MANAGE_ROLES;
+        yield return USERS.UPDATE;
+        yield return USERS.DELETE;
         yield return SYSTEM.SEND_EMAIL;
         yield return SCHEDULING.READ;
         yield return SCHEDULING.BOOK;

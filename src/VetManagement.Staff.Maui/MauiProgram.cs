@@ -120,6 +120,7 @@ public static class MauiProgram
 
         builder.Services.AddScoped<AuthenticationStateProvider, JwtAuthenticationStateProvider>();
         builder.Services.AddStaffAuthorization();
+        builder.Services.AddScoped<SessionRefresher>();
 
         // Background + Theme services
         builder.Services.AddScoped<BackgroundService>();

@@ -14,7 +14,12 @@ public sealed record ApiResult(bool Ok, string? Error = null, int? Id = null, Js
     public static async Task<ApiResult> FromResponseAsync(HttpResponseMessage response)
     {
         var text = await response.Content.ReadAsStringAsync();
-        JsonElement? body = string.IsNullOrWhiteSpace(text) ? null : JsonDocument.Parse(text).RootElement.Clone();
+        JsonElement? body = null;
+        if (!string.IsNullOrWhiteSpace(text))
+        {
+            try { body = JsonDocument.Parse(text).RootElement.Clone(); }
+            catch (JsonException) { } // not JSON (e.g. a proxy's error page): fall back to the status message
+        }
 
         if (response.IsSuccessStatusCode)
         {

@@ -66,6 +66,7 @@ builder.Services.AddIdentityCore<IdentityUser>(options =>
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
 })
 .AddRoles<IdentityRole>()
+.AddErrorDescriber<LocalizedIdentityErrors>()
 .AddEntityFrameworkStores<AppDbContext>();
 
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key is not configured.");
@@ -107,9 +108,17 @@ builder.Services.AddAuthentication(options =>
             if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
                 context.Token = accessToken;
             return Task.CompletedTask;
+        },
+        // Roles and permissions of each request come from the database, not from the token (see UserAccess).
+        OnTokenValidated = async context =>
+        {
+            var services = context.HttpContext.RequestServices;
+            if (!await services.GetRequiredService<UserAccess>().ApplyAsync(context.Principal!, services))
+                context.Fail("The user is blocked or no longer exists.");
         }
     };
 });
+builder.Services.AddSingleton<UserAccess>();
 
 builder.Services.AddAuthorizationBuilder()
     .SetFallbackPolicy(new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build())
@@ -117,6 +126,7 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy("Inventory.Create", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.INVENTORY.CREATE))
     .AddPolicy("Inventory.Update", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.INVENTORY.UPDATE))
     .AddPolicy("Inventory.Delete", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.INVENTORY.DELETE))
+    .AddPolicy("Inventory.Metrics", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.INVENTORY.METRICS))
     .AddPolicy("Exams.Read", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.EXAMS.READ))
     .AddPolicy("Exams.Create", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.EXAMS.CREATE))
     .AddPolicy("Exams.Update", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.EXAMS.UPDATE))
@@ -141,6 +151,8 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy("Users.Read", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.USERS.READ))
     .AddPolicy("Users.Create", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.USERS.CREATE))
     .AddPolicy("Users.ManageRoles", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.USERS.MANAGE_ROLES))
+    .AddPolicy("Users.Update", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.USERS.UPDATE))
+    .AddPolicy("Users.Delete", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.USERS.DELETE))
     .AddPolicy("System.SendEmail", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.SYSTEM.SEND_EMAIL))
     .AddPolicy("Scheduling.Read", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.SCHEDULING.READ))
     .AddPolicy("Scheduling.Book", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.SCHEDULING.BOOK))

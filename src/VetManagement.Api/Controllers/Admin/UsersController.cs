@@ -1,10 +1,13 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using VetManagement.Api.Authorization;
 using VetManagement.Api.Services;
 using VetManagement.Application.Services;
 using VetManagement.Contracts.Accounts;
 using VetManagement.Domain.Enums;
+using VetManagement.Domain.Localization;
 
 namespace VetManagement.Api.Controllers.Admin;
 
@@ -29,7 +32,8 @@ public class UsersController(
                 Id = user.Id,
                 UserName = user.UserName ?? string.Empty,
                 Email = user.Email ?? string.Empty,
-                Roles = [.. await userService.GetUserRolesAsync(user)]
+                Roles = [.. await userService.GetUserRolesAsync(user)],
+                IsBlocked = UserAccess.IsBlocked(user)
             });
         return Ok(result.OrderBy(u => u.UserName, StringComparer.OrdinalIgnoreCase).ToList());
     }
@@ -53,16 +57,82 @@ public class UsersController(
         return Ok(roles);
     }
 
-    public record CreateUserRequest(string UserName, string Email, string Password, List<string> Roles);
-
     [HttpPost]
     [Authorize(Policy = "Users.Create")]
     public async Task<IActionResult> CreateAsync([FromBody] CreateUserRequest request)
     {
         var result = await userService.CreateUserAsync(request.UserName, request.Email, request.Password, request.Roles);
         if (!result.Succeeded)
-            return BadRequest(result.Errors);
+            return IdentityProblem(result);
         await audit.LogSecurityAsync(AuditActionType.UserCreated, User.Identity?.Name, $"Target={request.UserName}; Roles=[{string.Join(',', request.Roles)}]");
+        return Ok();
+    }
+
+    [HttpPut("{id}")]
+    [Authorize(Policy = "Users.Update")]
+    public async Task<IActionResult> UpdateAsync(string id, [FromBody] EditUserRequest request)
+    {
+        var user = await userManager.FindByIdAsync(id);
+        if (user is null)
+            return NotFound();
+        var before = $"{user.UserName} <{user.Email}>";
+        var result = await userService.UpdateUserAsync(user, request.UserName, request.Email);
+        if (!result.Succeeded)
+            return IdentityProblem(result);
+        await audit.LogSecurityAsync(AuditActionType.UserUpdated, User.Identity?.Name, $"TargetUserId={id}; Before={before}; After={user.UserName} <{user.Email}>");
+        return Ok();
+    }
+
+    /// <summary>Blocks the account (e.g. staff who left the clinic): no sign-in, and open sessions stop working.</summary>
+    [HttpPost("{id}/block")]
+    [Authorize(Policy = "Users.Update")]
+    public Task<IActionResult> BlockAsync(string id) => SetBlockedAsync(id, true);
+
+    [HttpPost("{id}/unblock")]
+    [Authorize(Policy = "Users.Update")]
+    public Task<IActionResult> UnblockAsync(string id) => SetBlockedAsync(id, false);
+
+    private async Task<IActionResult> SetBlockedAsync(string id, bool blocked)
+    {
+        var user = await userManager.FindByIdAsync(id);
+        if (user is null)
+            return NotFound();
+        if (blocked && await ProtectedAccountProblemAsync(user) is { } problem)
+            return problem;
+        var result = await userService.SetBlockedAsync(user, blocked);
+        if (!result.Succeeded)
+            return IdentityProblem(result);
+        await audit.LogSecurityAsync(blocked ? AuditActionType.UserBlocked : AuditActionType.UserUnblocked, User.Identity?.Name, $"TargetUserId={id}; Target={user.UserName}");
+        return Ok();
+    }
+
+    [HttpPost("{id}/reset-password")]
+    [Authorize(Policy = "Users.Update")]
+    public async Task<IActionResult> ResetPasswordAsync(string id, [FromBody] ResetPasswordRequest request)
+    {
+        var user = await userManager.FindByIdAsync(id);
+        if (user is null)
+            return NotFound();
+        var result = await userService.ResetPasswordAsync(user, request.NewPassword);
+        if (!result.Succeeded)
+            return IdentityProblem(result);
+        await audit.LogSecurityAsync(AuditActionType.PasswordReset, User.Identity?.Name, $"TargetUserId={id}; Target={user.UserName}");
+        return Ok();
+    }
+
+    [HttpDelete("{id}")]
+    [Authorize(Policy = "Users.Delete")]
+    public async Task<IActionResult> DeleteAsync(string id)
+    {
+        var user = await userManager.FindByIdAsync(id);
+        if (user is null)
+            return NotFound();
+        if (await ProtectedAccountProblemAsync(user) is { } problem)
+            return problem;
+        var result = await userService.DeleteUserAsync(user);
+        if (!result.Succeeded)
+            return IdentityProblem(result);
+        await audit.LogSecurityAsync(AuditActionType.UserDeleted, User.Identity?.Name, $"TargetUserId={id}; Target={user.UserName}");
         return Ok();
     }
 
@@ -81,11 +151,23 @@ public class UsersController(
     [Authorize(Policy = "Users.ManageRoles")]
     public async Task<IActionResult> RemoveRoleAsync(string id, string role)
     {
+        if (string.Equals(role, Permissions.ROLES.ADMIN, StringComparison.OrdinalIgnoreCase)
+            && await userManager.FindByIdAsync(id) is { } user && await userService.IsLastActiveAdminAsync(user))
+            return BadRequestMessage(Texts.T("At least one active administrator must remain."));
         var ok = await userService.RemoveRoleAsync(id, role);
         if (!ok)
             return BadRequest();
         await audit.LogSecurityAsync(AuditActionType.RoleRemoved, User.Identity?.Name, $"TargetUserId={id}; Role={role}");
         return Ok();
     }
-}
 
+    /// <summary>Your own account and the last active Admin can't be blocked or deleted.</summary>
+    private async Task<ObjectResult?> ProtectedAccountProblemAsync(IdentityUser user)
+    {
+        if (user.Id == User.FindFirstValue(ClaimTypes.NameIdentifier))
+            return BadRequestMessage(Texts.T("You can't block or delete your own account."));
+        if (await userService.IsLastActiveAdminAsync(user))
+            return BadRequestMessage(Texts.T("At least one active administrator must remain."));
+        return null;
+    }
+}

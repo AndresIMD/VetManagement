@@ -80,7 +80,8 @@
                                 </MudStack>
                             </MudMenuItem>
                             <MudDivider />
-                            <MudMenuItem OnClick="@LogoutAsync">@L["Logout"]</MudMenuItem>
+                            <MudMenuItem Href="profile" Icon="@Icons.Material.Filled.Person">@L["My profile"]</MudMenuItem>
+                            <MudMenuItem OnClick="@LogoutAsync" Icon="@Icons.Material.Filled.Logout">@L["Logout"]</MudMenuItem>
                         </ChildContent>
                         <ActivatorContent Context="userMenuContext">
                             <div @onclick="@(e => userMenuContext.ToggleAsync(e))" style="cursor:pointer;">
@@ -128,8 +129,8 @@
                 new MenuItem { Title = "Dashboard", Href = "inventory", RequiredPerms = new[] { "inventory.read" } },
                 new MenuItem { Title = "Items", Href = "inventory-items", RequiredPerms = new[] { "inventory.read" } },
                 new MenuItem { Title = "Audit", Href = "inventory-audit", RequiredPerms = new[] { "audit.read" } },
-                new MenuItem { Title = "Metrics", Href = "inventory-metrics", RequiredPerms = new[] { "inventory.read" } },
-                new MenuItem { Title = "Email Alerts", Href = "inventory-alerts", RequiredPerms = new[] { "inventory.update" } }
+                new MenuItem { Title = "Metrics", Href = "inventory-metrics", RequiredPerms = new[] { "inventory.metrics" } },
+                new MenuItem { Title = "Email Alerts", Href = "inventory-alerts", RequiredPerms = new[] { "system.send-email" } }
             }
         },
         new MenuItem
@@ -139,11 +140,12 @@
             RequiredPerms = new[] { "exams.read", "examsperformed.read", "externallabs.read" },
             Children = new List<MenuItem>
             {
-                new MenuItem { Title = "Exam Catalog", Href = "exams", RequiredPerms = new[] { "exams.read" } },
-                new MenuItem { Title = "Requests", Href = "exam-requests", RequiredPerms = new[] { "examsperformed.read" } },
+                new MenuItem { Title = "Exam Catalog", Href = "exams", RequiredPerms = new[] { "exams.update" } },
+                // Lab staff work on Lab Reports; requests are made by clinicians and followed up by the lab supervisor.
+                new MenuItem { Title = "Requests", Href = "exam-requests", RequiredPerms = new[] { "medical.read", "exams.update" } },
                 new MenuItem { Title = "Lab Reports", Href = "exam-reports", RequiredPerms = new[] { "examsperformed.read" } },
                 new MenuItem { Title = "Report Design", Href = "exam-reports/settings", RequiredPerms = new[] { "exams.update" } },
-                new MenuItem { Title = "External Labs", Href = "external-labs", RequiredPerms = new[] { "externallabs.read" } },
+                new MenuItem { Title = "External Labs", Href = "external-labs", RequiredPerms = new[] { "externallabs.update" } },
                 new MenuItem { Title = "Medical Visits", Href = "medical-visits", RequiredPerms = new[] { "medical.read" } }
             }
         },

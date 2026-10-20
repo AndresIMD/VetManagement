@@ -74,7 +74,17 @@ public enum AuditActionType
     [DisplayString("Setup Bootstrap")]
     SetupBootstrap = 207,
     [DisplayString("Setup Bootstrap Failed")]
-    SetupBootstrapFailed = 208
+    SetupBootstrapFailed = 208,
+    [DisplayString("User Updated")]
+    UserUpdated = 209,
+    [DisplayString("User Blocked")]
+    UserBlocked = 210,
+    [DisplayString("User Unblocked")]
+    UserUnblocked = 211,
+    [DisplayString("Password Reset")]
+    PasswordReset = 212,
+    [DisplayString("User Deleted")]
+    UserDeleted = 213
 }
 
 /// <summary>

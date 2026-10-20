@@ -6,6 +6,8 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject AccountApiService AccountApi
 
+<PageTitle>@L["My profile"]</PageTitle>
+
 <MudContainer MaxWidth="MaxWidth.Small" Class="d-flex flex-column align-center justify-center" Style="min-height:80vh;">
 	<MudPaper Elevation="6" Class="pa-6" Style="width:100%; max-width:500px;">
 		<MudText Typo="Typo.h5" Align="Align.Center" Class="mb-4">@L["My profile"]</MudText>
@@ -101,15 +103,15 @@
 		try
 		{
 			var request = new UpdateUserRequest { Email = _profileModel.Email };
-			var success = await AccountApi.UpdateUserInfoAsync(request);
+			var result = await AccountApi.UpdateUserInfoAsync(request);
 
-			if (success)
+			if (result.Ok)
 			{
 				Snackbar.Add(L["Profile updated successfully!"], Severity.Success);
 			}
 			else
 			{
-				Snackbar.Add(L["Failed to update profile. Please try again."], Severity.Error);
+				Snackbar.Add(L["Failed to update profile: {0}", result.Error ?? ""], Severity.Error);
 			}
 		}
 		catch (Exception ex)
@@ -133,12 +135,6 @@
 			return;
 		}
 
-		if (_passwordModel.NewPassword.Length < 6)
-		{
-			Snackbar.Add(L["Password must be at least 6 characters long."], Severity.Error);
-			return;
-		}
-
 		_changingPassword = true;
 		try
 		{
@@ -148,9 +144,9 @@
 				NewPassword = _passwordModel.NewPassword
 			};
 
-			var success = await AccountApi.ChangePasswordAsync(request);
+			var result = await AccountApi.ChangePasswordAsync(request);
 
-			if (success)
+			if (result.Ok)
 			{
 				Snackbar.Add(L["Password changed successfully"], Severity.Success);
 				// Clear the password fields
@@ -158,7 +154,7 @@
 			}
 			else
 			{
-				Snackbar.Add(L["Failed to change password. Please verify your current password."], Severity.Error);
+				Snackbar.Add(L["Could not change password: {0}", result.Error ?? ""], Severity.Error);
 			}
 		}
 		catch (Exception ex)

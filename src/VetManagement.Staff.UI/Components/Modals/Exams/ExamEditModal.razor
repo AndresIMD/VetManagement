@@ -13,18 +13,18 @@
             PrimaryLoadingText="@L["Saving..."]"
             OnPrimaryClick="HandleValidSubmit"
             OnCancelClick="OnCancelRequested">
-    <ExamForm ExamModel="ExamModel"
+    <ExamForm @ref="_form"
+              ExamModel="ExamModel"
               Brands="@brandsDictionary.Keys.ToList()"
               Machines="@machinesList"
               OnBrandChangedCallback="OnBrandChanged"
-              OnValidSubmitCallback="HandleValidSubmit"
-              OnCancelCallback="OnCancelRequested"
               OnDirtyChanged="OnFormDirtyChanged" />
 </ModalShell>
 
 @code {
     [Parameter] public Exam? Initial { get; set; }
 
+    private ExamForm? _form;
     private Exam ExamModel = new();
     private bool _isFormDirty;
 
@@ -63,6 +63,8 @@
 
     private async Task HandleValidSubmit()
     {
+        if (_form != null && !await _form.ValidateAsync())
+            return;
         try
         {
             if (ExamModel.Id == 0)

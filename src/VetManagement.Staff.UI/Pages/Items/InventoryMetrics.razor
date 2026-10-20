@@ -1,7 +1,7 @@
 ﻿@page "/inventory-metrics"
 @inject ItemsApiService ItemsService
 @inject VetManagement.Staff.UI.Services.Api.InventoryMovementApiService MovementService
-@attribute [Authorize(Policy = "Inventory.Read")]
+@attribute [Authorize(Policy = "Inventory.Metrics")]
 @using System.Globalization
 @using VetManagement.Staff.UI.Components.Filters
 @using VetManagement.Staff.UI.Constants
