@@ -22,6 +22,7 @@ public static class StaffAuthorization
         ["Inventory.Metrics"] = "inventory.metrics",
         ["ClientsPets.Read"] = "clientspets.read",
         ["ClientsPets.Create"] = "clientspets.create",
+        ["ClientsPets.List"] = "clientspets.list",
         ["Audit.Read"] = "audit.read",
         ["Exams.Read"] = "exams.read",
         ["Exams.Update"] = "exams.update",

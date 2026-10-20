@@ -40,11 +40,14 @@
             }
             else if (_report.CanRegisterPatient)
             {
-                @* The typed patient is kept as a provisional client, hidden from searches until registered here. *@
+                @* The typed patient is kept as a provisional client, hidden from searches until registered here. Registering
+                   leads to the client screen, so it also needs the Clients screens (not Laboratory). *@
+                <AuthorizeView Policy="ClientsPets.List" Context="clientsScreens">
                 <AuthorizeView Policy="ClientsPets.Create">
                     <MudTooltip Text="@L["Make this patient and owner a client, then complete their details"]">
                         <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.PersonAdd" Disabled="_registering" OnClick="RegisterPatientAsync">@L["Register as client"]</MudButton>
                     </MudTooltip>
+                </AuthorizeView>
                 </AuthorizeView>
             }
             <MudSpacer />

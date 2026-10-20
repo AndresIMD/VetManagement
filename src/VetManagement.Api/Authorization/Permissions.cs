@@ -57,6 +57,8 @@ public static class Permissions
         public const string CREATE = "clientspets.create";
         public const string UPDATE = "clientspets.update";
         public const string DELETE = "clientspets.delete";
+        /// <summary>The Clients screens (search, client file). Laboratory reads patients only through its lab reports.</summary>
+        public const string LIST = "clientspets.list";
     }
 
     public static class AUDIT
@@ -140,14 +142,14 @@ public static class Permissions
              CLIENTS_PETS.READ, CLIENTS_PETS.CREATE, CLIENTS_PETS.UPDATE],
             [EXAMS.CREATE, EXAMS.UPDATE, EXAMS.DELETE, EXTERNAL_LABS.CREATE, EXTERNAL_LABS.UPDATE, EXTERNAL_LABS.DELETE, EXAMS_PERFORMED.DELETE]),
         new(ROLES.RECEPTION,
-            [CLIENTS_PETS.READ, CLIENTS_PETS.CREATE, CLIENTS_PETS.UPDATE, SCHEDULING.READ, SCHEDULING.BOOK],
+            [CLIENTS_PETS.READ, CLIENTS_PETS.LIST, CLIENTS_PETS.CREATE, CLIENTS_PETS.UPDATE, SCHEDULING.READ, SCHEDULING.BOOK],
             [CLIENTS_PETS.DELETE, SCHEDULING.MANAGE]),
         new(ROLES.CLINICAL,
-            [MEDICAL.READ, MEDICAL.CREATE, MEDICAL.UPDATE, CLIENTS_PETS.READ, CLIENTS_PETS.CREATE, CLIENTS_PETS.UPDATE,
+            [MEDICAL.READ, MEDICAL.CREATE, MEDICAL.UPDATE, CLIENTS_PETS.READ, CLIENTS_PETS.LIST, CLIENTS_PETS.CREATE, CLIENTS_PETS.UPDATE,
              EXAMS.READ, EXAMS_PERFORMED.READ, EXAMS_PERFORMED.CREATE, SCHEDULING.READ, INVENTORY.READ],
             [MEDICAL.DELETE, CLINICAL.MANAGE]),
         new(ROLES.CASHIER,
-            [BILLING.READ, BILLING.CHARGE, CLIENTS_PETS.READ, SCHEDULING.READ, INVENTORY.READ],
+            [BILLING.READ, BILLING.CHARGE, CLIENTS_PETS.READ, CLIENTS_PETS.LIST, SCHEDULING.READ, INVENTORY.READ],
             [BILLING.MANAGE])
     ];
 
@@ -213,6 +215,7 @@ public static class Permissions
         yield return CLIENTS_PETS.CREATE;
         yield return CLIENTS_PETS.UPDATE;
         yield return CLIENTS_PETS.DELETE;
+        yield return CLIENTS_PETS.LIST;
         yield return AUDIT.READ;
         yield return USERS.READ;
         yield return USERS.CREATE;
