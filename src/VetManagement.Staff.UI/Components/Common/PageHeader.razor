@@ -1,4 +1,7 @@
 @using MudBlazor
+@using VetManagement.Staff.UI.Services.App
+@inject TourService Tours
+@inject ISnackbar Snackbar
 
 <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="1" Class="mt-6 mb-3 text-center">
     @if (!string.IsNullOrWhiteSpace(Icon))
@@ -10,6 +13,11 @@
     {
         <MudText Typo="Typo.subtitle1" Color="Color.Secondary">@Subtitle</MudText>
     }
+    @if (TourSteps is not null)
+    {
+        <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.School" OnClick="StartTourAsync">
+            @L["Tutorial"]</MudButton>
+    }
 </MudStack>
 <MudDivider Class="mb-4" />
 
@@ -17,4 +25,36 @@
     [Parameter] public string Title { get; set; } = string.Empty;
     [Parameter] public string? Subtitle { get; set; }
     [Parameter] public string? Icon { get; set; }
+    /// <summary>A guided tour of the page: offered once the first time, then on the "Tutorial" button. Needs <see cref="TourSteps"/>.</summary>
+    [Parameter] public string? TourId { get; set; }
+    /// <summary>
+    /// The tour's steps, read when it starts so they match what the page shows then. A page passes them once the content
+    /// they explain is on screen (null while loading or empty): only then are the button and the offer shown.
+    /// </summary>
+    [Parameter] public Func<IEnumerable<TourStep>>? TourSteps { get; set; }
+
+    private bool _offerChecked;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_offerChecked || TourId is null || TourSteps is null)
+            return;
+        _offerChecked = true;
+        if (!await Tours.ShouldOfferAsync(TourId))
+            return;
+        await Tours.MarkSeenAsync(TourId);
+        Snackbar.Add(L["This screen has a short tutorial."], Severity.Info, config =>
+        {
+            config.Action = L["Show me"];
+            config.ActionColor = Color.Primary;
+            config.VisibleStateDuration = 10000;
+            config.OnClick = _ => StartTourAsync();
+        });
+    }
+
+    private async Task StartTourAsync()
+    {
+        if (TourSteps is not null)
+            await Tours.StartAsync(TourId ?? Title, TourSteps());
+    }
 }

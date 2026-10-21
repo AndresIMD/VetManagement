@@ -5,6 +5,7 @@
 @inject ISnackbar Snackbar
 @inject AuthenticationStateProvider AuthStateProvider
 @inject AccountApiService AccountApi
+@inject TourService Tours
 
 <PageTitle>@L["My profile"]</PageTitle>
 
@@ -34,6 +35,13 @@
 
 			<MudDivider Class="my-4" />
 
+			<MudText Typo="Typo.h6" Class="mb-2">@L["Tutorials"]</MudText>
+			<MudSwitch T="bool" Value="_tutorialOffers" ValueChanged="SetTutorialOffersAsync" Color="Color.Primary"
+					   Label="@L["Offer the tutorial the first time I open a screen"]" />
+			<MudText Typo="Typo.caption" Color="Color.Secondary">@L["The \"Tutorial\" button on each screen shows it at any time."]</MudText>
+
+			<MudDivider Class="my-4" />
+
 			<MudText Typo="Typo.h6" Class="mb-2">@L["Change password"]</MudText>
 			<MudForm @ref="_passwordForm" Model="_passwordModel">
 				<MudTextField T="string" @bind-Value="_passwordModel.CurrentPassword" Label="@L["Current password"]" InputType="InputType.Password" Required="true" Class="mb-3" />
@@ -59,6 +67,7 @@
 	private bool _isLoading = true;
 	private bool _saving = false;
 	private bool _changingPassword = false;
+	private bool _tutorialOffers = true;
 
 	private ProfileModel _profileModel = new();
 	private ChangePasswordModel _passwordModel = new();
@@ -66,6 +75,13 @@
 	protected override async Task OnInitializedAsync()
 	{
 		await LoadUserInfo();
+		_tutorialOffers = await Tours.OffersOnAsync();
+	}
+
+	private async Task SetTutorialOffersAsync(bool on)
+	{
+		_tutorialOffers = on;
+		await Tours.SetOffersOnAsync(on);
 	}
 
 	private async Task LoadUserInfo()

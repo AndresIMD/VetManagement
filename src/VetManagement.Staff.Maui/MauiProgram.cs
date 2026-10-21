@@ -125,6 +125,7 @@ public static class MauiProgram
         // Background + Theme services
         builder.Services.AddScoped<BackgroundService>();
         builder.Services.AddScoped<ThemeService>();
+        builder.Services.AddScoped<TourService>();
 
         // SignalR Realtime service
         builder.Services.AddScoped(sp =>

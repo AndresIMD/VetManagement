@@ -1160,4 +1160,26 @@
   <data name="When the first word is in capitals, the whole title prints in capitals." xml:space="preserve"><value>Si la primera palabra está en mayúsculas, todo el título se imprime en mayúsculas.</value></data>
   <data name="Unsaved changes" xml:space="preserve"><value>Cambios sin guardar</value></data>
   <data name="The image changes are applied when you press Save." xml:space="preserve"><value>Los cambios de imágenes se aplican al presionar Guardar.</value></data>
+  <data name="Tutorial" xml:space="preserve"><value>Tutorial</value></data>
+  <data name="This screen has a short tutorial." xml:space="preserve"><value>Esta pantalla tiene un tutorial corto.</value></data>
+  <data name="Show me" xml:space="preserve"><value>Verlo</value></data>
+  <data name="Previous" xml:space="preserve"><value>Anterior</value></data>
+  <data name="Done" xml:space="preserve"><value>Listo</value></data>
+  <data name="{{current}} of {{total}}" xml:space="preserve"><value>{{current}} de {{total}}</value></data>
+  <data name="Tutorials" xml:space="preserve"><value>Tutoriales</value></data>
+  <data name="Offer the tutorial the first time I open a screen" xml:space="preserve"><value>Ofrecer el tutorial la primera vez que abro una pantalla</value></data>
+  <data name="The &quot;Tutorial&quot; button on each screen shows it at any time." xml:space="preserve"><value>El botón "Tutorial" de cada pantalla lo muestra cuando quieras.</value></data>
+  <data name="Patient seen before?" xml:space="preserve"><value>¿Paciente ya ingresado?</value></data>
+  <data name="Results" xml:space="preserve"><value>Resultados</value></data>
+  <data name="Choose a registered pet of the clinic, or type the patient only for this report (the usual case for lab samples)." xml:space="preserve"><value>Elige una mascota registrada en la clínica, o escribe el paciente solo para este informe (lo habitual en muestras de laboratorio).</value></data>
+  <data name="Search by patient or owner name. Picking one fills in its data and links its reports, so the previous result can be printed next to the new one." xml:space="preserve"><value>Busca por nombre del paciente o del dueño. Al elegirlo se completan sus datos y se enlazan sus informes, para poder imprimir el resultado anterior junto al nuevo.</value></data>
+  <data name="Type the pet's number, shown in the client's record." xml:space="preserve"><value>Escribe el número de la mascota, que aparece en la ficha del cliente.</value></data>
+  <data name="The species picks the normal ranges, so choose it before typing the results." xml:space="preserve"><value>La especie define los rangos normales, así que elígela antes de escribir los resultados.</value></data>
+  <data name="Type the age in years and months when the birth date isn't known; the date is worked out from the reception date." xml:space="preserve"><value>Escribe la edad en años y meses si no se sabe la fecha de nacimiento; la fecha se calcula a partir de la fecha de recepción.</value></data>
+  <data name="Only exams with a report template are listed. Changing the exam clears the results already typed." xml:space="preserve"><value>Solo aparecen los exámenes que tienen plantilla de informe. Al cambiar de examen se borran los resultados ya escritos.</value></data>
+  <data name="The date the sample arrived; today by default." xml:space="preserve"><value>La fecha en que llegó la muestra; por defecto, hoy.</value></data>
+  <data name="The vet who requested the exam. It prints as 'Médico tratante'." xml:space="preserve"><value>El veterinario que pidió el examen. Se imprime como 'Médico tratante'.</value></data>
+  <data name="Type each value. Values outside the normal range are marked as you type, and the range for the species is shown next to each one." xml:space="preserve"><value>Escribe cada valor. Los valores fuera del rango normal se marcan mientras escribes, y junto a cada uno se muestra el rango de la especie.</value></data>
+  <data name="When the exam has interpretation rules, the automatic interpretation shows in grey: leave the field empty to print it, or write your own." xml:space="preserve"><value>Cuando el examen tiene reglas de interpretación, la interpretación automática aparece en gris: deja el campo vacío para imprimirla o escribe la tuya.</value></data>
+  <data name="Saves the report and opens it, ready to print or save as PDF. A saved report can be corrected later." xml:space="preserve"><value>Guarda el informe y lo abre, listo para imprimir o guardar en PDF. Un informe guardado se puede corregir después.</value></data>
 </root>

@@ -164,6 +164,7 @@ builder.Services.AddHttpClient<AccountApiService>(client =>
 // Background + Theme services
 builder.Services.AddScoped<AppBackgroundService>();
 builder.Services.AddScoped<ThemeService>();
+builder.Services.AddScoped<TourService>();
 
 var host = builder.Build();
 StaffLocalization.ApplyCulture(culture);
