@@ -19,6 +19,16 @@ public static class Permissions
         public const string METRICS = "inventory.metrics";
     }
 
+    /// <summary>Consumption sheets: supplies used on each patient during a stay, charged at discharge (inventory module).</summary>
+    public static class CONSUMPTION
+    {
+        public const string READ = "consumption.read";
+        /// <summary>Open sheets, record and remove uses, discharge.</summary>
+        public const string RECORD = "consumption.record";
+        /// <summary>How items are charged, reopening and deleting sheets.</summary>
+        public const string MANAGE = "consumption.manage";
+    }
+
     public static class EXAMS
     {
         public const string READ = "exams.read";
@@ -135,8 +145,8 @@ public static class Permissions
     private static readonly Area[] AREAS =
     [
         new(ROLES.INVENTORY,
-            [INVENTORY.READ, INVENTORY.CREATE, INVENTORY.UPDATE],
-            [INVENTORY.DELETE, INVENTORY.METRICS]),
+            [INVENTORY.READ, INVENTORY.CREATE, INVENTORY.UPDATE, CONSUMPTION.READ, CONSUMPTION.RECORD],
+            [INVENTORY.DELETE, INVENTORY.METRICS, CONSUMPTION.MANAGE]),
         new(ROLES.LABORATORY,
             [EXAMS.READ, EXTERNAL_LABS.READ, EXAMS_PERFORMED.READ, EXAMS_PERFORMED.CREATE, EXAMS_PERFORMED.UPDATE,
              CLIENTS_PETS.READ, CLIENTS_PETS.CREATE, CLIENTS_PETS.UPDATE],
@@ -146,10 +156,10 @@ public static class Permissions
             [CLIENTS_PETS.DELETE, SCHEDULING.MANAGE]),
         new(ROLES.CLINICAL,
             [MEDICAL.READ, MEDICAL.CREATE, MEDICAL.UPDATE, CLIENTS_PETS.READ, CLIENTS_PETS.LIST, CLIENTS_PETS.CREATE, CLIENTS_PETS.UPDATE,
-             EXAMS.READ, EXAMS_PERFORMED.READ, EXAMS_PERFORMED.CREATE, SCHEDULING.READ, INVENTORY.READ],
-            [MEDICAL.DELETE, CLINICAL.MANAGE]),
+             EXAMS.READ, EXAMS_PERFORMED.READ, EXAMS_PERFORMED.CREATE, SCHEDULING.READ, INVENTORY.READ, CONSUMPTION.READ, CONSUMPTION.RECORD],
+            [MEDICAL.DELETE, CLINICAL.MANAGE, CONSUMPTION.MANAGE]),
         new(ROLES.CASHIER,
-            [BILLING.READ, BILLING.CHARGE, CLIENTS_PETS.READ, CLIENTS_PETS.LIST, SCHEDULING.READ, INVENTORY.READ],
+            [BILLING.READ, BILLING.CHARGE, CLIENTS_PETS.READ, CLIENTS_PETS.LIST, SCHEDULING.READ, INVENTORY.READ, CONSUMPTION.READ],
             [BILLING.MANAGE])
     ];
 
@@ -178,7 +188,7 @@ public static class Permissions
     /// <summary>The module a permission belongs to; null for the ones every clinic has (users, audit, system).</summary>
     public static AppModule? ModuleOf(string permission) => permission.Split('.')[0] switch
     {
-        "inventory" => AppModule.Inventory,
+        "inventory" or "consumption" => AppModule.Inventory,
         "exams" or "externallabs" or "examsperformed" => AppModule.Exams,
         "clientspets" => AppModule.Clients,
         "medical" or "clinical" => AppModule.Clinical,
@@ -195,6 +205,9 @@ public static class Permissions
         yield return INVENTORY.UPDATE;
         yield return INVENTORY.DELETE;
         yield return INVENTORY.METRICS;
+        yield return CONSUMPTION.READ;
+        yield return CONSUMPTION.RECORD;
+        yield return CONSUMPTION.MANAGE;
         yield return EXAMS.READ;
         yield return EXAMS.CREATE;
         yield return EXAMS.UPDATE;

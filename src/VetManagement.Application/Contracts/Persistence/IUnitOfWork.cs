@@ -30,6 +30,8 @@ public interface IUnitOfWork : IDisposable
     IRepository<VetManagement.Domain.Billing.CashClose> CashCloses { get; }
     IRepository<VetManagement.Domain.Exams.ExamReport> ExamReports { get; }
     IRepository<VetManagement.Domain.Configuration.ClinicImage> ClinicImages { get; }
+    IConsumptionSheetRepository ConsumptionSheets { get; }
+    IRepository<VetManagement.Domain.Consumption.ConsumptionPricing> ConsumptionPricings { get; }
 
     Task<int> SaveChangesAsync();
 

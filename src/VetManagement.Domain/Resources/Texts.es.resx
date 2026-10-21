@@ -244,4 +244,11 @@
   <data name="Use at most 6 header lines and {0} footer lines." xml:space="preserve"><value>Usa como máximo 6 líneas de encabezado y {0} de pie de página.</value></data>
   <data name="The footer can be at most {0} characters long." xml:space="preserve"><value>El pie de página puede tener como máximo {0} caracteres.</value></data>
   <data name="Text sizes must be between {0} and {1} pt." xml:space="preserve"><value>Los tamaños de texto deben estar entre {0} y {1} pt.</value></data>
+  <data name="The sheet is closed: reopen it to add or remove supplies." xml:space="preserve"><value>La hoja está cerrada: reábrela para agregar o quitar insumos.</value></data>
+  <data name="The item doesn't exist." xml:space="preserve"><value>El insumo no existe.</value></data>
+  <data name="The quantity must be more than 0 and at most {0}." xml:space="preserve"><value>La cantidad debe ser mayor que 0 y como máximo {0}.</value></data>
+  <data name="'{0}' is charged per unit: use whole numbers." xml:space="preserve"><value>'{0}' se cobra por unidad: usa números enteros.</value></data>
+  <data name="There is no open container of this item." xml:space="preserve"><value>No hay un envase abierto de este insumo.</value></data>
+  <data name="Write how many mL one container holds." xml:space="preserve"><value>Escribe cuántos mL trae un envase.</value></data>
+  <data name="Write the price of one mL." xml:space="preserve"><value>Escribe el precio de un mL.</value></data>
 </root>

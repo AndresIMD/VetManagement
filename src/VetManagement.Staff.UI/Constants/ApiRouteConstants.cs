@@ -16,6 +16,13 @@ public static class ApiRouteConstants
     public const string INVENTORY_MASS_EGRESS = "api/inventory/movements/mass-egress";
     public const string INVENTORY_METRICS = "api/inventory/metrics";
 
+    // Consumption sheets (supplies used on each patient)
+    public const string CONSUMPTION_SHEETS = "api/consumption-sheets";
+    public const string CONSUMPTION_SHEET_BY_ID = "api/consumption-sheets/{0}";
+    public const string CONSUMPTION_SHEET_ENTRIES = "api/consumption-sheets/{0}/entries";
+    public const string CONSUMPTION_SHEET_DISCARD_REST = "api/consumption-sheets/{0}/items/{1}/discard-rest";
+    public const string CONSUMPTION_PRICING = "api/consumption-sheets/pricing";
+
     // Clients & Pets
     public const string CLIENTS = "api/clientpet/clients";
     public const string CLIENT_BY_ID = "api/clientpet/clients/{0}";

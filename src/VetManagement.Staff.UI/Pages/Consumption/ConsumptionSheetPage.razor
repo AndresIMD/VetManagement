@@ -1,0 +1,372 @@
+@page "/consumption/{Id:int}"
+@using VetManagement.Contracts.Consumption
+@inject ConsumptionApiService Api
+@inject ItemsApiService ItemsApi
+@inject IDialogService DialogService
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
+@attribute [Authorize(Policy = "Consumption.Read")]
+
+<PageTitle>@L["Consumption sheet"]</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
+    @if (_sheet is null)
+    {
+        <PageHeader Title="@L["Consumption sheet"]" Icon="@Icons.Material.Filled.Vaccines" />
+        @if (_notFound)
+        {
+            <MudAlert Severity="Severity.Warning">@L["The sheet was not found."]</MudAlert>
+        }
+        else
+        {
+            <MudProgressLinear Indeterminate="true" />
+        }
+    }
+    else
+    {
+        var sheet = _sheet;
+        <PageHeader Title="@sheet.PatientName" Icon="@Icons.Material.Filled.Vaccines" Subtitle="@Subtitle(sheet)" />
+
+        @if (_error is not null)
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-3" ShowCloseIcon="true" CloseIconClicked="() => _error = null">@_error</MudAlert>
+        }
+
+        <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" Class="mb-3">
+            <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" Href="consumption">@L["All sheets"]</MudButton>
+            <MudSpacer />
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Print" OnClick="PrintAsync" Disabled="sheet.Lines.Count == 0">
+                @L["Print summary"]</MudButton>
+            @if (sheet.ClosedAtUtc is null)
+            {
+                <AuthorizeView Policy="Consumption.Record" Context="auth">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ExitToApp" OnClick="CloseAsync">
+                        @L["Discharge"]</MudButton>
+                </AuthorizeView>
+            }
+            else
+            {
+                <AuthorizeView Policy="Consumption.Manage" Context="auth">
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.LockOpen" OnClick="ReopenAsync">@L["Reopen"]</MudButton>
+                </AuthorizeView>
+            }
+            <AuthorizeView Policy="Consumption.Manage" Context="auth">
+                <MudButton Variant="Variant.Text" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" OnClick="DeleteAsync">@L["Delete sheet"]</MudButton>
+            </AuthorizeView>
+        </MudStack>
+
+        @if (sheet.ClosedAtUtc is null)
+        {
+            <AuthorizeView Policy="Consumption.Record" Context="auth">
+                <MudPaper Class="pa-4 mb-3" Elevation="1">
+                    <MudText Typo="Typo.h6" Class="mb-2">@L["Record a use"]</MudText>
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" md="5">
+                            <MudAutocomplete T="InventoryItemDTO" Value="_item" ValueChanged="OnItemChanged" Label="@L["Drug or material"]"
+                                             SearchFunc="SearchAsync" ToStringFunc="@(i => i?.Name)" DebounceInterval="300" MinCharacters="2"
+                                             Clearable="true" HelperText="@ChargeHint" />
+                        </MudItem>
+                        <MudItem xs="6" md="2">
+                            <MudNumericField T="decimal?" @bind-Value="_quantity" Label="@L["Quantity"]" Min="0.01m" HideSpinButtons="true" Culture="CultureInfo.CurrentCulture" Immediate="true"
+                                             Adornment="Adornment.End" AdornmentText="@UnitText(SelectedCharge)" />
+                        </MudItem>
+                        <MudItem xs="6" md="3">
+                            <MudTextField @bind-Value="_notes" Label="@L["Note (optional)"]" MaxLength="200" Placeholder="@L["E.g. infusion, single dose"]" />
+                        </MudItem>
+                        <MudItem xs="12" md="2" Class="d-flex align-center">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="AddAsync"
+                                       Disabled="@(_item is null || _quantity is not > 0 || _busy)">@L["Add"]</MudButton>
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+            </AuthorizeView>
+        }
+
+        <MudPaper Class="pa-4 mb-3" Elevation="1">
+            <MudText Typo="Typo.h6" Class="mb-2">@L["To charge"]</MudText>
+            @if (sheet.Lines.Count == 0)
+            {
+                <MudText Color="Color.Secondary">@L["Nothing recorded yet."]</MudText>
+            }
+            else
+            {
+                <MudSimpleTable Dense="true" Hover="true">
+                    <thead>
+                        <tr>
+                            <th>@L["Drug or material"]</th>
+                            <th style="text-align:right">@L["Used"]</th>
+                            <th style="text-align:right">@L["Charged as"]</th>
+                            <th style="text-align:right">@L["Price"]</th>
+                            <th style="text-align:right">@L["Total"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var line in sheet.Lines)
+                        {
+                            <tr>
+                                <td>@line.ItemName</td>
+                                <td style="text-align:right">@Qty(line.Given) @UnitText(line.Charge)</td>
+                                <td style="text-align:right">
+                                    @Charged(line)
+                                    @if (line.Charge == ConsumptionCharge.Container && line.LeftMl > 0 && sheet.ClosedAtUtc is null)
+                                    {
+                                        <div>
+                                            <MudText Typo="Typo.caption" Color="Color.Info">@L["{0} mL left in the open one", Qty(line.LeftMl)]</MudText>
+                                            <AuthorizeView Policy="Consumption.Record" Context="auth">
+                                                <MudTooltip Text="@L["Throw away what is left; the next use starts a new container."]">
+                                                    <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Warning"
+                                                               OnClick="() => DiscardRestAsync(line)">@L["Discard rest"]</MudButton>
+                                                </MudTooltip>
+                                            </AuthorizeView>
+                                        </div>
+                                    }
+                                    @if (line.Discarded > 0)
+                                    {
+                                        <div><MudText Typo="Typo.caption" Color="Color.Secondary">@L["{0} mL discarded", Qty(line.Discarded)]</MudText></div>
+                                    }
+                                </td>
+                                <td style="text-align:right">@PriceText(line)</td>
+                                <td style="text-align:right">@Money.Clp(line.Total)</td>
+                            </tr>
+                        }
+                        <tr>
+                            <td colspan="4" style="text-align:right"><b>@L["Total"]</b></td>
+                            <td style="text-align:right"><b>@Money.Clp(sheet.Total)</b></td>
+                        </tr>
+                    </tbody>
+                </MudSimpleTable>
+            }
+        </MudPaper>
+
+        <MudPaper Class="pa-4 mb-8" Elevation="1">
+            <MudText Typo="Typo.h6" Class="mb-2">@L["Uses recorded"]</MudText>
+            <MudTable Items="sheet.Entries" Dense="true" Hover="true" Elevation="0">
+                <HeaderContent>
+                    <MudTh>@L["Date"]</MudTh>
+                    <MudTh>@L["Drug or material"]</MudTh>
+                    <MudTh Style="text-align:right">@L["Quantity"]</MudTh>
+                    <MudTh>@L["Note"]</MudTh>
+                    <MudTh>@L["Recorded by"]</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.UsedAtUtc.ToLocalTime().ToString("dd/MM HH:mm")</MudTd>
+                    <MudTd>@context.ItemName</MudTd>
+                    <MudTd Style="text-align:right">
+                        @Qty(context.Quantity) @UnitText(context.Charge)
+                        @if (context.Discarded)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined">@L["discarded"]</MudChip>
+                        }
+                    </MudTd>
+                    <MudTd>@context.Notes</MudTd>
+                    <MudTd>@context.CreatedBy</MudTd>
+                    <MudTd Style="text-align:right">
+                        @if (sheet.ClosedAtUtc is null)
+                        {
+                            <AuthorizeView Policy="Consumption.Record" Context="auth">
+                                <MudTooltip Text="@L["Remove (recorded by mistake)"]">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                                   OnClick="() => RemoveAsync(context)" />
+                                </MudTooltip>
+                            </AuthorizeView>
+                        }
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Color="Color.Secondary">@L["Nothing recorded yet."]</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        </MudPaper>
+
+        @* Printed on its own (js/print.js copies only this element), so it carries its own styles. *@
+        <div style="position:absolute;left:-10000px;top:0" aria-hidden="true">
+            <div id="@PRINT_ID">
+                <style>
+                    body { font-family: Arial, sans-serif; font-size: 10.5pt; color: #222; margin: 15mm; }
+                    h2 { margin: 0 0 2mm; font-size: 15pt; }
+                    .muted { color: #555; font-size: 9pt; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 5mm; }
+                    th, td { padding: 1.6mm 2mm; border-bottom: 0.2mm solid #ccc; text-align: left; vertical-align: top; }
+                    th { font-size: 9pt; text-transform: uppercase; border-bottom: 0.4mm solid #999; }
+                    .r { text-align: right; }
+                    .total td { font-weight: 700; border-bottom: 0; }
+                </style>
+                <h2>@L["Consumption summary"]</h2>
+                <div><b>@L["Patient"]:</b> @sheet.PatientName @if (!string.IsNullOrWhiteSpace(sheet.OwnerName)) { <span> · <b>@L["Owner"]:</b> @sheet.OwnerName</span> }</div>
+                <div class="muted">@Dates(sheet)</div>
+                <table>
+                    <tr><th>@L["Drug or material"]</th><th class="r">@L["Used"]</th><th class="r">@L["Charged as"]</th><th class="r">@L["Price"]</th><th class="r">@L["Total"]</th></tr>
+                    @foreach (var line in sheet.Lines)
+                    {
+                        <tr>
+                            <td>@line.ItemName</td>
+                            <td class="r">@Qty(line.Given) @UnitText(line.Charge)</td>
+                            <td class="r">@Charged(line)</td>
+                            <td class="r">@PriceText(line)</td>
+                            <td class="r">@Money.Clp(line.Total)</td>
+                        </tr>
+                    }
+                    <tr class="total"><td colspan="4" class="r">@L["Total"]</td><td class="r">@Money.Clp(sheet.Total)</td></tr>
+                </table>
+                <p class="muted">@L["Printed on {0}.", DateTime.Now.ToString("dd/MM/yyyy HH:mm")]</p>
+            </div>
+        </div>
+    }
+</MudContainer>
+
+@code {
+    private const string PRINT_ID = "consumption-print";
+
+    [Parameter] public int Id { get; set; }
+
+    private ConsumptionSheetDto? _sheet;
+    private Dictionary<int, ConsumptionPricingDto> _pricings = [];
+    private bool _notFound;
+    private InventoryItemDTO? _item;
+    private decimal? _quantity;
+    private string? _notes;
+    private bool _busy;
+    private string? _error;
+
+    private ConsumptionPricingDto? SelectedPricing => _item is null ? null : _pricings.GetValueOrDefault(_item.Id);
+    private ConsumptionCharge SelectedCharge => SelectedPricing?.Charge ?? ConsumptionCharge.Unit;
+
+    /// <summary>How the chosen item is charged, so the quantity is typed in the right unit.</summary>
+    private string? ChargeHint => _item is null ? null : SelectedPricing switch
+    {
+        { Charge: ConsumptionCharge.PerMl } p => L["Charged per mL: {0} each mL.", Money.Clp(p.PricePerMl ?? 0)],
+        { Charge: ConsumptionCharge.Container } p => L["Type the mL given. Each {0} mL container started is charged whole ({1}).", Qty(p.ContainerMl ?? 0), Money.Clp(_item.SellPrice)],
+        _ => L["Charged per unit: {0} each.", Money.Clp(_item.SellPrice)]
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        _pricings = (await Api.GetPricingsAsync()).ToDictionary(p => p.ItemId);
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _sheet = await Api.GetAsync(Id);
+        _notFound = _sheet is null;
+    }
+
+    private string Subtitle(ConsumptionSheetDto sheet)
+        => string.IsNullOrWhiteSpace(sheet.OwnerName) ? Dates(sheet) : $"{L["Owner: {0}", sheet.OwnerName]} · {Dates(sheet)}";
+
+    /// <summary>Admission and discharge, and the sheet's notes.</summary>
+    private string Dates(ConsumptionSheetDto sheet)
+    {
+        var parts = new List<string> { L["Opened {0}", sheet.OpenedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")] };
+        if (sheet.ClosedAtUtc is { } closed)
+            parts.Add(L["Discharged {0}", closed.ToLocalTime().ToString("dd/MM/yyyy HH:mm")]);
+        if (!string.IsNullOrWhiteSpace(sheet.Notes))
+            parts.Add(sheet.Notes);
+        return string.Join(" · ", parts);
+    }
+
+    private static string Qty(decimal value) => value.ToString("0.##");
+
+    private string UnitText(ConsumptionCharge charge) => charge == ConsumptionCharge.Unit ? L["u."] : "mL";
+
+    private string Charged(ConsumptionLineDto line) => line.Charge switch
+    {
+        ConsumptionCharge.Container => line.Containers == 1 ? L["1 container of {0} mL", Qty(line.ContainerMl ?? 0)] : L["{0} containers of {1} mL", line.Containers, Qty(line.ContainerMl ?? 0)],
+        ConsumptionCharge.PerMl => $"{Qty(line.Given)} mL",
+        _ => $"{Qty(line.Given)} {L["u."]}"
+    };
+
+    private string PriceText(ConsumptionLineDto line) => line.Charge switch
+    {
+        ConsumptionCharge.PerMl => L["{0} / mL", Money.Clp(line.UnitPrice)],
+        ConsumptionCharge.Container => L["{0} / container", Money.Clp(line.UnitPrice)],
+        _ => L["{0} / u.", Money.Clp(line.UnitPrice)]
+    };
+
+    private async Task<IEnumerable<InventoryItemDTO>> SearchAsync(string text, CancellationToken ct)
+        => (await ItemsApi.GetItemsPagedAsync(text, ItemType.None, 0, 15, ct))?.Items ?? [];
+
+    private void OnItemChanged(InventoryItemDTO? item)
+    {
+        _item = item;
+        _quantity ??= SelectedCharge == ConsumptionCharge.Unit ? 1 : null;
+    }
+
+    private async Task AddAsync()
+    {
+        _busy = true;
+        var result = await Api.AddEntryAsync(Id, new AddConsumptionEntryRequest { ItemId = _item!.Id, Quantity = _quantity!.Value, Notes = _notes });
+        _busy = false;
+        if (!result.Ok)
+        {
+            _error = result.Error;
+            return;
+        }
+        _error = null;
+        (_item, _quantity, _notes) = (null, null, null);
+        await LoadAsync();
+    }
+
+    private async Task RemoveAsync(ConsumptionEntryDto entry)
+    {
+        if (!await ConfirmAsync(L["Remove use"], L["Remove {0} {1} of {2}, recorded {3}?", Qty(entry.Quantity), UnitText(entry.Charge), entry.ItemName,
+                entry.UsedAtUtc.ToLocalTime().ToString("dd/MM HH:mm")], L["Remove"]))
+            return;
+        await RunAsync(() => Api.RemoveEntryAsync(Id, entry.Id));
+    }
+
+    private async Task DiscardRestAsync(ConsumptionLineDto line)
+    {
+        if (!await ConfirmAsync(L["Discard rest"], L["Throw away the {0} mL left of {1}? The next use starts a new container.", Qty(line.LeftMl), line.ItemName], L["Discard"]))
+            return;
+        await RunAsync(() => Api.DiscardRestAsync(Id, line.ItemId));
+    }
+
+    private async Task CloseAsync()
+    {
+        if (!await ConfirmAsync(L["Discharge"], L["Close the sheet? It takes no more uses, and what is left in open containers counts as discarded."], L["Discharge"]))
+            return;
+        await RunAsync(() => Api.CloseAsync(Id));
+    }
+
+    private async Task ReopenAsync() => await RunAsync(() => Api.ReopenAsync(Id));
+
+    private async Task DeleteAsync()
+    {
+        if (!await ConfirmAsync(L["Delete sheet"], L["Delete this sheet and everything recorded on it? This can't be undone."], L["Delete"]))
+            return;
+        var result = await Api.DeleteAsync(Id);
+        if (result.Ok)
+            Navigation.NavigateTo("consumption");
+        else
+            _error = result.Error;
+    }
+
+    private async Task PrintAsync()
+        => await Js.InvokeVoidAsync("appPrint.element", PRINT_ID, $"{L["Consumption summary"]} - {_sheet!.PatientName}", null);
+
+    private async Task RunAsync(Func<Task<ApiResult>> action)
+    {
+        _busy = true;
+        var result = await action();
+        _busy = false;
+        _error = result.Ok ? null : result.Error;
+        await LoadAsync();
+    }
+
+    private async Task<bool> ConfirmAsync(string title, string message, string confirm)
+    {
+        var parameters = new DialogParameters<Components.Modals.Common.ConfirmModal>
+        {
+            { x => x.Title, title },
+            { x => x.Message, message },
+            { x => x.ButtonConfirmText, confirm },
+            { x => x.ButtonCancelText, L["Cancel"].Value },
+            { x => x.TitleIcon, Icons.Material.Filled.Warning },
+            { x => x.TitleColor, Color.Warning }
+        };
+        var dialog = await DialogService.ShowAsync<Components.Modals.Common.ConfirmModal>(null, parameters, new DialogOptions { MaxWidth = MaxWidth.Small });
+        return await dialog.Result is { Canceled: false };
+    }
+}

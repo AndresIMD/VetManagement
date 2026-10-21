@@ -127,6 +127,9 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy("Inventory.Update", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.INVENTORY.UPDATE))
     .AddPolicy("Inventory.Delete", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.INVENTORY.DELETE))
     .AddPolicy("Inventory.Metrics", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.INVENTORY.METRICS))
+    .AddPolicy("Consumption.Read", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.CONSUMPTION.READ))
+    .AddPolicy("Consumption.Record", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.CONSUMPTION.RECORD))
+    .AddPolicy("Consumption.Manage", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.CONSUMPTION.MANAGE))
     .AddPolicy("Exams.Read", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.EXAMS.READ))
     .AddPolicy("Exams.Create", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.EXAMS.CREATE))
     .AddPolicy("Exams.Update", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.EXAMS.UPDATE))
@@ -175,6 +178,7 @@ builder.Services.AddScoped<VetManagement.Application.Services.ExamService>();
 builder.Services.AddScoped<VetManagement.Application.Services.ExamPerformedService>();
 builder.Services.AddScoped<VetManagement.Application.Services.ExternalLabService>();
 builder.Services.AddScoped<VetManagement.Application.Exams.LabMachineService>();
+builder.Services.AddScoped<VetManagement.Application.Consumption.ConsumptionService>();
 builder.Services.AddScoped<VetManagement.Application.Services.ClientPetService>();
 builder.Services.AddScoped<VetManagement.Application.Services.MedicalVisitService>();
 builder.Services.AddSingleton(new VetManagement.Application.Scheduling.SchedulingDefaults(

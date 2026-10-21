@@ -1184,4 +1184,74 @@
   <data name="Pet and owner data text: {0} pt" xml:space="preserve"><value>Texto de datos del paciente y tutor: {0} pt</value></data>
   <data name="Results text: {0} pt" xml:space="preserve"><value>Texto de resultados: {0} pt</value></data>
   <data name="Altered" xml:space="preserve"><value>Alterado</value></data>
+  <data name="All sheets" xml:space="preserve"><value>Todas las hojas</value></data>
+  <data name="Back to per unit at the sale price" xml:space="preserve"><value>Volver a cobrar por unidad al precio de venta</value></data>
+  <data name="Charged per mL: {0} each mL." xml:space="preserve"><value>Se cobra por mL: {0} cada mL.</value></data>
+  <data name="Charged per unit: {0} each." xml:space="preserve"><value>Se cobra por unidad: {0} cada una.</value></data>
+  <data name="Close the sheet? It takes no more uses, and what is left in open containers counts as discarded." xml:space="preserve"><value>¿Cerrar la hoja? No admite más usos, y lo que quede en envases abiertos se registra como descartado.</value></data>
+  <data name="Consumption sheet" xml:space="preserve"><value>Hoja de consumo</value></data>
+  <data name="Consumption summary" xml:space="preserve"><value>Resumen de consumo</value></data>
+  <data name="Controlled" xml:space="preserve"><value>Controlado</value></data>
+  <data name="Delete sheet" xml:space="preserve"><value>Eliminar hoja</value></data>
+  <data name="Delete this sheet and everything recorded on it? This can't be undone." xml:space="preserve"><value>¿Eliminar esta hoja y todo lo registrado en ella? No se puede deshacer.</value></data>
+  <data name="Discard" xml:space="preserve"><value>Descartar</value></data>
+  <data name="Discard rest" xml:space="preserve"><value>Descartar resto</value></data>
+  <data name="Discharge" xml:space="preserve"><value>Dar de alta</value></data>
+  <data name="Discharged {0}" xml:space="preserve"><value>Alta {0}</value></data>
+  <data name="E.g. hospitalised, box 3" xml:space="preserve"><value>Ej. hospitalizado, box 3</value></data>
+  <data name="E.g. infusion, single dose" xml:space="preserve"><value>Ej. infusión, dosis única</value></data>
+  <data name="Each container started on a patient is charged whole at the sale price; the rest stays for that patient (e.g. a 10 mL fentanyl ampoule)." xml:space="preserve"><value>Cada envase que se empieza en un paciente se cobra completo al precio de venta; lo que sobra queda para ese paciente (ej. ampolla de fentanilo de 10 mL).</value></data>
+  <data name="Every item is charged per unit at its sale price." xml:space="preserve"><value>Todos los insumos se cobran por unidad a su precio de venta.</value></data>
+  <data name="How supplies are charged" xml:space="preserve"><value>Cómo se cobran los insumos</value></data>
+  <data name="New sheet" xml:space="preserve"><value>Nueva hoja</value></data>
+  <data name="No open sheets." xml:space="preserve"><value>No hay hojas abiertas.</value></data>
+  <data name="Note" xml:space="preserve"><value>Nota</value></data>
+  <data name="Note (optional)" xml:space="preserve"><value>Nota (opcional)</value></data>
+  <data name="Notes (optional)" xml:space="preserve"><value>Notas (opcional)</value></data>
+  <data name="Nothing recorded yet." xml:space="preserve"><value>Aún no hay nada registrado.</value></data>
+  <data name="On the patient consumption sheets. Items not listed are charged per unit at their sale price." xml:space="preserve"><value>En las hojas de gasto por paciente. Los insumos que no estén en la lista se cobran por unidad a su precio de venta.</value></data>
+  <data name="Open sheet" xml:space="preserve"><value>Abrir hoja</value></data>
+  <data name="Opened" xml:space="preserve"><value>Ingreso</value></data>
+  <data name="Opened {0}" xml:space="preserve"><value>Ingreso {0}</value></data>
+  <data name="Owner's name and last name" xml:space="preserve"><value>Nombre y apellido del tutor</value></data>
+  <data name="Patient consumption" xml:space="preserve"><value>Gasto por paciente</value></data>
+  <data name="Patient typed in" xml:space="preserve"><value>Paciente escrito a mano</value></data>
+  <data name="Price per mL" xml:space="preserve"><value>Precio por mL</value></data>
+  <data name="Print summary" xml:space="preserve"><value>Imprimir resumen</value></data>
+  <data name="Printed on {0}." xml:space="preserve"><value>Impreso el {0}.</value></data>
+  <data name="Record a use" xml:space="preserve"><value>Registrar un uso</value></data>
+  <data name="Recorded by" xml:space="preserve"><value>Registrado por</value></data>
+  <data name="Remove (recorded by mistake)" xml:space="preserve"><value>Quitar (registrado por error)</value></data>
+  <data name="Remove use" xml:space="preserve"><value>Quitar uso</value></data>
+  <data name="Remove {0} {1} of {2}, recorded {3}?" xml:space="preserve"><value>¿Quitar {0} {1} de {2}, registrado el {3}?</value></data>
+  <data name="Reopen" xml:space="preserve"><value>Reabrir</value></data>
+  <data name="Sale price: {0}" xml:space="preserve"><value>Precio de venta: {0}</value></data>
+  <data name="Saved: {0}." xml:space="preserve"><value>Guardado: {0}.</value></data>
+  <data name="Sheets" xml:space="preserve"><value>Hojas</value></data>
+  <data name="Show discharged in the last {0} days" xml:space="preserve"><value>Mostrar altas de los últimos {0} días</value></data>
+  <data name="Supplies used on each patient during a stay, added up for the charge at discharge." xml:space="preserve"><value>Insumos usados en cada paciente durante su estadía, sumados para el cobro al alta.</value></data>
+  <data name="The mL given are charged at the price per mL (e.g. diazepam from a vial shared by several patients)." xml:space="preserve"><value>Se cobran los mL administrados al precio por mL (ej. diazepam de un frasco que se usa en varios pacientes).</value></data>
+  <data name="The sheet was not found." xml:space="preserve"><value>No se encontró la hoja.</value></data>
+  <data name="Throw away the {0} mL left of {1}? The next use starts a new container." xml:space="preserve"><value>¿Descartar los {0} mL que quedan de {1}? El próximo uso empieza un envase nuevo.</value></data>
+  <data name="Throw away what is left; the next use starts a new container." xml:space="preserve"><value>Descarta lo que queda; el próximo uso empieza un envase nuevo.</value></data>
+  <data name="To charge" xml:space="preserve"><value>A cobrar</value></data>
+  <data name="Type the mL given. Each {0} mL container started is charged whole ({1})." xml:space="preserve"><value>Escribe los mL administrados. Cada envase de {0} mL que se empieza se cobra completo ({1}).</value></data>
+  <data name="Used" xml:space="preserve"><value>Usado</value></data>
+  <data name="Uses" xml:space="preserve"><value>Usos</value></data>
+  <data name="Uses recorded" xml:space="preserve"><value>Usos registrados</value></data>
+  <data name="Whole units at the sale price (syringes, catheters...)." xml:space="preserve"><value>Unidades completas al precio de venta (jeringas, catéteres...).</value></data>
+  <data name="discarded" xml:space="preserve"><value>descartado</value></data>
+  <data name="mL per container" xml:space="preserve"><value>mL por envase</value></data>
+  <data name="u." xml:space="preserve"><value>u.</value></data>
+  <data name="{0} / container" xml:space="preserve"><value>{0} / envase</value></data>
+  <data name="{0} / mL" xml:space="preserve"><value>{0} / mL</value></data>
+  <data name="{0} / u." xml:space="preserve"><value>{0} / u.</value></data>
+  <data name="{0} mL discarded" xml:space="preserve"><value>{0} mL descartados</value></data>
+  <data name="{0} mL left in the open one" xml:space="preserve"><value>Quedan {0} mL en el envase abierto</value></data>
+  <data name="Per unit" xml:space="preserve"><value>Por unidad</value></data>
+  <data name="Per mL used" xml:space="preserve"><value>Por mL usado</value></data>
+  <data name="Whole container" xml:space="preserve"><value>Envase completo</value></data>
+  <data name="Charged as" xml:space="preserve"><value>Se cobra</value></data>
+  <data name="1 container of {0} mL" xml:space="preserve"><value>1 envase de {0} mL</value></data>
+  <data name="{0} containers of {1} mL" xml:space="preserve"><value>{0} envases de {1} mL</value></data>
 </root>

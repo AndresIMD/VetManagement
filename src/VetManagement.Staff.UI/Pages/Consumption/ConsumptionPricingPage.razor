@@ -1,0 +1,166 @@
+@page "/consumption/pricing"
+@using VetManagement.Contracts.Consumption
+@inject ConsumptionApiService Api
+@inject ItemsApiService ItemsApi
+@inject ISnackbar Snackbar
+@attribute [Authorize(Policy = "Consumption.Manage")]
+
+<PageTitle>@L["How supplies are charged"]</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
+    <PageHeader Title="@L["How supplies are charged"]" Icon="@Icons.Material.Filled.PriceChange"
+                Subtitle="@L["On the patient consumption sheets. Items not listed are charged per unit at their sale price."]" />
+
+    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" Href="consumption" Class="mb-3">@L["All sheets"]</MudButton>
+
+    @if (_error is not null)
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-3" ShowCloseIcon="true" CloseIconClicked="() => _error = null">@_error</MudAlert>
+    }
+
+    <MudPaper Class="pa-4 mb-3" Elevation="1">
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="4">
+                <MudAutocomplete T="InventoryItemDTO" @bind-Value="_item" Label="@L["Drug or material"]" SearchFunc="SearchAsync"
+                                 ToStringFunc="@(i => i?.Name)" DebounceInterval="300" MinCharacters="2" Clearable="true"
+                                 HelperText="@(_item is null ? null : L["Sale price: {0}", Money.Clp(_item.SellPrice)])" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudSelect T="ConsumptionCharge" @bind-Value="_charge" Label="@L["Charged as"]">
+                    @foreach (var charge in Enum.GetValues<ConsumptionCharge>())
+                    {
+                        <MudSelectItem Value="charge">@charge.ToText()</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="6" sm="3" md="2">
+                @if (_charge == ConsumptionCharge.Container)
+                {
+                    <MudNumericField T="decimal?" @bind-Value="_containerMl" Label="@L["mL per container"]" Min="0.01m" HideSpinButtons="true" Culture="CultureInfo.CurrentCulture" Immediate="true"
+                                     Adornment="Adornment.End" AdornmentText="mL" />
+                }
+                else if (_charge == ConsumptionCharge.PerMl)
+                {
+                    <MudNumericField T="int?" @bind-Value="_pricePerMl" Label="@L["Price per mL"]" Min="0" HideSpinButtons="true" Immediate="true" />
+                }
+            </MudItem>
+            <MudItem xs="6" sm="3" md="2" Class="d-flex align-center">
+                <MudCheckBox T="bool" @bind-Value="_controlled" Label="@L["Controlled"]" Color="Color.Warning" />
+            </MudItem>
+            <MudItem xs="12" md="1" Class="d-flex align-center">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Disabled="@(_item is null || _busy)" OnClick="SaveAsync">@L["Save"]</MudButton>
+            </MudItem>
+            <MudItem xs="12">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">@ChargeHelp</MudText>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudPaper Class="pa-4" Elevation="1">
+        @if (_pricings is null)
+        {
+            <MudProgressLinear Indeterminate="true" />
+        }
+        else
+        {
+            <MudTable Items="_pricings" Dense="true" Hover="true" Elevation="0">
+                <HeaderContent>
+                    <MudTh>@L["Drug or material"]</MudTh>
+                    <MudTh>@L["Charged as"]</MudTh>
+                    <MudTh Style="text-align:right">@L["Price"]</MudTh>
+                    <MudTh>@L["Controlled"]</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.ItemName</MudTd>
+                    <MudTd>
+                        @context.Charge.ToText()
+                        @if (context.Charge == ConsumptionCharge.Container)
+                        {
+                            <span> (@context.ContainerMl?.ToString("0.##") mL)</span>
+                        }
+                    </MudTd>
+                    <MudTd Style="text-align:right">
+                        @(context.Charge == ConsumptionCharge.PerMl ? L["{0} / mL", Money.Clp(context.PricePerMl ?? 0)].Value
+                          : context.Charge == ConsumptionCharge.Container ? L["{0} / container", Money.Clp(context.SellPrice)].Value
+                          : L["{0} / u.", Money.Clp(context.SellPrice)].Value)
+                    </MudTd>
+                    <MudTd>
+                        @if (context.Controlled)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined">@L["Controlled"]</MudChip>
+                        }
+                    </MudTd>
+                    <MudTd Style="text-align:right; white-space:nowrap">
+                        <MudTooltip Text="@L["Edit"]">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="() => Edit(context)" />
+                        </MudTooltip>
+                        <MudTooltip Text="@L["Back to per unit at the sale price"]">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => DeleteAsync(context)" />
+                        </MudTooltip>
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Color="Color.Secondary">@L["Every item is charged per unit at its sale price."]</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private List<ConsumptionPricingDto>? _pricings;
+    private InventoryItemDTO? _item;
+    private ConsumptionCharge _charge = ConsumptionCharge.PerMl;
+    private decimal? _containerMl;
+    private int? _pricePerMl;
+    private bool _controlled;
+    private bool _busy;
+    private string? _error;
+
+    private string ChargeHelp => _charge switch
+    {
+        ConsumptionCharge.PerMl => L["The mL given are charged at the price per mL (e.g. diazepam from a vial shared by several patients)."],
+        ConsumptionCharge.Container => L["Each container started on a patient is charged whole at the sale price; the rest stays for that patient (e.g. a 10 mL fentanyl ampoule)."],
+        _ => L["Whole units at the sale price (syringes, catheters...)."]
+    };
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync() => _pricings = await Api.GetPricingsAsync();
+
+    private async Task<IEnumerable<InventoryItemDTO>> SearchAsync(string text, CancellationToken ct)
+        => (await ItemsApi.GetItemsPagedAsync(text, ItemType.None, 0, 15, ct))?.Items ?? [];
+
+    private void Edit(ConsumptionPricingDto pricing)
+    {
+        _item = new InventoryItemDTO { Id = pricing.ItemId, Name = pricing.ItemName, SellPrice = pricing.SellPrice };
+        (_charge, _containerMl, _pricePerMl, _controlled) = (pricing.Charge, pricing.ContainerMl, pricing.PricePerMl, pricing.Controlled);
+    }
+
+    private async Task SaveAsync()
+    {
+        _busy = true;
+        var result = await Api.SetPricingAsync(new ConsumptionPricingRequest
+        {
+            ItemId = _item!.Id, Charge = _charge, ContainerMl = _containerMl, PricePerMl = _pricePerMl, Controlled = _controlled
+        });
+        _busy = false;
+        if (!result.Ok)
+        {
+            _error = result.Error;
+            return;
+        }
+        _error = null;
+        Snackbar.Add(L["Saved: {0}.", _item.Name], Severity.Success);
+        (_item, _containerMl, _pricePerMl, _controlled) = (null, null, null, false);
+        await LoadAsync();
+    }
+
+    private async Task DeleteAsync(ConsumptionPricingDto pricing)
+    {
+        var result = await Api.DeletePricingAsync(pricing.ItemId);
+        _error = result.Ok ? null : result.Error;
+        await LoadAsync();
+    }
+}

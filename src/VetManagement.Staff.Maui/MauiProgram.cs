@@ -115,6 +115,9 @@ public static class MauiProgram
         builder.Services.AddHttpClient<ExternalLabsApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
             .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
 
+        builder.Services.AddHttpClient<ConsumptionApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
+            .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
+
         builder.Services.AddHttpClient<MedicalVisitApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
             .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
 

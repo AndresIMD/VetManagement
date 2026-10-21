@@ -44,6 +44,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<VetManagement.Domain.Billing.SaleLine> SaleLines { get; set; }
     public DbSet<VetManagement.Domain.Billing.SalePayment> SalePayments { get; set; }
     public DbSet<VetManagement.Domain.Billing.CashClose> CashCloses { get; set; }
+    public DbSet<VetManagement.Domain.Consumption.ConsumptionSheet> ConsumptionSheets { get; set; }
+    public DbSet<VetManagement.Domain.Consumption.ConsumptionEntry> ConsumptionEntries { get; set; }
+    public DbSet<VetManagement.Domain.Consumption.ConsumptionPricing> ConsumptionPricings { get; set; }
 
     private static readonly JsonSerializerOptions _jsonOptions = new();
     private static string SerializeDict(Dictionary<string, string>? v)
@@ -201,6 +204,36 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             e.Property(m => m.Brand).HasMaxLength(100);
             e.Property(m => m.Model).HasMaxLength(100);
             e.HasIndex(m => new { m.Brand, m.Model }).IsUnique();
+        });
+
+        // Consumption sheets: a registered pet may be deleted later, the sheet keeps the name it printed with.
+        builder.Entity<VetManagement.Domain.Consumption.ConsumptionSheet>(e =>
+        {
+            e.Property(s => s.PatientName).HasMaxLength(100);
+            e.Property(s => s.OwnerName).HasMaxLength(200);
+            e.Property(s => s.Notes).HasMaxLength(500);
+            e.Property(s => s.OpenedBy).HasMaxLength(100);
+            e.Property(s => s.ClosedBy).HasMaxLength(100);
+            e.Ignore(s => s.IsClosed);
+            e.HasOne<Pet>().WithMany().HasForeignKey(s => s.PetId).OnDelete(DeleteBehavior.SetNull);
+            e.HasMany(s => s.Entries).WithOne().HasForeignKey(x => x.SheetId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(s => s.ClosedAtUtc);
+        });
+        builder.Entity<VetManagement.Domain.Consumption.ConsumptionEntry>(e =>
+        {
+            e.Property(x => x.ItemName).HasMaxLength(200);
+            e.Property(x => x.Notes).HasMaxLength(200);
+            e.Property(x => x.CreatedBy).HasMaxLength(100);
+            e.Property(x => x.Quantity).HasPrecision(10, 2);
+            e.Property(x => x.ContainerMl).HasPrecision(10, 2);
+            e.HasIndex(x => x.ItemId);
+        });
+        builder.Entity<VetManagement.Domain.Consumption.ConsumptionPricing>(e =>
+        {
+            e.Property(p => p.ContainerMl).HasPrecision(10, 2);
+            e.Property(p => p.UpdatedBy).HasMaxLength(100);
+            e.HasOne<Item>().WithMany().HasForeignKey(p => p.ItemId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(p => p.ItemId).IsUnique();
         });
 
         // Map Attributes (Dictionary<string,string>) as JSON with a value comparer

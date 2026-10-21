@@ -67,6 +67,12 @@ public class UnitOfWork(AppDbContext context) : IUnitOfWork
 
     public IRepository<VetManagement.Domain.Configuration.ClinicImage> ClinicImages => _clinicImages ??= new Repository<VetManagement.Domain.Configuration.ClinicImage>(context);
 
+    private IConsumptionSheetRepository? _consumptionSheets;
+    public IConsumptionSheetRepository ConsumptionSheets => _consumptionSheets ??= new ConsumptionSheetRepository(context);
+
+    private IRepository<VetManagement.Domain.Consumption.ConsumptionPricing>? _consumptionPricings;
+    public IRepository<VetManagement.Domain.Consumption.ConsumptionPricing> ConsumptionPricings => _consumptionPricings ??= new Repository<VetManagement.Domain.Consumption.ConsumptionPricing>(context);
+
     public async Task<int> SaveChangesAsync()
     {
         try
