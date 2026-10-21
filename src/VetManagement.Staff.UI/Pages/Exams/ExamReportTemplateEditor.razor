@@ -59,7 +59,7 @@
                                 </MudSelect>
                             </MudItem>
                             <MudItem xs="6" sm="3">
-                                <MudAutocomplete T="string" Label="@L["Unit"]" @bind-Value="p.Unit" SearchFunc="SearchUnitsAsync"
+                                <MudAutocomplete T="string" Label="@L["Unit"]" @bind-Value="p.Unit" SearchFunc="SearchUnitsAsync" MaxItems="null"
                                                  CoerceValue="true" CoerceText="false" Clearable="true" Placeholder="ng/mL" />
                             </MudItem>
                             <MudItem xs="12" sm="1" Class="d-flex align-center justify-end">
@@ -399,18 +399,19 @@
         _background = await ReportsApi.GetImageDataUrlAsync(ClinicImageKind.ReportBackground);
     }
 
-    /// <summary>Units offered while typing; any other unit can be written too.</summary>
+    /// <summary>Units offered while typing, the most used first; any other unit can be written too.</summary>
     private static readonly string[] CommonUnits =
     [
-        "ng/mL", "ng/dL", "pg/mL", "µg/dL", "µg/mL", "mg/dL", "mg/L", "g/dL", "g/L", "mmol/L", "µmol/L", "nmol/L", "pmol/L",
-        "mEq/L", "U/L", "UI/L", "%", "fL", "pg", "K/µL", "M/µL", "x10³/µL", "x10⁶/µL", "mmHg", "mOsm/kg", "Ery/µL", "seg", "min"
+        "mg/dL", "g/dL", "mmol/L", "mEq/L", "mmHg", "%", "U/L", "UI/L", "nmol/L", "µmol/L", "pmol/L", "ng/mL", "ng/dL",
+        "pg/mL", "µg/dL", "µg/mL", "mg/L", "g/L", "fL", "pg", "K/µL", "M/µL", "x10³/µL", "x10⁶/µL", "mOsm/kg", "Ery/µL", "seg", "min"
     ];
 
-    /// <summary>Common units plus the ones this clinic already uses in other templates.</summary>
+    /// <summary>The units this clinic already uses in its templates (most used first), then the common ones; all of them listed.</summary>
     private Task<IEnumerable<string>> SearchUnitsAsync(string? text, CancellationToken _)
     {
-        var used = _settings!.Templates.SelectMany(t => t.Parameters).Select(p => p.Unit).OfType<string>().Where(u => u.Length > 0);
-        var all = CommonUnits.Concat(used).Distinct();
+        var used = _settings!.Templates.SelectMany(t => t.Parameters).Select(p => p.Unit?.Trim()).OfType<string>().Where(u => u.Length > 0)
+            .GroupBy(u => u).OrderByDescending(g => g.Count()).Select(g => g.Key);
+        var all = used.Concat(CommonUnits).Distinct().ToList();
         return Task.FromResult(string.IsNullOrWhiteSpace(text) ? all : all.Where(u => u.Contains(text.Trim(), StringComparison.OrdinalIgnoreCase)));
     }
 
