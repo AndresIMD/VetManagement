@@ -305,8 +305,8 @@ builder.Services.AddRateLimiter(options =>
 
         var userIdentifier = context.User?.Identity?.Name ?? context.Connection.RemoteIpAddress?.ToString() ?? "anonymous";
 
-        // More permissive limits in development
-        var permitLimit = builder.Environment.IsDevelopment() ? 1000 : 100;
+        // More permissive limits in development; RateLimits:UserPerMinute tunes the others (default 100).
+        var permitLimit = builder.Environment.IsDevelopment() ? 1000 : builder.Configuration.GetValue("RateLimits:UserPerMinute", 100);
         var window = builder.Environment.IsDevelopment() ? TimeSpan.FromMinutes(5) : TimeSpan.FromMinutes(1);
 
         return System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(

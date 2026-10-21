@@ -54,6 +54,8 @@ public class CustomWebAppFactory : WebApplicationFactory<Program>
         // Tests book many times per minute from one "IP"; the default public limit would return 429.
         builder.UseSetting("RateLimits:PublicWritePerMinute", "10000");
         builder.UseSetting("RateLimits:PublicReadPerMinute", "10000");
+        // Every client of a test class signs in as the same user; a busy class goes past the per-user limit.
+        builder.UseSetting("RateLimits:UserPerMinute", "10000");
 
         builder.ConfigureServices(services =>
         {

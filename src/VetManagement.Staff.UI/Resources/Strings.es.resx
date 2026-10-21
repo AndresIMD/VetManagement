@@ -1254,4 +1254,10 @@
   <data name="Charged as" xml:space="preserve"><value>Se cobra</value></data>
   <data name="1 container of {0} mL" xml:space="preserve"><value>1 envase de {0} mL</value></data>
   <data name="{0} containers of {1} mL" xml:space="preserve"><value>{0} envases de {1} mL</value></data>
+  <data name="Section title" xml:space="preserve"><value>Título de sección</value></data>
+  <data name="E.g. OXIMETRY VALUES" xml:space="preserve"><value>Ej. VALORES DE OXIMETRÍA</value></data>
+  <data name="Move down" xml:space="preserve"><value>Bajar</value></data>
+  <data name="Remove section" xml:space="preserve"><value>Quitar sección</value></data>
+  <data name="Printed as a band over the parameters below it, up to the next section; left out when none of them has a result." xml:space="preserve"><value>Se imprime como una franja sobre los parámetros que siguen, hasta la próxima sección; no se imprime si ninguno tiene resultado.</value></data>
+  <data name="Add section" xml:space="preserve"><value>Agregar sección</value></data>
 </root>

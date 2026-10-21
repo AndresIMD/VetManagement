@@ -19,6 +19,7 @@ Environment variable names use `__` for sections, e.g. `Payments__WebPayPlus__Ap
 | `Payments:WebPayPlus:CommerceCode`, `ApiKeySecret` | **ApiKeySecret is secret.** Issued by Transbank to the clinic. |
 | `Smtp:Host`, `Port`, `User`, `Pass`, `From`, `EnableSsl` | **Pass is secret.** Client emails (confirmation, reminders, changes). |
 | `RateLimits:PublicReadPerMinute`, `PublicWritePerMinute` | Public portal limits per IP (defaults 120 / 10). |
+| `RateLimits:UserPerMinute` | Requests per signed-in user per minute (default 100; development 1000 per 5 minutes). |
 | `SeedAdmin:*` | First admin user; disable after first start. **Password is secret.** |
 | `Security:*` | HTTPS redirection / HSTS (on by default). |
 | `Proxy:ForwardLimit` | Number of proxies in front of the API (cloud front ends, CDN). Client IPs (rate limits) and the scheme (HTTPS redirect) are then read from `X-Forwarded-For` / `-Proto`. Azure App Service = `1`; App Service behind Cloudflare's proxy (orange cloud) = `2`. Unset on a server in the clinic's own network. Too low: the whole clinic shares one login limit; too high: a client can fake its IP. |

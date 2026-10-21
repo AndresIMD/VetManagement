@@ -48,6 +48,9 @@ Asked in the form (per template): the lot number, so the form only shows the fie
   results on the last page. It is for the reader; the automatic interpretation still comes from the rules, since a
   table row with "or" is two rules. A report keeps a copy, like the rest of the template.
 - Parameter codes are generated from the first name and hidden; renaming a parameter keeps its code.
+- **Section titles** (`Kind: Section`) group the parameters after them, up to the next title; a report prints a title
+  as a band above its first result, and leaves it out when none of its parameters has a value. Parameters and titles
+  are moved up and down in the editor, which is also how a parameter changes section.
 
 ## Snapshots
 

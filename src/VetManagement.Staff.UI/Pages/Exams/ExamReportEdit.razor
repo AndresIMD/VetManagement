@@ -131,6 +131,14 @@
                     @foreach (var parameter in template.Parameters)
                     {
                         var current = parameter;
+                        if (current.IsSection)
+                        {
+                            <MudItem xs="12" Class="pb-0">
+                                <MudText Typo="Typo.subtitle2" Color="Color.Primary" Style="text-transform:uppercase">@current.Name</MudText>
+                                <MudDivider />
+                            </MudItem>
+                            continue;
+                        }
                         var evaluation = current.Evaluate(Value(current.Code), Species);
                         <MudItem xs="12" sm="5">
                             @if (current.Options.Count > 0)

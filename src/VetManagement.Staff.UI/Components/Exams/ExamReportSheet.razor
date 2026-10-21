@@ -35,6 +35,9 @@
         .xr-table th.xr-previous { white-space: nowrap; }
         .xr-qual-row { display: flex; align-items: center; gap: 4mm; padding: 2mm 1.5mm; border-bottom: 0.2mm solid #eee; }
         .xr-qual-name { flex: 1; font-weight: 600; }
+        /* Section titles over the parameters that follow them, in the patient bar's colour. */
+        .xr-section td, .xr-qual-section { color: #fff; font-weight: 700; text-align: center; text-transform: uppercase; letter-spacing: .4px; padding: 1.4mm 1.5mm; border-bottom: 0; }
+        .xr-qual-section { margin-top: 2mm; }
         .xr-qual-previous { font-size: .86em; }
         .xr-pill { min-width: 34mm; padding: 1.2mm 4mm; border: 0.5mm solid; border-radius: 3mm; text-align: center; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
         .xr-gauge { display: flex; align-items: center; height: 4mm; margin-top: 0.8mm; max-width: 55mm; }
@@ -132,6 +135,11 @@
                             <div>
                                 @foreach (var line in rows)
                                 {
+                                    @if (line.Kind == ReportParameterKind.Section)
+                                    {
+                                        <div class="xr-qual-section" style="background:@Settings.HeaderColor">@line.Name</div>
+                                        continue;
+                                    }
                                     <div class="xr-qual-row">
                                         <span class="xr-qual-name">@line.Name</span>
                                         @if (HasPrevious && !string.IsNullOrEmpty(line.PreviousValue))
@@ -168,6 +176,11 @@
                                 <tbody>
                                     @foreach (var line in rows)
                                     {
+                                        @if (line.Kind == ReportParameterKind.Section)
+                                        {
+                                            <tr class="xr-section"><td colspan="@ColumnWidths.Length" style="background:@Settings.HeaderColor">@line.Name</td></tr>
+                                            continue;
+                                        }
                                         <tr>
                                             <td>@line.Name</td>
                                             <td class="@(line.Abnormal ? "xr-flag" : null)">@line.Value @Mark(line)</td>
@@ -315,7 +328,10 @@
     };
 
     /// <summary>Only text results (Positivo / Negativo, blood types): each prints as a highlighted result, no table.</summary>
-    private bool Qualitative => Report.Results.Count > 0 && Report.Results.All(r => r.Kind == ReportParameterKind.Text);
+    private bool Qualitative => Values.Any() && Values.All(r => r.Kind == ReportParameterKind.Text);
+
+    /// <summary>The results without the section titles.</summary>
+    private IEnumerable<ExamReportResultDto> Values => Report.Results.Where(r => r.Kind != ReportParameterKind.Section);
 
     /// <summary>Abnormal results in solid red; the others outlined in the clinic's result colour.</summary>
     private string PillStyle(ExamReportResultDto line) => line.Abnormal
@@ -451,8 +467,12 @@
             var room = pages.Count == 1 ? firstMm : nextMm;
             if (used + height > room && pages[^1].Count > 0)
             {
-                pages.Add([]);
-                used = 0;
+                // A section title never stays alone at the foot of a page: it moves on with its first parameter.
+                var title = pages[^1][^1].Kind == ReportParameterKind.Section && pages[^1].Count > 1 ? pages[^1][^1] : null;
+                if (title is not null)
+                    pages[^1].RemoveAt(pages[^1].Count - 1);
+                pages.Add(title is null ? [] : [title]);
+                used = title is null ? 0 : RowMm(title);
             }
             pages[^1].Add(line);
             used += height;
@@ -467,6 +487,8 @@
     private double RowMm(ExamReportResultDto line)
     {
         var widths = ColumnWidths.Select(w => ContentWidth * w / 100 - 3).ToArray();
+        if (line.Kind == ReportParameterKind.Section)
+            return ResultLines(line.Name, ContentWidth) * ResultLineMm + (Qualitative ? 5 : 3);
         if (Qualitative)
             return Math.Max(1, ResultLines(line.Name, ContentWidth - 80)) * ResultLineMm + 6;
         var reference = !HasReference ? 0 : (string.IsNullOrEmpty(line.Reference) ? 0 : ResultLines(line.Reference, widths[3])) + (HasBar(line) ? 1 : 0);

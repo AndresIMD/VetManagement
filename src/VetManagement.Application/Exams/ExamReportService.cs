@@ -207,7 +207,7 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
         if (input.ReceivedOn == default)
             return Invalid(Texts.T("The reception date is required."));
 
-        var unknown = input.Values.Keys.Where(code => template.FindParameter(code) is null).ToList();
+        var unknown = input.Values.Keys.Where(code => template.FindParameter(code) is null or { IsSection: true }).ToList();
         if (unknown.Count > 0)
             return Invalid(Texts.T("Unknown parameters: {0}.", string.Join(", ", unknown)));
         var values = input.Values.Where(v => !string.IsNullOrWhiteSpace(v.Value))
@@ -242,10 +242,7 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
                 Rows = template.Criteria.Rows.Select(r => new CriteriaRow { Cells = [.. r.Cells] }).ToList()
             }
             : null;
-        report.Results = template.Parameters
-            .Where(p => values.ContainsKey(p.Code))
-            .Select(p => p.ToResult(values[p.Code], species))
-            .ToList();
+        report.Results = template.ResultsFor(values, species);
         report.Interpretation = string.IsNullOrWhiteSpace(input.Interpretation)
             ? template.Interpret(report.Results)
             : input.Interpretation.Trim();
@@ -330,7 +327,7 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
                 .OrderByDescending(r => r.ReceivedOn).ThenByDescending(r => r.Id).FirstOrDefault()
             : null;
         report.PreviousReceivedOn = previous?.ReceivedOn;
-        foreach (var line in report.Results)
+        foreach (var line in report.Results.Where(r => r.Kind != ReportParameterKind.Section))
             line.PreviousValue = previous?.Results.FirstOrDefault(r => string.Equals(r.Code, line.Code, StringComparison.OrdinalIgnoreCase))?.Value;
     }
 

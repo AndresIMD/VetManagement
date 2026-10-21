@@ -45,28 +45,52 @@
                 @foreach (var parameter in _template.Parameters)
                 {
                     var p = parameter;
-                    <MudPaper Class="pa-4 mb-3" Elevation="1">
+                    var index = _template.Parameters.IndexOf(p);
+                    <MudPaper Class="@(p.IsSection ? "pa-3 mb-3" : "pa-4 mb-3")" Elevation="1"
+                              Style="@(p.IsSection ? "border-left: 4px solid var(--mud-palette-primary)" : null)">
                         <MudGrid Spacing="2">
-                            <MudItem xs="12" sm="5">
-                                <MudTextField Label="@L["Parameter"]" @bind-Value="p.Name" Placeholder="cPL" OnBlur="_ => FillCode(p)" />
+                            <MudItem xs="12" sm="@(p.IsSection ? 7 : 4)">
+                                <MudTextField Label="@(p.IsSection ? L["Section title"] : L["Parameter"])" @bind-Value="p.Name"
+                                              Placeholder="@(p.IsSection ? L["E.g. OXIMETRY VALUES"] : "cPL")" OnBlur="_ => FillCode(p)" />
                             </MudItem>
                             <MudItem xs="6" sm="3">
                                 <MudSelect T="ReportParameterKind" Label="@L["Type"]" @bind-Value="p.Kind">
                                     <MudSelectItem Value="ReportParameterKind.Number">@L["Number"]</MudSelectItem>
                                     <MudSelectItem Value="ReportParameterKind.Text">@L["Text"]</MudSelectItem>
+                                    <MudSelectItem Value="ReportParameterKind.Section">@L["Section title"]</MudSelectItem>
                                 </MudSelect>
                             </MudItem>
-                            <MudItem xs="6" sm="3">
-                                <MudAutocomplete T="string" Label="@L["Unit"]" @bind-Value="p.Unit" SearchFunc="SearchUnitsAsync" MaxItems="null"
-                                                 CoerceValue="true" CoerceText="false" Clearable="true" Placeholder="ng/mL" />
-                            </MudItem>
-                            <MudItem xs="12" sm="1" Class="d-flex align-center justify-end">
-                                <MudTooltip Text="@L["Remove parameter"]">
-                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => _template.Parameters.Remove(p)" />
+                            @if (!p.IsSection)
+                            {
+                                <MudItem xs="6" sm="3">
+                                    <MudAutocomplete T="string" Label="@L["Unit"]" @bind-Value="p.Unit" SearchFunc="SearchUnitsAsync" MaxItems="null"
+                                                     CoerceValue="true" CoerceText="false" Clearable="true" Placeholder="ng/mL" />
+                                </MudItem>
+                            }
+                            <MudItem xs="@(p.IsSection ? 6 : 12)" sm="2" Class="d-flex align-center justify-end">
+                                <MudTooltip Text="@L["Move up"]">
+                                    <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward" Size="Size.Small" Disabled="index == 0" OnClick="() => Move(p, -1)"
+                                                   aria-label="@L["Move up"]" />
+                                </MudTooltip>
+                                <MudTooltip Text="@L["Move down"]">
+                                    <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward" Size="Size.Small" Disabled="index == _template.Parameters.Count - 1"
+                                                   OnClick="() => Move(p, 1)" aria-label="@L["Move down"]" />
+                                </MudTooltip>
+                                <MudTooltip Text="@(p.IsSection ? L["Remove section"] : L["Remove parameter"])">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => _template.Parameters.Remove(p)"
+                                                   aria-label="@(p.IsSection ? L["Remove section"] : L["Remove parameter"])" />
                                 </MudTooltip>
                             </MudItem>
 
-                            @if (p.Kind == ReportParameterKind.Text)
+                            @if (p.IsSection)
+                            {
+                                <MudItem xs="12">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        @L["Printed as a band over the parameters below it, up to the next section; left out when none of them has a result."]
+                                    </MudText>
+                                </MudItem>
+                            }
+                            else if (p.Kind == ReportParameterKind.Text)
                             {
                                 <MudItem xs="12">
                                     <MudTextField T="string" Label="@L["Options (optional, separated by ;)"]" Placeholder="@L["DEA 1.1 Positive; DEA 1.1 Negative"]"
@@ -86,7 +110,7 @@
                                         </MudSelect>
                                     </MudItem>
                                 }
-                                @if (_template.Parameters.All(x => x.Kind == ReportParameterKind.Text) && p == _template.Parameters[0])
+                                @if (_template.Parameters.Where(x => !x.IsSection).All(x => x.Kind == ReportParameterKind.Text) && p == _template.Parameters.First(x => !x.IsSection))
                                 {
                                     <MudItem xs="12">
                                         <MudText Typo="Typo.caption" Color="Color.Secondary">
@@ -175,6 +199,8 @@
                                     <MudButton Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" Class="mt-1" OnClick="() => p.Bands.Add(new InterpretationBand())">@L["Add band"]</MudButton>
                                 </MudItem>
                             }
+                            @if (!p.IsSection)
+                            {
                             <MudItem xs="12" sm="5">
                                 @if (p.Kind == ReportParameterKind.Text && p.Options.Count > 0)
                                 {
@@ -202,9 +228,17 @@
                                     }
                                 </MudSelect>
                             </MudItem>
+                            }
                         </MudGrid>
                     </MudPaper>
                 }
+
+                @* Right under the list: the panels below appear as parameters are named, and would move the buttons under the pointer. *@
+                <MudStack Row="true" Spacing="2" Class="mb-3">
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="() => _template.Parameters.Add(NewParameter())">@L["Add parameter"]</MudButton>
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Title"
+                               OnClick="() => _template.Parameters.Add(new ReportParameter { Kind = ReportParameterKind.Section })">@L["Add section"]</MudButton>
+                </MudStack>
 
                 @if (NumberParameters.Count >= 2)
                 {
@@ -324,7 +358,6 @@
                 </MudPaper>
 
                 <MudStack Row="true" Spacing="2" Class="mb-8">
-                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="() => _template.Parameters.Add(NewParameter())">@L["Add parameter"]</MudButton>
                     <MudSpacer />
                     @if (_exists)
                     {
@@ -422,6 +455,17 @@
 
     private RuleCondition NewCondition() => new() { Code = NumberParameters.FirstOrDefault()?.Code ?? string.Empty };
 
+    /// <summary>Moves a parameter or section title one place up or down; that is also how a parameter changes section.</summary>
+    private void Move(ReportParameter parameter, int step)
+    {
+        var parameters = _template!.Parameters;
+        var index = parameters.IndexOf(parameter);
+        if (index + step < 0 || index + step >= parameters.Count)
+            return;
+        parameters.RemoveAt(index);
+        parameters.Insert(index + step, parameter);
+    }
+
     private void MoveUp(InterpretationRule rule)
     {
         var index = _template!.Rules.IndexOf(rule);
@@ -477,9 +521,10 @@
     {
         get
         {
-            var results = _template!.Parameters
-                .Select(p => p.ToResult(_samples.GetValueOrDefault(p) is { Length: > 0 } value ? value : "—", _sampleSpecies))
-                .ToList();
+            var values = _template!.Parameters.Where(p => !p.IsSection && !string.IsNullOrWhiteSpace(p.Code))
+                .GroupBy(p => p.Code, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => _samples.GetValueOrDefault(g.First()) is { Length: > 0 } value ? value : "—", StringComparer.OrdinalIgnoreCase);
+            var results = _template.ResultsFor(values, _sampleSpecies);
             var report = ExamReportSheet.PlaceholderReport(_template.Title, _method,
                 results.Select(r => new ExamReportResultDto
                 {
@@ -513,6 +558,8 @@
         {
             FillCode(p);
             p.Ranges.RemoveAll(r => r.Min is null && r.Max is null);
+            if (p.IsSection)
+                (p.Unit, p.Ranges, p.Bands, p.Options, p.AbnormalOptions, p.ShowBar) = (null, [], [], [], [], false);
         }
         _settings!.Templates.RemoveAll(t => t.ExamId == ExamId);
         _settings.Templates.Add(_template);

@@ -108,13 +108,18 @@ public enum PaperSize
     A4
 }
 
-/// <summary>What a report parameter holds: a measured number (evaluated against bands) or free text.</summary>
+/// <summary>
+/// What a report parameter holds: a measured number (evaluated against bands) or free text; or a section title that
+/// groups the parameters under it (e.g. "VALORES DE OXIMETRÍA").
+/// </summary>
 public enum ReportParameterKind
 {
     [DisplayString("Number")]
     Number,
     [DisplayString("Text")]
-    Text
+    Text,
+    [DisplayString("Section title")]
+    Section = 2
 }
 
 /// <summary>Images the clinic uploads for its printed documents.</summary>

@@ -107,6 +107,43 @@ public class ExamReportsApiTests : IClassFixture<CustomWebAppFactory>
     }
 
     [Fact]
+    public async Task SectionTitles_PrintAboveTheirOwnResults_AndOnlyWhenOneOfThemHasAValue()
+    {
+        var (petId, examId) = await AddPetAndExamAsync(Species.Dog);
+        static ReportParameter Section(string code, string name) => new() { Code = code, Name = name, Kind = ReportParameterKind.Section };
+        static ReportParameter Value(string code) => new() { Code = code, Name = code, Unit = "mmHg" };
+        await AddTemplateAsync(new ExamReportTemplate
+        {
+            ExamId = examId, Title = "PRUEBA GASES EN SANGRE",
+            Parameters = [Section("gas", "VALOR DE LA SANGRE Y EL GAS"), Value("ph"), Value("pco2"), Section("oxi", "VALORES DE OXIMETRÍA"), Value("hct"),
+                Section("met", "VALOR DE LOS METABOLITOS"), Value("lac")]
+        });
+
+        var report = await CreateAsync(_employee, new
+        {
+            PetId = petId, ExamId = examId, ReceivedOn = new DateOnly(2026, 10, 21),
+            Values = new Dictionary<string, string> { ["ph"] = "7.33", ["pco2"] = "38.8", ["lac"] = "1.22" }
+        });
+
+        report.Results.Select(r => (r.Kind, r.Name)).Should().Equal(
+            (ReportParameterKind.Section, "VALOR DE LA SANGRE Y EL GAS"), (ReportParameterKind.Number, "ph"), (ReportParameterKind.Number, "pco2"),
+            (ReportParameterKind.Section, "VALOR DE LOS METABOLITOS"), (ReportParameterKind.Number, "lac"));
+
+        var valueForATitle = await _employee.PostAsJsonAsync("/api/exam-reports", new
+        {
+            PetId = petId, ExamId = examId, ReceivedOn = new DateOnly(2026, 10, 21), Values = new Dictionary<string, string> { ["oxi"] = "1" }
+        });
+        valueForATitle.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public void Template_WithOnlySectionTitles_HasNoParameters()
+        => new ExamReportTemplate
+        {
+            ExamId = 1, Title = "X", Parameters = [new ReportParameter { Code = "a", Name = "A", Kind = ReportParameterKind.Section }]
+        }.Validate().Should().ContainSingle().Which.Should().Contain("at least one parameter");
+
+    [Fact]
     public async Task WrittenInterpretation_ReplacesTheAutomaticOne_AndTemplateChangesDontAlterIssuedReports()
     {
         var (petId, examId) = await AddPetAndExamAsync(Species.Dog);

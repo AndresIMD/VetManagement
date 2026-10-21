@@ -154,6 +154,29 @@ public class ExamReportTemplate
     public ReportParameter? FindParameter(string code)
         => Parameters.FirstOrDefault(p => string.Equals(p.Code, code, StringComparison.OrdinalIgnoreCase));
 
+    /// <summary>
+    /// The printed lines for the values given, in the template's order. A section title prints above the first value of
+    /// its own (the parameters after it, up to the next title), and not at all when none of them has a value.
+    /// </summary>
+    public List<ExamReportResult> ResultsFor(IReadOnlyDictionary<string, string> values, Species species)
+    {
+        var results = new List<ExamReportResult>();
+        ReportParameter? section = null;
+        foreach (var parameter in Parameters)
+        {
+            if (parameter.IsSection)
+                section = parameter;
+            else if (values.TryGetValue(parameter.Code, out var value))
+            {
+                if (section is not null)
+                    results.Add(new ExamReportResult { Code = section.Code, Name = section.Name, Kind = ReportParameterKind.Section });
+                section = null;
+                results.Add(parameter.ToResult(value, species));
+            }
+        }
+        return results;
+    }
+
     /// <summary>The automatic interpretation: the first rule whose conditions all hold, otherwise the band labels.</summary>
     public string? Interpret(IReadOnlyList<ExamReportResult> results)
     {
@@ -168,7 +191,7 @@ public class ExamReportTemplate
         var name = string.IsNullOrWhiteSpace(Title) ? $"Exam {ExamId}" : Title;
         if (ExamId <= 0) errors.Add(Texts.T("Template '{0}': ExamId is required.", name));
         if (string.IsNullOrWhiteSpace(Title)) errors.Add(Texts.T("Template for exam {0}: Title is required.", ExamId));
-        if (Parameters.Count == 0) errors.Add(Texts.T("Template '{0}': add at least one parameter.", name));
+        if (Parameters.All(p => p.IsSection)) errors.Add(Texts.T("Template '{0}': add at least one parameter.", name));
         foreach (var code in Parameters.GroupBy(p => p.Code, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1).Select(g => g.Key))
             errors.Add(Texts.T("Template '{0}': duplicate parameter code '{1}'.", name, code));
         foreach (var p in Parameters)
@@ -261,6 +284,11 @@ public class ReportParameter
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public ReportParameterKind Kind { get; set; } = ReportParameterKind.Number;
+
+    /// <summary>A section title: only its name is used, printed above the parameters that follow it.</summary>
+    [JsonIgnore]
+    public bool IsSection => Kind == ReportParameterKind.Section;
+
     public string? Unit { get; set; }
     /// <summary>What the reference column shows: the normal range (default), a written text, or nothing.</summary>
     public ReferenceDisplay Reference { get; set; } = ReferenceDisplay.Range;
