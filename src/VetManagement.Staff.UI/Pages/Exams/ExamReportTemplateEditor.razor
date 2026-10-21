@@ -37,11 +37,9 @@
                         <MudCheckBox T="bool" @bind-Value="_template.Sections.DirectionArrows" Label="@L["↑ / ↓ arrows on values outside the normal range"]" />
                         <MudCheckBox T="bool" @bind-Value="_template.Sections.PreviousResult" Label="@L["Previous result column (the pet's last report of this exam, headed by its date)"]" />
                     </MudStack>
-                    <MudText Typo="Typo.subtitle2" Class="mt-3">@L["Ask in the report form"]</MudText>
+                    <HelpLabel Text="@L["Ask in the report form"]" Class="mt-3"
+                               Help="@L["The form only shows what this exam needs: patient, exam, reception date, referring vet, these fields and the parameters."]" />
                     <MudCheckBox T="bool" @bind-Value="_template.Sections.LotNumber" Label="@L["Lot number of the test kit or reagent (printed in the method bar)"]" />
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">
-                        @L["The form only shows what this exam needs: patient, exam, reception date, referring vet, these fields and the parameters."]
-                    </MudText>
                 </MudPaper>
 
                 @foreach (var parameter in _template.Parameters)
@@ -80,7 +78,7 @@
                                     <MudItem xs="12">
                                         <MudSelect T="string" Label="@L["Abnormal results (print in red)"]" MultiSelection="true" Clearable="true"
                                                    SelectedValues="p.AbnormalOptions" SelectedValuesChanged="v => p.AbnormalOptions = v.ToList()"
-                                                   HelperText="@L["E.g. 'Positivo' in a SNAP or PCR test. Leave empty when no value is abnormal (blood types)."]">
+                                                   HelperTextOnFocus="true" HelperText="@L["E.g. 'Positivo' in a SNAP or PCR test. Leave empty when no value is abnormal (blood types)."]">
                                             @foreach (var option in p.Options)
                                             {
                                                 <MudSelectItem Value="@option">@option</MudSelectItem>
@@ -118,10 +116,8 @@
                                 </MudItem>
 
                                 <MudItem xs="12">
-                                    <MudText Typo="Typo.subtitle2">@L["Normal range"]</MudText>
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        @L["Values outside it print in red (with ↑ or ↓ when the arrows are on). Leave it empty if the parameter has no range. A range for one species replaces the one for all."]
-                                    </MudText>
+                                    <HelpLabel Text="@L["Normal range"]"
+                                               Help="@L["Values outside it print in red (with ↑ or ↓ when the arrows are on). Leave it empty if the parameter has no range. A range for one species replaces the one for all."]" />
                                     @foreach (var range in p.Ranges)
                                     {
                                         var r = range;
@@ -148,10 +144,8 @@
                                 </MudItem>
 
                                 <MudItem xs="12">
-                                    <MudText Typo="Typo.subtitle2">@L["Interpretation (optional)"]</MudText>
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        @L["Name what a value means, e.g. ≤ 200 \"Normal\", 200 – 399.9 \"Zona gris\", ≥ 400 \"Consistente con pancreatitis\". Limits included; the first band that contains the value is used and its meaning becomes the automatic interpretation. Tick Abnormal on bands that are not normal results: a value there prints in red with *, even inside the normal range."]
-                                    </MudText>
+                                    <HelpLabel Text="@L["Interpretation (optional)"]"
+                                               Help="@L["Name what a value means, e.g. ≤ 200 \"Normal\", 200 – 399.9 \"Zona gris\", ≥ 400 \"Consistente con pancreatitis\". Limits included; the first band that contains the value is used and its meaning becomes the automatic interpretation. Tick Abnormal on bands that are not normal results: a value there prints in red with *, even inside the normal range."]" />
                                     @foreach (var band in p.Bands)
                                     {
                                         var b = band;
@@ -186,7 +180,7 @@
                                 {
                                     <MudSelect T="string" Label="@L["Try a value"]" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true"
                                                Value="@_samples.GetValueOrDefault(p)" ValueChanged="v => _samples[p] = v"
-                                               HelperText="@L["Not saved: shows the result in the preview."]">
+                                               HelperTextOnFocus="true" HelperText="@L["Not saved: shows the result in the preview."]">
                                         @foreach (var option in p.Options)
                                         {
                                             <MudSelectItem Value="@option">@option</MudSelectItem>
@@ -197,7 +191,7 @@
                                 {
                                     <MudTextField T="string" Label="@L["Try a value"]" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
                                                   Value="@_samples.GetValueOrDefault(p)" ValueChanged="v => _samples[p] = v"
-                                                  HelperText="@L["Not saved: shows the result in the preview."]" />
+                                                  HelperTextOnFocus="true" HelperText="@L["Not saved: shows the result in the preview."]" />
                                 }
                             </MudItem>
                             <MudItem xs="12" sm="3">
@@ -215,10 +209,8 @@
                 @if (NumberParameters.Count >= 2)
                 {
                     <MudPaper Class="pa-4 mb-3" Elevation="1">
-                        <MudText Typo="Typo.subtitle2">@L["Interpretation from several values (optional)"]</MudText>
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">
-                            @L["For exams read as a whole, e.g. cortisol at 0, 4 and 8 h. Rules are checked from the top; the first one whose conditions all hold gives the automatic interpretation. If none holds, the bands' meanings are used. A condition compares a value with a number, or with a percentage of another value (e.g. 4 h < 50 % of basal)."]
-                        </MudText>
+                        <HelpLabel Text="@L["Interpretation from several values (optional)"]"
+                                   Help="@L["For exams read as a whole, e.g. cortisol at 0, 4 and 8 h. Rules are checked from the top; the first one whose conditions all hold gives the automatic interpretation. If none holds, the bands' meanings are used. A condition compares a value with a number, or with a percentage of another value (e.g. 4 h < 50 % of basal)."]" />
                         @foreach (var rule in _template.Rules)
                         {
                             var rl = rule;
@@ -276,14 +268,14 @@
                 }
 
                 <MudPaper Class="pa-4 mb-3" Elevation="1">
-                    <MudCheckBox T="bool" Value="_template.Sections.CriteriaTable" ValueChanged="SetCriteriaTable"
-                                 Label="@L["Print a criteria table under the results (e.g. the manufacturer's interpretation table)"]" />
+                    <div class="d-flex align-center">
+                        <MudCheckBox T="bool" Value="_template.Sections.CriteriaTable" ValueChanged="SetCriteriaTable"
+                                     Label="@L["Print a criteria table under the results (e.g. the manufacturer's interpretation table)"]" />
+                        <HelpTip Text="@L["Printed as written, for the reader. The automatic interpretation still comes from the rules above. A line break inside a cell prints as a new line."]" />
+                    </div>
                     @if (_template.Sections.CriteriaTable)
                     {
                         var table = _template.Criteria;
-                        <MudText Typo="Typo.caption" Color="Color.Secondary">
-                            @L["Printed as written, for the reader. The automatic interpretation still comes from the rules above. A line break inside a cell prints as a new line."]
-                        </MudText>
                         <MudTextField Label="@L["Table title (optional)"]" @bind-Value="table.Title" MaxLength="200"
                                       Placeholder="@L["Low-dose dexamethasone suppression test"]" />
                         <div style="overflow-x:auto" class="mt-2">

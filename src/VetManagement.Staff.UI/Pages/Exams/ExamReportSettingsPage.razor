@@ -1,12 +1,15 @@
 @page "/exam-reports/settings"
+@using System.Text.Json
 @using VetManagement.Contracts.Exams
 @using VetManagement.Domain.Exams
 @inject ExamReportsApiService ReportsApi
 @inject ISnackbar Snackbar
 @inject IJSRuntime Js
+@inject IDialogService DialogService
 @attribute [Authorize(Policy = "Exams.Update")]
 
 <PageTitle>@L["Report Design"]</PageTitle>
+<NavigationLock OnBeforeInternalNavigation="ConfirmLeaveAsync" ConfirmExternalNavigation="@HasChanges" />
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mx-auto px-2 mt-8">
     <PageHeader Title="@L["Report Design"]"
@@ -43,7 +46,7 @@
                                 @if (_logo is not null)
                                 {
                                     <MudButton Size="Size.Small" Color="Color.Error"
-                                               OnClick="() => RemoveAsync(ClinicImageKind.ReportLogo)">@L["Remove"]</MudButton>
+                                               OnClick="() => RemoveImage(ClinicImageKind.ReportLogo)">@L["Remove"]</MudButton>
                                 }
                             </MudStack>
                             <MudCheckBox T="bool" @bind-Value="_settings.LogoKeepRatio" Label="@L["Keep the logo's proportions"]" Dense="true" />
@@ -70,7 +73,7 @@
                                 @if (_background is not null)
                                 {
                                     <MudButton Size="Size.Small" Color="Color.Error"
-                                               OnClick="() => RemoveAsync(ClinicImageKind.ReportBackground)">@L["Remove"]</MudButton>
+                                               OnClick="() => RemoveImage(ClinicImageKind.ReportBackground)">@L["Remove"]</MudButton>
                                 }
                             </MudStack>
                             <MudSelect T="BackgroundArea" Label="@L["Background covers"]" @bind-Value="_settings.BackgroundArea" Class="mt-2" Dense="true">
@@ -98,6 +101,10 @@
                                 @L["Background strength: {0}% (lower it to turn the image into a watermark)", (_settings.BackgroundOpacity * 100).ToString("0")]
                             </MudSlider>
                         </div>
+                        @if (_imageChanges.Count > 0)
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Warning">@L["The image changes are applied when you press Save."]</MudText>
+                        }
                         <MudAlert Severity="Severity.Info" Dense="true" NoIcon="true">
                             <b>@L["Recommended image specifications"]</b> @L["(up to 3 MB; PNG, JPEG or WebP):"]
                             <ul class="mt-1 mb-0">
@@ -176,7 +183,11 @@
                                                   HelperText="@L["Leave it empty if the note is already part of the footer."]" />
                                 </MudItem>
                             </MudGrid>
-                            <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-3">
+                            <MudStack Row="true" Justify="Justify.FlexEnd" AlignItems="AlignItems.Center" Class="mt-3">
+                                @if (HasChanges)
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Warning">@L["Unsaved changes"]</MudText>
+                                }
                                 <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_saving" OnClick="SaveAsync">
                                     @L["Save"]</MudButton>
                                 </MudStack>
@@ -204,15 +215,29 @@
     private string? _background;
     private string? _error;
     private bool _saving;
+    private string _savedSettings = string.Empty;
+
+    /// <summary>Images uploaded or removed on screen: they reach the server only on Save (no data = remove it).</summary>
+    private readonly Dictionary<ClinicImageKind, ImageChange> _imageChanges = [];
+    /// <summary>The images the server has, so removing one it doesn't have needs no call.</summary>
+    private readonly HashSet<ClinicImageKind> _storedImages = [];
+
+    private sealed record ImageChange(string? ContentType, byte[]? Data);
 
     private string BackgroundPixels => _settings?.Paper == PaperSize.A4 ? "2480 × 3508" : "2550 × 3300";
 
+    private bool HasChanges => _settings is not null && (_imageChanges.Count > 0 || Snapshot() != _savedSettings);
+
+    private string Snapshot() => JsonSerializer.Serialize(_settings);
 
     protected override async Task OnInitializedAsync()
     {
         (_settings, _version) = await ReportsApi.GetSettingsAsync();
+        _savedSettings = Snapshot();
         _logo = await ReportsApi.GetImageDataUrlAsync(ClinicImageKind.ReportLogo);
         _background = await ReportsApi.GetImageDataUrlAsync(ClinicImageKind.ReportBackground);
+        if (_logo is not null) _storedImages.Add(ClinicImageKind.ReportLogo);
+        if (_background is not null) _storedImages.Add(ClinicImageKind.ReportBackground);
     }
 
     private static List<string> Lines(string? text)
@@ -220,19 +245,42 @@
 
     private async Task BoldFooterAsync() => await Js.InvokeVoidAsync("appText.bold", "report-footer");
 
+    /// <summary>Saves the design, then the image changes; an image that fails stays pending to try again.</summary>
     private async Task SaveAsync()
     {
         _saving = true;
-        var result = await ReportsApi.SaveSettingsAsync(_settings!, _version);
-        _saving = false;
-        if (!result.Ok)
+        try
         {
-            _error = result.Error;
-            return;
+            var result = await ReportsApi.SaveSettingsAsync(_settings!, _version);
+            if (!result.Ok)
+            {
+                _error = result.Error;
+                return;
+            }
+            _error = null;
+            _version = result.Body?.GetProperty("version").GetInt32() ?? _version + 1;
+            _savedSettings = Snapshot();
+
+            foreach (var (kind, change) in _imageChanges.ToList())
+            {
+                var imageResult = change.Data is not null ? await ReportsApi.SetImageAsync(kind, change.ContentType!, change.Data)
+                    : _storedImages.Contains(kind) ? await ReportsApi.DeleteImageAsync(kind)
+                    : null;
+                if (imageResult is { Ok: false })
+                {
+                    _error = imageResult.Error;
+                    continue;
+                }
+                _imageChanges.Remove(kind);
+                if (change.Data is null) _storedImages.Remove(kind); else _storedImages.Add(kind);
+            }
+            if (_error is null)
+                Snackbar.Add(L["Report design saved."], Severity.Success);
         }
-        _error = null;
-        _version = result.Body?.GetProperty("version").GetInt32() ?? _version + 1;
-        Snackbar.Add(L["Report design saved."], Severity.Success);
+        finally
+        {
+            _saving = false;
+        }
     }
 
     private async Task UploadAsync(InputFileChangeEventArgs e, ClinicImageKind kind)
@@ -244,27 +292,37 @@
         }
         using var buffer = new MemoryStream();
         await e.File.OpenReadStream(MAX_IMAGE_BYTES).CopyToAsync(buffer);
-        var result = await ReportsApi.SetImageAsync(kind, e.File.ContentType, buffer.ToArray());
-        if (!result.Ok)
-        {
-            _error = result.Error;
-            return;
-        }
-        await ReloadImageAsync(kind);
-        Snackbar.Add(L["Image saved."], Severity.Success);
+        var data = buffer.ToArray();
+        _imageChanges[kind] = new ImageChange(e.File.ContentType, data);
+        ShowImage(kind, $"data:{e.File.ContentType};base64,{Convert.ToBase64String(data)}");
     }
 
-    private async Task RemoveAsync(ClinicImageKind kind)
+    private void RemoveImage(ClinicImageKind kind)
     {
-        var result = await ReportsApi.DeleteImageAsync(kind);
-        if (!result.Ok)
-            _error = result.Error;
-        await ReloadImageAsync(kind);
+        _imageChanges[kind] = new ImageChange(null, null);
+        ShowImage(kind, null);
     }
 
-    private async Task ReloadImageAsync(ClinicImageKind kind)
+    private void ShowImage(ClinicImageKind kind, string? url)
     {
-        var url = await ReportsApi.GetImageDataUrlAsync(kind);
         if (kind == ClinicImageKind.ReportLogo) _logo = url; else _background = url;
+    }
+
+    private async Task ConfirmLeaveAsync(LocationChangingContext context)
+    {
+        if (!HasChanges)
+            return;
+        var parameters = new DialogParameters<Components.Modals.Common.ConfirmModal>
+        {
+            { x => x.Title, L["Discard changes"].Value },
+            { x => x.Message, L["There are unsaved changes. Do you want to exit without saving?"].Value },
+            { x => x.ButtonConfirmText, L["Exit"].Value },
+            { x => x.ButtonCancelText, L["Keep editing"].Value },
+            { x => x.TitleIcon, Icons.Material.Filled.Warning },
+            { x => x.TitleColor, Color.Warning }
+        };
+        var dialog = await DialogService.ShowAsync<Components.Modals.Common.ConfirmModal>(null, parameters, new DialogOptions { MaxWidth = MaxWidth.Small });
+        if (await dialog.Result is not { Canceled: false })
+            context.PreventNavigation();
     }
 }

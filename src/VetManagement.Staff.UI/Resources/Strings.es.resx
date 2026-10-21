@@ -625,7 +625,6 @@
   <data name="Note under the footer" xml:space="preserve"><value>Nota bajo el pie</value></data>
   <data name="Report design saved." xml:space="preserve"><value>Diseño del informe guardado.</value></data>
   <data name="The image must be 3 MB or smaller." xml:space="preserve"><value>La imagen debe pesar 3 MB o menos.</value></data>
-  <data name="Image saved." xml:space="preserve"><value>Imagen guardada.</value></data>
   <data name="Title printed on the result bar" xml:space="preserve"><value>Título impreso en la barra de resultados</value></data>
   <data name="Print on this report" xml:space="preserve"><value>Imprimir en este informe</value></data>
   <data name="Patient and owner data" xml:space="preserve"><value>Datos del paciente y del dueño</value></data>
@@ -1159,4 +1158,6 @@
   <data name="Yellow tube" xml:space="preserve"><value>Tubo amarillo</value></data>
   <data name="Lavender tube" xml:space="preserve"><value>Tubo lila</value></data>
   <data name="When the first word is in capitals, the whole title prints in capitals." xml:space="preserve"><value>Si la primera palabra está en mayúsculas, todo el título se imprime en mayúsculas.</value></data>
+  <data name="Unsaved changes" xml:space="preserve"><value>Cambios sin guardar</value></data>
+  <data name="The image changes are applied when you press Save." xml:space="preserve"><value>Los cambios de imágenes se aplican al presionar Guardar.</value></data>
 </root>

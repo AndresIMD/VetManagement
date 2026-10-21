@@ -1,0 +1,12 @@
+@* A label with its explanation behind a (?) icon, e.g. "Normal range (?)". *@
+<div class="d-flex align-center @Class">
+    <MudText Typo="@Typo">@Text</MudText>
+    <HelpTip Text="@Help" />
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Text { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string Help { get; set; } = string.Empty;
+    [Parameter] public Typo Typo { get; set; } = Typo.subtitle2;
+    [Parameter] public string? Class { get; set; }
+}
