@@ -133,6 +133,18 @@
                                         }
                                     </MudSelect>
                                 </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudSlider T="double" @bind-Value="_settings.PatientFontPt" Min="ExamReportSettings.MinFontPt"
+                                               Max="ExamReportSettings.MaxFontPt" Step="0.5">
+                                        @L["Pet and owner data text: {0} pt", _settings.PatientFontPt.ToString("0.#")]
+                                    </MudSlider>
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudSlider T="double" @bind-Value="_settings.ResultsFontPt" Min="ExamReportSettings.MinFontPt"
+                                               Max="ExamReportSettings.MaxFontPt" Step="0.5">
+                                        @L["Results text: {0} pt", _settings.ResultsFontPt.ToString("0.#")]
+                                    </MudSlider>
+                                </MudItem>
                                 <MudItem xs="6" sm="3">
                                     <MudText Typo="Typo.caption">@L["Patient bar"]</MudText>
                                     <input type="color" @bind="_settings.HeaderColor"

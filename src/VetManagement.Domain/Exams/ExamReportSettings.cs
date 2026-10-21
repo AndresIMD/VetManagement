@@ -58,6 +58,16 @@ public class ExamReportSettings
     public static readonly string[] Fonts =
         ["Segoe UI", "Arial", "Calibri", "Verdana", "Tahoma", "Trebuchet MS", "Century Gothic", "Georgia", "Cambria", "Times New Roman"];
 
+    public const double DefaultFontPt = 10.5;
+    public const double MinFontPt = 8;
+    public const double MaxFontPt = 14;
+
+    /// <summary>Text size of the pet and owner data, in points.</summary>
+    public double PatientFontPt { get; set; } = DefaultFontPt;
+
+    /// <summary>Text size of the results (table, interpretation, criteria), in points; the smaller texts in it keep their proportion.</summary>
+    public double ResultsFontPt { get; set; } = DefaultFontPt;
+
     /// <summary>1 = background image as uploaded; lower values fade it into a watermark.</summary>
     public double BackgroundOpacity { get; set; } = 1;
 
@@ -98,6 +108,8 @@ public class ExamReportSettings
             errors.Add(Texts.T("Colours must be written as #RRGGBB."));
         if (!Fonts.Contains(FontFamily))
             errors.Add(Texts.T("FontFamily must be one of: {0}.", string.Join(", ", Fonts)));
+        if (PatientFontPt is < MinFontPt or > MaxFontPt || ResultsFontPt is < MinFontPt or > MaxFontPt)
+            errors.Add(Texts.T("Text sizes must be between {0} and {1} pt.", MinFontPt, MaxFontPt));
         if (HeaderLines.Count > 6 || ReportText.Lines(Footer).Length > MaxFooterLines)
             errors.Add(Texts.T("Use at most 6 header lines and {0} footer lines.", MaxFooterLines));
         if (Footer.Length > MaxFooterLength)

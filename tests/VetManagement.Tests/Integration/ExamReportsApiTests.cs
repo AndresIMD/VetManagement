@@ -448,6 +448,27 @@ public class ExamReportsApiTests : IClassFixture<CustomWebAppFactory>
         settings.Validate().Should().HaveCount(valid ? 0 : 1);
     }
 
+    [Theory]
+    [InlineData(10.5, 10.5, true)]
+    [InlineData(8, 14, true)]
+    [InlineData(7.5, 10.5, false)]
+    [InlineData(10.5, 14.5, false)]
+    public void TextSizes_OfPatientDataAndResults_StayReadable(double patientPt, double resultsPt, bool valid)
+    {
+        var settings = new ExamReportSettings { PatientFontPt = patientPt, ResultsFontPt = resultsPt };
+
+        settings.Validate().Should().HaveCount(valid ? 0 : 1);
+    }
+
+    [Fact]
+    public void Design_SavedBeforeTextSizes_PrintsAtTheUsualSize()
+    {
+        var settings = SettingsJson.Deserialize<ExamReportSettings>("""{ "fontFamily": "Arial" }""");
+
+        settings.PatientFontPt.Should().Be(ExamReportSettings.DefaultFontPt);
+        settings.ResultsFontPt.Should().Be(ExamReportSettings.DefaultFontPt);
+    }
+
     [Fact]
     public void FooterMarkup_KeepsGaps_AndPrintsDoubleAsterisksInBold()
     {

@@ -243,4 +243,5 @@
   <data name="{0} catalog exams run on this machine. Move them to another machine first." xml:space="preserve"><value>{0} exámenes del catálogo usan este equipo. Cámbialos a otro equipo primero.</value></data>
   <data name="Use at most 6 header lines and {0} footer lines." xml:space="preserve"><value>Usa como máximo 6 líneas de encabezado y {0} de pie de página.</value></data>
   <data name="The footer can be at most {0} characters long." xml:space="preserve"><value>El pie de página puede tener como máximo {0} caracteres.</value></data>
+  <data name="Text sizes must be between {0} and {1} pt." xml:space="preserve"><value>Los tamaños de texto deben estar entre {0} y {1} pt.</value></data>
 </root>

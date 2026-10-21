@@ -692,7 +692,6 @@
   <data name="AGE:" xml:space="preserve"><value>EDAD:</value></data>
   <data name="RECEIVED ON:" xml:space="preserve"><value>FECHA RECEPCIÓN:</value></data>
   <data name="SEX:" xml:space="preserve"><value>SEXO:</value></data>
-  <data name=" (continued)" xml:space="preserve"><value> (continuación)</value></data>
   <data name="Reference value" xml:space="preserve"><value>Valor referencial</value></data>
   <data name="INTERPRETATION:" xml:space="preserve"><value>INTERPRETACIÓN:</value></data>
   <data name="Reported by: {0}" xml:space="preserve"><value>Informado por: {0}</value></data>
@@ -1182,4 +1181,7 @@
   <data name="Type each value. Values outside the normal range are marked as you type, and the range for the species is shown next to each one." xml:space="preserve"><value>Escribe cada valor. Los valores fuera del rango normal se marcan mientras escribes, y junto a cada uno se muestra el rango de la especie.</value></data>
   <data name="When the exam has interpretation rules, the automatic interpretation shows in grey: leave the field empty to print it, or write your own." xml:space="preserve"><value>Cuando el examen tiene reglas de interpretación, la interpretación automática aparece en gris: deja el campo vacío para imprimirla o escribe la tuya.</value></data>
   <data name="Saves the report and opens it, ready to print or save as PDF. A saved report can be corrected later." xml:space="preserve"><value>Guarda el informe y lo abre, listo para imprimir o guardar en PDF. Un informe guardado se puede corregir después.</value></data>
+  <data name="Pet and owner data text: {0} pt" xml:space="preserve"><value>Texto de datos del paciente y tutor: {0} pt</value></data>
+  <data name="Results text: {0} pt" xml:space="preserve"><value>Texto de resultados: {0} pt</value></data>
+  <data name="Altered" xml:space="preserve"><value>Alterado</value></data>
 </root>

@@ -155,7 +155,8 @@
                             }
                             else if (evaluation.Abnormal)
                             {
-                                <MudChip T="string" Size="Size.Small" Color="Color.Warning">@L["Out of range"]</MudChip>
+                                // Outside the normal range, or an abnormal answer (e.g. "Positivo") or band without a name.
+                                <MudChip T="string" Size="Size.Small" Color="Color.Warning">@(evaluation.Direction == ResultDirection.None ? L["Altered"] : L["Out of range"])</MudChip>
                             }
                             <MudText Typo="Typo.caption" Color="Color.Secondary">@current.ReferenceFor(Species)</MudText>
                         </MudItem>
