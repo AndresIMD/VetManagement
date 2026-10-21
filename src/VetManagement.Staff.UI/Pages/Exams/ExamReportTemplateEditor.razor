@@ -131,8 +131,8 @@
                                                     }
                                                 </MudSelect>
                                             </MudItem>
-                                            <MudItem xs="3" sm="3"><MudNumericField T="decimal?" Label="@L["Min"]" @bind-Value="r.Min" HideSpinButtons="true" /></MudItem>
-                                            <MudItem xs="3" sm="3"><MudNumericField T="decimal?" Label="@L["Max"]" @bind-Value="r.Max" HideSpinButtons="true" /></MudItem>
+                                            <MudItem xs="3" sm="3"><MudNumericField Culture="CultureInfo.CurrentCulture" T="decimal?" Label="@L["Min"]" @bind-Value="r.Min" HideSpinButtons="true" /></MudItem>
+                                            <MudItem xs="3" sm="3"><MudNumericField Culture="CultureInfo.CurrentCulture" T="decimal?" Label="@L["Max"]" @bind-Value="r.Max" HideSpinButtons="true" /></MudItem>
                                             <MudItem xs="12" sm="3" Class="d-flex align-center">
                                                 <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="() => p.Ranges.Remove(r)" />
                                             </MudItem>
@@ -159,8 +159,8 @@
                                                     }
                                                 </MudSelect>
                                             </MudItem>
-                                            <MudItem xs="3" sm="2"><MudNumericField T="decimal?" Label="@L["From"]" @bind-Value="b.Min" HideSpinButtons="true" /></MudItem>
-                                            <MudItem xs="3" sm="2"><MudNumericField T="decimal?" Label="@L["To"]" @bind-Value="b.Max" HideSpinButtons="true" /></MudItem>
+                                            <MudItem xs="3" sm="2"><MudNumericField Culture="CultureInfo.CurrentCulture" T="decimal?" Label="@L["From"]" @bind-Value="b.Min" HideSpinButtons="true" /></MudItem>
+                                            <MudItem xs="3" sm="2"><MudNumericField Culture="CultureInfo.CurrentCulture" T="decimal?" Label="@L["To"]" @bind-Value="b.Max" HideSpinButtons="true" /></MudItem>
                                             <MudItem xs="8" sm="3"><MudTextField Label="@L["Meaning"]" @bind-Value="b.Label" Placeholder="@L["Grey zone"]" /></MudItem>
                                             <MudItem xs="3" sm="2" Class="d-flex align-center">
                                                 <MudTooltip Text="@L["A value in this band prints in red with * (not a normal result)"]">
@@ -235,7 +235,7 @@
                                                 }
                                             </MudSelect>
                                         </MudItem>
-                                        <MudItem xs="5" sm="2"><MudNumericField T="decimal" Label="@L["Value"]" @bind-Value="c.Value" HideSpinButtons="true" /></MudItem>
+                                        <MudItem xs="5" sm="2"><MudNumericField Culture="CultureInfo.CurrentCulture" T="decimal" Label="@L["Value"]" @bind-Value="c.Value" HideSpinButtons="true" /></MudItem>
                                         <MudItem xs="6" sm="4">
                                             <MudSelect T="string" Label="@L["of"]" @bind-Value="c.PercentOf" Dense="true">
                                                 <MudSelectItem T="string" Value="null">@L["(the number itself)"]</MudSelectItem>

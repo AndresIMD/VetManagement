@@ -46,7 +46,7 @@
             <MudNumericField T="int" Label="@L["Age"]" @bind-Value="PetModel.Age" For="@(() => PetModel.Age)" Required="true" />
         </MudItem>
         <MudItem xs="12" sm="6">
-            <MudNumericField T="float" Label="@L["Weight (kg)"]" @bind-Value="PetModel.Weight" For="@(() => PetModel.Weight)" Required="true" />
+            <MudNumericField Culture="CultureInfo.CurrentCulture" T="float" Label="@L["Weight (kg)"]" @bind-Value="PetModel.Weight" For="@(() => PetModel.Weight)" Required="true" />
         </MudItem>
         <MudItem xs="12" sm="6">
             <MudSelect T="ReproductiveStatus" Label="@L["Reproductive status"]" @bind-Value="PetModel.ReproductiveStatus" Required="true">
