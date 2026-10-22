@@ -9,6 +9,10 @@ name: Deploy to Azure
 #              AZURE_STAFF_SWA_TOKEN       Static Web App → Manage deployment token
 # The API's own settings (connection string, JWT, CORS...) are App Service settings: see docs/DEPLOYMENT.md.
 # The API applies pending database migrations on start-up.
+#
+# A clinic's private repository can run it instead (workflow_call), so the environment, its secrets and the run logs
+# (which show resource names and URLs) stay private: its workflow calls this file with the environment name, this
+# repository and the ref to deploy, and `secrets: inherit`. The environment then lives in that repository.
 
 on:
   workflow_dispatch:
@@ -25,6 +29,26 @@ on:
         description: Deploy the staff web
         type: boolean
         default: true
+  workflow_call:
+    inputs:
+      environment:
+        description: GitHub Environment of the clinic, in the calling repository
+        required: true
+        type: string
+      repository:
+        description: Repository of this code (the caller's own repository is the default)
+        type: string
+        default: ''
+      ref:
+        description: Branch, tag or commit to deploy
+        type: string
+        default: ''
+      deploy_api:
+        type: boolean
+        default: true
+      deploy_staff_web:
+        type: boolean
+        default: true
 
 env:
   DOTNET_VERSION: '10.0.x'
@@ -32,8 +56,16 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.code.outputs.sha }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: ${{ inputs.repository || github.repository }}
+          ref: ${{ inputs.ref || github.sha }}
+      # The deploy jobs check out this same commit, so what is deployed is what was tested.
+      - id: code
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
@@ -47,6 +79,9 @@ jobs:
     environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: ${{ inputs.repository || github.repository }}
+          ref: ${{ needs.test.outputs.sha }}
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
@@ -64,6 +99,9 @@ jobs:
     environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: ${{ inputs.repository || github.repository }}
+          ref: ${{ needs.test.outputs.sha }}
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
