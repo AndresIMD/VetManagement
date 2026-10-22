@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using VetManagement.Api.Authorization;
 using VetManagement.Contracts.Accounts;
+using VetManagement.Staff.UI.Components.Common;
 
 namespace VetManagement.Tests.Integration;
 
@@ -78,7 +79,11 @@ public class UserAccessTests(CustomWebAppFactory factory) : IClassFixture<Custom
 
         var login = await LoginAsync(factory, user.UserName!, "Temp#Pass67890");
         login.EnsureSuccessStatusCode();
-        (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("mustChangePassword").GetBoolean().Should().BeTrue();
+        var body = await login.Content.ReadFromJsonAsync<JsonElement>();
+        body.GetProperty("mustChangePassword").GetBoolean().Should().BeTrue();
+        new JwtSecurityTokenHandler().ReadJwtToken(body.GetProperty("token").GetString()).Claims.Should().Contain(
+            c => c.Type == TemporaryPasswordGate.ClaimType && c.Value == TemporaryPasswordGate.MustChangePassword,
+            "the staff app reads it from the token to show only the change page, also after a reload");
     }
 
     [Fact]
