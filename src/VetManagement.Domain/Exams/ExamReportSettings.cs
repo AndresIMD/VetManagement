@@ -52,11 +52,20 @@ public class ExamReportSettings
 
     public string Disclaimer { get; set; } = Texts.T("The result of this exam is not a diagnosis; please consult your referring vet.");
 
-    /// <summary>Font of the whole report; one of <see cref="Fonts"/>, which every Windows PC has.</summary>
+    /// <summary>Font of the whole report; one of <see cref="Fonts"/>.</summary>
     public string FontFamily { get; set; } = "Segoe UI";
 
-    public static readonly string[] Fonts =
+    /// <summary>Fonts every Windows PC has.</summary>
+    public static readonly string[] SystemFonts =
         ["Segoe UI", "Arial", "Calibri", "Verdana", "Tahoma", "Trebuchet MS", "Century Gothic", "Georgia", "Cambria", "Times New Roman"];
+
+    /// <summary>
+    /// Open-licence fonts (SIL OFL) shipped with the staff app and embedded in the printed report, so they look the same on
+    /// every computer: Inter and Figtree (close to Aptos), Jost (close to Futura).
+    /// </summary>
+    public static readonly string[] BundledFonts = ["Inter", "Figtree", "Jost"];
+
+    public static readonly string[] Fonts = [.. SystemFonts, .. BundledFonts];
 
     public const double DefaultFontPt = 10.5;
     public const double MinFontPt = 8;

@@ -81,9 +81,13 @@ correcting this one looks the previous report up again.
 
 ## Printing and sending
 
-The page renders the report as pages of the chosen paper size, in the chosen font (`FontFamily`, one of the fonts
-every Windows PC has). Lines that don't fit go to the next page, which repeats the header, a line with the patient,
-"(continuación)" and the footer; every page says "Página X de N". Interpretation and method go on the last page. The
+The page renders the report as pages of the chosen paper size, in the chosen font (`FontFamily`: one of the fonts
+every Windows PC has, or one shipped with the app and embedded when printing: Inter and Figtree, close to Aptos, and Jost,
+close to Futura; all SIL Open Font License, in `wwwroot/fonts`). Lines that don't fit go to the next page, which repeats
+the header, the patient bar with the patient, owner and reception date, and the footer; every page says "Página X de N".
+Pages are laid out from the heights measured on the rendered sheet (`report-sheet.js`, `ReportPagination`): a section
+title never stays alone at the foot of a page, and the closing blocks (legend, criteria table, interpretation, method) go
+on the last page, taking the last two lines with them when they don't fit. The
 **lot number** (test kit or reagent; asked only when the template says so) prints in the method bar ("Vcheck - BIONOTE · LOTE: A123"), alone if the
 method is hidden.
 Pagination estimates row heights from text length, on the generous side: a page may end a row early. ponytail: an

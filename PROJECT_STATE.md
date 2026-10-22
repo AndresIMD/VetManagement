@@ -39,6 +39,9 @@ How the code is organised: [`docs/architecture/ARCHITECTURE.md`](docs/architectu
 - Should charging an appointment mark it `Completed`? Refunds of paid sales and reopening a closed day are not built.
 - `Responsible` on exams/visits is free text; a staff picker would link records to users.
 - Exam reports: emailing the PDF from the server and starting a report from an exam request item are not built.
+- Report fonts: beyond the system fonts and the bundled open-licence ones (Inter, Figtree, Jost), either a button to
+  upload the clinic's own font (stored like the logo, embedded in the report; the clinic must hold a web/app embedding
+  licence, e.g. for Futura or Aptos) or more bundled open-licence fonts.
 - Printable prescriptions; attachments (images, lab PDFs) in the clinical record.
 - Settings screens (agenda, billing, clinical) are JSON editors that point admins to repo docs they can't open;
   guided forms with in-screen explanations would suit clinic admins.

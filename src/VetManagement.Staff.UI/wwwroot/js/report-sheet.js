@@ -3,8 +3,11 @@
 // there is one), the patient box, the patient box of later pages (bar and one line), the table header, the closing blocks and each line
 // (marked data-row="index"). Returns null while the sheet isn't laid out (e.g. hidden).
 window.appReportSheet = {
-    measure(id, pageHeightMm) {
+    async measure(id, pageHeightMm) {
         const doc = document.getElementById(id);
+        // Laying the sheet out starts loading its font; heights only count once it is there.
+        if (doc) doc.getBoundingClientRect();
+        await document.fonts.ready;
         const pages = doc ? [...doc.querySelectorAll('.xr-page')] : [];
         const pagePx = pages.length ? pages[0].getBoundingClientRect().height : 0;
         if (!pagePx) return null;
