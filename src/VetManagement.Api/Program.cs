@@ -15,6 +15,7 @@ using VetManagement.Infrastructure.Data;
 using VetManagement.Infrastructure.Persistence;
 using VetManagement.Domain.Clients;
 using VetManagement.Domain.Inventory;
+using VetManagement.Domain.Localization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -280,12 +281,12 @@ builder.Services.AddRateLimiter(options =>
         context.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
         _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions { PermitLimit = builder.Configuration.GetValue("RateLimits:PublicWritePerMinute", 10), Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
 
-    // Login attempts per client IP, on top of the global limit and the per-account lockout.
+    // Login attempts per client IP, on top of the global limit and the per-account lockout (RateLimits:LoginPerMinute, default 10).
     options.AddPolicy("login", context => System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
         context.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
         _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
         {
-            PermitLimit = 10,
+            PermitLimit = builder.Configuration.GetValue("RateLimits:LoginPerMinute", 10),
             Window = TimeSpan.FromMinutes(1),
             QueueLimit = 0
         }));
@@ -327,6 +328,12 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 });
 
 builder.Services.AddProblemDetails();
+// Browsers keep to HTTPS for a year (the default is 30 days).
+builder.Services.AddHsts(options =>
+{
+    options.MaxAge = TimeSpan.FromDays(365);
+    options.IncludeSubDomains = true;
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -371,6 +378,21 @@ else
 app.UseRateLimiter();
 app.UseCors("LocalOnly");
 app.UseAuthentication();
+// A session opened with a temporary password can only change it (the staff app sends the user there first).
+app.Use(async (context, next) =>
+{
+    if (context.User.HasClaim(SystemClaims.CLAIM_TYPE, SystemClaims.MUST_CHANGE_PASSWORD)
+        && !SystemClaims.TEMPORARY_PASSWORD_PATHS.Any(path => context.Request.Path.StartsWithSegments(path)))
+    {
+        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        await context.Response.WriteAsJsonAsync(new Microsoft.AspNetCore.Mvc.ProblemDetails
+        {
+            Status = StatusCodes.Status403Forbidden, Title = Texts.T("Change your temporary password first.")
+        });
+        return;
+    }
+    await next();
+});
 app.UseAuthorization();
 app.MapControllers();
 app.MapHub<InventoryHub>("/hubs/inventory");

@@ -135,7 +135,10 @@ public class AccountApiService
         if (result.Ok)
         {
             _mustChangePassword = false;
-            await RefreshAsync(); // the new token no longer asks for a password change
+            // The new password ends the sessions opened with the old one, this one included: the API sends its new token.
+            if (result.Body is { ValueKind: JsonValueKind.Object } body && body.TryGetProperty("token", out var tokenProp)
+                && tokenProp.GetString() is { Length: > 0 } token)
+                await SetTokenAsync(token, await IsRememberedAsync());
         }
         return result;
     }

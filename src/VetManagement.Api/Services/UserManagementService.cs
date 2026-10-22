@@ -59,6 +59,7 @@ public class UserManagementService(UserManager<IdentityUser> userManager, RoleMa
         if (!claims.Any(c => c.Type == SystemClaims.CLAIM_TYPE && c.Value == SystemClaims.MUST_CHANGE_PASSWORD))
             await userManager.AddClaimAsync(user, new Claim(SystemClaims.CLAIM_TYPE, SystemClaims.MUST_CHANGE_PASSWORD));
         await userManager.ResetAccessFailedCountAsync(user);
+        access?.Forget(user.Id); // the new password came with a new security stamp: open sessions end now
         return result;
     }
 

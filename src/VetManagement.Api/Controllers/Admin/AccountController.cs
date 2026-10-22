@@ -19,11 +19,19 @@ namespace VetManagement.Api.Controllers.Admin;
 [Route("api/[controller]")]
 public class AccountController(
     UserManager<IdentityUser> userManager,
+    IPasswordHasher<IdentityUser> passwordHasher,
     IConfiguration configuration,
     AuditService audit,
     UserManagementService userManagement,
     UserAccess access) : ApiControllerBase
 {
+    /// <summary>Sign-in with "remember me": the session survives closing the browser for this long.</summary>
+    private static readonly TimeSpan RememberFor = TimeSpan.FromDays(7);
+
+    // Hashed when the account doesn't exist or is locked, so the response time doesn't tell those apart from a wrong password.
+    private static readonly IdentityUser NoUser = new();
+    private static string? _noUserHash;
+
     [HttpPost("login")]
     [AllowAnonymous]
     [EnableRateLimiting("login")]
@@ -31,14 +39,17 @@ public class AccountController(
     {
         var user = await userManager.FindByNameAsync(request.Username);
 
-        // Same 401 for unknown user, locked account and wrong password, so responses don't reveal which accounts exist.
-        if (user != null && await userManager.IsLockedOutAsync(user))
+        // Same 401 for unknown user, locked account and wrong password, so responses don't reveal which accounts exist;
+        // a password is hashed in every case, so the response time doesn't either.
+        if (user is null || await userManager.IsLockedOutAsync(user))
         {
-            await audit.LogSecurityAsync(AuditActionType.UserLoginFailed, request.Username, "Account locked out");
+            _noUserHash ??= passwordHasher.HashPassword(NoUser, Guid.NewGuid().ToString());
+            passwordHasher.VerifyHashedPassword(NoUser, _noUserHash, request.Password ?? string.Empty);
+            await audit.LogSecurityAsync(AuditActionType.UserLoginFailed, request.Username, user is null ? "Invalid credentials" : "Account locked out");
             return Unauthorized(Texts.T("Invalid credentials."));
         }
 
-        if (user != null && await userManager.CheckPasswordAsync(user, request.Password))
+        if (await userManager.CheckPasswordAsync(user, request.Password))
         {
             await userManager.ResetAccessFailedCountAsync(user);
             // Permissions derive from roles; syncing here gives existing users any permission added since their last login.
@@ -46,13 +57,12 @@ public class AccountController(
             var userRoles = await userManager.GetRolesAsync(user);
             var userClaims = await userManager.GetClaimsAsync(user);
             var mustChange = MustChangePassword(userClaims);
-            var expires = mustChange ? DateTime.UtcNow.AddMinutes(30) : (request.RememberMe ? DateTime.UtcNow.AddDays(30) : DateTime.UtcNow.AddHours(8));
-            var token = GenerateJwtToken(user, userRoles, userClaims, expires);
+            var expires = mustChange ? DateTime.UtcNow.AddMinutes(30) : DateTime.UtcNow.Add(request.RememberMe ? RememberFor : TimeSpan.FromHours(8));
+            var token = await GenerateJwtTokenAsync(user, userRoles, userClaims, expires);
             await audit.LogSecurityAsync(AuditActionType.UserLogin, user.UserName, "Login successful");
             return Ok(new { token, mustChangePassword = mustChange });
         }
-        if (user != null)
-            await userManager.AccessFailedAsync(user); // locks the account after MaxFailedAccessAttempts
+        await userManager.AccessFailedAsync(user); // locks the account after MaxFailedAccessAttempts
 
         await audit.LogSecurityAsync(AuditActionType.UserLoginFailed, request.Username, "Invalid credentials");
         return Unauthorized(Texts.T("Invalid credentials."));
@@ -78,7 +88,7 @@ public class AccountController(
         var expires = DateTimeOffset.FromUnixTimeSeconds(exp).UtcDateTime;
         if (!mustChange && User.HasClaim(SystemClaims.CLAIM_TYPE, SystemClaims.MUST_CHANGE_PASSWORD))
             expires = DateTime.UtcNow.AddHours(8);
-        return Ok(new { token = GenerateJwtToken(user, userRoles, userClaims, expires), mustChangePassword = mustChange });
+        return Ok(new { token = await GenerateJwtTokenAsync(user, userRoles, userClaims, expires), mustChangePassword = mustChange });
     }
 
     [HttpGet("user-info")]
@@ -122,13 +132,21 @@ public class AccountController(
             await userManager.RemoveClaimAsync(user, mustChange);
         }
         await audit.LogSecurityAsync(AuditActionType.PasswordChanged, user.UserName, "User changed own password");
-        return Ok();
+
+        // The new password came with a new security stamp, which ends every session opened before, this one included:
+        // it goes on with a new token (the 30-minute one of a temporary password gets the usual 8 hours).
+        access.Forget(user.Id);
+        var expires = mustChange is null && long.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Exp), out var exp)
+            ? DateTimeOffset.FromUnixTimeSeconds(exp).UtcDateTime
+            : DateTime.UtcNow.AddHours(8);
+        var token = await GenerateJwtTokenAsync(user, await userManager.GetRolesAsync(user), await userManager.GetClaimsAsync(user), expires);
+        return Ok(new { token, mustChangePassword = false });
     }
 
     private static bool MustChangePassword(IEnumerable<Claim> claims)
         => claims.Any(c => c.Type == SystemClaims.CLAIM_TYPE && c.Value == SystemClaims.MUST_CHANGE_PASSWORD);
 
-    private string GenerateJwtToken(IdentityUser user, IList<string> roles, IList<Claim> extraClaims, DateTime expires)
+    private async Task<string> GenerateJwtTokenAsync(IdentityUser user, IList<string> roles, IList<Claim> extraClaims, DateTime expires)
     {
         var jwtKey = configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key is not configured.");
         var jwtIssuer = configuration["Jwt:Issuer"] ?? throw new InvalidOperationException("Jwt:Issuer is not configured.");
@@ -143,7 +161,8 @@ public class AccountController(
             new(JwtRegisteredClaimNames.Sub, user.Id),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new(ClaimTypes.NameIdentifier, user.Id),
-            new(ClaimTypes.Name, user.UserName ?? string.Empty)
+            new(ClaimTypes.Name, user.UserName ?? string.Empty),
+            new(SystemClaims.SECURITY_STAMP, await userManager.GetSecurityStampAsync(user))
         ];
 
         foreach (var role in roles)

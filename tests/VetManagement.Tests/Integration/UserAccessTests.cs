@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
+using System.Security.Claims;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -23,6 +24,7 @@ public class UserAccessTests(CustomWebAppFactory factory) : IClassFixture<Custom
     [Fact]
     public async Task BlockedUser_CannotSignIn_AndTheirOpenSessionStops()
     {
+        await CreateUserAsync(factory, Permissions.ROLES.ADMIN); // so the user below isn't the last active admin
         var user = await CreateUserAsync(factory, Permissions.ROLES.ADMIN);
         var session = await SignInAsync(factory, user.UserName!);
         (await session.GetAsync("/api/admin/users")).StatusCode.Should().Be(HttpStatusCode.OK);
@@ -42,6 +44,7 @@ public class UserAccessTests(CustomWebAppFactory factory) : IClassFixture<Custom
     [Fact]
     public async Task RoleChanges_ApplyToOpenSessions_AndTheRefreshedTokenCarriesThem()
     {
+        await CreateUserAsync(factory, Permissions.ROLES.ADMIN); // so removing the role below doesn't leave the clinic without an admin
         var user = await CreateUserAsync(factory, Permissions.ROLES.INVENTORY);
         var session = await SignInAsync(factory, user.UserName!);
         (await session.GetAsync("/api/admin/users")).StatusCode.Should().Be(HttpStatusCode.Forbidden);
@@ -76,6 +79,71 @@ public class UserAccessTests(CustomWebAppFactory factory) : IClassFixture<Custom
         var login = await LoginAsync(factory, user.UserName!, "Temp#Pass67890");
         login.EnsureSuccessStatusCode();
         (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("mustChangePassword").GetBoolean().Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ResetPassword_EndsOpenSessions_AndTheTemporaryPasswordCanOnlyBeChanged()
+    {
+        var user = await CreateUserAsync(factory, Permissions.ROLES.INVENTORY);
+        var session = await SignInAsync(factory, user.UserName!);
+        (await session.GetAsync("/api/items")).StatusCode.Should().Be(HttpStatusCode.OK);
+
+        (await _admin.PostAsJsonAsync($"/api/admin/users/{user.Id}/reset-password", new ResetPasswordRequest { NewPassword = "Temp#Pass67890" }))
+            .EnsureSuccessStatusCode();
+        (await session.GetAsync("/api/items")).StatusCode.Should().Be(HttpStatusCode.Unauthorized, "whoever knew the old password is out");
+
+        var temporary = await SignInAsync(factory, user.UserName!, "Temp#Pass67890");
+        var refused = await temporary.GetAsync("/api/items");
+        refused.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        (await refused.Content.ReadAsStringAsync()).Should().Contain("temporary password");
+        (await temporary.GetAsync("/api/account/user-info")).StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var changed = await temporary.PostAsJsonAsync("/api/account/change-password",
+            new ChangePasswordRequest { CurrentPassword = "Temp#Pass67890", NewPassword = "Mine#Pass24680" });
+        changed.EnsureSuccessStatusCode();
+        var body = await changed.Content.ReadFromJsonAsync<JsonElement>();
+        body.GetProperty("mustChangePassword").GetBoolean().Should().BeFalse();
+        (await temporary.GetAsync("/api/account/user-info")).StatusCode.Should().Be(HttpStatusCode.Unauthorized, "the change ends the temporary session");
+
+        var next = factory.CreateClient();
+        next.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", body.GetProperty("token").GetString());
+        (await next.GetAsync("/api/items")).StatusCode.Should().Be(HttpStatusCode.OK, "the session goes on with the token the change returned");
+    }
+
+    [Fact]
+    public async Task ChangingTheOwnPassword_EndsTheOtherSessions_AndKeepsThisOne()
+    {
+        var user = await CreateUserAsync(factory, Permissions.ROLES.INVENTORY);
+        var here = await SignInAsync(factory, user.UserName!);
+        var elsewhere = await SignInAsync(factory, user.UserName!);
+
+        var changed = await here.PostAsJsonAsync("/api/account/change-password", new ChangePasswordRequest { CurrentPassword = Password, NewPassword = "Other#Pass13579" });
+        changed.EnsureSuccessStatusCode();
+
+        (await elsewhere.GetAsync("/api/items")).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        here.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer",
+            (await changed.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("token").GetString());
+        (await here.GetAsync("/api/items")).StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task TokenWithoutTheAccountsSecurityStamp_IsRefused()
+    {
+        var user = await CreateUserAsync(factory, Permissions.ROLES.ADMIN);
+        var forged = factory.CreateClientWithClaims([new Claim(ClaimTypes.NameIdentifier, user.Id), new Claim(ClaimTypes.Name, user.UserName!)]);
+
+        (await forged.GetAsync("/api/admin/users")).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task RememberMe_KeepsTheSessionForAWeek()
+    {
+        var user = await CreateUserAsync(factory, Permissions.ROLES.INVENTORY);
+
+        var login = await factory.CreateClient().PostAsJsonAsync("/api/account/login", new { Username = user.UserName, Password, RememberMe = true });
+
+        var token = (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("token").GetString();
+        new JwtSecurityTokenHandler().ReadJwtToken(token).ValidTo.Should().BeCloseTo(DateTime.UtcNow.AddDays(7), TimeSpan.FromMinutes(1));
     }
 
     [Fact]
@@ -144,9 +212,9 @@ public class UserAccessTests(CustomWebAppFactory factory) : IClassFixture<Custom
     private static Task<HttpResponseMessage> LoginAsync(CustomWebAppFactory app, string userName, string password = Password)
         => app.CreateClient().PostAsJsonAsync("/api/account/login", new { Username = userName, Password = password });
 
-    private static async Task<HttpClient> SignInAsync(CustomWebAppFactory app, string userName)
+    private static async Task<HttpClient> SignInAsync(CustomWebAppFactory app, string userName, string password = Password)
     {
-        var response = await LoginAsync(app, userName);
+        var response = await LoginAsync(app, userName, password);
         response.EnsureSuccessStatusCode();
         var token = (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("token").GetString();
         var client = app.CreateClient();

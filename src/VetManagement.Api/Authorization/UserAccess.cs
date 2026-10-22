@@ -7,13 +7,14 @@ namespace VetManagement.Api.Authorization;
 /// <summary>
 /// What a signed-in user may do right now. A token proves who the user is; the roles and permissions of each request
 /// come from the database (cached for a minute), so role changes apply without signing in again and a blocked or
-/// deleted user's open sessions stop working.
+/// deleted user's open sessions stop working. A token must also carry the account's current security stamp: changing
+/// or resetting the password ends the sessions opened with the old one.
 /// </summary>
 public sealed class UserAccess(IMemoryCache cache)
 {
     private static readonly TimeSpan CacheFor = TimeSpan.FromMinutes(1);
 
-    private sealed record Entry(string[] Roles, string[] Permissions);
+    private sealed record Entry(string[] Roles, string[] Permissions, string SecurityStamp);
 
     /// <summary>
     /// Blocked by an administrator (e.g. staff who left the clinic): locked out with no end. The temporary lockout
@@ -39,9 +40,9 @@ public sealed class UserAccess(IMemoryCache cache)
                 return null;
             var roles = await users.GetRolesAsync(user);
             var permissions = services.GetRequiredService<EnabledModules>().Filter(Permissions.ForRoles(roles));
-            return new Entry([.. roles], [.. permissions]);
+            return new Entry([.. roles], [.. permissions], user.SecurityStamp ?? string.Empty);
         });
-        if (entry is null)
+        if (entry is null || (principal.FindFirstValue(SystemClaims.SECURITY_STAMP) ?? string.Empty) != entry.SecurityStamp)
             return false;
 
         foreach (var claim in identity.FindAll(c => c.Type is ClaimTypes.Role or Permissions.CLAIM_TYPE).ToList())
