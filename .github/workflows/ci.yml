@@ -43,7 +43,6 @@ jobs:
           dotnet restore tests/VetManagement.Tests/VetManagement.Tests.csproj
           dotnet restore src/VetManagement.Staff.Web/VetManagement.Staff.Web.csproj
           dotnet restore src/VetManagement.Booking.Web/VetManagement.Booking.Web.csproj
-          dotnet restore sites/SPVetClinic/SPVetClinic.csproj
 
       - name: Build backend + tests (Api, Application, Infrastructure, Domain, Contracts, Staff.UI)
         run: dotnet build tests/VetManagement.Tests/VetManagement.Tests.csproj --no-restore
@@ -53,9 +52,6 @@ jobs:
 
       - name: Build public booking portal
         run: dotnet build src/VetManagement.Booking.Web/VetManagement.Booking.Web.csproj --no-restore
-
-      - name: Build clinic sites
-        run: dotnet build sites/SPVetClinic/SPVetClinic.csproj --no-restore
 
       - name: Test
         run: dotnet test tests/VetManagement.Tests/VetManagement.Tests.csproj --no-restore --no-build --verbosity minimal

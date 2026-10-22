@@ -1,6 +1,6 @@
 # VetManagement — Project State
 
-**Last updated:** 2026-10-19 · **Branch:** feature/pre-production-adjustments · **Tests:** 308 (+3 on SQL Server)
+**Last updated:** 2026-10-22 · **Branch:** feature/pre-production-adjustments · **Tests:** 380 (with SQL Server)
 
 Product model: one generic staff CRM sold to many clinics; each clinic has its own deployment and database, its
 own branded public site, and configures every business policy itself (admin-editable settings).
@@ -13,7 +13,7 @@ How the code is organised: [`docs/architecture/ARCHITECTURE.md`](docs/architectu
 |---|---|---|
 | F0–F5 | ✅ | Restructure into Clean Architecture, CI, inventory/clients/exams/medical/audit moved to Domain + Contracts, staff UI split out, hardening (errors, login protection, health check, logs), architecture docs |
 | F6 | ✅ | Agenda: per-clinic settings, availability with progressive release, appointments, staff agenda, emails — [SCHEDULING.md](docs/modules/SCHEDULING.md) |
-| F7 | ✅ | Online booking: RUT, WebPay Plus / simulated payments, public API, hosted portal, link from SPVetClinic — [SCHEDULING.md](docs/modules/SCHEDULING.md), [DEPLOYMENT.md](docs/DEPLOYMENT.md) |
+| F7 | ✅ | Online booking: RUT, WebPay Plus / simulated payments, public API, hosted portal, link from a clinic's public site — [SCHEDULING.md](docs/modules/SCHEDULING.md), [DEPLOYMENT.md](docs/DEPLOYMENT.md) |
 | F8 | ✅ | Billing: sales, split payments, discounts, voids, daily cash close, stock on sale — [BILLING.md](docs/modules/BILLING.md) |
 | F9 | ✅ | Clinical record: visit notes, vaccines/deworming with protocols, due list, owner reminders — [CLINICAL.md](docs/modules/CLINICAL.md) |
 | F10 | ✅ | Inventory from clinical use: visit supplies and vaccines leave stock; shared stock lock — [CLINICAL.md](docs/modules/CLINICAL.md) |
@@ -22,7 +22,7 @@ How the code is organised: [`docs/architecture/ARCHITECTURE.md`](docs/architectu
 | — | ✅ | "Charge visit": appointment + procedures + supplies, one sale or split taxed / VAT-exempt; legacy visit payment fields retired — [BILLING.md](docs/modules/BILLING.md) |
 | — | ✅ | Modules per clinic (`Modules:Enabled`) and area roles (Inventory, Laboratory, Reception, Clinical, Cashier + Supervisor) — [ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) |
 | — | ✅ | Exam reports: per-exam templates with normal ranges (↓/↑), interpretation bands, multi-value interpretation rules, reference column and IDEXX-style bars, previous result column, highlighted qualitative results, reports for unregistered (typed) patients; clinic branding (logo, background, font, footer); multi-page print / save PDF — [EXAM_REPORTS.md](docs/modules/EXAM_REPORTS.md) |
-| — | ✅ | Legacy SPLabHybrid data migration script — [DEPLOYMENT.md](docs/DEPLOYMENT.md#moving-a-clinic-from-the-legacy-splabhybrid-app-san-pablo) |
+| — | ✅ | Moving a clinic's data from a legacy app (the copy script lives with that clinic's deployment) — [DEPLOYMENT.md](docs/DEPLOYMENT.md#moving-a-clinic-from-another-app) |
 | — | ✅ | Test data page for development (Administration → Test Data) — [guide](docs/guides/TEST_DATA.md) |
 | — | ✅ | Language per clinic: staff UI, printed reports, server messages, client emails and default settings in the clinic's language (English and Spanish, Chilean terms on top); the booking portal is still Spanish only — [DEPLOYMENT.md](docs/DEPLOYMENT.md) |
 
@@ -32,7 +32,7 @@ How the code is organised: [`docs/architecture/ARCHITECTURE.md`](docs/architectu
 2. SMTP account for client emails (confirmations, reminders, client-portal links).
 3. Hosting: API + SQL Server database, staff web, booking portal — follow [DEPLOYMENT.md](docs/DEPLOYMENT.md).
 4. Which items are VAT-exempt (clinic's accountant), then set it in Billing settings → `Tax`.
-5. Switch `sites/SPVetClinic` `BookingUrl` from the external CRM to the portal once live.
+5. Point the booking buttons of the clinic's public site (`BookingUrl`) to the portal once live.
 
 ## Open product decisions
 

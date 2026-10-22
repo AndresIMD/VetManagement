@@ -43,7 +43,7 @@ public class DataSeeder(
 
     /// <summary>
     /// Roles of earlier versions and what their users get instead: the same access as before, which the admin then
-    /// narrows per person. "Laboratorio" comes from the legacy SPLabHybrid app.
+    /// narrows per person. "Laboratorio" comes from data copied from a legacy app.
     /// </summary>
     private static readonly Dictionary<string, string[]> LegacyRoles = new()
     {

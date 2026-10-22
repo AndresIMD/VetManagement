@@ -7,7 +7,7 @@ its own deployment (database, API) and its own branded public website.
 ## Projects and dependency direction
 
 ```text
-   Staff.Web (WASM)   Staff.Maui (desktop)       Booking.Web (WASM)        sites/<Clinic> (public web)
+   Staff.Web (WASM)   Staff.Maui (desktop)       Booking.Web (WASM)        clinic site (own repo)
             \             /                    booking + client portal      links to Booking.Web
              Staff.UI (pages, components,               |                            |
              view models, API clients)                  |                            |
@@ -30,7 +30,7 @@ its own deployment (database, API) and its own branded public website.
 | `Staff.UI` | Staff UI shared by web and MAUI: pages, components, view models, `*ApiService` clients. | Domain, Contracts |
 | `Staff.Web` / `Staff.Maui` | Thin hosts for `Staff.UI`. | Staff.UI |
 | `Booking.Web` | Public portal: online booking with deposit, booking status/cancel, client portal ("Mis mascotas"). Anonymous. | Contracts |
-| `sites/*` | One branded public website per clinic. Not part of the product. | (links to Booking.Web) |
+| Clinic sites | One branded public website per clinic, in the clinic's own repository. Not part of the product. | (links to Booking.Web) |
 
 The backend never references `Staff.UI`. `ArchitectureTests` fails the build if that changes.
 
