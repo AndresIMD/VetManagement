@@ -73,8 +73,20 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         // (Domain types are persistence-ignorant, so the schema lives here).
         builder.Entity<Item>().Property(i => i.Barcode).HasMaxLength(100);
         builder.Entity<Item>().Property(i => i.BrandBarcode).HasMaxLength(100);
+        // Scanner lookups. Not unique: items created without a code share the placeholder one.
+        builder.Entity<Item>().HasIndex(i => i.Barcode);
         builder.Entity<InventoryMovement>().Property(m => m.Reason).HasMaxLength(200);
         builder.Entity<InventoryMovement>().Property(m => m.Responsible).HasMaxLength(100);
+        // The metrics read movements by date range.
+        builder.Entity<InventoryMovement>().HasIndex(m => m.Date);
+
+        // The audit pages list one kind of entity newest first, or the history of one entity.
+        builder.Entity<AuditLog>(e =>
+        {
+            e.Property(a => a.EntityName).HasMaxLength(100);
+            e.HasIndex(a => new { a.EntityName, a.Date });
+            e.HasIndex(a => new { a.EntityId, a.EntityName });
+        });
 
         // One row per configuration document; Version rejects a save based on a stale read.
         builder.Entity<ClinicSetting>().HasIndex(s => s.Key).IsUnique();
@@ -90,6 +102,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         builder.Entity<ExamReport>(e =>
         {
             e.HasIndex(r => r.PetId);
+            // The report list is the latest reports by reception date.
+            e.HasIndex(r => r.ReceivedOn);
             e.Property(r => r.Title).HasMaxLength(200);
             e.Property(r => r.Method).HasMaxLength(200);
             e.Property(r => r.ReferringVet).HasMaxLength(200);

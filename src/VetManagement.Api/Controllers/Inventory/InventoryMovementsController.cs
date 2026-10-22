@@ -14,18 +14,6 @@ namespace VetManagement.Api.Controllers.Inventory;
 [Authorize(Policy = "Inventory.Read")]
 public class InventoryMovementsController(InventoryMovementService movementService) : ApiControllerBase
 {
-    [HttpGet]
-    public async Task<IActionResult> GetMovementsFilteredAsync(
-        [FromQuery] string? itemName = null,
-        [FromQuery] DomainInventoryMovementType? type = null,
-        [FromQuery] string? responsible = null,
-        [FromQuery] DateTime? from = null,
-        [FromQuery] DateTime? to = null)
-    {
-        var movements = await movementService.GetMovementsFilteredAsync(itemName, type, responsible, from, to);
-        return Ok(movements.Select(MapToDto).ToList());
-    }
-
     [HttpGet("paged")]
     public async Task<IActionResult> GetMovementsFilteredPagedAsync(
         [FromQuery] int page = 0,
@@ -36,6 +24,7 @@ public class InventoryMovementsController(InventoryMovementService movementServi
         [FromQuery] DateTime? from = null,
         [FromQuery] DateTime? to = null)
     {
+        (page, pageSize) = Paging(page, pageSize);
         var result = await movementService.GetMovementsFilteredPagedAsync(page, pageSize, itemId, type, responsible, from, to);
         return Ok(new PagedResponse<MovementDto>(
             result.Items.Select(MapToDto).ToList(),

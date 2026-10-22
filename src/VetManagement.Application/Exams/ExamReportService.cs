@@ -58,11 +58,7 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
     /// <summary>Reports of a pet, or the latest 200 of the clinic; newest first.</summary>
     public async Task<List<ExamReportView>> ListAsync(int? petId)
     {
-        // ponytail: loads the clinic's reports to keep the newest 200; a paged query when a clinic has many thousands.
-        var reports = petId is int id
-            ? await unitOfWork.ExamReports.FindAsync(r => r.PetId == id)
-            : await unitOfWork.ExamReports.GetAllAsync();
-        var latest = reports.OrderByDescending(r => r.ReceivedOn).ThenByDescending(r => r.Id).Take(200).ToList();
+        var latest = await unitOfWork.ExamReports.GetLatestAsync(petId, 200);
 
         var petIds = latest.Where(r => r.Patient is null).Select(r => r.PetId).OfType<int>().Distinct().ToList();
         var pets = (await unitOfWork.Pets.FindAsync(p => petIds.Contains(p.Id))).ToDictionary(p => p.Id);
@@ -79,18 +75,7 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
 
     /// <summary>Provisional patients whose name contains <paramref name="search"/>, as typed in their latest report; for reuse in the form.</summary>
     public async Task<List<ReportPatient>> ProvisionalPatientsAsync(string? search)
-    {
-        // ponytail: filters in memory over the typed reports; a query when a clinic has many thousands.
-        var term = search?.Trim() ?? string.Empty;
-        return (await unitOfWork.ExamReports.FindAsync(r => r.Patient != null && r.PetId != null))
-            .GroupBy(r => r.PetId)
-            .Select(g => g.OrderByDescending(r => r.ReceivedOn).ThenByDescending(r => r.Id).First().Patient!)
-            .Where(p => p.Name.Contains(term, StringComparison.OrdinalIgnoreCase)
-                        || $"{p.OwnerName} {p.OwnerLastName}".Contains(term, StringComparison.OrdinalIgnoreCase))
-            .OrderBy(p => p.Name)
-            .Take(10)
-            .ToList();
-    }
+        => string.IsNullOrWhiteSpace(search) ? [] : await unitOfWork.ExamReports.FindTypedPatientsAsync(search, 10);
 
     public async Task<ExamReportResultStatus> CreateAsync(ExamReportInput input, string userName)
     {

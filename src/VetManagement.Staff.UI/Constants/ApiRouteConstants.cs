@@ -9,7 +9,6 @@ public static class ApiRouteConstants
     public const string ITEMS_PAGED = "api/items/paged";
 
     // Inventory Movements
-    public const string INVENTORY_MOVEMENTS_BASE = "api/inventory/movements";
     public const string INVENTORY_MOVEMENT_BY_ITEM = "api/inventory/movements/{0}";
     public const string INVENTORY_ADJUST_STOCK = "api/inventory/movements/adjust-stock";
     public const string INVENTORY_MASS_INGRESS = "api/inventory/movements/mass-ingress";

@@ -26,7 +26,7 @@ public class UnitOfWork(AppDbContext context) : IUnitOfWork
     private IRepository<VetManagement.Domain.Clinical.VisitSupply>? _visitSupplies;
     private IRepository<VetManagement.Domain.Clients.ClientAccessToken>? _clientAccessTokens;
     private IRepository<VetManagement.Domain.Billing.CashClose>? _cashCloses;
-    private IRepository<VetManagement.Domain.Exams.ExamReport>? _examReports;
+    private IExamReportRepository? _examReports;
     private IRepository<VetManagement.Domain.Configuration.ClinicImage>? _clinicImages;
 
     public IItemRepository Items => _items ??= new ItemRepository(context);
@@ -63,7 +63,7 @@ public class UnitOfWork(AppDbContext context) : IUnitOfWork
 
     public IRepository<VetManagement.Domain.Billing.CashClose> CashCloses => _cashCloses ??= new Repository<VetManagement.Domain.Billing.CashClose>(context);
 
-    public IRepository<VetManagement.Domain.Exams.ExamReport> ExamReports => _examReports ??= new Repository<VetManagement.Domain.Exams.ExamReport>(context);
+    public IExamReportRepository ExamReports => _examReports ??= new ExamReportRepository(context);
 
     public IRepository<VetManagement.Domain.Configuration.ClinicImage> ClinicImages => _clinicImages ??= new Repository<VetManagement.Domain.Configuration.ClinicImage>(context);
 

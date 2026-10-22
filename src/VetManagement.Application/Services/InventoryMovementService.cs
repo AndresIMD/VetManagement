@@ -16,32 +16,10 @@ public class InventoryMovementService(IUnitOfWork unitOfWork, IRealtimeNotificat
 {
     #region Query Methods
 
-    public async Task<List<InventoryMovement>> GetAllMovementsAsync()
-        => await unitOfWork.InventoryMovements.GetAllAsync();
-
     public async Task<List<InventoryMovement>> GetMovementsByItemIdAsync(int itemId)
     {
         var movements = await unitOfWork.InventoryMovements.GetByItemIdAsync(itemId);
         return [.. movements];
-    }
-
-    public async Task<List<InventoryMovement>> GetMovementsFilteredAsync(
-        string? itemName = null,
-        DomainInventoryMovementType? type = null,
-        string? responsible = null,
-        DateTime? from = null,
-        DateTime? to = null)
-    {
-        var (items, _) = await unitOfWork.InventoryMovements.GetFilteredPagedAsync(
-            page: 0,
-            pageSize: int.MaxValue,
-            itemId: null,
-            type: type,
-            responsible: responsible,
-            from: from,
-            to: to);
-
-        return items;
     }
 
     public async Task<PagedResult<InventoryMovement>> GetMovementsFilteredPagedAsync(

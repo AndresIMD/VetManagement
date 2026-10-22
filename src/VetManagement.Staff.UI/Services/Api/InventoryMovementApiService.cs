@@ -31,37 +31,6 @@ public class InventoryMovementApiService(HttpClient http)
         return movements?.Select(MapToShared).ToList() ?? [];
     }
 
-    public async Task<List<InventoryMovement>> GetMovementsFilteredAsync(
-    int? itemId = null,
-    string? itemName = null,
-    InventoryMovementType? type = null,
-    string? responsible = null,
-    DateTime? from = null,
-    DateTime? to = null)
-    {
-        var parameters = new List<string>();
-        if (itemId.HasValue)
-            parameters.Add($"itemId={itemId.Value}");
-        if (!string.IsNullOrWhiteSpace(itemName))
-            parameters.Add($"itemName={Uri.EscapeDataString(itemName)}");
-        if (type.HasValue && type.Value != InventoryMovementType.None)
-            parameters.Add($"type={type}");
-        if (!string.IsNullOrWhiteSpace(responsible))
-            parameters.Add($"responsible={Uri.EscapeDataString(responsible)}");
-        if (from.HasValue)
-            parameters.Add($"from={from.Value:O}");
-        if (to.HasValue)
-            parameters.Add($"to={to.Value:O}");
-        string url = ApiRouteConstants.INVENTORY_MOVEMENTS_BASE;
-        if (parameters.Count > 0)
-            url += "?" + string.Join("&", parameters);
-
-        var response = await http.GetAsync(url);
-        response.EnsureSuccessStatusCode();
-        var movements = await response.Content.ReadFromJsonAsync<List<MovementDto>>();
-        return movements?.Select(MapToShared).ToList() ?? [];
-    }
-
     public async Task AdjustStockAsync(int itemId, int amount, string reason)
     {
         var payload = new

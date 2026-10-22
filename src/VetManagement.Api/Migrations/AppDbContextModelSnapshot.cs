@@ -243,12 +243,17 @@ namespace VetManagement.Api.Migrations
 
                     b.Property<string>("EntityName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("User")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("EntityId", "EntityName");
+
+                    b.HasIndex("EntityName", "Date");
 
                     b.ToTable("AuditLogs");
                 });
@@ -1017,6 +1022,8 @@ namespace VetManagement.Api.Migrations
 
                     b.HasIndex("PetId");
 
+                    b.HasIndex("ReceivedOn");
+
                     b.ToTable("ExamReports");
                 });
 
@@ -1151,6 +1158,8 @@ namespace VetManagement.Api.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Date");
+
                     b.HasIndex("ItemId");
 
                     b.ToTable("InventoryMovements");
@@ -1201,6 +1210,8 @@ namespace VetManagement.Api.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Barcode");
 
                     b.ToTable("Items");
 

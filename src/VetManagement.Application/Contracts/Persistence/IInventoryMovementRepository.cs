@@ -8,13 +8,6 @@ public sealed record MovementQuantity(int ItemId, InventoryMovementType Type, in
 
 public interface IInventoryMovementRepository : IRepository<InventoryMovement>
 {
-    Task<IEnumerable<InventoryMovement>> GetFilteredAsync(
-        string? itemName = null,
-        InventoryMovementType? type = null,
-        string? responsible = null,
-        DateTime? from = null,
-        DateTime? to = null);
-
     Task<IEnumerable<InventoryMovement>> GetByItemIdAsync(int itemId);
 
     /// <summary>Movements between two UTC instants (from inclusive, to exclusive), without the item or the texts.</summary>

@@ -28,7 +28,7 @@ public interface IUnitOfWork : IDisposable
     IRepository<VetManagement.Domain.Clinical.VisitSupply> VisitSupplies { get; }
     IRepository<VetManagement.Domain.Clients.ClientAccessToken> ClientAccessTokens { get; }
     IRepository<VetManagement.Domain.Billing.CashClose> CashCloses { get; }
-    IRepository<VetManagement.Domain.Exams.ExamReport> ExamReports { get; }
+    IExamReportRepository ExamReports { get; }
     IRepository<VetManagement.Domain.Configuration.ClinicImage> ClinicImages { get; }
     IConsumptionSheetRepository ConsumptionSheets { get; }
     IRepository<VetManagement.Domain.Consumption.ConsumptionPricing> ConsumptionPricings { get; }

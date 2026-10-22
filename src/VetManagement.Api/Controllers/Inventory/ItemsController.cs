@@ -94,6 +94,7 @@ public class ItemsController(ItemService itemService, InventoryQueryService quer
         [FromQuery] DomainItemSortField? sortBy = null,
         [FromQuery] DomainSortDirection sortDirection = DomainSortDirection.Ascending)
     {
+        (page, pageSize) = Paging(page, pageSize);
         var result = await queryService.GetItemsPagedAsync(search, type, page, pageSize, alertFilter, sortBy, sortDirection);
         return Ok(result);
     }
