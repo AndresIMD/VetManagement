@@ -337,12 +337,27 @@ builder.Services.AddHsts(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// JSON answers compressed (App Service on Linux doesn't): item lists and report templates shrink to a fifth. Safe over
+// HTTPS here because the session is a bearer token the browser never sends on its own, so another site can't make
+// it fetch pages to compare their compressed sizes (BREACH). Images are already compressed and stay as they are.
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProvider>();
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProvider>();
+    options.MimeTypes = ["application/json", "application/problem+json"];
+});
+builder.Services.Configure<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProviderOptions>(
+    options => options.Level = System.IO.Compression.CompressionLevel.Fastest);
+
 var app = builder.Build();
 
 // Some hosts (Azure App Service on Linux) already add this middleware when ASPNETCORE_FORWARDEDHEADERS_ENABLED is set,
 // using the options above; adding it twice would read one forwarded entry too many.
 if (proxyForwardLimit is > 0 && !string.Equals(Environment.GetEnvironmentVariable("ASPNETCORE_FORWARDEDHEADERS_ENABLED"), "true", StringComparison.OrdinalIgnoreCase))
     app.UseForwardedHeaders();
+
+app.UseResponseCompression();
 
 var securityConfig = builder.Configuration.GetSection("Security");
 var enableHttpsRedirection = securityConfig.GetValue<bool>("EnableHttpsRedirection", true);

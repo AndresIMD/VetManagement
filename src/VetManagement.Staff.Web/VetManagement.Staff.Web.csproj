@@ -8,9 +8,10 @@
     <AssemblyName>VetManagement.Staff.Web</AssemblyName>
     <UserSecretsId>aa903c23-0dc5-4366-bbbf-8dbcd8f2658c</UserSecretsId>
     <BlazorWebAssemblyEnableLinking>true</BlazorWebAssemblyEnableLinking>
-    <!-- The clinic's culture (config.json "Culture") sets texts and date/number formats: needs globalization data. -->
+    <!-- The clinic's culture (config.json "Culture") sets texts and date/number formats: needs globalization data. Only
+         the part covering that culture is downloaded: js/boot.js starts Blazor in it (about 200 KB less than all of it). -->
     <InvariantGlobalization>false</InvariantGlobalization>
-    <BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>
+    <BlazorWebAssemblyLoadAllGlobalizationData>false</BlazorWebAssemblyLoadAllGlobalizationData>
   </PropertyGroup>
 
   <!-- Disable debug symbols in Development to avoid GitHub rate limiting -->

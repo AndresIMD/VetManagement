@@ -586,6 +586,12 @@ public class ExamReportsApiTests : IClassFixture<CustomWebAppFactory>
         var served = await _employee.GetAsync("/api/exam-reports/images/ReportLogo");
         served.Content.Headers.ContentType!.MediaType.Should().Be("image/png");
         (await served.Content.ReadAsByteArrayAsync()).Should().Equal(png);
+
+        // Revalidated on each use: unchanged, the browser keeps its copy (304, no body).
+        served.Headers.CacheControl!.NoCache.Should().BeTrue();
+        using var again = new HttpRequestMessage(HttpMethod.Get, "/api/exam-reports/images/ReportLogo");
+        again.Headers.IfNoneMatch.Add(served.Headers.ETag!);
+        (await _employee.SendAsync(again)).StatusCode.Should().Be(HttpStatusCode.NotModified);
     }
 
     [Theory]
