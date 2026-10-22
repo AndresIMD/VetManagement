@@ -41,9 +41,14 @@
         .xr-table th.xr-previous { white-space: nowrap; }
         .xr-qual-row { display: flex; align-items: center; gap: 4mm; padding: 2mm 1.5mm; border-bottom: 0.2mm solid #eee; }
         .xr-qual-name { flex: 1; font-weight: 600; }
-        /* Section titles over the parameters that follow them, in the patient bar's colour. */
+        /* Section titles over the parameters that follow them, in the patient bar's colour, across the whole box like its bars:
+           over the results area's side padding (6 mm), the table cell with a strip on each side (the box clips any excess). */
         .xr-section td, .xr-qual-section { color: #fff; font-weight: 700; text-align: center; text-transform: uppercase; letter-spacing: .4px; padding: 1.4mm 1.5mm; border-bottom: 0; }
-        .xr-qual-section { margin-top: 2mm; }
+        .xr-section td { position: relative; }
+        .xr-section td::before, .xr-section td::after { content: ''; position: absolute; top: 0; bottom: 0; width: 7mm; background: inherit; }
+        .xr-section td::before { right: calc(100% - 0.2mm); }
+        .xr-section td::after { left: calc(100% - 0.2mm); }
+        .xr-qual-section { margin: 2mm -6mm 0; }
         .xr-qual-previous { font-size: .86em; }
         .xr-pill { min-width: 34mm; padding: 1.2mm 4mm; border: 0.5mm solid; border-radius: 3mm; text-align: center; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
         .xr-gauge { display: flex; align-items: center; height: 4mm; margin-top: 0.8mm; max-width: 55mm; }
