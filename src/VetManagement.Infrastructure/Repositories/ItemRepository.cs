@@ -42,11 +42,11 @@ public class ItemRepository(AppDbContext context) : Repository<Item>(context), I
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
-            var term = searchTerm.Trim();
+            var term = searchTerm.Trim().ToLower();
             query = query.Where(i =>
-                i.Name.Contains(term, StringComparison.CurrentCultureIgnoreCase) ||
-                (i.Brand != null && i.Brand.Contains(term, StringComparison.CurrentCultureIgnoreCase)) ||
-                (i.Barcode != null && i.Barcode.Contains(term, StringComparison.CurrentCultureIgnoreCase)));
+                i.Name.ToLower().Contains(term) ||
+                (i.Brand != null && i.Brand.ToLower().Contains(term)) ||
+                (i.Barcode != null && i.Barcode.ToLower().Contains(term)));
         }
 
         return await query.ToListAsync();

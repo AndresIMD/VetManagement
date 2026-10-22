@@ -24,8 +24,8 @@ public class AuditLogRepository(AppDbContext context) : Repository<AuditLog>(con
 
         if (!string.IsNullOrWhiteSpace(user))
         {
-            var term = user.Trim();
-            query = query.Where(a => a.User != null && a.User.Contains(term, StringComparison.OrdinalIgnoreCase));
+            var term = user.Trim().ToLower();
+            query = query.Where(a => a.User != null && a.User.ToLower().Contains(term));
         }
 
         if (from.HasValue)
@@ -79,8 +79,8 @@ public class AuditLogRepository(AppDbContext context) : Repository<AuditLog>(con
 
         if (!string.IsNullOrWhiteSpace(user))
         {
-            var term = user.Trim();
-            query = query.Where(a => a.User != null && a.User.Contains(term, StringComparison.OrdinalIgnoreCase));
+            var term = user.Trim().ToLower();
+            query = query.Where(a => a.User != null && a.User.ToLower().Contains(term));
         }
 
         if (from.HasValue)

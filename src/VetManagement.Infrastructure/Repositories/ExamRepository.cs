@@ -13,11 +13,11 @@ public class ExamRepository(AppDbContext context) : Repository<Exam>(context), I
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
-            var term = searchTerm.Trim();
+            var term = searchTerm.Trim().ToLower();
             query = query.Where(e =>
-                e.Name.Contains(term, StringComparison.CurrentCultureIgnoreCase) ||
-                (e.Brand != null && e.Brand.Contains(term, StringComparison.CurrentCultureIgnoreCase)) ||
-                (e.Machine != null && e.Machine.Contains(term, StringComparison.CurrentCultureIgnoreCase)));
+                e.Name.ToLower().Contains(term) ||
+                (e.Brand != null && e.Brand.ToLower().Contains(term)) ||
+                (e.Machine != null && e.Machine.ToLower().Contains(term)));
         }
 
         return await query.ToListAsync();

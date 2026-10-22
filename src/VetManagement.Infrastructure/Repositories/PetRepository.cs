@@ -22,10 +22,10 @@ public class PetRepository(AppDbContext context) : Repository<Pet>(context), IPe
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
-            var term = searchTerm.Trim();
+            var term = searchTerm.Trim().ToLower();
             query = query.Where(p =>
-                p.Name.Contains(term, StringComparison.CurrentCultureIgnoreCase) ||
-                (p.Breed != null && p.Breed.Contains(term, StringComparison.CurrentCultureIgnoreCase)));
+                p.Name.ToLower().Contains(term) ||
+                (p.Breed != null && p.Breed.ToLower().Contains(term)));
         }
 
         if (species.HasValue)

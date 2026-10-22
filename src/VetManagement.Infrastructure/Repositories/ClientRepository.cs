@@ -38,13 +38,13 @@ public class ClientRepository(AppDbContext context) : Repository<Client>(context
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
-            var term = searchTerm.Trim();
+            var term = searchTerm.Trim().ToLower();
             query = query.Where(c =>
-                c.Name.Contains(term, StringComparison.CurrentCultureIgnoreCase) ||
-                c.LastName.Contains(term, StringComparison.CurrentCultureIgnoreCase) ||
-                c.TaxId.Contains(term, StringComparison.CurrentCultureIgnoreCase) ||
-                (c.Email != null && c.Email.Contains(term, StringComparison.CurrentCultureIgnoreCase)) ||
-                (c.PhoneNumber.ToString().Contains(term, StringComparison.CurrentCultureIgnoreCase)));
+                c.Name.ToLower().Contains(term) ||
+                c.LastName.ToLower().Contains(term) ||
+                c.TaxId.ToLower().Contains(term) ||
+                (c.Email != null && c.Email.ToLower().Contains(term)) ||
+                c.PhoneNumber.ToString().Contains(term));
         }
 
         return await query.ToListAsync();

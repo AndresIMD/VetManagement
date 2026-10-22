@@ -91,8 +91,8 @@ public class InventoryMovementRepository(AppDbContext context) : Repository<Inve
 
         if (!string.IsNullOrWhiteSpace(responsible))
         {
-            var term = responsible.Trim();
-            query = query.Where(m => m.Responsible != null && m.Responsible.Contains(term, StringComparison.OrdinalIgnoreCase));
+            var term = responsible.Trim().ToLower();
+            query = query.Where(m => m.Responsible != null && m.Responsible.ToLower().Contains(term));
         }
 
         if (from.HasValue)
