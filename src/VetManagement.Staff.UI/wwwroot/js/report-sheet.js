@@ -1,6 +1,6 @@
 // Measures a rendered exam report (ExamReportSheet) so its lines are spread over pages by their real height instead of an
 // estimate. Everything is returned in mm: the room for lines in the results box of the first page (and of a later page, when
-// there is one), the patient box, the slim patient box of later pages, the table header, the closing blocks and each line
+// there is one), the patient box, the patient box of later pages (bar and one line), the table header, the closing blocks and each line
 // (marked data-row="index"). Returns null while the sheet isn't laid out (e.g. hidden).
 window.appReportSheet = {
     measure(id, pageHeightMm) {
@@ -37,7 +37,7 @@ window.appReportSheet = {
             firstRoom: room(pages[0]),
             nextRoom: pages.length > 1 ? room(pages[1]) : null,
             patientBox: height(pages[0].querySelector('.xr-patient-box')),
-            continued: pages.length > 1 ? height(pages[1].querySelector('.xr-continued')) : null,
+            continued: pages.length > 1 ? height(pages[1].querySelector('.xr-continued-box')) : null,
             header: Math.max(0, ...[...doc.querySelectorAll('.xr-table thead')].map(height)),
             closing: closingHeight(),
             rows: [...rows].map(r => r ?? 0)

@@ -20,13 +20,16 @@
         .xr-results-box { position: relative; overflow: hidden; flex: 1; display: flex; flex-direction: column; }
         .xr-results-box > .xr-bar, .xr-results-box > .xr-results { position: relative; z-index: 1; }
         .xr-bar { color: #fff; font-weight: 700; text-align: center; padding: 1.6mm; font-size: 11.5pt; letter-spacing: .4px; }
-        .xr-patient { display: grid; grid-template-columns: 1fr 1fr; gap: 1mm 8mm; padding: 3mm 8mm; text-transform: uppercase; }
+        /* Two columns that grow on their own: a long value wraps beside its label without pushing the other column down. */
+        .xr-patient { display: grid; grid-template-columns: 1fr 1fr; gap: 0 8mm; padding: 3mm 8mm; text-transform: uppercase; }
+        .xr-patient-col { display: flex; flex-direction: column; gap: 1mm; min-width: 0; }
+        .xr-field { display: flex; align-items: baseline; gap: 1.5mm; }
+        .xr-field b { white-space: nowrap; }
+        .xr-field span { min-width: 0; overflow-wrap: anywhere; }
         /* Later pages: who the report is about, in a slim box like the patient one. */
-        .xr-continued { display: flex; flex-wrap: wrap; gap: 1mm 8mm; padding: 1.6mm 6mm; border: 0.4mm solid; border-radius: 1mm; background: rgba(255,255,255,.82); font-size: 9pt; text-transform: uppercase; }
-        .xr-continued b { margin-right: 1.5mm; }
+        .xr-continued { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1mm 8mm; padding: 2mm 8mm; text-transform: uppercase; }
         /* A hair shorter than the paper when printing, so rounding never pushes the footer onto an extra page. */
         @@media print { .xr-page { height: @(Mm(PageHeight - 0.6))mm !important; } }
-        .xr-patient b { margin-right: 1.5mm; }
         .xr-results { padding: 3mm 6mm 5mm; flex: 1; display: flex; flex-direction: column; }
         .xr-table { width: 100%; align-self: stretch; table-layout: fixed; border-collapse: collapse; }
         .xr-table th { text-align: left; vertical-align: bottom; font-size: .86em; text-transform: uppercase; padding: 2mm 1.5mm; border-bottom: 0.4mm solid #ccc; overflow-wrap: break-word; hyphens: auto; }
@@ -104,25 +107,33 @@
                     <div class="xr-box xr-patient-box" style="border-color:@Settings.HeaderColor">
                         <div class="xr-bar" style="background:@Settings.HeaderColor">@L["PET AND OWNER DATA"]</div>
                         <div class="xr-patient" style="font-size:@(Mm(Settings.PatientFontPt))pt">
-                            <div><b>@L["PATIENT:"]</b> @Report.PetName</div>
-                            <div><b>@L["OWNER:"]</b> @Report.OwnerName</div>
-                            <div><b>@L["SPECIES:"]</b> @(Placeholder ? L["SPECIES – BREED"] : SpeciesAndBreed)</div>
-                            <div><b>@L["REFERRING VET:"]</b> @Report.ReferringVet</div>
-                            <div><b>@L["AGE:"]</b> @(Placeholder ? Upper(L["Age"]) : Age)</div>
-                            <div><b>@L["RECEIVED ON:"]</b> @ReceivedOn</div>
-                            <div><b>@L["SEX:"]</b> @(Placeholder ? Upper(L["Sex"]) : SexName)</div>
+                            <div class="xr-patient-col">
+                                <div class="xr-field"><b>@L["PATIENT:"]</b><span>@Report.PetName</span></div>
+                                <div class="xr-field"><b>@L["SPECIES:"]</b><span>@(Placeholder ? L["SPECIES – BREED"] : SpeciesAndBreed)</span></div>
+                                <div class="xr-field"><b>@L["AGE:"]</b><span>@(Placeholder ? Upper(L["Age"]) : Age)</span></div>
+                                <div class="xr-field"><b>@L["SEX:"]</b><span>@(Placeholder ? Upper(L["Sex"]) : SexName)</span></div>
+                            </div>
+                            <div class="xr-patient-col">
+                                <div class="xr-field"><b>@L["OWNER:"]</b><span>@Report.OwnerName</span></div>
+                                <div class="xr-field"><b>@L["REFERRING VET:"]</b><span>@Report.ReferringVet</span></div>
+                                <div class="xr-field"><b>@L["RECEIVED ON:"]</b><span>@ReceivedOn</span></div>
+                            </div>
                         </div>
                     </div>
                 }
                 else if (!first)
                 {
-                    <div class="xr-continued" style="border-color:@Settings.HeaderColor">
-                        <span><b>@L["PATIENT:"]</b>@Report.PetName</span>
-                        @if (!string.IsNullOrWhiteSpace(Report.OwnerName))
-                        {
-                            <span><b>@L["OWNER:"]</b>@Report.OwnerName</span>
-                        }
-                        <span><b>@L["RECEIVED ON:"]</b>@ReceivedOn</span>
+                    @* Later pages: the patient box's bar over who the report is about, spread across the box. *@
+                    <div class="xr-box xr-continued-box" style="border-color:@Settings.HeaderColor">
+                        <div class="xr-bar" style="background:@Settings.HeaderColor">@L["PET AND OWNER DATA"]</div>
+                        <div class="xr-continued" style="font-size:@(Mm(Settings.PatientFontPt))pt">
+                            <div class="xr-field"><b>@L["PATIENT:"]</b><span>@Report.PetName</span></div>
+                            @if (!string.IsNullOrWhiteSpace(Report.OwnerName))
+                            {
+                                <div class="xr-field"><b>@L["OWNER:"]</b><span>@Report.OwnerName</span></div>
+                            }
+                            <div class="xr-field"><b>@L["RECEIVED ON:"]</b><span>@ReceivedOn</span></div>
+                        </div>
                     </div>
                 }
 
@@ -494,8 +505,8 @@
         if (_measures is { } m && m.Rows.Length == Report.Results.Count)
         {
             var header = Qualitative ? 0 : m.Header;
-            // A later page has the slim patient box (or nothing above the results when the first has no patient box).
-            var continued = m.Continued ?? 8;
+            // A later page has the shorter patient box (or nothing above the results when the first has no patient box).
+            var continued = m.Continued ?? 16;
             var next = m.NextRoom ?? (Report.Sections.PatientData ? m.FirstRoom + m.PatientBox - continued : m.FirstRoom - continued - GAP_MM);
             return ReportPagination.Split(m.Rows, sections, m.FirstRoom - header - SAFETY_MM, next - header - SAFETY_MM, m.Closing);
         }
@@ -513,7 +524,7 @@
             - 26; // result bar, table header and box padding
         // Patient box: its bar and padding, plus four lines of data at the chosen size.
         var firstMm = frameMm - (Report.Sections.PatientData ? 16 + 22 * Settings.PatientFontPt / ExamReportSettings.DefaultFontPt + GAP_MM : 0);
-        var nextMm = frameMm - 9 - GAP_MM; // the box with the patient's name on later pages
+        var nextMm = frameMm - 18 * Settings.PatientFontPt / ExamReportSettings.DefaultFontPt - GAP_MM; // the patient box of later pages
 
         var closingMm = 6.0
             + (Report.Sections.Interpretation && !string.IsNullOrWhiteSpace(Report.Interpretation)
