@@ -252,4 +252,6 @@
   <data name="Write how many mL one container holds." xml:space="preserve"><value>Escribe cuántos mL trae un envase.</value></data>
   <data name="Write the price of one mL." xml:space="preserve"><value>Escribe el precio de un mL.</value></data>
   <data name="Change your temporary password first." xml:space="preserve"><value>Primero cambia tu contraseña temporal.</value></data>
+  <data name="Choose a valid day and time." xml:space="preserve"><value>Elige un día y una hora válidos.</value></data>
+  <data name="Write at least one email address to send the alerts to." xml:space="preserve"><value>Escribe al menos un correo al que enviar las alertas.</value></data>
 </root>

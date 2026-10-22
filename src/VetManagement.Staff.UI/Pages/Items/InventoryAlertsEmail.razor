@@ -283,8 +283,11 @@
             IncludeOutOfStock: ScheduleIncludeZero,
             LastSentUtc: LastSent
             );
-            await SchedulesApi.SaveScheduleAsync(dto);
-            Snackbar.Add(L["Schedule saved."], Severity.Success);
+            var result = await SchedulesApi.SaveScheduleAsync(dto);
+            if (result.Ok)
+                Snackbar.Add(L["Schedule saved."], Severity.Success);
+            else
+                Snackbar.Add(L["Error saving schedule: {0}", result.Error ?? string.Empty], Severity.Error);
         }
         catch (Exception ex)
         {

@@ -211,8 +211,7 @@ builder.Services.AddMemoryCache(options =>
     options.SizeLimit = 1024;
     options.CompactionPercentage = 0.25;
 });
-builder.Services.AddScoped<OptimizedCacheService>();
-builder.Services.AddScoped<OptimizedQueryService>();
+builder.Services.AddScoped<InventoryEmailScheduleService>();
 
 builder.Services.AddScoped<VetManagement.Application.Contracts.Services.IRealtimeNotificationService, RealtimeNotificationService>();
 builder.Services.AddScoped<EmailService>();

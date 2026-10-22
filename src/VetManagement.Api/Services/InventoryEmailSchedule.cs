@@ -1,7 +1,12 @@
 using System.Text.Json;
+using VetManagement.Application.Configuration;
+using VetManagement.Application.Contracts.Persistence;
+using VetManagement.Application.Services;
+using VetManagement.Domain.Localization;
 
 namespace VetManagement.Api.Services;
 
+/// <summary>When the inventory alert email goes out and to whom. The time is the clinic's local time.</summary>
 public class InventoryEmailSchedule
 {
     public bool Enabled { get; set; }
@@ -15,41 +20,45 @@ public class InventoryEmailSchedule
     public bool IncludeOutOfStock { get; set; } = true;
     public DateTime? LastSentUtc { get; set; }
 
-    private static string GetFilePath(IHostEnvironment env)
-        => Path.Combine(env.ContentRootPath, "App_Data", "inventory_email_schedule.json");
+    public static string[] Addresses(string? list)
+        => (list ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-    public static async Task<InventoryEmailSchedule> LoadAsync(IHostEnvironment env, CancellationToken cancellationToken = default)
+    public List<string> Validate()
     {
-        var path = GetFilePath(env);
+        var errors = new List<string>();
+        if (DayOfWeek is < 0 or > 6 || Hour is < 0 or > 23 || Minute is < 0 or > 59)
+            errors.Add(Texts.T("Choose a valid day and time."));
+        if (Enabled && Addresses(To).Length == 0)
+            errors.Add(Texts.T("Write at least one email address to send the alerts to."));
+        return errors;
+    }
+}
+
+/// <summary>
+/// The schedule is a clinic settings document in the database. It used to be a file next to the API
+/// (App_Data/inventory_email_schedule.json), which a redeploy could lose; when present, that file starts the document.
+/// </summary>
+public class InventoryEmailScheduleService(IUnitOfWork unitOfWork, AuditService audit, IHostEnvironment env)
+    : ClinicSettingsService<InventoryEmailSchedule>(unitOfWork, audit)
+{
+    protected override string SettingsKey => "inventory-email-schedule";
+    protected override InventoryEmailSchedule CreateDefaults() => ReadFormerFile() ?? new InventoryEmailSchedule();
+    protected override List<string> Validate(InventoryEmailSchedule settings) => settings.Validate();
+
+    /// <summary>Saves over the stored schedule (the screen keeps no version: the last save wins, as with the file).</summary>
+    public async Task<SettingsUpdateResult> SaveAsync(InventoryEmailSchedule schedule, string userName)
+        => await UpdateAsync(schedule, (await GetAsync()).Version, userName);
+
+    private InventoryEmailSchedule? ReadFormerFile()
+    {
+        var path = Path.Combine(env.ContentRootPath, "App_Data", "inventory_email_schedule.json");
         try
         {
-            if (!File.Exists(path))
-            {
-                var dir = Path.GetDirectoryName(path);
-                if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-
-                var defaultSchedule = new InventoryEmailSchedule();
-                await SaveAsync(env, defaultSchedule, cancellationToken);
-                return defaultSchedule;
-            }
-
-            await using var fileStream = File.OpenRead(path);
-            var schedule = await JsonSerializer.DeserializeAsync<InventoryEmailSchedule>(fileStream, cancellationToken: cancellationToken);
-            return schedule ?? new InventoryEmailSchedule();
+            return File.Exists(path) ? JsonSerializer.Deserialize<InventoryEmailSchedule>(File.ReadAllText(path)) : null;
         }
-        catch (Exception)
+        catch (Exception e) when (e is IOException or JsonException or UnauthorizedAccessException)
         {
-            return new InventoryEmailSchedule();
+            return null;
         }
-    }
-
-    public static async Task SaveAsync(IHostEnvironment env, InventoryEmailSchedule schedule, CancellationToken cancellationToken = default)
-    {
-        var path = GetFilePath(env);
-        var dir = Path.GetDirectoryName(path);
-        if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-
-        await using var fileStream = File.Create(path);
-        await JsonSerializer.SerializeAsync(fileStream, schedule, new JsonSerializerOptions { WriteIndented = true }, cancellationToken);
     }
 }

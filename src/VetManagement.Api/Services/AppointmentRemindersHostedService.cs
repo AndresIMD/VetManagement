@@ -1,4 +1,6 @@
+using VetManagement.Api.Authorization;
 using VetManagement.Application.Scheduling;
+using VetManagement.Domain.Enums;
 
 namespace VetManagement.Api.Services;
 
@@ -6,28 +8,40 @@ namespace VetManagement.Api.Services;
 /// Every few minutes: emails reminders for upcoming appointments and preventive doses (vaccines, deworming) when
 /// enabled, and releases online bookings whose payment hold expired.
 /// </summary>
-public class AppointmentRemindersHostedService(IServiceScopeFactory scopeFactory, ILogger<AppointmentRemindersHostedService> logger)
+public class AppointmentRemindersHostedService(IServiceScopeFactory scopeFactory, ILogger<AppointmentRemindersHostedService> logger,
+    EnabledModules modules)
     : BackgroundService
 {
     private static readonly TimeSpan Interval = TimeSpan.FromMinutes(5);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        // Only the work of the modules this clinic has: the others would query the database for nothing every 5 minutes.
+        var scheduling = modules.IsEnabled(AppModule.Scheduling);
+        var clinical = modules.IsEnabled(AppModule.Clinical);
+        if (!scheduling && !clinical)
+            return;
         using var timer = new PeriodicTimer(Interval);
         while (await timer.WaitForNextTickAsync(stoppingToken))
         {
             try
             {
                 using var scope = scopeFactory.CreateScope();
-                var sent = await scope.ServiceProvider.GetRequiredService<AppointmentService>().SendDueRemindersAsync();
-                if (sent > 0)
-                    logger.LogInformation("Sent {Count} appointment reminder(s)", sent);
-                var doses = await scope.ServiceProvider.GetRequiredService<VetManagement.Application.Clinical.ClinicalService>().SendDueRemindersAsync();
-                if (doses > 0)
-                    logger.LogInformation("Sent {Count} preventive dose reminder(s)", doses);
-                var released = await scope.ServiceProvider.GetRequiredService<OnlineBookingService>().ExpireUnpaidHoldsAsync();
-                if (released > 0)
-                    logger.LogInformation("Released {Count} online booking(s) whose payment hold expired", released);
+                if (scheduling)
+                {
+                    var sent = await scope.ServiceProvider.GetRequiredService<AppointmentService>().SendDueRemindersAsync();
+                    if (sent > 0)
+                        logger.LogInformation("Sent {Count} appointment reminder(s)", sent);
+                    var released = await scope.ServiceProvider.GetRequiredService<OnlineBookingService>().ExpireUnpaidHoldsAsync();
+                    if (released > 0)
+                        logger.LogInformation("Released {Count} online booking(s) whose payment hold expired", released);
+                }
+                if (clinical)
+                {
+                    var doses = await scope.ServiceProvider.GetRequiredService<VetManagement.Application.Clinical.ClinicalService>().SendDueRemindersAsync();
+                    if (doses > 0)
+                        logger.LogInformation("Sent {Count} preventive dose reminder(s)", doses);
+                }
             }
             catch (Exception ex)
             {
