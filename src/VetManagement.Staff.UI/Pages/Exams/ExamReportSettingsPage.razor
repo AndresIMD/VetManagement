@@ -145,6 +145,13 @@
                                         @L["Results text: {0} pt", _settings.ResultsFontPt.ToString("0.#")]
                                     </MudSlider>
                                 </MudItem>
+                                <MudItem xs="12">
+                                    <div class="d-flex align-center">
+                                        <MudSwitch T="bool" Value="_settings.PatientDataOnLaterPages" ValueChanged="SetPatientDataOnLaterPages"
+                                                   Color="Color.Primary" Label="@L["Pet and owner data on the following pages"]" />
+                                        <HelpTip Text="@L["The pages after the first repeat the patient, owner and reception date in a slim box under the header, so a loose page can still be matched to its patient. Turned off, their results start right under the header."]" />
+                                    </div>
+                                </MudItem>
                                 <MudItem xs="6" sm="3">
                                     <MudText Typo="Typo.caption">@L["Patient bar"]</MudText>
                                     <input type="color" @bind="_settings.HeaderColor"
@@ -207,9 +214,10 @@
                         </MudItem>
 
                         <MudItem xs="12" lg="7">
+                            <MudSwitch T="bool" @bind-Value="_longPreview" Color="Color.Primary" Label="@L["Preview a report of several pages"]" />
                             <div style="overflow-x:auto">
                                 <div style="width:fit-content;margin:auto">
-                                    <ExamReportSheet Settings="_settings" Report="ExamReportSheet.PlaceholderReport()"
+                                    <ExamReportSheet Settings="_settings" Report="Preview"
                                                      Placeholder="true" LogoUrl="@_logo" BackgroundUrl="@_background" />
                                 </div>
                             </div>
@@ -237,6 +245,35 @@
     private sealed record ImageChange(string? ContentType, byte[]? Data);
 
     private string BackgroundPixels => _settings?.Paper == PaperSize.A4 ? "2480 × 3508" : "2550 × 3300";
+
+    /// <summary>The preview shows a report long enough for a second page: what later pages repeat only shows there.</summary>
+    private bool _longPreview;
+
+    private ExamReportDto Preview => _longPreview
+        ? ExamReportSheet.PlaceholderReport(results: LongReportLines(), interpretation: Strings.T("Interpretation of the result."))
+        : ExamReportSheet.PlaceholderReport();
+
+    /// <summary>Sample lines under two section titles: enough to fill the first page and go on to a second one.</summary>
+    private static List<ExamReportResultDto> LongReportLines()
+    {
+        var lines = new List<ExamReportResultDto>();
+        for (var i = 1; i <= 24; i++)
+        {
+            if (i % 15 == 1)
+                lines.Add(new ExamReportResultDto { Name = Strings.T("Section title"), Kind = ReportParameterKind.Section });
+            lines.Add(i % 5 == 0
+                ? new ExamReportResultDto { Name = $"{Strings.T("Parameter")} {i}", Value = "6.4", Unit = Strings.T("Unit"), Reference = "3.5 - 5.8", BarMin = 3.5m, BarMax = 5.8m, Abnormal = true, Direction = ResultDirection.High }
+                : new ExamReportResultDto { Name = $"{Strings.T("Parameter")} {i}", Value = Strings.T("Result"), Unit = Strings.T("Unit"), Reference = Strings.T("Reference value") });
+        }
+        return lines;
+    }
+
+    /// <summary>The option only shows from the second page on, so the preview gets one.</summary>
+    private void SetPatientDataOnLaterPages(bool value)
+    {
+        _settings!.PatientDataOnLaterPages = value;
+        _longPreview = true;
+    }
 
     private bool HasChanges => _settings is not null && (_imageChanges.Count > 0 || Snapshot() != _savedSettings);
 

@@ -46,4 +46,12 @@ public class ReportPaginationTests
     [Fact]
     public void Closing_GoesAlone_OnlyWhenThePageHasASingleLine()
         => Split(lines: 1, room: 15, closing: 10).Should().BeEquivalentTo(new[] { new[] { 0 }, Array.Empty<int>() }, o => o.WithStrictOrdering());
+
+    [Theory]
+    [InlineData(40, 16, 124)]  // the slim box replaces the first page's patient box
+    [InlineData(40, 0, 145)]   // no box on later pages: their lines take its place and the gap under it
+    [InlineData(0, 16, 79)]    // no patient box on the first page, the slim one on later pages
+    [InlineData(0, 0, 100)]
+    public void LaterPages_GainOrLoseTheRoomOfThePatientBoxes(double patientBox, double laterPatientBox, double expected)
+        => ReportPagination.LaterRoom(firstRoom: 100, patientBox, laterPatientBox, gap: 5).Should().Be(expected);
 }

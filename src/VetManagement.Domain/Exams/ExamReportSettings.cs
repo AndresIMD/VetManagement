@@ -77,6 +77,9 @@ public class ExamReportSettings
     /// <summary>Text size of the results (table, interpretation, criteria), in points; the smaller texts in it keep their proportion.</summary>
     public double ResultsFontPt { get; set; } = DefaultFontPt;
 
+    /// <summary>Later pages repeat the patient, owner and reception date in a slim box; off, their results start under the header.</summary>
+    public bool PatientDataOnLaterPages { get; set; } = true;
+
     /// <summary>1 = background image as uploaded; lower values fade it into a watermark.</summary>
     public double BackgroundOpacity { get; set; } = 1;
 

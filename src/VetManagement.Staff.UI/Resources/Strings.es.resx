@@ -1260,4 +1260,7 @@
   <data name="Remove section" xml:space="preserve"><value>Quitar sección</value></data>
   <data name="Printed as a band over the parameters below it, up to the next section; left out when none of them has a result." xml:space="preserve"><value>Se imprime como una franja sobre los parámetros que siguen, hasta la próxima sección; no se imprime si ninguno tiene resultado.</value></data>
   <data name="Add section" xml:space="preserve"><value>Agregar sección</value></data>
+  <data name="Pet and owner data on the following pages" xml:space="preserve"><value>Datos del paciente y tutor en las hojas siguientes</value></data>
+  <data name="The pages after the first repeat the patient, owner and reception date in a slim box under the header, so a loose page can still be matched to its patient. Turned off, their results start right under the header." xml:space="preserve"><value>Las hojas después de la primera repiten el paciente, el tutor y la fecha de recepción en un recuadro delgado bajo el encabezado, para que una hoja suelta se pueda asociar a su paciente. Si lo desactivas, sus resultados empiezan justo bajo el encabezado.</value></data>
+  <data name="Preview a report of several pages" xml:space="preserve"><value>Vista previa de un informe de varias hojas</value></data>
 </root>

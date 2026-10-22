@@ -507,6 +507,13 @@ public class ExamReportsApiTests : IClassFixture<CustomWebAppFactory>
     }
 
     [Fact]
+    public void Design_SavedBeforeTheOption_KeepsThePatientDataOnLaterPages()
+    {
+        SettingsJson.Deserialize<ExamReportSettings>("""{ "fontFamily": "Arial" }""").PatientDataOnLaterPages.Should().BeTrue();
+        SettingsJson.Deserialize<ExamReportSettings>("""{ "patientDataOnLaterPages": false }""").PatientDataOnLaterPages.Should().BeFalse();
+    }
+
+    [Fact]
     public void FooterMarkup_KeepsGaps_AndPrintsDoubleAsterisksInBold()
     {
         ReportText.Lines("\r\n**Clínica Demo**\r\nRUT: 11.111.111-1\r\n\r\n  Calle 1  \n\n").Should().Equal("**Clínica Demo**", "RUT: 11.111.111-1", "", "Calle 1");

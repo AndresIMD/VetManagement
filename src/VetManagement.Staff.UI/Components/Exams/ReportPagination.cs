@@ -11,6 +11,13 @@ public static class ReportPagination
     /// <summary>Lines carried over with the closing blocks when these don't fit on the last page.</summary>
     public const int LinesWithClosing = 2;
 
+    /// <summary>
+    /// Room for lines on a later page, worked out from the first one (when no later page has been measured): the first
+    /// page's patient box and the gap under it make way for the slim box of later pages and its gap. A height of 0 = no box.
+    /// </summary>
+    public static double LaterRoom(double firstRoom, double patientBox, double laterPatientBox, double gap)
+        => firstRoom + (patientBox > 0 ? patientBox + gap : 0) - (laterPatientBox > 0 ? laterPatientBox + gap : 0);
+
     /// <returns>For each page, the indexes of its lines; the last page also holds the closing blocks.</returns>
     public static List<List<int>> Split(IReadOnlyList<double> heights, IReadOnlyList<bool> isSection, double firstRoom, double nextRoom, double closing)
     {

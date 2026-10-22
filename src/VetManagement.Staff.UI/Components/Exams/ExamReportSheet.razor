@@ -128,7 +128,7 @@
                         </div>
                     </div>
                 }
-                else if (!first)
+                else if (!first && Settings.PatientDataOnLaterPages)
                 {
                     @* Later pages: the patient box's bar over who the report is about, spread across the box. *@
                     <div class="xr-box xr-continued-box" style="border-color:@Settings.HeaderColor">
@@ -479,8 +479,8 @@
     private string Layout() => System.Text.Json.JsonSerializer.Serialize(new
     {
         Report, Placeholder, Logo = LogoUrl?.Length, Settings.Paper, Settings.MarginsMm, Settings.FontFamily, Settings.PatientFontPt,
-        Settings.ResultsFontPt, Settings.HeaderLines, Settings.Footer, Settings.Disclaimer, Settings.LogoHeightMm, Settings.LogoWidthMm,
-        Settings.LogoKeepRatio
+        Settings.ResultsFontPt, Settings.PatientDataOnLaterPages, Settings.HeaderLines, Settings.Footer, Settings.Disclaimer,
+        Settings.LogoHeightMm, Settings.LogoWidthMm, Settings.LogoKeepRatio
     });
 
     protected override void OnParametersSet()
@@ -528,9 +528,9 @@
         if (_measures is { } m && m.Rows.Length == Report.Results.Count)
         {
             var header = Qualitative ? 0 : m.Header;
-            // A later page has the shorter patient box (or nothing above the results when the first has no patient box).
-            var continued = m.Continued ?? 16;
-            var next = m.NextRoom ?? (Report.Sections.PatientData ? m.FirstRoom + m.PatientBox - continued : m.FirstRoom - continued - GAP_MM);
+            // A later page has the slim patient box instead of the first page's one, or none when the design leaves it out.
+            var laterBox = Settings.PatientDataOnLaterPages ? m.Continued ?? 16 : 0;
+            var next = m.NextRoom ?? ReportPagination.LaterRoom(m.FirstRoom, m.PatientBox, laterBox, GAP_MM);
             return ReportPagination.Split(m.Rows, sections, m.FirstRoom - header - SAFETY_MM, next - header - SAFETY_MM, m.Closing);
         }
         var (first, later, closing) = Estimates();
@@ -547,7 +547,8 @@
             - 26; // result bar, table header and box padding
         // Patient box: its bar and padding, plus four lines of data at the chosen size.
         var firstMm = frameMm - (Report.Sections.PatientData ? 16 + 22 * Settings.PatientFontPt / ExamReportSettings.DefaultFontPt + GAP_MM : 0);
-        var nextMm = frameMm - 18 * Settings.PatientFontPt / ExamReportSettings.DefaultFontPt - GAP_MM; // the patient box of later pages
+        // The slim patient box of later pages, unless the design leaves it out.
+        var nextMm = frameMm - (Settings.PatientDataOnLaterPages ? 18 * Settings.PatientFontPt / ExamReportSettings.DefaultFontPt + GAP_MM : 0);
 
         var closingMm = 6.0
             + (Report.Sections.Interpretation && !string.IsNullOrWhiteSpace(Report.Interpretation)
