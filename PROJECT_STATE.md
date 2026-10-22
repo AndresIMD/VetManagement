@@ -45,6 +45,10 @@ How the code is organised: [`docs/architecture/ARCHITECTURE.md`](docs/architectu
 - Printable prescriptions; attachments (images, lab PDFs) in the clinical record.
 - Settings screens (agenda, billing, clinical) are JSON editors that point admins to repo docs they can't open;
   guided forms with in-screen explanations would suit clinic admins.
+- How long to keep personal data: the audit log keeps every change for good, client changes with the whole record
+  (name, tax ID, contact details), also after the client is deleted. Chile's Ley 21.719 (in force from December 2026)
+  asks to keep personal data only while it is needed and to delete it when the person asks. Decide a retention period
+  and whether old entries keep client details, with the clinic's lawyer; a background job can then purge or redact.
 
 ## Later (depend on providers or costs)
 

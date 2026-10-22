@@ -82,9 +82,12 @@ private repository, not here.
 2. App Service → Environment variables: the keys of the API table above (`ConnectionStrings__DefaultConnection`,
    `Jwt__Key`, `AllowedOrigins__0`, `Modules__Enabled__0`, `Localization__Culture`, ...), `ASPNETCORE_ENVIRONMENT=Production` and
    `Proxy__ForwardLimit`. The first start creates the schema (migrations run on start-up) and the `SeedAdmin` user.
+   The connection string uses the API's own database user ([below](#the-apis-database-user)), not the server admin.
 3. GitHub → Settings → Environments → one per clinic, with the variables and secrets listed at the top of
    `.github/workflows/deploy-azure.yml`; then Actions → **Deploy to Azure** → Run workflow with that environment. It runs
    the tests, publishes the API and the staff web, and writes the staff web's `config.json` (`ApiBaseUrl`, and `Culture` from the optional `STAFF_CULTURE` variable).
+   It also narrows the page's Content-Security-Policy so the browser connects only to that API (`connect-src`); the
+   repository's `index.html` allows any HTTPS site and localhost, for development.
 4. Custom domains, DNS at Cloudflare: a `CNAME` per subdomain to the Azure default host name, plus the `TXT asuid.<sub>`
    record App Service asks for. Keep the records **DNS only (grey cloud)** until Azure has validated the domain and issued
    its certificate; with the proxy on afterwards, use SSL mode **Full (strict)** and set `Proxy:ForwardLimit` to 2.
@@ -93,6 +96,32 @@ private repository, not here.
    copy while the clinic keeps working on its current server.
 
 A hosted system needs the internet: with no connection at the clinic there's no system, unlike a server on its network.
+
+### The API's database user
+
+The server admin can do anything on the server; the API only needs its own database. Connected to the clinic's
+database as the admin (e.g. the portal's Query editor), create a user for the API. Migrations run when the API starts,
+so besides reading and writing rows it changes the schema (`db_ddladmin`); it can't manage users or permissions.
+
+```sql
+CREATE USER [vetmanagement_api] WITH PASSWORD = '<long random password>', DEFAULT_SCHEMA = dbo;
+ALTER ROLE db_datareader ADD MEMBER [vetmanagement_api];
+ALTER ROLE db_datawriter ADD MEMBER [vetmanagement_api];
+ALTER ROLE db_ddladmin ADD MEMBER [vetmanagement_api];
+```
+
+Then `ConnectionStrings__DefaultConnection` uses `User ID=vetmanagement_api;Password=...`, and the admin's password
+stays out of the app's settings. Every migration applies with these roles.
+
+### Checks after the first deploy
+
+- App Service → Configuration: **Always on** and **Web sockets** on, **HTTPS only** on, minimum TLS 1.2. FTP basic
+  authentication can be off; SCM basic authentication stays on (the deploy's publish profile uses it).
+- Azure SQL → Networking: delete the firewall rules of the PCs used to import the data. *Allow Azure services* lets any
+  service hosted on Azure, of any customer, reach the server (it still needs a password); to narrow it, allow only the
+  App Service's outbound IP addresses (App Service → Properties), which change if the plan's tier changes.
+- Azure SQL → Metrics: *DTU percentage* over a busy week; Basic (5 DTU) staying near 100% means moving up to S0.
+- Cost Management → Budgets: an alert on the clinic's resource group.
 
 ## Moving a clinic from the legacy SPLabHybrid app (San Pablo)
 
