@@ -7,6 +7,11 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    # ASP.NET Core 10's OpenAPI source generator needs Microsoft.OpenApi 2.x: with 3.x its generated code doesn't
+    # compile. Major updates wait until ASP.NET Core supports them.
+    ignore:
+      - dependency-name: Microsoft.OpenApi
+        update-types: ["version-update:semver-major"]
     groups:
       minor-and-patch:
         update-types: [minor, patch]
