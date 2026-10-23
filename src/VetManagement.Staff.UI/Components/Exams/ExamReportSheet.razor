@@ -163,7 +163,7 @@
                                     }
                                     @if (line.Kind == ReportParameterKind.Section)
                                     {
-                                        <div class="xr-qual-section" style="background:@Settings.SectionBarColor" data-row="@RowIndex(line)">@line.Name</div>
+                                        <div class="xr-qual-section" style="background:@Settings.SectionBarColor;color:@Settings.SectionTextColor" data-row="@RowIndex(line)">@line.Name</div>
                                         continue;
                                     }
                                     <div class="xr-qual-row" data-row="@RowIndex(line)">
@@ -208,7 +208,7 @@
                                         }
                                         @if (line.Kind == ReportParameterKind.Section)
                                         {
-                                            <tr class="xr-section" data-row="@RowIndex(line)"><td colspan="@ColumnWidths.Length" style="background:@Settings.SectionBarColor">@line.Name</td></tr>
+                                            <tr class="xr-section" data-row="@RowIndex(line)"><td colspan="@ColumnWidths.Length" style="background:@Settings.SectionBarColor;color:@Settings.SectionTextColor">@line.Name</td></tr>
                                             continue;
                                         }
                                         <tr data-row="@RowIndex(line)">

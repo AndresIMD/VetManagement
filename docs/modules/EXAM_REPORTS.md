@@ -49,9 +49,9 @@ Asked in the form (per template): the lot number, so the form only shows the fie
   table row with "or" is two rules. A report keeps a copy, like the rest of the template.
 - Parameter codes are generated from the first name and hidden; renaming a parameter keeps its code.
 - **Section titles** (`Kind: Section`) group the parameters after them, up to the next title; a report prints a title
-  as a band across the results box above its first result, in the section colour of Report Design, and leaves it out
-  when none of its parameters has a value. Parameters and titles are moved up and down in the editor, which is also how
-  a parameter changes section.
+  as a band across the results box above its first result, in the section colour of Report Design (dark text on a light
+  colour, white otherwise), and leaves it out when none of its parameters has a value. Parameters and titles are moved
+  up and down in the editor, which is also how a parameter changes section.
 - **Page breaks** (`Kind: PageBreak`) print nothing: the lines after one start a new page, and a section title right
   above it goes along. A report keeps one only between values: never first or last, and several in a row count once.
   The report form doesn't show them.
