@@ -52,10 +52,10 @@
         .xr-qual-section { margin: 2mm -6mm 0; }
         .xr-qual-previous { font-size: .86em; }
         .xr-pill { min-width: 34mm; padding: 1.2mm 4mm; border: 0.5mm solid; border-radius: 3mm; text-align: center; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
-        /* The bar beside the reference, at the column's right edge so the bars line up; as tall as a line of text (centred on
-           the first one), so a line with a bar is no taller than one without. */
+        /* The bar beside the reference, after the room of the widest range so the bars line up; as tall as a line of text
+           (centred on the first one), so a line with a bar is no taller than one without. */
         .xr-ref { display: flex; align-items: flex-start; gap: @(Mm(GAUGE_GAP_MM))mm; }
-        .xr-ref > span { flex: 1; min-width: 0; }
+        .xr-ref > span { flex: 0 1 @(Mm(Math.Round(_rangeMm, 2)))mm; min-width: 0; }
         .xr-gauge { flex: 0 0 @(Mm(GAUGE_MM))mm; display: flex; align-items: center; height: 1.35em; }
         .xr-gauge-box { position: relative; flex: 1; height: .7em; border: 0.2mm solid #333; }
         .xr-gauge-tick { position: absolute; top: 0; bottom: 0; width: 0.2mm; background: #333; }
@@ -185,9 +185,9 @@
                         {
                             <table class="xr-table">
                                 <colgroup>
-                                    @foreach (var width in ColumnWidths)
+                                    @foreach (var width in _columns.Percents)
                                     {
-                                        <col style="width:@(width)%" />
+                                        <col style="width:@(Mm(Math.Round(width, 3)))%" />
                                     }
                                 </colgroup>
                                 <thead>
@@ -212,7 +212,7 @@
                                         }
                                         @if (line.Kind == ReportParameterKind.Section)
                                         {
-                                            <tr class="xr-section" data-row="@RowIndex(line)"><td colspan="@ColumnWidths.Length" style="background:@Settings.SectionBarColor;color:@Settings.SectionTextColor">@line.Name</td></tr>
+                                            <tr class="xr-section" data-row="@RowIndex(line)"><td colspan="@_columns.Percents.Length" style="background:@Settings.SectionBarColor;color:@Settings.SectionTextColor">@line.Name</td></tr>
                                             continue;
                                         }
                                         <tr data-row="@RowIndex(line)">
@@ -363,13 +363,76 @@
     private string PreviousHeader => Report.PreviousReceivedOn?.ToString("dd/MM/yyyy") ?? Upper(L["dd/mm/yyyy"]);
     /// <summary>Exams read without a reference (e.g. cortisol samples judged together by the rules) drop the column.</summary>
     private bool HasReference => Report.Results.Any(r => !string.IsNullOrWhiteSpace(r.Reference) || HasBar(r));
-    // Parameter, result, unit, [reference (with the bar beside it)], [previous result].
-    private int[] ColumnWidths => (HasReference, HasPrevious) switch
+    /// <summary>
+    /// The table's columns: parameter, result, unit, [reference (with the bar beside it)], [previous result]; each as wide as
+    /// this report's widest text in it, the room left shared out equally (see <see cref="ReportColumns"/>).
+    /// </summary>
+    private ReportColumns.Layout _columns = new([100], [0], 0);
+    /// <summary>Room for the range beside a bar, in mm: the widest range and the gap before the bars.</summary>
+    private double _rangeMm;
+
+    /// <summary>
+    /// Works the columns out from the texts of the report, each at least as wide as its header. Names wrap past 40 % of the
+    /// table and written references past 45 %, rather than crowd the other columns.
+    /// </summary>
+    private void LayOutColumns()
     {
-        (true, true) => [26, 15, 12, 31, 16],
-        (true, false) => [30, 18, 14, 38],
-        (false, true) => [40, 22, 16, 22],
-        (false, false) => [50, 28, 22]
+        var values = Values.ToList();
+        double Widest(IEnumerable<string?> texts, bool bold = false) => texts.Select(t => TextMm(t, bold: bold)).DefaultIfEmpty(0).Max();
+        double Header(string text) => TextMm(Upper(text), HEADER_EM, bold: true);
+        var range = Widest(values.Where(HasBar).Select(r => r.Reference));
+        var bars = values.Any(HasBar);
+        var widest = new List<double>
+        {
+            Math.Min(Widest(values.Select(r => r.Name)), ContentWidth * .4),
+            Widest(values.Select(r => $"{r.Value} {Mark(r)}"), bold: true),
+            Widest(values.Select(r => r.Unit))
+        };
+        var headers = new List<double> { Header(L["Parameter"]), Header(L["Result"]), Header(L["Unit"]) };
+        if (HasReference)
+        {
+            widest.Add(Math.Min(Math.Max(Widest(values.Where(r => !HasBar(r)).Select(r => r.Reference)),
+                bars ? range + GAUGE_GAP_MM + GAUGE_MM : 0), ContentWidth * .45));
+            headers.Add(Header(L["Reference value"]));
+        }
+        if (HasPrevious)
+        {
+            widest.Add(Widest(values.Select(r => r.PreviousValue)));
+            headers.Add(TextMm(PreviousHeader, HEADER_EM, bold: true));
+        }
+        _columns = ReportColumns.Lay(widest, headers, ContentWidth, CELL_PADDING_MM, bars ? 3 : -1);
+        _rangeMm = range + _columns.BarGap;
+    }
+
+    /// <summary>
+    /// Rough width of a text in mm at the results size (times <paramref name="size"/>), on the generous side like the other
+    /// estimates: narrow letters count less, wide and capital ones more (within 3 % of Segoe UI), times how wide the font
+    /// runs; 4 % more, or 10 % for bold.
+    /// </summary>
+    private double TextMm(string? text, double size = 1, bool bold = false)
+    {
+        var (figures, letters) = FontWidths.GetValueOrDefault(Settings.FontFamily, (1.2, 1.2));
+        return (text ?? string.Empty).Sum(c => c switch
+        {
+            ' ' or '.' or ',' or ':' or ';' or '\'' or '|' or '!' or 'i' or 'l' or 'j' or 'I' => 0.3,
+            'f' or 't' or 'r' or '(' or ')' or '[' or ']' or '/' or '-' => 0.4,
+            'm' or 'w' or 'M' or 'W' or '%' or '@' => 0.85,
+            _ when char.IsUpper(c) => 0.65,
+            _ => 0.55
+        } * (char.IsDigit(c) ? figures : letters)) * Settings.ResultsFontPt * MM_PER_PT * size * (bold ? 1.1 : 1.04);
+    }
+
+    /// <summary>
+    /// How wide each report font runs next to Segoe UI, for figures (zero-heavy ranges such as "200000 - 500000" count) and
+    /// for letters, measured on typical report texts. Century Gothic wasn't installed where they were measured and counts as
+    /// wide, like any font not listed.
+    /// </summary>
+    private static readonly Dictionary<string, (double Figures, double Letters)> FontWidths = new()
+    {
+        ["Segoe UI"] = (1, 1), ["Arial"] = (1.03, 1.02), ["Calibri"] = (.94, .92), ["Verdana"] = (1.2, 1.13),
+        ["Tahoma"] = (1.03, 1), ["Trebuchet MS"] = (1.01, .99), ["Century Gothic"] = (1.2, 1.2), ["Georgia"] = (1.06, 1.03),
+        ["Cambria"] = (1.01, .97), ["Times New Roman"] = (.93, .95), ["Inter"] = (1.11, 1.07), ["Figtree"] = (1.1, 1.02),
+        ["Jost"] = (1.05, .97)
     };
 
     /// <summary>Only text results (Positivo / Negativo, blood types): each prints as a highlighted result, no table.</summary>
@@ -450,11 +513,8 @@
         }
     }
 
-    /// <summary>
-    /// Width of the bar beside the reference, and the gap between them, in mm: with the previous result column, the reference
-    /// column (31 %) still holds a range as long as "200000 - 500000" on one line, on Letter and A4 at the default text size.
-    /// </summary>
-    private const double GAUGE_MM = 18;
+    /// <summary>Width of the bar beside the reference, and the least gap between them, in mm.</summary>
+    private const double GAUGE_MM = 21;
     private const double GAUGE_GAP_MM = 2;
 
     /// <summary>
@@ -493,6 +553,11 @@
     private const double LINE_MM = 5.0;
     private const double CHAR_MM = 1.95;
     private const double GAP_MM = 5;
+    private const double MM_PER_PT = 0.3528;
+    /// <summary>A table cell's padding, left and right together.</summary>
+    private const double CELL_PADDING_MM = 3;
+    /// <summary>The table headers' text size, relative to the results'.</summary>
+    private const double HEADER_EM = .86;
     /// <summary>Kept free on each page of a measured sheet, against rounding and the browser's print layout.</summary>
     private const double SAFETY_MM = 2;
 
@@ -514,6 +579,7 @@
 
     protected override void OnParametersSet()
     {
+        LayOutColumns();
         _layout = Layout();
         if (_layout != _measuredFor)
             _measures = null;
@@ -596,14 +662,14 @@
     {
         if (line.Kind == ReportParameterKind.PageBreak)
             return 0;
-        var widths = ColumnWidths.Select(w => ContentWidth * w / 100 - 3).ToArray();
+        var widths = _columns.Text;
         if (line.Kind == ReportParameterKind.Section)
             return ResultLines(line.Name, ContentWidth) * ResultLineMm + (Qualitative ? 5 : 3);
         if (Qualitative)
             return Math.Max(1, ResultLines(line.Name, ContentWidth - 80)) * ResultLineMm + 6;
-        // The bar sits beside the reference, in the same line: the text wraps in what the bar leaves of the column.
+        // The bar sits beside the reference, in the same line: the range wraps in the room before the bars.
         var reference = !HasReference || string.IsNullOrEmpty(line.Reference) ? 0
-            : ResultLines(line.Reference, widths[3] - (HasBar(line) ? GAUGE_MM + GAUGE_GAP_MM : 0));
+            : ResultLines(line.Reference, HasBar(line) ? Math.Min(_rangeMm, widths[3] - GAUGE_MM - GAUGE_GAP_MM) : widths[3]);
         var previous = HasPrevious ? ResultLines(line.PreviousValue, widths[^1]) : 1;
         var lines = new[] { ResultLines(line.Name, widths[0]), ResultLines($"{line.Value} *", widths[1]), ResultLines(line.Unit, widths[2]), reference, previous }.Max();
         return lines * ResultLineMm + 3.6;
