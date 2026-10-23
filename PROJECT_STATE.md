@@ -1,6 +1,6 @@
 # VetManagement — Project State
 
-**Last updated:** 2026-10-23 · **Branch:** main (work on feature branches, merged by pull request) · **Tests:** 387 (with SQL Server)
+**Last updated:** 2026-10-23 · **Branch:** main (work on feature branches, merged by pull request) · **Tests:** 394 (with SQL Server)
 
 Product model: one generic staff CRM sold to many clinics; each clinic has its own deployment and database, its
 own branded public site, and configures every business policy itself (admin-editable settings).

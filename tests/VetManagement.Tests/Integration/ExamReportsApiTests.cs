@@ -204,6 +204,17 @@ public class ExamReportsApiTests : IClassFixture<CustomWebAppFactory>
         settings.Validate().Should().ContainSingle().Which.Should().Contain("#RRGGBB");
     }
 
+    [Theory]
+    [InlineData("#2D2E30", "#FFFFFF")] // the default dark bar
+    [InlineData("#12A9C1", "#FFFFFF")] // a brand colour of medium tone, white like the result bar
+    [InlineData("#8E24AA", "#FFFFFF")]
+    [InlineData("#E0E0E0", "#222222")] // light grey
+    [InlineData("#FFEB3B", "#222222")] // yellow
+    [InlineData("#FF9800", "#222222")] // orange
+    [InlineData("blue", "#FFFFFF")]    // not a colour: as before
+    public void SectionTitles_GetDarkText_OnALightColour(string background, string text)
+        => ExamReportSettings.TextColorOn(background).Should().Be(text);
+
     [Fact]
     public void Template_WithOnlySectionTitles_HasNoParameters()
         => new ExamReportTemplate

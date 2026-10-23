@@ -52,15 +52,19 @@
         .xr-qual-section { margin: 2mm -6mm 0; }
         .xr-qual-previous { font-size: .86em; }
         .xr-pill { min-width: 34mm; padding: 1.2mm 4mm; border: 0.5mm solid; border-radius: 3mm; text-align: center; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
-        .xr-gauge { display: flex; align-items: center; height: 4mm; margin-top: 0.8mm; max-width: 55mm; }
-        .xr-gauge-box { position: relative; flex: 1; height: 3.2mm; border: 0.25mm solid #333; }
-        .xr-gauge-tick { position: absolute; top: 0; bottom: 0; width: 0.25mm; background: #333; }
-        .xr-gauge-mark { position: absolute; top: -0.2mm; bottom: -0.2mm; width: 0.9mm; margin-left: -0.45mm; background: #111; }
+        /* The bar beside the reference, at the column's right edge so the bars line up; as tall as a line of text (centred on
+           the first one), so a line with a bar is no taller than one without. */
+        .xr-ref { display: flex; align-items: flex-start; gap: @(Mm(GAUGE_GAP_MM))mm; }
+        .xr-ref > span { flex: 1; min-width: 0; }
+        .xr-gauge { flex: 0 0 @(Mm(GAUGE_MM))mm; display: flex; align-items: center; height: 1.35em; }
+        .xr-gauge-box { position: relative; flex: 1; height: .7em; border: 0.2mm solid #333; }
+        .xr-gauge-tick { position: absolute; top: 0; bottom: 0; width: 0.2mm; background: #333; }
+        .xr-gauge-mark { position: absolute; top: -0.2mm; bottom: -0.2mm; width: 0.8mm; margin-left: -0.4mm; background: #111; }
         .xr-gauge-mark.out { background: #C62828; }
         /* Arrows drawn as CSS triangles so they sit exactly in the middle of the bar, whatever the font. */
-        .xr-gauge-edge { position: absolute; top: 50%; width: 0; height: 0; transform: translateY(-50%); border-top: 1.1mm solid transparent; border-bottom: 1.1mm solid transparent; }
-        .xr-gauge-edge.low { left: 0.4mm; border-right: 1.6mm solid #C62828; }
-        .xr-gauge-edge.high { right: 0.4mm; border-left: 1.6mm solid #C62828; }
+        .xr-gauge-edge { position: absolute; top: 50%; width: 0; height: 0; transform: translateY(-50%); border-top: .25em solid transparent; border-bottom: .25em solid transparent; }
+        .xr-gauge-edge.low { left: 0.3mm; border-right: .36em solid #C62828; }
+        .xr-gauge-edge.high { right: 0.3mm; border-left: .36em solid #C62828; }
         /* Legend, criteria, interpretation, signature and method: they fill the rest of the box, the method at its foot. */
         .xr-closing { flex: 1; display: flex; flex-direction: column; }
         .xr-interpretation { margin-top: 5mm; white-space: pre-line; }
@@ -163,7 +167,7 @@
                                     }
                                     @if (line.Kind == ReportParameterKind.Section)
                                     {
-                                        <div class="xr-qual-section" style="background:@Settings.SectionBarColor" data-row="@RowIndex(line)">@line.Name</div>
+                                        <div class="xr-qual-section" style="background:@Settings.SectionBarColor;color:@Settings.SectionTextColor" data-row="@RowIndex(line)">@line.Name</div>
                                         continue;
                                     }
                                     <div class="xr-qual-row" data-row="@RowIndex(line)">
@@ -208,7 +212,7 @@
                                         }
                                         @if (line.Kind == ReportParameterKind.Section)
                                         {
-                                            <tr class="xr-section" data-row="@RowIndex(line)"><td colspan="@ColumnWidths.Length" style="background:@Settings.SectionBarColor">@line.Name</td></tr>
+                                            <tr class="xr-section" data-row="@RowIndex(line)"><td colspan="@ColumnWidths.Length" style="background:@Settings.SectionBarColor;color:@Settings.SectionTextColor">@line.Name</td></tr>
                                             continue;
                                         }
                                         <tr data-row="@RowIndex(line)">
@@ -217,7 +221,16 @@
                                             <td>@line.Unit</td>
                                             @if (HasReference)
                                             {
-                                                <td>@line.Reference @Gauge(line)</td>
+                                                <td>
+                                                    @if (HasBar(line))
+                                                    {
+                                                        <div class="xr-ref"><span>@line.Reference</span>@Gauge(line)</div>
+                                                    }
+                                                    else
+                                                    {
+                                                        @line.Reference
+                                                    }
+                                                </td>
                                             }
                                             @if (HasPrevious)
                                             {
@@ -350,7 +363,7 @@
     private string PreviousHeader => Report.PreviousReceivedOn?.ToString("dd/MM/yyyy") ?? Upper(L["dd/mm/yyyy"]);
     /// <summary>Exams read without a reference (e.g. cortisol samples judged together by the rules) drop the column.</summary>
     private bool HasReference => Report.Results.Any(r => !string.IsNullOrWhiteSpace(r.Reference) || HasBar(r));
-    // Parameter, result, unit, [reference (with the bar under it)], [previous result].
+    // Parameter, result, unit, [reference (with the bar beside it)], [previous result].
     private int[] ColumnWidths => (HasReference, HasPrevious) switch
     {
         (true, true) => [26, 15, 12, 31, 16],
@@ -438,8 +451,15 @@
     }
 
     /// <summary>
-    /// IDEXX-style bar: the normal range is the middle third; the mark sits where the value falls, and a value
-    /// beyond the bar shows as an arrow at its edge.
+    /// Width of the bar beside the reference, and the gap between them, in mm: with the previous result column, the reference
+    /// column (31 %) still holds a range as long as "200000 - 500000" on one line, on Letter and A4 at the default text size.
+    /// </summary>
+    private const double GAUGE_MM = 18;
+    private const double GAUGE_GAP_MM = 2;
+
+    /// <summary>
+    /// IDEXX-style bar, beside the reference: the normal range is the middle third; the mark sits where the value falls,
+    /// and a value beyond the bar shows as an arrow at its edge.
     /// </summary>
     private RenderFragment Gauge(ExamReportResultDto line) => __builder =>
     {
@@ -581,7 +601,9 @@
             return ResultLines(line.Name, ContentWidth) * ResultLineMm + (Qualitative ? 5 : 3);
         if (Qualitative)
             return Math.Max(1, ResultLines(line.Name, ContentWidth - 80)) * ResultLineMm + 6;
-        var reference = !HasReference ? 0 : (string.IsNullOrEmpty(line.Reference) ? 0 : ResultLines(line.Reference, widths[3])) + (HasBar(line) ? 1 : 0);
+        // The bar sits beside the reference, in the same line: the text wraps in what the bar leaves of the column.
+        var reference = !HasReference || string.IsNullOrEmpty(line.Reference) ? 0
+            : ResultLines(line.Reference, widths[3] - (HasBar(line) ? GAUGE_MM + GAUGE_GAP_MM : 0));
         var previous = HasPrevious ? ResultLines(line.PreviousValue, widths[^1]) : 1;
         var lines = new[] { ResultLines(line.Name, widths[0]), ResultLines($"{line.Value} *", widths[1]), ResultLines(line.Unit, widths[2]), reference, previous }.Max();
         return lines * ResultLineMm + 3.6;

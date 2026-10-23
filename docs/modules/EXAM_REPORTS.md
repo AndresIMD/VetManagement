@@ -38,8 +38,9 @@ Asked in the form (per template): the lot number, so the form only shows the fie
   A written interpretation replaces it.
 - Reference column, chosen per parameter: **Normal range** ("3.5 - 5.8"; without a range, the labelled bands),
   **Written text** (e.g. "Sin rango de referencia") or **Nothing**. With a range of both limits, **Show bar** draws the
-  value IDEXX-style under the reference: the normal range is the middle third, a value beyond the bar shows as an arrow
-  at its edge.
+  value IDEXX-style beside the reference, on the same line: the normal range is the middle third, a value beyond the bar
+  shows as an arrow at its edge. The bars line up at the column's right edge and are one line of text tall, so a line
+  with a bar takes no more room than one without.
 - Exams read without a reference (e.g. cortisol samples judged together by the rules): set each parameter's
   reference to **Nothing**; when no line has a reference or bar, the "Valor referencial" column is dropped.
 - The legend under the table explains only the marks the report prints.
@@ -49,9 +50,9 @@ Asked in the form (per template): the lot number, so the form only shows the fie
   table row with "or" is two rules. A report keeps a copy, like the rest of the template.
 - Parameter codes are generated from the first name and hidden; renaming a parameter keeps its code.
 - **Section titles** (`Kind: Section`) group the parameters after them, up to the next title; a report prints a title
-  as a band across the results box above its first result, in the section colour of Report Design, and leaves it out
-  when none of its parameters has a value. Parameters and titles are moved up and down in the editor, which is also how
-  a parameter changes section.
+  as a band across the results box above its first result, in the section colour of Report Design (dark text on a light
+  colour, white otherwise), and leaves it out when none of its parameters has a value. Parameters and titles are moved
+  up and down in the editor, which is also how a parameter changes section.
 - **Page breaks** (`Kind: PageBreak`) print nothing: the lines after one start a new page, and a section title right
   above it goes along. A report keeps one only between values: never first or last, and several in a row count once.
   The report form doesn't show them.

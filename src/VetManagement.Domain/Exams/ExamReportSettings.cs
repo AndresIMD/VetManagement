@@ -31,6 +31,23 @@ public class ExamReportSettings
     [JsonIgnore]
     public string SectionBarColor => string.IsNullOrWhiteSpace(SectionColor) ? HeaderColor : SectionColor;
 
+    /// <summary>The section titles' text: white like the other bars, dark on a light colour so it stays readable.</summary>
+    [JsonIgnore]
+    public string SectionTextColor => TextColorOn(SectionBarColor);
+
+    /// <summary>
+    /// White text, or the report's dark text when the background is light (perceived brightness, YIQ, of 150 or more out of
+    /// 255): brand colours of medium tone keep white text, pale and bright ones (light grey, yellow, orange) get dark text.
+    /// </summary>
+    public static string TextColorOn(string background)
+    {
+        if (!IsColor(background))
+            return "#FFFFFF";
+        int Channel(int start) => Convert.ToInt32(background.Substring(start, 2), 16);
+        var brightness = (Channel(1) * 299 + Channel(3) * 587 + Channel(5) * 114) / 1000.0;
+        return brightness >= 150 ? "#222222" : "#FFFFFF";
+    }
+
     /// <summary>Lines next to the logo, e.g. "LABORATORIO" and the address.</summary>
     public List<string> HeaderLines { get; set; } = [];
 
