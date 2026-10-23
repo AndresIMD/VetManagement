@@ -47,6 +47,27 @@ public class ReportPaginationTests
     public void Closing_GoesAlone_OnlyWhenThePageHasASingleLine()
         => Split(lines: 1, room: 15, closing: 10).Should().BeEquivalentTo(new[] { new[] { 0 }, Array.Empty<int>() }, o => o.WithStrictOrdering());
 
+    [Fact]
+    public void PageBreak_StartsANewPage_AndIsOnNoPage()
+    {
+        var breaks = Enumerable.Range(0, 6).Select(i => i == 3).ToList();
+
+        ReportPagination.Split(Enumerable.Repeat(10.0, 6).ToList(), new bool[6], 100, 100, 0, breaks).Should().BeEquivalentTo(
+            new[] { new[] { 0, 1, 2 }, new[] { 4, 5 } }, o => o.WithStrictOrdering());
+    }
+
+    [Fact]
+    public void PageBreaks_NeverLeaveAnEmptyPage()
+        // A break before any line, and two breaks in a row.
+        => ReportPagination.Split(Enumerable.Repeat(10.0, 5).ToList(), new bool[5], 100, 100, 0, [true, false, true, true, false])
+            .Should().BeEquivalentTo(new[] { new[] { 1 }, new[] { 4 } }, o => o.WithStrictOrdering());
+
+    [Fact]
+    public void SectionTitle_RightAboveAPageBreak_MovesOnWithTheLinesAfterIt()
+        => ReportPagination.Split(Enumerable.Repeat(10.0, 5).ToList(), [false, false, true, false, false], 100, 100, 0,
+                [false, false, false, true, false])
+            .Should().BeEquivalentTo(new[] { new[] { 0, 1 }, new[] { 2, 4 } }, o => o.WithStrictOrdering());
+
     [Theory]
     [InlineData(40, 16, 124)]  // the slim box replaces the first page's patient box
     [InlineData(40, 0, 145)]   // no box on later pages: their lines take its place and the gap under it

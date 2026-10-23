@@ -131,6 +131,8 @@
                     @foreach (var parameter in template.Parameters)
                     {
                         var current = parameter;
+                        if (current.IsPageBreak)
+                            continue; // it only changes the printed report's page
                         if (current.IsSection)
                         {
                             <MudItem xs="12" Class="pb-0">

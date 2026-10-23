@@ -1147,7 +1147,7 @@
   <data name="(up to 3 MB; PNG, JPEG or WebP):" xml:space="preserve"><value>(hasta 3 MB; PNG, JPEG o WebP):</value></data>
   <data name="PNG with a transparent background, approximately 1200 × 400 px. Printed at the top left, at the height set above." xml:space="preserve"><value>PNG con fondo transparente, de aproximadamente 1200 × 400 px. Se imprime en la esquina superior izquierda, con la altura definida arriba.</value></data>
   <data name="full portrait page of {0} px (300 dpi; 150 dpi is enough for a lighter file). It covers the whole sheet, or the results box when that option is selected. The content area should stay free of text and strong colours; the margins ({1} mm top, {2} mm bottom, {3} mm left, {4} mm right) can hold frames or artwork. Watermarks should be light, since results are printed over them." xml:space="preserve"><value>página completa en orientación vertical, de {0} px (300 dpi; con 150 dpi basta para un archivo más liviano). Cubre toda la hoja, o el recuadro de resultados si se elige esa opción. El área de contenido debe quedar libre de textos y colores intensos; los márgenes ({1} mm arriba, {2} mm abajo, {3} mm a la izquierda y {4} mm a la derecha) pueden llevar marcos o diseños. Las marcas de agua deben ser suaves, ya que los resultados se imprimen sobre ellas.</value></data>
-  <data name="the two bars below use the clinic's brand colours, in #RRGGBB format." xml:space="preserve"><value>las dos barras de abajo usan los colores institucionales de la clínica, en formato #RRGGBB.</value></data>
+  <data name="the bars and section titles below use the clinic's brand colours, in #RRGGBB format." xml:space="preserve"><value>las barras y los títulos de sección de abajo usan los colores institucionales de la clínica, en formato #RRGGBB.</value></data>
   <data name="Plasma" xml:space="preserve"><value>Plasma</value></data>
   <data name="Serum" xml:space="preserve"><value>Suero</value></data>
   <data name="Supernatant" xml:space="preserve"><value>Sobrenadante</value></data>
@@ -1263,4 +1263,9 @@
   <data name="Pet and owner data on the following pages" xml:space="preserve"><value>Datos del paciente y tutor en las hojas siguientes</value></data>
   <data name="The pages after the first repeat the patient, owner and reception date in a slim box under the header, so a loose page can still be matched to its patient. Turned off, their results start right under the header." xml:space="preserve"><value>Las hojas después de la primera repiten el paciente, el tutor y la fecha de recepción en un recuadro delgado bajo el encabezado, para que una hoja suelta se pueda asociar a su paciente. Si lo desactivas, sus resultados empiezan justo bajo el encabezado.</value></data>
   <data name="Preview a report of several pages" xml:space="preserve"><value>Vista previa de un informe de varias hojas</value></data>
+  <data name="Section titles" xml:space="preserve"><value>Títulos de sección</value></data>
+  <data name="Page break" xml:space="preserve"><value>Salto de página</value></data>
+  <data name="Add page break" xml:space="preserve"><value>Agregar salto de página</value></data>
+  <data name="Remove page break" xml:space="preserve"><value>Quitar salto de página</value></data>
+  <data name="Not printed: what follows starts on a new page, and a section title right above it goes along. Left out at the start or end of a report." xml:space="preserve"><value>No se imprime: lo que sigue empieza en una hoja nueva, y un título de sección justo antes se va con ello. Se omite al principio o al final de un informe.</value></data>
 </root>

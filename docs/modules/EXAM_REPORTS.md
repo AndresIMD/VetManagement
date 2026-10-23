@@ -7,7 +7,7 @@ Staff web → Exams → **Lab Reports** (issue, view, print), **Report Design** 
 
 | Piece | Where | Who edits it |
 |---|---|---|
-| Branding: paper (Letter/A4), margins, font, two bar colours, header lines, footer (a paragraph: each line as written, an empty line for a gap, `**bold**`), disclaimer, text sizes, whether later pages repeat the pet and owner data (on by default), background strength and area (whole page or results box), background stretched or keeping its proportions (fit to width/height, aligned start/centre/end), logo height (and width when its proportions aren't kept) | settings document `exam-reports` (`ExamReportSettings`) | `exams.update` |
+| Branding: paper (Letter/A4), margins, font, two bar colours and the section titles' one (the patient bar's until chosen), header lines, footer (a paragraph: each line as written, an empty line for a gap, `**bold**`), disclaimer, text sizes, whether later pages repeat the pet and owner data (on by default), background strength and area (whole page or results box), background stretched or keeping its proportions (fit to width/height, aligned start/centre/end), logo height (and width when its proportions aren't kept) | settings document `exam-reports` (`ExamReportSettings`) | `exams.update` |
 | Logo and background images (one each, PNG/JPEG/WebP, ≤ 3 MB) | table `ClinicImages` | `exams.update` |
 | Template of a catalog exam: title, printed blocks, parameters with unit, normal ranges, reference column, bar, options, interpretation bands; interpretation rules | same settings document, `Templates[]` keyed by `ExamId` | `exams.update` |
 | Issued report: registered pet or typed patient, exam, reception date, referring vet, optional lot number, values, interpretation | table `ExamReports` | `examsperformed.create` / `.update` / `.delete` |
@@ -49,8 +49,12 @@ Asked in the form (per template): the lot number, so the form only shows the fie
   table row with "or" is two rules. A report keeps a copy, like the rest of the template.
 - Parameter codes are generated from the first name and hidden; renaming a parameter keeps its code.
 - **Section titles** (`Kind: Section`) group the parameters after them, up to the next title; a report prints a title
-  as a band across the results box above its first result, and leaves it out when none of its parameters has a value.
-  Parameters and titles are moved up and down in the editor, which is also how a parameter changes section.
+  as a band across the results box above its first result, in the section colour of Report Design, and leaves it out
+  when none of its parameters has a value. Parameters and titles are moved up and down in the editor, which is also how
+  a parameter changes section.
+- **Page breaks** (`Kind: PageBreak`) print nothing: the lines after one start a new page, and a section title right
+  above it goes along. A report keeps one only between values: never first or last, and several in a row count once.
+  The report form doesn't show them.
 
 ## Snapshots
 
@@ -87,7 +91,7 @@ close to Futura; all SIL Open Font License, in `wwwroot/fonts`). Lines that don'
 the header, the patient bar with the patient, owner and reception date (unless Report Design turns it off: "Pet and
 owner data on the following pages"), and the footer; every page says "Página X de N".
 Pages are laid out from the heights measured on the rendered sheet (`report-sheet.js`, `ReportPagination`): a section
-title never stays alone at the foot of a page, and the closing blocks (legend, criteria table, interpretation, method) go
+title never stays alone at the foot of a page, a page break of the template starts a new page, and the closing blocks (legend, criteria table, interpretation, method) go
 on the last page, taking the last two lines with them when they don't fit. The
 **lot number** (test kit or reagent; asked only when the template says so) prints in the method bar ("Vcheck - BIONOTE · LOTE: A123"), alone if the
 method is hidden.
