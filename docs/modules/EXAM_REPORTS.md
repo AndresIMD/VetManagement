@@ -38,8 +38,9 @@ Asked in the form (per template): the lot number, so the form only shows the fie
   A written interpretation replaces it.
 - Reference column, chosen per parameter: **Normal range** ("3.5 - 5.8"; without a range, the labelled bands),
   **Written text** (e.g. "Sin rango de referencia") or **Nothing**. With a range of both limits, **Show bar** draws the
-  value IDEXX-style under the reference: the normal range is the middle third, a value beyond the bar shows as an arrow
-  at its edge.
+  value IDEXX-style beside the reference, on the same line: the normal range is the middle third, a value beyond the bar
+  shows as an arrow at its edge. The bars line up at the column's right edge and are one line of text tall, so a line
+  with a bar takes no more room than one without.
 - Exams read without a reference (e.g. cortisol samples judged together by the rules): set each parameter's
   reference to **Nothing**; when no line has a reference or bar, the "Valor referencial" column is dropped.
 - The legend under the table explains only the marks the report prints.
