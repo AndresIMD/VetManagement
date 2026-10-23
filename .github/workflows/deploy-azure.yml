@@ -59,14 +59,14 @@ jobs:
     outputs:
       sha: ${{ steps.code.outputs.sha }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ inputs.repository || github.repository }}
           ref: ${{ inputs.ref || github.sha }}
       # The deploy jobs check out this same commit, so what is deployed is what was tested.
       - id: code
         run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
       # Same projects as CI (the MAUI app needs platform workloads and isn't built on Linux).
@@ -78,11 +78,11 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ inputs.repository || github.repository }}
           ref: ${{ needs.test.outputs.sha }}
-      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
       - run: dotnet publish src/VetManagement.Api/VetManagement.Api.csproj -c Release -o publish/api
@@ -98,11 +98,11 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ inputs.repository || github.repository }}
           ref: ${{ needs.test.outputs.sha }}
-      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
       - run: dotnet publish src/VetManagement.Staff.Web/VetManagement.Staff.Web.csproj -c Release -o publish/staff
@@ -127,7 +127,7 @@ jobs:
           sed -i "s#connect-src 'self' https: http://localhost:\* https://localhost:\* ws: wss:#connect-src 'self' $api_origin $ws_origin#" publish/staff/wwwroot/index.html
           grep -q "connect-src 'self' $api_origin $ws_origin;" publish/staff/wwwroot/index.html || { echo "index.html: the Content-Security-Policy was not updated."; exit 1; }
           rm -f publish/staff/wwwroot/index.html.br publish/staff/wwwroot/index.html.gz
-      - uses: Azure/static-web-apps-deploy@4d27395796ac319302594769cfe812bd207490b1 # v1
+      - uses: Azure/static-web-apps-deploy@1a947af9992250f3bc2e68ad0754c0b0c11566c9 # v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STAFF_SWA_TOKEN }}
           action: upload
