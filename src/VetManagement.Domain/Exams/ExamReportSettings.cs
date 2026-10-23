@@ -24,6 +24,13 @@ public class ExamReportSettings
     /// <summary>Bar behind the patient data heading (CSS colour).</summary>
     public string HeaderColor { get; set; } = "#2D2E30";
 
+    /// <summary>Band behind the section titles (CSS colour); empty = the patient bar's colour, as before it could be chosen.</summary>
+    public string? SectionColor { get; set; }
+
+    /// <summary>The section titles' colour as printed.</summary>
+    [JsonIgnore]
+    public string SectionBarColor => string.IsNullOrWhiteSpace(SectionColor) ? HeaderColor : SectionColor;
+
     /// <summary>Lines next to the logo, e.g. "LABORATORIO" and the address.</summary>
     public List<string> HeaderLines { get; set; } = [];
 
@@ -116,7 +123,7 @@ public class ExamReportSettings
             errors.Add(Texts.T("BackgroundOpacity must be between 0.05 and 1."));
         if (LogoHeightMm is < 10 or > 60 || LogoWidthMm is < 10 or > 150)
             errors.Add(Texts.T("The logo must be 10–60 mm high and 10–150 mm wide."));
-        if (!IsColor(AccentColor) || !IsColor(HeaderColor))
+        if (!IsColor(AccentColor) || !IsColor(HeaderColor) || (!string.IsNullOrWhiteSpace(SectionColor) && !IsColor(SectionColor)))
             errors.Add(Texts.T("Colours must be written as #RRGGBB."));
         if (!Fonts.Contains(FontFamily))
             errors.Add(Texts.T("FontFamily must be one of: {0}.", string.Join(", ", Fonts)));
@@ -168,21 +175,27 @@ public class ExamReportTemplate
 
     /// <summary>
     /// The printed lines for the values given, in the template's order. A section title prints above the first value of
-    /// its own (the parameters after it, up to the next title), and not at all when none of them has a value.
+    /// its own (the parameters after it, up to the next title), and not at all when none of them has a value. A page
+    /// break is kept only between values (never first or last; several in a row count once), before a title that waits
+    /// for its first value.
     /// </summary>
     public List<ExamReportResult> ResultsFor(IReadOnlyDictionary<string, string> values, Species species)
     {
         var results = new List<ExamReportResult>();
-        ReportParameter? section = null;
+        ReportParameter? section = null, pageBreak = null;
         foreach (var parameter in Parameters)
         {
             if (parameter.IsSection)
                 section = parameter;
+            else if (parameter.IsPageBreak)
+                pageBreak ??= parameter;
             else if (values.TryGetValue(parameter.Code, out var value))
             {
+                if (pageBreak is not null && results.Count > 0)
+                    results.Add(new ExamReportResult { Code = pageBreak.Code, Kind = ReportParameterKind.PageBreak });
                 if (section is not null)
                     results.Add(new ExamReportResult { Code = section.Code, Name = section.Name, Kind = ReportParameterKind.Section });
-                section = null;
+                (section, pageBreak) = (null, null);
                 results.Add(parameter.ToResult(value, species));
             }
         }
@@ -203,12 +216,12 @@ public class ExamReportTemplate
         var name = string.IsNullOrWhiteSpace(Title) ? $"Exam {ExamId}" : Title;
         if (ExamId <= 0) errors.Add(Texts.T("Template '{0}': ExamId is required.", name));
         if (string.IsNullOrWhiteSpace(Title)) errors.Add(Texts.T("Template for exam {0}: Title is required.", ExamId));
-        if (Parameters.All(p => p.IsSection)) errors.Add(Texts.T("Template '{0}': add at least one parameter.", name));
+        if (!Parameters.Any(p => p.TakesValue)) errors.Add(Texts.T("Template '{0}': add at least one parameter.", name));
         foreach (var code in Parameters.GroupBy(p => p.Code, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1).Select(g => g.Key))
             errors.Add(Texts.T("Template '{0}': duplicate parameter code '{1}'.", name, code));
         foreach (var p in Parameters)
         {
-            if (string.IsNullOrWhiteSpace(p.Code) || string.IsNullOrWhiteSpace(p.Name))
+            if (string.IsNullOrWhiteSpace(p.Code) || (string.IsNullOrWhiteSpace(p.Name) && !p.IsPageBreak))
                 errors.Add(Texts.T("Template '{0}': every parameter needs a Code and a Name.", name));
             foreach (var band in p.Bands)
             {
@@ -300,6 +313,14 @@ public class ReportParameter
     /// <summary>A section title: only its name is used, printed above the parameters that follow it.</summary>
     [JsonIgnore]
     public bool IsSection => Kind == ReportParameterKind.Section;
+
+    /// <summary>A page break: prints nothing, and the lines after it start a new page.</summary>
+    [JsonIgnore]
+    public bool IsPageBreak => Kind == ReportParameterKind.PageBreak;
+
+    /// <summary>A number or text that holds a result (not a section title or page break).</summary>
+    [JsonIgnore]
+    public bool TakesValue => Kind.TakesValue();
 
     public string? Unit { get; set; }
     /// <summary>What the reference column shows: the normal range (default), a written text, or nothing.</summary>

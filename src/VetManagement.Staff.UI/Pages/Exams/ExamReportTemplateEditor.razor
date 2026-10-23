@@ -46,6 +46,19 @@
                 {
                     var p = parameter;
                     var index = _template.Parameters.IndexOf(p);
+                    if (p.IsPageBreak)
+                    {
+                        <MudPaper Class="px-3 py-1 mb-3" Elevation="0" Outlined="true" Style="border-style:dashed">
+                            <div class="d-flex align-center">
+                                <MudIcon Icon="@Icons.Material.Filled.InsertPageBreak" Size="Size.Small" Color="Color.Secondary" Class="mr-2" />
+                                <MudText Typo="Typo.subtitle2">@L["Page break"]</MudText>
+                                <HelpTip Text="@L["Not printed: what follows starts on a new page, and a section title right above it goes along. Left out at the start or end of a report."]" />
+                                <MudSpacer />
+                                @ItemActions(p, index)
+                            </div>
+                        </MudPaper>
+                        continue;
+                    }
                     <MudPaper Class="@(p.IsSection ? "pa-3 mb-3" : "pa-4 mb-3")" Elevation="1"
                               Style="@(p.IsSection ? "border-left: 4px solid var(--mud-palette-primary)" : null)">
                         <MudGrid Spacing="2">
@@ -68,18 +81,7 @@
                                 </MudItem>
                             }
                             <MudItem xs="@(p.IsSection ? 6 : 12)" sm="2" Class="d-flex align-center justify-end">
-                                <MudTooltip Text="@L["Move up"]">
-                                    <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward" Size="Size.Small" Disabled="index == 0" OnClick="() => Move(p, -1)"
-                                                   aria-label="@L["Move up"]" />
-                                </MudTooltip>
-                                <MudTooltip Text="@L["Move down"]">
-                                    <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward" Size="Size.Small" Disabled="index == _template.Parameters.Count - 1"
-                                                   OnClick="() => Move(p, 1)" aria-label="@L["Move down"]" />
-                                </MudTooltip>
-                                <MudTooltip Text="@(p.IsSection ? L["Remove section"] : L["Remove parameter"])">
-                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => _template.Parameters.Remove(p)"
-                                                   aria-label="@(p.IsSection ? L["Remove section"] : L["Remove parameter"])" />
-                                </MudTooltip>
+                                @ItemActions(p, index)
                             </MudItem>
 
                             @if (p.IsSection)
@@ -110,7 +112,7 @@
                                         </MudSelect>
                                     </MudItem>
                                 }
-                                @if (_template.Parameters.Where(x => !x.IsSection).All(x => x.Kind == ReportParameterKind.Text) && p == _template.Parameters.First(x => !x.IsSection))
+                                @if (_template.Parameters.Where(x => x.TakesValue).All(x => x.Kind == ReportParameterKind.Text) && p == _template.Parameters.First(x => x.TakesValue))
                                 {
                                     <MudItem xs="12">
                                         <MudText Typo="Typo.caption" Color="Color.Secondary">
@@ -238,6 +240,7 @@
                     <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="() => _template.Parameters.Add(NewParameter())">@L["Add parameter"]</MudButton>
                     <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Title"
                                OnClick="() => _template.Parameters.Add(new ReportParameter { Kind = ReportParameterKind.Section })">@L["Add section"]</MudButton>
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.InsertPageBreak" OnClick="AddPageBreak">@L["Add page break"]</MudButton>
                 </MudStack>
 
                 @if (NumberParameters.Count >= 2)
@@ -473,7 +476,6 @@
         _template.Rules.Insert(index - 1, rule);
     }
 
-    /// <summary>A code from the name ("Na+" → "na"), so nobody has to think about codes.</summary>
     /// <summary>A first table starts with a column per number parameter plus the interpretation, and one empty row.</summary>
     private void SetCriteriaTable(bool on)
     {
@@ -509,19 +511,52 @@
         rows.Insert(index - 1, row);
     }
 
+    /// <summary>
+    /// A code from the name ("Na+" → "na"), so nobody has to think about codes; page breaks, which have no name, are
+    /// "page-break". A code already in use gets the first free number ("page-break-2").
+    /// </summary>
     private void FillCode(ReportParameter p)
     {
-        if (!string.IsNullOrWhiteSpace(p.Code) || string.IsNullOrWhiteSpace(p.Name))
+        var name = p.IsPageBreak ? "page-break" : p.Name;
+        if (!string.IsNullOrWhiteSpace(p.Code) || string.IsNullOrWhiteSpace(name))
             return;
-        var code = new string(p.Name.ToLowerInvariant().Select(c => char.IsLetterOrDigit(c) ? c : '-').ToArray()).Trim('-');
-        p.Code = _template!.Parameters.Any(o => o != p && o.Code == code) ? $"{code}-{_template.Parameters.IndexOf(p) + 1}" : code;
+        var code = new string(name.ToLowerInvariant().Select(c => char.IsLetterOrDigit(c) ? c : '-').ToArray()).Trim('-');
+        var taken = _template!.Parameters.Where(o => o != p).Select(o => o.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        p.Code = code;
+        for (var n = 2; taken.Contains(p.Code); n++)
+            p.Code = $"{code}-{n}";
     }
+
+    private void AddPageBreak()
+    {
+        var pageBreak = new ReportParameter { Kind = ReportParameterKind.PageBreak };
+        _template!.Parameters.Add(pageBreak);
+        FillCode(pageBreak);
+    }
+
+    /// <summary>Move up / down and remove, for parameters, section titles and page breaks.</summary>
+    private RenderFragment ItemActions(ReportParameter p, int index) => __builder =>
+    {
+        var remove = p.IsPageBreak ? L["Remove page break"] : p.IsSection ? L["Remove section"] : L["Remove parameter"];
+        <MudTooltip Text="@L["Move up"]">
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward" Size="Size.Small" Disabled="index == 0" OnClick="() => Move(p, -1)"
+                           aria-label="@L["Move up"]" />
+        </MudTooltip>
+        <MudTooltip Text="@L["Move down"]">
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward" Size="Size.Small" Disabled="index == _template!.Parameters.Count - 1"
+                           OnClick="() => Move(p, 1)" aria-label="@L["Move down"]" />
+        </MudTooltip>
+        <MudTooltip Text="@remove">
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => _template!.Parameters.Remove(p)"
+                           aria-label="@remove" />
+        </MudTooltip>
+    };
 
     private ExamReportDto Preview
     {
         get
         {
-            var values = _template!.Parameters.Where(p => !p.IsSection && !string.IsNullOrWhiteSpace(p.Code))
+            var values = _template!.Parameters.Where(p => p.TakesValue && !string.IsNullOrWhiteSpace(p.Code))
                 .GroupBy(p => p.Code, StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(g => g.Key, g => _samples.GetValueOrDefault(g.First()) is { Length: > 0 } value ? value : "—", StringComparer.OrdinalIgnoreCase);
             var results = _template.ResultsFor(values, _sampleSpecies);
@@ -558,7 +593,7 @@
         {
             FillCode(p);
             p.Ranges.RemoveAll(r => r.Min is null && r.Max is null);
-            if (p.IsSection)
+            if (!p.TakesValue)
                 (p.Unit, p.Ranges, p.Bands, p.Options, p.AbnormalOptions, p.ShowBar) = (null, [], [], [], [], false);
         }
         _settings!.Templates.RemoveAll(t => t.ExamId == ExamId);

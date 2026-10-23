@@ -137,6 +137,74 @@ public class ExamReportsApiTests : IClassFixture<CustomWebAppFactory>
     }
 
     [Fact]
+    public async Task PageBreak_IsKeptInTheIssuedReport_AndTakesNoValue()
+    {
+        var (petId, examId) = await AddPetAndExamAsync(Species.Dog);
+        await AddTemplateAsync(new ExamReportTemplate
+        {
+            ExamId = examId, Title = "PRUEBA PERFIL",
+            Parameters = [new ReportParameter { Code = "alt", Name = "ALT" }, new ReportParameter { Code = "page-break", Kind = ReportParameterKind.PageBreak },
+                new ReportParameter { Code = "crea", Name = "CREA" }]
+        });
+
+        var report = await CreateAsync(_employee, new
+        {
+            PetId = petId, ExamId = examId, ReceivedOn = new DateOnly(2026, 10, 23),
+            Values = new Dictionary<string, string> { ["alt"] = "45", ["crea"] = "1.2" }
+        });
+        report.Results.Select(r => r.Kind).Should().Equal(ReportParameterKind.Number, ReportParameterKind.PageBreak, ReportParameterKind.Number);
+
+        var valueForABreak = await _employee.PostAsJsonAsync("/api/exam-reports", new
+        {
+            PetId = petId, ExamId = examId, ReceivedOn = new DateOnly(2026, 10, 23), Values = new Dictionary<string, string> { ["page-break"] = "1" }
+        });
+        valueForABreak.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public void PageBreaks_AreKeptOnlyBetweenValues_OnceAndBeforeAWaitingTitle()
+    {
+        static ReportParameter Break(string code) => new() { Code = code, Kind = ReportParameterKind.PageBreak };
+        static ReportParameter Section(string code) => new() { Code = code, Name = code.ToUpperInvariant(), Kind = ReportParameterKind.Section };
+        static ReportParameter Value(string code) => new() { Code = code, Name = code };
+        var template = new ExamReportTemplate
+        {
+            ExamId = 1, Title = "X",
+            Parameters = [Break("pb-start"), Value("a"), Break("pb-1"), Break("pb-2"), Section("s"), Value("b"), Section("t"), Break("pb-3"), Value("c"), Break("pb-end")]
+        };
+
+        template.ResultsFor(new Dictionary<string, string> { ["a"] = "1", ["b"] = "2", ["c"] = "3" }, Species.Dog)
+            .Select(r => (r.Kind, r.Code)).Should().Equal(
+                (ReportParameterKind.Number, "a"), (ReportParameterKind.PageBreak, "pb-1"), (ReportParameterKind.Section, "s"), (ReportParameterKind.Number, "b"),
+                (ReportParameterKind.PageBreak, "pb-3"), (ReportParameterKind.Section, "t"), (ReportParameterKind.Number, "c"));
+    }
+
+    [Fact]
+    public void PageBreak_NeedsNoName_ButIsNotAParameter()
+    {
+        var pageBreak = new ReportParameter { Code = "page-break", Kind = ReportParameterKind.PageBreak };
+
+        new ExamReportTemplate { ExamId = 1, Title = "X", Parameters = [pageBreak] }
+            .Validate().Should().ContainSingle().Which.Should().Contain("at least one parameter");
+        new ExamReportTemplate { ExamId = 1, Title = "X", Parameters = [new ReportParameter { Code = "a", Name = "A" }, pageBreak] }
+            .Validate().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void SectionTitles_FollowThePatientBar_UntilTheyGetAColourOfTheirOwn()
+    {
+        var settings = SettingsJson.Deserialize<ExamReportSettings>("""{ "headerColor": "#112233" }""");
+        settings.SectionBarColor.Should().Be("#112233");
+
+        settings.SectionColor = "#445566";
+        settings.SectionBarColor.Should().Be("#445566");
+        settings.Validate().Should().BeEmpty();
+
+        settings.SectionColor = "blue";
+        settings.Validate().Should().ContainSingle().Which.Should().Contain("#RRGGBB");
+    }
+
+    [Fact]
     public void Template_WithOnlySectionTitles_HasNoParameters()
         => new ExamReportTemplate
         {

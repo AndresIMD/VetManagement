@@ -41,7 +41,8 @@
         .xr-table th.xr-previous { white-space: nowrap; }
         .xr-qual-row { display: flex; align-items: center; gap: 4mm; padding: 2mm 1.5mm; border-bottom: 0.2mm solid #eee; }
         .xr-qual-name { flex: 1; font-weight: 600; }
-        /* Section titles over the parameters that follow them, in the patient bar's colour, across the whole box like its bars:
+        /* Section titles over the parameters that follow them, in the section colour (the patient bar's unless chosen), across the
+           whole box like its bars:
            over the results area's side padding (6 mm), the table cell with a strip on each side (the box clips any excess). */
         .xr-section td, .xr-qual-section { color: #fff; font-weight: 700; text-align: center; text-transform: uppercase; letter-spacing: .4px; padding: 1.4mm 1.5mm; border-bottom: 0; }
         .xr-section td { position: relative; }
@@ -156,9 +157,13 @@
                             <div>
                                 @foreach (var line in rows)
                                 {
+                                    @if (line.Kind == ReportParameterKind.PageBreak)
+                                    {
+                                        continue;
+                                    }
                                     @if (line.Kind == ReportParameterKind.Section)
                                     {
-                                        <div class="xr-qual-section" style="background:@Settings.HeaderColor" data-row="@RowIndex(line)">@line.Name</div>
+                                        <div class="xr-qual-section" style="background:@Settings.SectionBarColor" data-row="@RowIndex(line)">@line.Name</div>
                                         continue;
                                     }
                                     <div class="xr-qual-row" data-row="@RowIndex(line)">
@@ -197,9 +202,13 @@
                                 <tbody>
                                     @foreach (var line in rows)
                                     {
+                                        @if (line.Kind == ReportParameterKind.PageBreak)
+                                        {
+                                            continue;
+                                        }
                                         @if (line.Kind == ReportParameterKind.Section)
                                         {
-                                            <tr class="xr-section" data-row="@RowIndex(line)"><td colspan="@ColumnWidths.Length" style="background:@Settings.HeaderColor">@line.Name</td></tr>
+                                            <tr class="xr-section" data-row="@RowIndex(line)"><td colspan="@ColumnWidths.Length" style="background:@Settings.SectionBarColor">@line.Name</td></tr>
                                             continue;
                                         }
                                         <tr data-row="@RowIndex(line)">
@@ -353,8 +362,8 @@
     /// <summary>Only text results (Positivo / Negativo, blood types): each prints as a highlighted result, no table.</summary>
     private bool Qualitative => Values.Any() && Values.All(r => r.Kind == ReportParameterKind.Text);
 
-    /// <summary>The results without the section titles.</summary>
-    private IEnumerable<ExamReportResultDto> Values => Report.Results.Where(r => r.Kind != ReportParameterKind.Section);
+    /// <summary>The results without section titles and page breaks.</summary>
+    private IEnumerable<ExamReportResultDto> Values => Report.Results.Where(r => r.Kind.TakesValue());
 
     /// <summary>Abnormal results in solid red; the others outlined in the clinic's result colour.</summary>
     private string PillStyle(ExamReportResultDto line) => line.Abnormal
@@ -525,16 +534,17 @@
     private List<List<int>> Paginate()
     {
         var sections = Report.Results.Select(r => r.Kind == ReportParameterKind.Section).ToList();
+        var pageBreaks = Report.Results.Select(r => r.Kind == ReportParameterKind.PageBreak).ToList();
         if (_measures is { } m && m.Rows.Length == Report.Results.Count)
         {
             var header = Qualitative ? 0 : m.Header;
             // A later page has the slim patient box instead of the first page's one, or none when the design leaves it out.
             var laterBox = Settings.PatientDataOnLaterPages ? m.Continued ?? 16 : 0;
             var next = m.NextRoom ?? ReportPagination.LaterRoom(m.FirstRoom, m.PatientBox, laterBox, GAP_MM);
-            return ReportPagination.Split(m.Rows, sections, m.FirstRoom - header - SAFETY_MM, next - header - SAFETY_MM, m.Closing);
+            return ReportPagination.Split(m.Rows, sections, m.FirstRoom - header - SAFETY_MM, next - header - SAFETY_MM, m.Closing, pageBreaks);
         }
         var (first, later, closing) = Estimates();
-        return ReportPagination.Split(Report.Results.Select(RowMm).ToList(), sections, first, later, closing);
+        return ReportPagination.Split(Report.Results.Select(RowMm).ToList(), sections, first, later, closing, pageBreaks);
     }
 
     /// <summary>Room for lines on the first and later pages, and the closing blocks' height, estimated.</summary>
@@ -564,6 +574,8 @@
 
     private double RowMm(ExamReportResultDto line)
     {
+        if (line.Kind == ReportParameterKind.PageBreak)
+            return 0;
         var widths = ColumnWidths.Select(w => ContentWidth * w / 100 - 3).ToArray();
         if (line.Kind == ReportParameterKind.Section)
             return ResultLines(line.Name, ContentWidth) * ResultLineMm + (Qualitative ? 5 : 3);

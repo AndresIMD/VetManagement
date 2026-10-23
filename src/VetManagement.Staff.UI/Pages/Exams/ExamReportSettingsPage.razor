@@ -110,7 +110,7 @@
                             <ul class="mt-1 mb-0">
                                 <li><b>@L["Logo:"]</b> @L["PNG with a transparent background, approximately 1200 × 400 px. Printed at the top left, at the height set above."]</li>
                                 <li><b>@L["Background:"]</b> @L["full portrait page of {0} px (300 dpi; 150 dpi is enough for a lighter file). It covers the whole sheet, or the results box when that option is selected. The content area should stay free of text and strong colours; the margins ({1} mm top, {2} mm bottom, {3} mm left, {4} mm right) can hold frames or artwork. Watermarks should be light, since results are printed over them.", BackgroundPixels, _settings.MarginsMm.Top, _settings.MarginsMm.Bottom, _settings.MarginsMm.Left, _settings.MarginsMm.Right]</li>
-                                <li><b>@L["Colours:"]</b> @L["the two bars below use the clinic's brand colours, in #RRGGBB format."]</li>
+                                <li><b>@L["Colours:"]</b> @L["the bars and section titles below use the clinic's brand colours, in #RRGGBB format."]</li>
                             </ul>
                                 </MudAlert>
                             </MudStack>
@@ -152,14 +152,19 @@
                                         <HelpTip Text="@L["The pages after the first repeat the patient, owner and reception date in a slim box under the header, so a loose page can still be matched to its patient. Turned off, their results start right under the header."]" />
                                     </div>
                                 </MudItem>
-                                <MudItem xs="6" sm="3">
+                                <MudItem xs="4">
                                     <MudText Typo="Typo.caption">@L["Patient bar"]</MudText>
                                     <input type="color" @bind="_settings.HeaderColor"
                                            style="width:100%;height:36px;border:0;background:none" />
                                 </MudItem>
-                                <MudItem xs="6" sm="3">
+                                <MudItem xs="4">
                                     <MudText Typo="Typo.caption">@L["Result bar"]</MudText>
                                     <input type="color" @bind="_settings.AccentColor"
+                                           style="width:100%;height:36px;border:0;background:none" />
+                                </MudItem>
+                                <MudItem xs="4">
+                                    <MudText Typo="Typo.caption">@L["Section titles"]</MudText>
+                                    <input type="color" value="@_settings.SectionBarColor" @onchange="SetSectionColor"
                                            style="width:100%;height:36px;border:0;background:none" />
                                 </MudItem>
                                 <MudItem xs="3">
@@ -266,6 +271,15 @@
                 : new ExamReportResultDto { Name = $"{Strings.T("Parameter")} {i}", Value = Strings.T("Result"), Unit = Strings.T("Unit"), Reference = Strings.T("Reference value") });
         }
         return lines;
+    }
+
+    /// <summary>
+    /// The section titles get a colour of their own (until then they follow the patient bar); the long preview has two of them.
+    /// </summary>
+    private void SetSectionColor(ChangeEventArgs e)
+    {
+        _settings!.SectionColor = e.Value as string;
+        _longPreview = true;
     }
 
     /// <summary>The option only shows from the second page on, so the preview gets one.</summary>

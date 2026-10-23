@@ -109,8 +109,9 @@ public enum PaperSize
 }
 
 /// <summary>
-/// What a report parameter holds: a measured number (evaluated against bands) or free text; or a section title that
-/// groups the parameters under it (e.g. "VALORES DE OXIMETRÍA").
+/// What a report parameter holds: a measured number (evaluated against bands) or free text; or, taking no value, a
+/// section title that groups the parameters under it (e.g. "VALORES DE OXIMETRÍA") or a page break, which prints
+/// nothing and starts a new page. Issued reports store the number, so the values never change.
 /// </summary>
 public enum ReportParameterKind
 {
@@ -119,7 +120,15 @@ public enum ReportParameterKind
     [DisplayString("Text")]
     Text,
     [DisplayString("Section title")]
-    Section = 2
+    Section = 2,
+    [DisplayString("Page break")]
+    PageBreak = 3
+}
+
+public static class ReportParameterKindExtensions
+{
+    /// <summary>Numbers and texts hold a result; section titles and page breaks only shape the printed report.</summary>
+    public static bool TakesValue(this ReportParameterKind kind) => kind is ReportParameterKind.Number or ReportParameterKind.Text;
 }
 
 /// <summary>Images the clinic uploads for its printed documents.</summary>
