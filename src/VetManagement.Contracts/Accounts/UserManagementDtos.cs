@@ -8,12 +8,6 @@ public class UserDto
     public List<string> Roles { get; set; } = new();
 }
 
-public class RoleChangeRequest
-{
-    public string UserId { get; set; } = string.Empty;
-    public string Role { get; set; } = string.Empty;
-}
-
 public class CreateUserRequest
 {
     public string UserName { get; set; } = string.Empty;

@@ -37,7 +37,6 @@ public static class ApiRouteConstants
     // User Management (Admin)
     public const string USERS_BASE = "api/admin/users";
     public const string USER_ROLES = "api/admin/users/{0}/roles";
-    public const string USER_CLAIMS = "api/admin/users/{0}/claims";
     public const string USERS_ROLES_ALL = "api/admin/users/roles";
 
     // Audit
