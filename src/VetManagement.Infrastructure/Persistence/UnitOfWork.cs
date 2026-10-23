@@ -17,6 +17,7 @@ public class UnitOfWork(AppDbContext context) : IUnitOfWork
     private IInventoryMovementRepository? _inventoryMovements;
     private IAuditLogRepository? _auditLogs;
     private IExternalLabRepository? _externalLabs;
+    private ILabMachineRepository? _labMachines;
     private IMedicalVisitRepository? _medicalVisits;
     private IClinicSettingRepository? _clinicSettings;
     private IAppointmentRepository? _appointments;
@@ -25,7 +26,7 @@ public class UnitOfWork(AppDbContext context) : IUnitOfWork
     private IRepository<VetManagement.Domain.Clinical.VisitSupply>? _visitSupplies;
     private IRepository<VetManagement.Domain.Clients.ClientAccessToken>? _clientAccessTokens;
     private IRepository<VetManagement.Domain.Billing.CashClose>? _cashCloses;
-    private IRepository<VetManagement.Domain.Exams.ExamReport>? _examReports;
+    private IExamReportRepository? _examReports;
     private IRepository<VetManagement.Domain.Configuration.ClinicImage>? _clinicImages;
 
     public IItemRepository Items => _items ??= new ItemRepository(context);
@@ -44,6 +45,8 @@ public class UnitOfWork(AppDbContext context) : IUnitOfWork
 
     public IExternalLabRepository ExternalLabs => _externalLabs ??= new ExternalLabRepository(context);
 
+    public ILabMachineRepository LabMachines => _labMachines ??= new LabMachineRepository(context);
+
     public IMedicalVisitRepository MedicalVisits => _medicalVisits ??= new MedicalVisitRepository(context);
 
     public IClinicSettingRepository ClinicSettings => _clinicSettings ??= new ClinicSettingRepository(context);
@@ -60,9 +63,15 @@ public class UnitOfWork(AppDbContext context) : IUnitOfWork
 
     public IRepository<VetManagement.Domain.Billing.CashClose> CashCloses => _cashCloses ??= new Repository<VetManagement.Domain.Billing.CashClose>(context);
 
-    public IRepository<VetManagement.Domain.Exams.ExamReport> ExamReports => _examReports ??= new Repository<VetManagement.Domain.Exams.ExamReport>(context);
+    public IExamReportRepository ExamReports => _examReports ??= new ExamReportRepository(context);
 
     public IRepository<VetManagement.Domain.Configuration.ClinicImage> ClinicImages => _clinicImages ??= new Repository<VetManagement.Domain.Configuration.ClinicImage>(context);
+
+    private IConsumptionSheetRepository? _consumptionSheets;
+    public IConsumptionSheetRepository ConsumptionSheets => _consumptionSheets ??= new ConsumptionSheetRepository(context);
+
+    private IRepository<VetManagement.Domain.Consumption.ConsumptionPricing>? _consumptionPricings;
+    public IRepository<VetManagement.Domain.Consumption.ConsumptionPricing> ConsumptionPricings => _consumptionPricings ??= new Repository<VetManagement.Domain.Consumption.ConsumptionPricing>(context);
 
     public async Task<int> SaveChangesAsync()
     {

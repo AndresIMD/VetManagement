@@ -12,7 +12,8 @@
 <PageTitle>@(Id is null ? L["New lab report"] : L["Correct lab report"])</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="mx-auto px-2 mt-8">
-    <PageHeader Title="@(Id is null ? L["New lab report"] : L["Correct lab report"])" Icon="@Icons.Material.Filled.Science" />
+    <PageHeader Title="@(Id is null ? L["New lab report"] : L["Correct lab report"])" Icon="@Icons.Material.Filled.Science"
+                TourId="new-lab-report" TourSteps="Tour" />
 
     @if (_settings is null)
     {
@@ -33,7 +34,7 @@
 
         <MudPaper Class="pa-4 mb-3" Elevation="1">
             <MudGrid>
-                <MudItem xs="12">
+                <MudItem xs="12" data-tour="patient-kind">
                     <MudRadioGroup T="bool" @bind-Value="_registered">
                         <MudRadio T="bool" Value="false">@L["Patient not registered (typed here, kept only in this report)"]</MudRadio>
                         <MudRadio T="bool" Value="true">@L["Registered pet"]</MudRadio>
@@ -41,7 +42,7 @@
                 </MudItem>
                 @if (_registered)
                 {
-                    <MudItem xs="12" sm="4">
+                    <MudItem xs="12" sm="4" data-tour="pet-id">
                         <MudNumericField T="int?" Label="@L["Pet ID"]" Value="_petId" ValueChanged="OnPetChangedAsync" Min="1" HideSpinButtons="true" />
                     </MudItem>
                     <MudItem xs="12" sm="8" Class="d-flex align-center">
@@ -57,7 +58,7 @@
                 }
                 else
                 {
-                    <MudItem xs="12">
+                    <MudItem xs="12" data-tour="typed-search">
                         <MudAutocomplete T="ExamReportPatientDto" Label="@L["Typed before? Search by patient or owner"]" SearchFunc="SearchTypedPatientsAsync"
                                          ToStringFunc="@(p => p is null ? null : $"{p.Name} · {p.OwnerName} {p.OwnerLastName}".TrimEnd())"
                                          ValueChanged="UseTypedPatient" ResetValueOnEmptyText="true" Clearable="true" DebounceInterval="300"
@@ -65,7 +66,7 @@
                                          HelperText="@L["Fills the fields with the patient's last report, so its reports share a history."]" />
                     </MudItem>
                     <MudItem xs="12" sm="4"><MudTextField Label="@L["Patient name"]" Class="vm-upper" @bind-Value="_patient.Name" MaxLength="100" Required="true" /></MudItem>
-                    <MudItem xs="6" sm="4">
+                    <MudItem xs="6" sm="4" data-tour="species">
                         <MudSelect T="Species" Label="@L["Species"]" @bind-Value="_patient.Species">
                             @foreach (var species in Enum.GetValues<Species>())
                             {
@@ -82,7 +83,7 @@
                             }
                         </MudSelect>
                     </MudItem>
-                    <MudItem xs="6" sm="2">
+                    <MudItem xs="6" sm="2" data-tour="age">
                         <MudNumericField T="int?" Label="@L["Age: years"]" Value="_ageYears" ValueChanged="y => OnAgeChanged(y, _ageMonths)" Min="0" Max="40" />
                     </MudItem>
                     <MudItem xs="6" sm="2">
@@ -96,7 +97,7 @@
                     <MudItem xs="6" sm="4"><MudTextField Label="@L["Owner first name"]" Class="vm-upper" @bind-Value="_patient.OwnerName" MaxLength="100" /></MudItem>
                     <MudItem xs="6" sm="4"><MudTextField Label="@L["Owner last name"]" Class="vm-upper" @bind-Value="_patient.OwnerLastName" MaxLength="100" /></MudItem>
                 }
-                <MudItem xs="12" sm="6">
+                <MudItem xs="12" sm="6" data-tour="exam">
                     <MudSelect T="int" Label="@L["Exam"]" Value="_examId" ValueChanged="OnExamChanged">
                         @foreach (var exam in _exams)
                         {
@@ -104,7 +105,7 @@
                         }
                     </MudSelect>
                 </MudItem>
-                <MudItem xs="6" sm="@(AsksLotNumber ? 3 : 6)">
+                <MudItem xs="6" sm="@(AsksLotNumber ? 3 : 6)" data-tour="received">
                     <MudDatePicker Label="@L["Sample received"]" Date="_receivedOn" DateChanged="OnReceivedChanged" Editable="true" DateFormat="dd/MM/yyyy"
                                    Placeholder="@L["dd/mm/yyyy"]" HelperText="@L["Today by default."]" />
                 </MudItem>
@@ -115,7 +116,7 @@
                                       HelperText="@L["Test kit or reagent; optional."]" />
                     </MudItem>
                 }
-                <MudItem xs="12">
+                <MudItem xs="12" data-tour="referring-vet">
                     <MudTextField Label="@L["Referring vet"]" Class="vm-upper" @bind-Value="_referringVet" MaxLength="200"
                                   HelperText="@L["Vet who requested the exam (printed as 'Médico tratante')."]" />
                 </MudItem>
@@ -124,12 +125,20 @@
 
         @if (Template is { } template)
         {
-            <MudPaper Class="pa-4 mb-3" Elevation="1">
+            <MudPaper Class="pa-4 mb-3" Elevation="1" data-tour="results">
                 <MudText Typo="Typo.h6" Class="mb-2">@template.Title</MudText>
                 <MudGrid>
                     @foreach (var parameter in template.Parameters)
                     {
                         var current = parameter;
+                        if (current.IsSection)
+                        {
+                            <MudItem xs="12" Class="pb-0">
+                                <MudText Typo="Typo.subtitle2" Color="Color.Primary" Style="text-transform:uppercase">@current.Name</MudText>
+                                <MudDivider />
+                            </MudItem>
+                            continue;
+                        }
                         var evaluation = current.Evaluate(Value(current.Code), Species);
                         <MudItem xs="12" sm="5">
                             @if (current.Options.Count > 0)
@@ -154,14 +163,15 @@
                             }
                             else if (evaluation.Abnormal)
                             {
-                                <MudChip T="string" Size="Size.Small" Color="Color.Warning">@L["Out of range"]</MudChip>
+                                // Outside the normal range, or an abnormal answer (e.g. "Positivo") or band without a name.
+                                <MudChip T="string" Size="Size.Small" Color="Color.Warning">@(evaluation.Direction == ResultDirection.None ? L["Altered"] : L["Out of range"])</MudChip>
                             }
                             <MudText Typo="Typo.caption" Color="Color.Secondary">@current.ReferenceFor(Species)</MudText>
                         </MudItem>
                     }
                     @if (template.Sections.Interpretation)
                     {
-                        <MudItem xs="12">
+                        <MudItem xs="12" data-tour="interpretation">
                             <MudTextField Label="@L["Interpretation"]" @bind-Value="_interpretation" Lines="3" MaxLength="2000"
                                           Placeholder="@AutomaticInterpretation"
                                           HelperText="@InterpretationHelp" />
@@ -170,7 +180,7 @@
                 </MudGrid>
             </MudPaper>
 
-            <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mb-8">
+            <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mb-8" data-tour="save">
                 <MudButton Variant="Variant.Outlined" Href="@CancelHref">@L["Cancel"]</MudButton>
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_saving || !HasPatient" OnClick="SaveAsync">@L["Save and view"]</MudButton>
             </MudStack>
@@ -217,6 +227,25 @@
     private string? Value(string code) => _values.GetValueOrDefault(code);
 
     private string CancelHref => Id is null ? "exam-reports" : string.Format(ReportRoute, Id);
+
+    // The tutorial is offered once the form is on screen.
+    private Func<IEnumerable<TourStep>>? Tour => _settings is not null && _exams.Count > 0 ? TourSteps : null;
+
+    /// <summary>The tutorial of this form, for staff who type lab reports; steps for fields not on screen are skipped.</summary>
+    private IEnumerable<TourStep> TourSteps() =>
+    [
+        new("patient-kind", L["Patient"], L["Choose a registered pet of the clinic, or type the patient only for this report (the usual case for lab samples)."]),
+        new("typed-search", L["Patient seen before?"], L["Search by patient or owner name. Picking one fills in its data and links its reports, so the previous result can be printed next to the new one."]),
+        new("pet-id", L["Registered pet"], L["Type the pet's number, shown in the client's record."]),
+        new("species", L["Species"], L["The species picks the normal ranges, so choose it before typing the results."]),
+        new("age", L["Age"], L["Type the age in years and months when the birth date isn't known; the date is worked out from the reception date."]),
+        new("exam", L["Exam"], L["Only exams with a report template are listed. Changing the exam clears the results already typed."]),
+        new("received", L["Sample received"], L["The date the sample arrived; today by default."]),
+        new("referring-vet", L["Referring vet"], L["The vet who requested the exam. It prints as 'Médico tratante'."]),
+        new("results", L["Results"], L["Type each value. Values outside the normal range are marked as you type, and the range for the species is shown next to each one."]),
+        new("interpretation", L["Interpretation"], L["When the exam has interpretation rules, the automatic interpretation shows in grey: leave the field empty to print it, or write your own."]),
+        new("save", L["Save and view"], L["Saves the report and opens it, ready to print or save as PDF. A saved report can be corrected later."])
+    ];
 
     private string InterpretationHelp => AutomaticInterpretation is null
         ? L["Write the interpretation, or leave it empty."]

@@ -208,6 +208,10 @@ public class TestDataService(AppDbContext db, SchedulingSettingsService scheduli
                 SellPrice = sell, BuyPrice = sell * _random.Next(35, 60) / 100
             });
         }
+        // The exam form offers the machines on the list, so the ones used here go on it.
+        var listed = (await db.LabMachines.ToListAsync()).Select(m => (m.Brand.ToUpperInvariant(), m.Model.ToUpperInvariant())).ToHashSet();
+        foreach (var (brand, model) in LabMachines.Where(m => listed.Add((m.Brand.ToUpperInvariant(), m.Machine.ToUpperInvariant()))))
+            db.LabMachines.Add(new LabMachine { Brand = brand, Model = model });
         await db.SaveChangesAsync();
         return count;
     }

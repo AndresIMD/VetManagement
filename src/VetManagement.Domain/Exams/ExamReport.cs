@@ -59,7 +59,7 @@ public class ExamReport : Entity<int>
         var labelled = results.Where(r => !string.IsNullOrWhiteSpace(r.Band)).ToList();
         if (labelled.Count == 0)
             return null;
-        return results.Count == 1
+        return results.Count(r => r.Kind != ReportParameterKind.Section) == 1
             ? labelled[0].Band
             : string.Join("\n", labelled.Select(r => $"{r.Name}: {r.Band}"));
     }
@@ -84,7 +84,10 @@ public class ExamReportResult
 {
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
-    /// <summary>Text results (Positivo / Negativo, blood types) print as highlighted results when a report has only those.</summary>
+    /// <summary>
+    /// Text results (Positivo / Negativo, blood types) print as highlighted results when a report has only those; a
+    /// section line prints its name as a title over the results that follow it.
+    /// </summary>
     public ReportParameterKind Kind { get; set; }
     public string? Unit { get; set; }
     public string Value { get; set; } = string.Empty;

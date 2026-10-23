@@ -13,26 +13,28 @@ namespace VetManagement.Api.Controllers.Audit;
 [Authorize(Policy = "Audit.Read")]
 public class AuditController(AuditService auditService) : ApiControllerBase
 {
+    /// <summary>A page of the log, newest first. <paramref name="action"/> and <paramref name="entityId"/> may repeat (any of them).</summary>
     [HttpGet("logs/paged")]
     public async Task<IActionResult> GetAuditLogsPagedAsync(
         [FromQuery] int page = 0,
         [FromQuery] int pageSize = 25,
         [FromQuery] string? entityName = null,
-        [FromQuery] AuditActionType? action = null,
+        [FromQuery] List<AuditActionType>? action = null,
         [FromQuery] string? user = null,
         [FromQuery] DateTime? from = null,
         [FromQuery] DateTime? to = null,
-        [FromQuery] int? entityId = null)
+        [FromQuery] List<int>? entityId = null)
     {
+        (page, pageSize) = Paging(page, pageSize);
         var result = await auditService.GetLogsPagedAsync(
             page: page,
             pageSize: pageSize,
             entityName: entityName,
-            action: action,
+            actions: action,
             user: user,
             from: from,
             to: to,
-            entityId: entityId);
+            entityIds: entityId);
         return Ok(new PagedResponse<AuditLogDto>(
             result.Items.Select(MapToDto).ToList(), result.TotalCount, result.Page, result.PageSize));
     }

@@ -18,7 +18,14 @@ public enum SampleType
     [DisplayString("Swab")]
     Swab,
     [DisplayString("Other")]
-    Other
+    Other,
+    // Added later: the stored numbers of the values above must not change. Forms list them in DisplayOrder.
+    [DisplayString("Plasma")]
+    Plasma = 7,
+    [DisplayString("Serum")]
+    Serum = 8,
+    [DisplayString("Supernatant")]
+    Supernatant = 9
 }
 
 /// <summary>
@@ -39,7 +46,40 @@ public enum SampleContainer
     [DisplayString("Pot")]
     Pot,
     [DisplayString("Other")]
-    Other
+    Other,
+    // Added later: the stored numbers of the values above must not change. Forms list them in DisplayOrder.
+    /// <summary>Red top: no additive (serum).</summary>
+    [DisplayString("Red tube")]
+    RedTube = 7,
+    /// <summary>Light blue top: sodium citrate (coagulation).</summary>
+    [DisplayString("Light blue tube")]
+    LightBlueTube = 8,
+    /// <summary>Green top: heparin.</summary>
+    [DisplayString("Green tube")]
+    GreenTube = 9,
+    /// <summary>Yellow top: separator gel (serum).</summary>
+    [DisplayString("Yellow tube")]
+    YellowTube = 10,
+    /// <summary>Lavender top: EDTA (haematology).</summary>
+    [DisplayString("Lavender tube")]
+    LavenderTube = 11
+}
+
+/// <summary>The order the exam form lists sample types and containers in (related values together, "Other" last).</summary>
+public static class ExamSampleOrder
+{
+    public static readonly SampleType[] SampleTypes =
+    [
+        SampleType.Blood, SampleType.Plasma, SampleType.Serum, SampleType.Urine, SampleType.Supernatant,
+        SampleType.Feces, SampleType.Tissue, SampleType.Swab, SampleType.Other
+    ];
+
+    public static readonly SampleContainer[] Containers =
+    [
+        SampleContainer.Tube, SampleContainer.RedTube, SampleContainer.LightBlueTube, SampleContainer.GreenTube,
+        SampleContainer.YellowTube, SampleContainer.LavenderTube, SampleContainer.Swab, SampleContainer.Slide,
+        SampleContainer.Jar, SampleContainer.Pot, SampleContainer.Other
+    ];
 }
 
 /// <summary>
@@ -68,13 +108,18 @@ public enum PaperSize
     A4
 }
 
-/// <summary>What a report parameter holds: a measured number (evaluated against bands) or free text.</summary>
+/// <summary>
+/// What a report parameter holds: a measured number (evaluated against bands) or free text; or a section title that
+/// groups the parameters under it (e.g. "VALORES DE OXIMETRÍA").
+/// </summary>
 public enum ReportParameterKind
 {
     [DisplayString("Number")]
     Number,
     [DisplayString("Text")]
-    Text
+    Text,
+    [DisplayString("Section title")]
+    Section = 2
 }
 
 /// <summary>Images the clinic uploads for its printed documents.</summary>

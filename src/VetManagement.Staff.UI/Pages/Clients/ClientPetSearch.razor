@@ -5,7 +5,7 @@
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
-@attribute [Authorize(Policy = "ClientsPets.Read")]
+@attribute [Authorize(Policy = "ClientsPets.List")]
 
 <PageTitle>@L["Client and Pet Search"]</PageTitle>
 
@@ -33,7 +33,7 @@
 
 <MudStack Spacing="2">
     <MudItem>
-        <MudTable TItem="ClientWithPetsResult" Items="@_filteredResults" Loading="@_isLoading" Striped="true"
+        <MudTable T="ClientWithPetsResult" Items="@_filteredResults" Loading="@_isLoading" Striped="true"
                   Hover="true" Bordered="true" FixedHeader="true" RowsPerPage="25">
             <ToolBarContent>
                 <MudSpacer />

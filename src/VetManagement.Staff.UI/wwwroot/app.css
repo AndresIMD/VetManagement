@@ -174,3 +174,29 @@ h1:focus {
 .vm-upper input {
     text-transform: uppercase;
 }
+
+/* Guided tours (js/tour.js): the driver.js popover in the app's font and colours. */
+.driver-popover.vm-tour {
+    font-family: var(--mud-typography-default-family);
+    max-width: 360px;
+}
+
+    .driver-popover.vm-tour .driver-popover-title {
+        font-size: 1.05rem;
+    }
+
+    .driver-popover.vm-tour .driver-popover-description {
+        font-size: .9rem;
+        line-height: 1.45;
+    }
+
+    .driver-popover.vm-tour .driver-popover-navigation-btns button {
+        text-shadow: none;
+        padding: 4px 10px;
+    }
+
+    .driver-popover.vm-tour .driver-popover-next-btn {
+        background: var(--mud-palette-primary);
+        border-color: var(--mud-palette-primary);
+        color: var(--mud-palette-primary-text);
+    }

@@ -97,6 +97,7 @@ builder.Services.AddSingleton(new VetManagement.Staff.UI.Models.Configuration.Ap
 // Authentication + Authorization (client-side)
 builder.Services.AddScoped<AuthenticationStateProvider, JwtAuthenticationStateProvider>();
 builder.Services.AddStaffAuthorization();
+builder.Services.AddScoped<SessionRefresher>();
 
 // Message handler that attaches the JWT to protected API calls
 builder.Services.AddTransient<JwtAuthorizationMessageHandler>();
@@ -146,6 +147,7 @@ ConfigureHttpClient<BillingApiService>();
 ConfigureHttpClient<ClinicalApiService>();
 ConfigureHttpClient<ReportsApiService>();
 ConfigureHttpClient<ExamReportsApiService>();
+ConfigureHttpClient<ConsumptionApiService>();
 ConfigureHttpClient<TestDataApiService>();
 ConfigureHttpClient<UserManagementApiService>();
 ConfigureHttpClient<MedicalVisitApiService>();
@@ -163,6 +165,7 @@ builder.Services.AddHttpClient<AccountApiService>(client =>
 // Background + Theme services
 builder.Services.AddScoped<AppBackgroundService>();
 builder.Services.AddScoped<ThemeService>();
+builder.Services.AddScoped<TourService>();
 
 var host = builder.Build();
 StaffLocalization.ApplyCulture(culture);

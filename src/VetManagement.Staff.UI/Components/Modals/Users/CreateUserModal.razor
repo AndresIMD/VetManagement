@@ -1,5 +1,5 @@
 ﻿@using System.ComponentModel.DataAnnotations
-@using System.Text.RegularExpressions
+@using VetManagement.Staff.UI.Helpers
 @using MudBlazor
 @using VetManagement.Contracts.Accounts
 @using VetManagement.Staff.UI.Services.Api
@@ -16,8 +16,8 @@
                           InputType="@PasswordInput"
                           Required="true"
                           RequiredError="@L["Password is required"]"
-                          HelperText="@L["Must be at least 8 characters, with uppercase, lowercase, and a number."]"
-                          Validation="@(new Func<string, IEnumerable<string>>(PasswordStrength))"
+                          HelperText="@PasswordRules.Hint"
+                          Validation="@(new Func<string, IEnumerable<string>>(PasswordRules.Check))"
                           Class="mb-2"
                           Adornment="Adornment.End"
                           AdornmentIcon="@PasswordInputIcon"
@@ -94,23 +94,6 @@
         }
     }
 
-    private IEnumerable<string> PasswordStrength(string pw)
-    {
-        if (string.IsNullOrWhiteSpace(pw))
-        {
-            yield return L["Password is required"];
-            yield break;
-        }
-        if (pw.Length < 8)
-            yield return L["Password must be at least 8 characters long."];
-        if (!Regex.IsMatch(pw, @"[A-Z]"))
-            yield return L["Password must contain at least one uppercase letter."];
-        if (!Regex.IsMatch(pw, @"[a-z]"))
-            yield return L["Password must contain at least one lowercase letter."];
-        if (!Regex.IsMatch(pw, @"[0-9]"))
-            yield return L["Password must contain at least one number."];
-    }
-
     private string PasswordMatch(string arg)
     {
         if (model.Password != arg)
@@ -143,17 +126,17 @@
         }
         StateHasChanged();
 
-        (bool successResult, string? error) = await UserManagementService.CreateUserAsync(model);
+        var result = await UserManagementService.CreateUserAsync(model);
         loading = false;
 
-        if (successResult)
+        if (result.Ok)
         {
             Snackbar.Add(L["User '{0}' created successfully.", model.UserName], Severity.Success);
             MudDialog.Close(DialogResult.Ok(true));
         }
         else
         {
-            Snackbar.Add(L["Error creating user: {0}", error ?? ""], Severity.Error);
+            Snackbar.Add(L["Error creating user: {0}", result.Error ?? ""], Severity.Error);
         }
     }
 

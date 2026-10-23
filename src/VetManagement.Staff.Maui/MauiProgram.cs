@@ -115,15 +115,20 @@ public static class MauiProgram
         builder.Services.AddHttpClient<ExternalLabsApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
             .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
 
+        builder.Services.AddHttpClient<ConsumptionApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
+            .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
+
         builder.Services.AddHttpClient<MedicalVisitApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
             .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
 
         builder.Services.AddScoped<AuthenticationStateProvider, JwtAuthenticationStateProvider>();
         builder.Services.AddStaffAuthorization();
+        builder.Services.AddScoped<SessionRefresher>();
 
         // Background + Theme services
         builder.Services.AddScoped<BackgroundService>();
         builder.Services.AddScoped<ThemeService>();
+        builder.Services.AddScoped<TourService>();
 
         // SignalR Realtime service
         builder.Services.AddScoped(sp =>

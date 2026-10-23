@@ -15,15 +15,16 @@ public class AuditApiService(HttpClient http)
     };
 
     // Audit entries are written by the API itself; the UI only reads them.
+    /// <summary>A page of the log, filtered and paged by the API; any of <paramref name="actions"/> and of <paramref name="entityIds"/>.</summary>
     public async Task<PagedResult<AuditLog>?> GetLogsPagedAsync(
         int page,
         int pageSize,
         string? entityName = null,
-        AuditActionType? action = null,
+        IEnumerable<AuditActionType>? actions = null,
         string? user = null,
         DateTime? from = null,
         DateTime? to = null,
-        string? itemName = null,
+        IEnumerable<int>? entityIds = null,
         CancellationToken ct = default)
     {
         var parameters = new List<string>
@@ -34,16 +35,14 @@ public class AuditApiService(HttpClient http)
 
         if (!string.IsNullOrWhiteSpace(entityName))
             parameters.Add($"entityName={Uri.EscapeDataString(entityName)}");
-        if (action.HasValue)
-            parameters.Add($"action={action.Value}");
+        parameters.AddRange((actions ?? []).Select(action => $"action={action}"));
         if (!string.IsNullOrWhiteSpace(user))
             parameters.Add($"user={Uri.EscapeDataString(user)}");
         if (from.HasValue)
             parameters.Add($"from={from.Value:O}");
         if (to.HasValue)
             parameters.Add($"to={to.Value:O}");
-        if (!string.IsNullOrWhiteSpace(itemName))
-            parameters.Add($"itemName={Uri.EscapeDataString(itemName)}");
+        parameters.AddRange((entityIds ?? []).Select(id => $"entityId={id}"));
 
         var url = $"{ApiRouteConstants.AUDIT_LOGS_PAGED}?{string.Join("&", parameters)}";
 

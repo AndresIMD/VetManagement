@@ -2,6 +2,7 @@
 @inject ExamApiService ExamService
 @inject IDialogService DialogService
 @using System.Text.Json
+@using VetManagement.Contracts.Exams
 @using VetManagement.Staff.UI.Models.Exams
 
 <ModalShell Title="@Title"
@@ -13,31 +14,33 @@
             PrimaryLoadingText="@L["Saving..."]"
             OnPrimaryClick="HandleValidSubmit"
             OnCancelClick="OnCancelRequested">
-    <ExamForm ExamModel="ExamModel"
-              Brands="@brandsDictionary.Keys.ToList()"
+    @if (_machinesLoaded && _machines.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3">
+            @L["There are no lab machines yet."] <MudLink Href="lab-machines" Typo="Typo.body2">@L["Add them in Lab Machines."]</MudLink>
+        </MudAlert>
+    }
+    <ExamForm @ref="_form"
+              ExamModel="ExamModel"
+              Brands="@BrandOptions()"
               Machines="@machinesList"
               OnBrandChangedCallback="OnBrandChanged"
-              OnValidSubmitCallback="HandleValidSubmit"
-              OnCancelCallback="OnCancelRequested"
               OnDirtyChanged="OnFormDirtyChanged" />
 </ModalShell>
 
 @code {
     [Parameter] public Exam? Initial { get; set; }
 
+    private ExamForm? _form;
     private Exam ExamModel = new();
     private bool _isFormDirty;
 
-    // -- Placeholder data --
-    private Dictionary<string, List<string>> brandsDictionary = new()
-    {
-        { "Idexx", new List<string> { "Catalyst One", "ProCyte Dx", "Snap Pro" } },
-        { "BioNote", new List<string> { "Vcheck V200", "Vcheck V2400" } },
-        { "GZMed", new List<string> { "PCR" } }
-    };
+    // The brands and models come from Lab Machines.
+    private List<LabMachineDto> _machines = [];
+    private bool _machinesLoaded;
     private List<string> machinesList = new();
 
-    protected override Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
         if (Initial is not null)
         {
@@ -57,12 +60,37 @@
         {
             ExamModel = new Exam();
         }
-        _ = OnBrandChanged(ExamModel.Brand);
-        return Task.CompletedTask;
+        _machines = await ExamService.GetLabMachinesAsync();
+        _machinesLoaded = true;
+        // The list's spelling of the same brand and model, so the selects show them.
+        ExamModel.Brand = BrandOptions().FirstOrDefault(b => Same(b, ExamModel.Brand)) ?? ExamModel.Brand;
+        machinesList = ModelsFor(ExamModel.Brand);
+        ExamModel.Machine = machinesList.FirstOrDefault(m => Same(m, ExamModel.Machine)) ?? ExamModel.Machine;
     }
+
+    private List<string> BrandOptions()
+    {
+        var brands = _machines.Select(m => m.Brand).Distinct(StringComparer.OrdinalIgnoreCase).Order().ToList();
+        if (!string.IsNullOrWhiteSpace(Initial?.Brand) && !brands.Any(b => Same(b, Initial.Brand)))
+            brands.Add(Initial.Brand);
+        return brands;
+    }
+
+    private List<string> ModelsFor(string? brand)
+    {
+        var models = _machines.Where(m => Same(m.Brand, brand)).Select(m => m.Model).Order().ToList();
+        // An exam saved with a machine that isn't on the list keeps it as an option, so editing the exam doesn't drop it.
+        if (Initial is not null && Same(Initial.Brand, brand) && !string.IsNullOrWhiteSpace(Initial.Machine) && !models.Any(m => Same(m, Initial.Machine)))
+            models.Add(Initial.Machine);
+        return models;
+    }
+
+    private static bool Same(string? a, string? b) => string.Equals(a?.Trim(), b?.Trim(), StringComparison.OrdinalIgnoreCase);
 
     private async Task HandleValidSubmit()
     {
+        if (_form != null && !await _form.ValidateAsync())
+            return;
         try
         {
             if (ExamModel.Id == 0)
@@ -86,19 +114,9 @@
     private Task OnBrandChanged(string value)
     {
         ExamModel.Brand = value;
-        if (!string.IsNullOrEmpty(ExamModel.Brand) && brandsDictionary.ContainsKey(ExamModel.Brand))
-        {
-            machinesList = brandsDictionary[ExamModel.Brand];
-            if (!machinesList.Contains(ExamModel.Machine))
-            {
-                ExamModel.Machine = machinesList.Count > 0 ? machinesList[0] : string.Empty;
-            }
-        }
-        else
-        {
-            machinesList = new List<string>();
-            ExamModel.Machine = string.Empty;
-        }
+        machinesList = ModelsFor(value);
+        if (!machinesList.Contains(ExamModel.Machine))
+            ExamModel.Machine = machinesList.Count == 1 ? machinesList[0] : string.Empty;
         return Task.CompletedTask;
     }
 

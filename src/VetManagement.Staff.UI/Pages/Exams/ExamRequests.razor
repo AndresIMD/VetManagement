@@ -43,7 +43,7 @@
 </MudContainer>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2">
-    <MudTable TItem="ExamPerformed" Items="@_filtered" Loading="@_isLoading" Striped="true" Hover="true" Bordered="true"
+    <MudTable T="ExamPerformed" Items="@_filtered" Loading="@_isLoading" Striped="true" Hover="true" Bordered="true"
         FixedHeader="true" RowsPerPage="25">
         <ToolBarContent></ToolBarContent>
         <HeaderContent>

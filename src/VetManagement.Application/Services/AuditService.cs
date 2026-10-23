@@ -15,19 +15,19 @@ public class AuditService(IUnitOfWork unitOfWork)
         int page = 0,
         int pageSize = 25,
         string? entityName = null,
-        AuditActionType? action = null,
+        IReadOnlyCollection<AuditActionType>? actions = null,
         string? user = null,
         DateTime? from = null,
         DateTime? to = null,
-        int? entityId = null,
+        IReadOnlyCollection<int>? entityIds = null,
         CancellationToken ct = default)
     {
         var (items, totalCount) = await unitOfWork.AuditLogs.GetFilteredPagedAsync(
             page: page,
             pageSize: pageSize,
-            entityId: entityId,
+            entityIds: entityIds,
             entityName: entityName,
-            action: action,
+            actions: actions,
             user: user,
             from: from,
             to: to);

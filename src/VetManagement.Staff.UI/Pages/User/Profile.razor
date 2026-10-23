@@ -5,6 +5,9 @@
 @inject ISnackbar Snackbar
 @inject AuthenticationStateProvider AuthStateProvider
 @inject AccountApiService AccountApi
+@inject TourService Tours
+
+<PageTitle>@L["My profile"]</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Small" Class="d-flex flex-column align-center justify-center" Style="min-height:80vh;">
 	<MudPaper Elevation="6" Class="pa-6" Style="width:100%; max-width:500px;">
@@ -29,6 +32,13 @@
 					</MudLoadingButton>
 				</MudStack>
 			</MudForm>
+
+			<MudDivider Class="my-4" />
+
+			<MudText Typo="Typo.h6" Class="mb-2">@L["Tutorials"]</MudText>
+			<MudSwitch T="bool" Value="_tutorialOffers" ValueChanged="SetTutorialOffersAsync" Color="Color.Primary"
+					   Label="@L["Offer the tutorial the first time I open a screen"]" />
+			<MudText Typo="Typo.caption" Color="Color.Secondary">@L["The \"Tutorial\" button on each screen shows it at any time."]</MudText>
 
 			<MudDivider Class="my-4" />
 
@@ -57,6 +67,7 @@
 	private bool _isLoading = true;
 	private bool _saving = false;
 	private bool _changingPassword = false;
+	private bool _tutorialOffers = true;
 
 	private ProfileModel _profileModel = new();
 	private ChangePasswordModel _passwordModel = new();
@@ -64,6 +75,13 @@
 	protected override async Task OnInitializedAsync()
 	{
 		await LoadUserInfo();
+		_tutorialOffers = await Tours.OffersOnAsync();
+	}
+
+	private async Task SetTutorialOffersAsync(bool on)
+	{
+		_tutorialOffers = on;
+		await Tours.SetOffersOnAsync(on);
 	}
 
 	private async Task LoadUserInfo()
@@ -101,15 +119,15 @@
 		try
 		{
 			var request = new UpdateUserRequest { Email = _profileModel.Email };
-			var success = await AccountApi.UpdateUserInfoAsync(request);
+			var result = await AccountApi.UpdateUserInfoAsync(request);
 
-			if (success)
+			if (result.Ok)
 			{
 				Snackbar.Add(L["Profile updated successfully!"], Severity.Success);
 			}
 			else
 			{
-				Snackbar.Add(L["Failed to update profile. Please try again."], Severity.Error);
+				Snackbar.Add(L["Failed to update profile: {0}", result.Error ?? ""], Severity.Error);
 			}
 		}
 		catch (Exception ex)
@@ -133,12 +151,6 @@
 			return;
 		}
 
-		if (_passwordModel.NewPassword.Length < 6)
-		{
-			Snackbar.Add(L["Password must be at least 6 characters long."], Severity.Error);
-			return;
-		}
-
 		_changingPassword = true;
 		try
 		{
@@ -148,9 +160,9 @@
 				NewPassword = _passwordModel.NewPassword
 			};
 
-			var success = await AccountApi.ChangePasswordAsync(request);
+			var result = await AccountApi.ChangePasswordAsync(request);
 
-			if (success)
+			if (result.Ok)
 			{
 				Snackbar.Add(L["Password changed successfully"], Severity.Success);
 				// Clear the password fields
@@ -158,7 +170,7 @@
 			}
 			else
 			{
-				Snackbar.Add(L["Failed to change password. Please verify your current password."], Severity.Error);
+				Snackbar.Add(L["Could not change password: {0}", result.Error ?? ""], Severity.Error);
 			}
 		}
 		catch (Exception ex)

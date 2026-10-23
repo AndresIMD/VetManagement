@@ -21,9 +21,6 @@ public class InventoryAlertsApiService(HttpClient http)
     public async Task<ScheduleDto?> GetScheduleAsync(CancellationToken ct = default)
         => await http.GetFromJsonAsync<ScheduleDto>(ApiRouteConstants.INVENTORY_ALERTS_SCHEDULE, ct);
 
-    public async Task SaveScheduleAsync(ScheduleDto schedule, CancellationToken ct = default)
-    {
-        var response = await http.PostAsJsonAsync(ApiRouteConstants.INVENTORY_ALERTS_SCHEDULE, schedule, ct);
-        response.EnsureSuccessStatusCode();
-    }
+    public async Task<ApiResult> SaveScheduleAsync(ScheduleDto schedule, CancellationToken ct = default)
+        => await ApiResult.FromResponseAsync(await http.PostAsJsonAsync(ApiRouteConstants.INVENTORY_ALERTS_SCHEDULE, schedule, ct));
 }

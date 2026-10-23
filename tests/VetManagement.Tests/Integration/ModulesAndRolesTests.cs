@@ -21,6 +21,13 @@ public class ModulesAndRolesTests(CustomWebAppFactory factory) : IClassFixture<C
         ForRole(ROLES.LABORATORY).Should().Contain(EXAMS_PERFORMED.CREATE).And.NotContain([MEDICAL.READ, BILLING.READ, EXAMS.UPDATE]);
         ForRoles([ROLES.LABORATORY, ROLES.SUPERVISOR]).Should().Contain([EXAMS.UPDATE, EXAMS_PERFORMED.DELETE, AUDIT.READ]).And.NotContain(INVENTORY.DELETE);
         ForRoles([ROLES.RECEPTION, ROLES.CASHIER]).Should().Contain([SCHEDULING.BOOK, BILLING.CHARGE]).And.NotContain(BILLING.MANAGE);
+        ForRole(ROLES.INVENTORY).Should().Contain([INVENTORY.READ, INVENTORY.UPDATE]).And.NotContain([INVENTORY.METRICS, AUDIT.READ]);
+        ForRoles([ROLES.INVENTORY, ROLES.SUPERVISOR]).Should().Contain([INVENTORY.METRICS, AUDIT.READ, INVENTORY.DELETE]);
+        ForRole(ROLES.LABORATORY).Should().NotContain([EXAMS.UPDATE, EXTERNAL_LABS.UPDATE], "the catalog and external labs are managed by a supervisor");
+        ForRoles([ROLES.LABORATORY, ROLES.SUPERVISOR]).Should().Contain(CLIENTS_PETS.READ).And.NotContain(CLIENTS_PETS.LIST,
+            "the lab reads patients through its reports, not the Clients screens");
+        ForRole(ROLES.RECEPTION).Should().Contain(CLIENTS_PETS.LIST);
+        ForRoles([.. ROLES.ALL.Where(r => r != ROLES.ADMIN)]).Should().NotContain(SYSTEM.SEND_EMAIL, "email is Admin only");
         ForRole(ROLES.SUPERVISOR).Should().BeEmpty("supervising needs an area");
         ForRole(ROLES.ADMIN).Should().BeEquivalentTo(ALL());
     }

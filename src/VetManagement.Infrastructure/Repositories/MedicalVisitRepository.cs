@@ -50,8 +50,8 @@ public class MedicalVisitRepository(AppDbContext context) : Repository<MedicalVi
         {
             var term = search.Trim().ToLower();
             query = query.Where(v =>
-                v.Responsible.Contains(term, StringComparison.CurrentCultureIgnoreCase) ||
-                (v.Location != null && v.Location.Contains(term, StringComparison.CurrentCultureIgnoreCase)));
+                v.Responsible.ToLower().Contains(term) ||
+                (v.Location != null && v.Location.ToLower().Contains(term)));
         }
 
         return await query.OrderByDescending(v => v.Date).ToListAsync();

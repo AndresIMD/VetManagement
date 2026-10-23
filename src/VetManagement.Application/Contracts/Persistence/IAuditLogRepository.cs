@@ -14,12 +14,13 @@ public interface IAuditLogRepository : IRepository<AuditLog>
 
     Task<IEnumerable<AuditLog>> GetByEntityAsync(int entityId, string entityName);
 
+    /// <summary>A page of the log, newest first; <paramref name="entityIds"/> and <paramref name="actions"/> match any of their values.</summary>
     Task<(List<AuditLog> Items, int TotalCount)> GetFilteredPagedAsync(
         int page = 0,
         int pageSize = 25,
-        int? entityId = null,
+        IReadOnlyCollection<int>? entityIds = null,
         string? entityName = null,
-        AuditActionType? action = null,
+        IReadOnlyCollection<AuditActionType>? actions = null,
         string? user = null,
         DateTime? from = null,
         DateTime? to = null);

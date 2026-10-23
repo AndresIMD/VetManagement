@@ -66,12 +66,12 @@
             <MudItem xs="12" sm="6">
                 <MudGrid>
                     <MudItem xs="6">
-                        <MudNumericField Variant="Variant.Outlined" T="float" Label="@L["Amount (mL)"]" @bind-Value="DrugModel.ML"
+                        <MudNumericField Culture="CultureInfo.CurrentCulture" Variant="Variant.Outlined" T="float" Label="@L["Amount (mL)"]" @bind-Value="DrugModel.ML"
                             For="@(() => DrugModel.ML)" Required="true" Margin="Margin.Dense" Min="0.001f"
                             Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.LocalDrink" />
                     </MudItem>
                     <MudItem xs="6">
-                        <MudNumericField Variant="Variant.Outlined" T="float" Label="@L["Concentration (%)"]"
+                        <MudNumericField Culture="CultureInfo.CurrentCulture" Variant="Variant.Outlined" T="float" Label="@L["Concentration (%)"]"
                             @bind-Value="DrugModel.Concentration" For="@(() => DrugModel.Concentration)" Required="true"
                             Margin="Margin.Dense" Min="0.001f" Max="100f" Adornment="Adornment.End"
                             AdornmentIcon="@Icons.Material.Filled.Percent" />
@@ -83,18 +83,18 @@
                     <MudText Typo="Typo.subtitle2" Class="me-2">@L["Dosage"]</MudText>
                     <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
                         <MudIcon Icon="@Icons.Material.Filled.Pets" Color="Color.Primary" />
-                        <MudNumericField T="float" Label="@L["Min"]" @bind-Value="DrugModel.DosageDog.Min" Margin="Margin.Dense"
+                        <MudNumericField Culture="CultureInfo.CurrentCulture" T="float" Label="@L["Min"]" @bind-Value="DrugModel.DosageDog.Min" Margin="Margin.Dense"
                             HideSpinButtons="true" Style="width:90px;" Min="0f" />
                         <MudText Class="mx-1">-</MudText>
-                        <MudNumericField T="float" Label="@L["Max"]" @bind-Value="DrugModel.DosageDog.Max" Margin="Margin.Dense"
+                        <MudNumericField Culture="CultureInfo.CurrentCulture" T="float" Label="@L["Max"]" @bind-Value="DrugModel.DosageDog.Max" Margin="Margin.Dense"
                             HideSpinButtons="true" Style="width:90px;" Min="0f" />
                     </MudStack>
                     <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
                         <MudIcon Icon="@Icons.Material.Filled.Pets" Color="Color.Secondary" />
-                        <MudNumericField T="float" Label="@L["Min"]" @bind-Value="DrugModel.DosageCat.Min" Margin="Margin.Dense"
+                        <MudNumericField Culture="CultureInfo.CurrentCulture" T="float" Label="@L["Min"]" @bind-Value="DrugModel.DosageCat.Min" Margin="Margin.Dense"
                             HideSpinButtons="true" Style="width:90px;" Min="0f" />
                         <MudText Class="mx-1">-</MudText>
-                        <MudNumericField T="float" Label="@L["Max"]" @bind-Value="DrugModel.DosageCat.Max" Margin="Margin.Dense"
+                        <MudNumericField Culture="CultureInfo.CurrentCulture" T="float" Label="@L["Max"]" @bind-Value="DrugModel.DosageCat.Max" Margin="Margin.Dense"
                             HideSpinButtons="true" Style="width:90px;" Min="0f" />
                     </MudStack>
                 </MudStack>

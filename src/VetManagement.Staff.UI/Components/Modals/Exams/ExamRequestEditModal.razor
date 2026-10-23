@@ -68,7 +68,7 @@
                             </MudSelect>
                         </MudTd>
                         <MudTd DataLabel="@L["External"]">
-                            <MudSwitch T="bool" @bind-Checked="it.IsExternal" Color="Color.Primary" />
+                            <MudSwitch T="bool" @bind-Value="it.IsExternal" Color="Color.Primary" />
                         </MudTd>
                         <MudTd DataLabel="@L["Laboratory"]">
                             <MudSelect T="int?" @bind-Value="it.ExternalLabId" Disabled="@(!it.IsExternal)">

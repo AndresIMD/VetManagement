@@ -197,7 +197,6 @@
   <data name="Use a range of at most 62 days." xml:space="preserve"><value>Usa un rango de 62 días como máximo.</value></data>
   <data name="Use a range of at most 92 days." xml:space="preserve"><value>Usa un rango de 92 días como máximo.</value></data>
   <data name="Use a range of at most {0} days, ending on or after the start." xml:space="preserve"><value>Usa un rango de {0} días como máximo, que termine el mismo día del inicio o después.</value></data>
-  <data name="Use at most 6 header lines and 8 footer lines." xml:space="preserve"><value>Usa como máximo 6 líneas de encabezado y 8 de pie.</value></data>
   <data name="User created successfully." xml:space="preserve"><value>Usuario creado correctamente.</value></data>
   <data name="Username already exists." xml:space="preserve"><value>El usuario ya existe.</value></data>
   <data name="VAT exempt" xml:space="preserve"><value>Exento de IVA</value></data>
@@ -225,4 +224,34 @@
   <data name="Massive Egress" xml:space="preserve"><value>Egreso masivo</value></data>
   <data name="service" xml:space="preserve"><value>servicio</value></data>
   <data name="resource" xml:space="preserve"><value>recurso</value></data>
+  <data name="At least one active administrator must remain." xml:space="preserve"><value>Debe quedar al menos un administrador activo.</value></data>
+  <data name="Passwords must be at least {0} characters." xml:space="preserve"><value>La contraseña debe tener al menos {0} caracteres.</value></data>
+  <data name="Passwords must have at least one digit ('0'-'9')." xml:space="preserve"><value>La contraseña debe tener al menos un número ('0'-'9').</value></data>
+  <data name="Passwords must have at least one lowercase letter ('a'-'z')." xml:space="preserve"><value>La contraseña debe tener al menos una letra minúscula ('a'-'z').</value></data>
+  <data name="Passwords must have at least one symbol, such as # or !." xml:space="preserve"><value>La contraseña debe tener al menos un símbolo, como # o !.</value></data>
+  <data name="Passwords must have at least one uppercase letter ('A'-'Z')." xml:space="preserve"><value>La contraseña debe tener al menos una letra mayúscula ('A'-'Z').</value></data>
+  <data name="Passwords must use at least {0} different characters." xml:space="preserve"><value>La contraseña debe usar al menos {0} caracteres distintos.</value></data>
+  <data name="The current password is incorrect." xml:space="preserve"><value>La contraseña actual es incorrecta.</value></data>
+  <data name="The email '{0}' is already in use." xml:space="preserve"><value>El correo '{0}' ya está en uso.</value></data>
+  <data name="The email '{0}' is invalid." xml:space="preserve"><value>El correo '{0}' no es válido.</value></data>
+  <data name="The user name '{0}' is already taken." xml:space="preserve"><value>El nombre de usuario '{0}' ya existe.</value></data>
+  <data name="The user name '{0}' is invalid: use only letters, digits and - . _ @ +" xml:space="preserve"><value>El nombre de usuario '{0}' no es válido: usa solo letras, números y - . _ @ +</value></data>
+  <data name="You can't block or delete your own account." xml:space="preserve"><value>No puedes bloquear ni eliminar tu propia cuenta.</value></data>
+  <data name="Compare at most {0} items at a time." xml:space="preserve"><value>Compara como máximo {0} productos a la vez.</value></data>
+  <data name="'{0} {1}' is already on the list." xml:space="preserve"><value>«{0} {1}» ya está en la lista.</value></data>
+  <data name="Enter the brand and the model." xml:space="preserve"><value>Ingresa la marca y el modelo.</value></data>
+  <data name="{0} catalog exams run on this machine. Move them to another machine first." xml:space="preserve"><value>{0} exámenes del catálogo usan este equipo. Cámbialos a otro equipo primero.</value></data>
+  <data name="Use at most 6 header lines and {0} footer lines." xml:space="preserve"><value>Usa como máximo 6 líneas de encabezado y {0} de pie de página.</value></data>
+  <data name="The footer can be at most {0} characters long." xml:space="preserve"><value>El pie de página puede tener como máximo {0} caracteres.</value></data>
+  <data name="Text sizes must be between {0} and {1} pt." xml:space="preserve"><value>Los tamaños de texto deben estar entre {0} y {1} pt.</value></data>
+  <data name="The sheet is closed: reopen it to add or remove supplies." xml:space="preserve"><value>La hoja está cerrada: reábrela para agregar o quitar insumos.</value></data>
+  <data name="The item doesn't exist." xml:space="preserve"><value>El insumo no existe.</value></data>
+  <data name="The quantity must be more than 0 and at most {0}." xml:space="preserve"><value>La cantidad debe ser mayor que 0 y como máximo {0}.</value></data>
+  <data name="'{0}' is charged per unit: use whole numbers." xml:space="preserve"><value>'{0}' se cobra por unidad: usa números enteros.</value></data>
+  <data name="There is no open container of this item." xml:space="preserve"><value>No hay un envase abierto de este insumo.</value></data>
+  <data name="Write how many mL one container holds." xml:space="preserve"><value>Escribe cuántos mL trae un envase.</value></data>
+  <data name="Write the price of one mL." xml:space="preserve"><value>Escribe el precio de un mL.</value></data>
+  <data name="Change your temporary password first." xml:space="preserve"><value>Primero cambia tu contraseña temporal.</value></data>
+  <data name="Choose a valid day and time." xml:space="preserve"><value>Elige un día y una hora válidos.</value></data>
+  <data name="Write at least one email address to send the alerts to." xml:space="preserve"><value>Escribe al menos un correo al que enviar las alertas.</value></data>
 </root>

@@ -28,8 +28,11 @@ public class CustomWebAppFactory : WebApplicationFactory<Program>
 
     /// <summary>Client authenticated as a test user holding the given permission claims (see Api.Authorization.Permissions).</summary>
     public HttpClient CreateClientWithPermissions(params string[] permissions)
+        => CreateClientWithClaims([.. permissions.Select(p => new Claim(Permissions.CLAIM_TYPE, p)), new Claim(ClaimTypes.Name, "test-user")]);
+
+    /// <summary>Client whose token, signed with the API's key, carries exactly these claims.</summary>
+    public HttpClient CreateClientWithClaims(IEnumerable<Claim> claims)
     {
-        var claims = permissions.Select(p => new Claim(Permissions.CLAIM_TYPE, p)).Append(new Claim(ClaimTypes.Name, "test-user"));
         var token = new JwtSecurityToken(JwtIssuer, JwtIssuer, claims, expires: DateTime.UtcNow.AddMinutes(10),
             signingCredentials: new SigningCredentials(new SymmetricSecurityKey(Encoding.ASCII.GetBytes(JwtKey)), SecurityAlgorithms.HmacSha256));
         var client = CreateClient();
@@ -54,6 +57,9 @@ public class CustomWebAppFactory : WebApplicationFactory<Program>
         // Tests book many times per minute from one "IP"; the default public limit would return 429.
         builder.UseSetting("RateLimits:PublicWritePerMinute", "10000");
         builder.UseSetting("RateLimits:PublicReadPerMinute", "10000");
+        // Every client of a test class signs in as the same user; a busy class goes past the per-user limit.
+        builder.UseSetting("RateLimits:UserPerMinute", "10000");
+        builder.UseSetting("RateLimits:LoginPerMinute", "10000");
 
         builder.ConfigureServices(services =>
         {

@@ -16,6 +16,9 @@ window.appPrint = {
         doc.title = title;
         doc.body.innerHTML = source.outerHTML;
         const pending = [...doc.images].map(img => img.complete ? Promise.resolve() : new Promise(done => { img.onload = img.onerror = done; }));
+        // Fonts the element brings with it (e.g. the report's) load once laid out: wait for them too.
+        doc.body.getBoundingClientRect();
+        if (doc.fonts) pending.push(doc.fonts.ready);
         Promise.all(pending).then(() => {
             // Chrome names the PDF after the top page, not the frame: borrow its title while the dialog is open.
             const pageTitle = document.title;

@@ -43,7 +43,7 @@ public class DataSeeder(
 
     /// <summary>
     /// Roles of earlier versions and what their users get instead: the same access as before, which the admin then
-    /// narrows per person. "Laboratorio" comes from the legacy SPLabHybrid app.
+    /// narrows per person. "Laboratorio" comes from data copied from a legacy app.
     /// </summary>
     private static readonly Dictionary<string, string[]> LegacyRoles = new()
     {
@@ -233,6 +233,11 @@ public class DataSeeder(
 
         foreach (var exam in exams)
             await unitOfWork.Exams.AddAsync(exam);
+
+        // The exam form offers the machines on this list.
+        var listed = (await unitOfWork.LabMachines.GetAllAsync()).Select(m => (m.Brand, m.Model)).ToHashSet();
+        foreach (var machine in exams.Select(e => (e.Brand, Model: e.Machine)).Distinct().Where(m => !listed.Contains(m)))
+            await unitOfWork.LabMachines.AddAsync(new LabMachine { Brand = machine.Brand, Model = machine.Model });
 
         await unitOfWork.SaveChangesAsync();
         logger.LogInformation("Exams seeded successfully.");

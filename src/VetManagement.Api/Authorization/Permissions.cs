@@ -15,6 +15,18 @@ public static class Permissions
         public const string CREATE = "inventory.create";
         public const string UPDATE = "inventory.update";
         public const string DELETE = "inventory.delete";
+        /// <summary>Stock metrics: consumption, value and trends (management data).</summary>
+        public const string METRICS = "inventory.metrics";
+    }
+
+    /// <summary>Consumption sheets: supplies used on each patient during a stay, charged at discharge (inventory module).</summary>
+    public static class CONSUMPTION
+    {
+        public const string READ = "consumption.read";
+        /// <summary>Open sheets, record and remove uses, discharge.</summary>
+        public const string RECORD = "consumption.record";
+        /// <summary>How items are charged, reopening and deleting sheets.</summary>
+        public const string MANAGE = "consumption.manage";
     }
 
     public static class EXAMS
@@ -55,6 +67,8 @@ public static class Permissions
         public const string CREATE = "clientspets.create";
         public const string UPDATE = "clientspets.update";
         public const string DELETE = "clientspets.delete";
+        /// <summary>The Clients screens (search, client file). Laboratory reads patients only through its lab reports.</summary>
+        public const string LIST = "clientspets.list";
     }
 
     public static class AUDIT
@@ -67,10 +81,14 @@ public static class Permissions
         public const string READ = "users.read";
         public const string CREATE = "users.create";
         public const string MANAGE_ROLES = "users.roles.manage";
+        /// <summary>Edit, block and reset the password of other users.</summary>
+        public const string UPDATE = "users.update";
+        public const string DELETE = "users.delete";
     }
 
     public static class SYSTEM
     {
+        /// <summary>Email sending and email alerts: Admin only until a clinic has its mail set up and tested.</summary>
         public const string SEND_EMAIL = "system.send-email";
         /// <summary>Create sample data (development/test environments only).</summary>
         public const string TEST_DATA = "system.test-data";
@@ -115,7 +133,7 @@ public static class Permissions
         public const string RECEPTION = "Reception";
         public const string CLINICAL = "Clinical";
         public const string CASHIER = "Cashier";
-        /// <summary>Adds deleting and settings in the areas the user already has, plus audit and the reports dashboard.</summary>
+        /// <summary>Adds deleting, settings and management data (e.g. inventory metrics) in the areas the user already has, plus audit and the reports dashboard.</summary>
         public const string SUPERVISOR = "Supervisor";
 
         public static readonly string[] ALL = [ADMIN, INVENTORY, LABORATORY, RECEPTION, CLINICAL, CASHIER, SUPERVISOR];
@@ -127,21 +145,21 @@ public static class Permissions
     private static readonly Area[] AREAS =
     [
         new(ROLES.INVENTORY,
-            [INVENTORY.READ, INVENTORY.CREATE, INVENTORY.UPDATE],
-            [INVENTORY.DELETE, SYSTEM.SEND_EMAIL]),
+            [INVENTORY.READ, INVENTORY.CREATE, INVENTORY.UPDATE, CONSUMPTION.READ, CONSUMPTION.RECORD],
+            [INVENTORY.DELETE, INVENTORY.METRICS, CONSUMPTION.MANAGE]),
         new(ROLES.LABORATORY,
             [EXAMS.READ, EXTERNAL_LABS.READ, EXAMS_PERFORMED.READ, EXAMS_PERFORMED.CREATE, EXAMS_PERFORMED.UPDATE,
              CLIENTS_PETS.READ, CLIENTS_PETS.CREATE, CLIENTS_PETS.UPDATE],
             [EXAMS.CREATE, EXAMS.UPDATE, EXAMS.DELETE, EXTERNAL_LABS.CREATE, EXTERNAL_LABS.UPDATE, EXTERNAL_LABS.DELETE, EXAMS_PERFORMED.DELETE]),
         new(ROLES.RECEPTION,
-            [CLIENTS_PETS.READ, CLIENTS_PETS.CREATE, CLIENTS_PETS.UPDATE, SCHEDULING.READ, SCHEDULING.BOOK],
+            [CLIENTS_PETS.READ, CLIENTS_PETS.LIST, CLIENTS_PETS.CREATE, CLIENTS_PETS.UPDATE, SCHEDULING.READ, SCHEDULING.BOOK],
             [CLIENTS_PETS.DELETE, SCHEDULING.MANAGE]),
         new(ROLES.CLINICAL,
-            [MEDICAL.READ, MEDICAL.CREATE, MEDICAL.UPDATE, CLIENTS_PETS.READ, CLIENTS_PETS.CREATE, CLIENTS_PETS.UPDATE,
-             EXAMS.READ, EXAMS_PERFORMED.READ, EXAMS_PERFORMED.CREATE, SCHEDULING.READ, INVENTORY.READ],
-            [MEDICAL.DELETE, CLINICAL.MANAGE]),
+            [MEDICAL.READ, MEDICAL.CREATE, MEDICAL.UPDATE, CLIENTS_PETS.READ, CLIENTS_PETS.LIST, CLIENTS_PETS.CREATE, CLIENTS_PETS.UPDATE,
+             EXAMS.READ, EXAMS_PERFORMED.READ, EXAMS_PERFORMED.CREATE, SCHEDULING.READ, INVENTORY.READ, CONSUMPTION.READ, CONSUMPTION.RECORD],
+            [MEDICAL.DELETE, CLINICAL.MANAGE, CONSUMPTION.MANAGE]),
         new(ROLES.CASHIER,
-            [BILLING.READ, BILLING.CHARGE, CLIENTS_PETS.READ, SCHEDULING.READ, INVENTORY.READ],
+            [BILLING.READ, BILLING.CHARGE, CLIENTS_PETS.READ, CLIENTS_PETS.LIST, SCHEDULING.READ, INVENTORY.READ, CONSUMPTION.READ],
             [BILLING.MANAGE])
     ];
 
@@ -170,7 +188,7 @@ public static class Permissions
     /// <summary>The module a permission belongs to; null for the ones every clinic has (users, audit, system).</summary>
     public static AppModule? ModuleOf(string permission) => permission.Split('.')[0] switch
     {
-        "inventory" => AppModule.Inventory,
+        "inventory" or "consumption" => AppModule.Inventory,
         "exams" or "externallabs" or "examsperformed" => AppModule.Exams,
         "clientspets" => AppModule.Clients,
         "medical" or "clinical" => AppModule.Clinical,
@@ -186,6 +204,10 @@ public static class Permissions
         yield return INVENTORY.CREATE;
         yield return INVENTORY.UPDATE;
         yield return INVENTORY.DELETE;
+        yield return INVENTORY.METRICS;
+        yield return CONSUMPTION.READ;
+        yield return CONSUMPTION.RECORD;
+        yield return CONSUMPTION.MANAGE;
         yield return EXAMS.READ;
         yield return EXAMS.CREATE;
         yield return EXAMS.UPDATE;
@@ -206,10 +228,13 @@ public static class Permissions
         yield return CLIENTS_PETS.CREATE;
         yield return CLIENTS_PETS.UPDATE;
         yield return CLIENTS_PETS.DELETE;
+        yield return CLIENTS_PETS.LIST;
         yield return AUDIT.READ;
         yield return USERS.READ;
         yield return USERS.CREATE;
         yield return USERS.MANAGE_ROLES;
+        yield return USERS.UPDATE;
+        yield return USERS.DELETE;
         yield return SYSTEM.SEND_EMAIL;
         yield return SCHEDULING.READ;
         yield return SCHEDULING.BOOK;

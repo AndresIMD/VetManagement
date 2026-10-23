@@ -1,5 +1,8 @@
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using VetManagement.Api.Authorization;
+using VetManagement.Application.Scheduling;
+using VetManagement.Domain.Enums;
 using VetManagement.Infrastructure.Data;
 using VetManagement.Domain.Inventory;
 
@@ -11,7 +14,7 @@ namespace VetManagement.Api.Services;
 public class InventoryAlertsHostedService(
     ILogger<InventoryAlertsHostedService> logger,
     IServiceScopeFactory scopeFactory,
-    IHostEnvironment env)
+    EnabledModules modules)
     : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -35,20 +38,26 @@ public class InventoryAlertsHostedService(
 
     private async Task CheckAndSendAsync(CancellationToken ct)
     {
-        var schedule = await InventoryEmailSchedule.LoadAsync(env, ct);
+        if (!modules.IsEnabled(AppModule.Inventory))
+            return;
+        using var scope = scopeFactory.CreateScope();
+        var schedules = scope.ServiceProvider.GetRequiredService<InventoryEmailScheduleService>();
+        var (schedule, version) = await schedules.GetAsync();
         if (!schedule.Enabled)
             return;
 
-        var now = DateTimeOffset.Now;
+        // The chosen time is the clinic's (its time zone, from the agenda settings), not the server's: on a cloud host
+        // the server runs on UTC.
+        var zone = TimeZoneInfo.FindSystemTimeZoneById((await scope.ServiceProvider.GetRequiredService<SchedulingSettingsService>().GetAsync()).Settings.TimeZone);
+        var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, zone);
         if ((int)now.DayOfWeek != schedule.DayOfWeek || now.Hour != schedule.Hour || now.Minute != schedule.Minute)
             return;
 
-        if (schedule.LastSentUtc.HasValue && (now.UtcDateTime - schedule.LastSentUtc.Value).TotalMinutes < 1)
+        if (schedule.LastSentUtc.HasValue && (DateTime.UtcNow - schedule.LastSentUtc.Value).TotalMinutes < 1)
             return;
 
         logger.LogInformation("Scheduled inventory alert check starting");
 
-        using var scope = scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var emailService = scope.ServiceProvider.GetRequiredService<EmailService>();
 
@@ -65,14 +74,14 @@ public class InventoryAlertsHostedService(
             return;
         }
 
-        var to = schedule.To.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        var cc = string.IsNullOrWhiteSpace(schedule.Cc) ? null : schedule.Cc.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var to = InventoryEmailSchedule.Addresses(schedule.To);
+        var cc = string.IsNullOrWhiteSpace(schedule.Cc) ? null : InventoryEmailSchedule.Addresses(schedule.Cc);
 
         logger.LogInformation("Sending inventory alert to {To}", string.Join(", ", to));
         await emailService.SendAsync(to, cc, schedule.Subject, body, ct);
 
         schedule.LastSentUtc = DateTime.UtcNow;
-        await InventoryEmailSchedule.SaveAsync(env, schedule, ct);
+        await schedules.UpdateAsync(schedule, version, "System");
         logger.LogInformation("Inventory alert sent successfully");
     }
 

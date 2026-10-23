@@ -1,0 +1,19 @@
+# Weekly pull requests for outdated NuGet packages and GitHub Actions (the workflows pin actions by commit; the
+# comment after each one says its version). Minor and patch updates come grouped in one pull request.
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]

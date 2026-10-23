@@ -19,10 +19,19 @@ namespace VetManagement.Api.Controllers.Admin;
 [Route("api/[controller]")]
 public class AccountController(
     UserManager<IdentityUser> userManager,
+    IPasswordHasher<IdentityUser> passwordHasher,
     IConfiguration configuration,
     AuditService audit,
-    UserManagementService userManagement) : ApiControllerBase
+    UserManagementService userManagement,
+    UserAccess access) : ApiControllerBase
 {
+    /// <summary>Sign-in with "remember me": the session survives closing the browser for this long.</summary>
+    private static readonly TimeSpan RememberFor = TimeSpan.FromDays(7);
+
+    // Hashed when the account doesn't exist or is locked, so the response time doesn't tell those apart from a wrong password.
+    private static readonly IdentityUser NoUser = new();
+    private static string? _noUserHash;
+
     [HttpPost("login")]
     [AllowAnonymous]
     [EnableRateLimiting("login")]
@@ -30,30 +39,56 @@ public class AccountController(
     {
         var user = await userManager.FindByNameAsync(request.Username);
 
-        // Same 401 for unknown user, locked account and wrong password, so responses don't reveal which accounts exist.
-        if (user != null && await userManager.IsLockedOutAsync(user))
+        // Same 401 for unknown user, locked account and wrong password, so responses don't reveal which accounts exist;
+        // a password is hashed in every case, so the response time doesn't either.
+        if (user is null || await userManager.IsLockedOutAsync(user))
         {
-            await audit.LogSecurityAsync(AuditActionType.UserLoginFailed, request.Username, "Account locked out");
+            _noUserHash ??= passwordHasher.HashPassword(NoUser, Guid.NewGuid().ToString());
+            passwordHasher.VerifyHashedPassword(NoUser, _noUserHash, request.Password ?? string.Empty);
+            await audit.LogSecurityAsync(AuditActionType.UserLoginFailed, request.Username, user is null ? "Invalid credentials" : "Account locked out");
             return Unauthorized(Texts.T("Invalid credentials."));
         }
 
-        if (user != null && await userManager.CheckPasswordAsync(user, request.Password))
+        if (await userManager.CheckPasswordAsync(user, request.Password))
         {
             await userManager.ResetAccessFailedCountAsync(user);
             // Permissions derive from roles; syncing here gives existing users any permission added since their last login.
             await userManagement.SyncClaimsForUserAsync(user);
             var userRoles = await userManager.GetRolesAsync(user);
             var userClaims = await userManager.GetClaimsAsync(user);
-            var token = GenerateJwtToken(user, userRoles, userClaims, request.RememberMe);
-            var mustChange = userClaims.Any(c => c.Type == SystemClaims.CLAIM_TYPE && c.Value == SystemClaims.MUST_CHANGE_PASSWORD);
+            var mustChange = MustChangePassword(userClaims);
+            var expires = mustChange ? DateTime.UtcNow.AddMinutes(30) : DateTime.UtcNow.Add(request.RememberMe ? RememberFor : TimeSpan.FromHours(8));
+            var token = await GenerateJwtTokenAsync(user, userRoles, userClaims, expires);
             await audit.LogSecurityAsync(AuditActionType.UserLogin, user.UserName, "Login successful");
             return Ok(new { token, mustChangePassword = mustChange });
         }
-        if (user != null)
-            await userManager.AccessFailedAsync(user); // locks the account after MaxFailedAccessAttempts
+        await userManager.AccessFailedAsync(user); // locks the account after MaxFailedAccessAttempts
 
         await audit.LogSecurityAsync(AuditActionType.UserLoginFailed, request.Username, "Invalid credentials");
         return Unauthorized(Texts.T("Invalid credentials."));
+    }
+
+    /// <summary>
+    /// A new token with the user's current roles and permissions, so the staff app's menus follow role changes without
+    /// signing in again. It expires when the current one does (the 30-minute password-change token gets the normal
+    /// 8 hours once the password is changed). Blocked or deleted users get 401 (see UserAccess).
+    /// </summary>
+    [HttpPost("refresh")]
+    [Authorize]
+    public async Task<IActionResult> RefreshAsync()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null || !long.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Exp), out var exp))
+            return Unauthorized();
+        await userManagement.SyncClaimsForUserAsync(user);
+        access.Forget(user.Id); // the next requests use the roles this token carries
+        var userRoles = await userManager.GetRolesAsync(user);
+        var userClaims = await userManager.GetClaimsAsync(user);
+        var mustChange = MustChangePassword(userClaims);
+        var expires = DateTimeOffset.FromUnixTimeSeconds(exp).UtcDateTime;
+        if (!mustChange && User.HasClaim(SystemClaims.CLAIM_TYPE, SystemClaims.MUST_CHANGE_PASSWORD))
+            expires = DateTime.UtcNow.AddHours(8);
+        return Ok(new { token = await GenerateJwtTokenAsync(user, userRoles, userClaims, expires), mustChangePassword = mustChange });
     }
 
     [HttpGet("user-info")]
@@ -77,7 +112,7 @@ public class AccountController(
         var result = await userManager.UpdateAsync(user);
         if (result.Succeeded)
             return Ok();
-        return BadRequest(result.Errors);
+        return IdentityProblem(result);
     }
 
     [HttpPost("change-password")]
@@ -89,7 +124,7 @@ public class AccountController(
             return Unauthorized();
         var result = await userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
         if (!result.Succeeded)
-            return BadRequest(result.Errors);
+            return IdentityProblem(result);
         var claims = await userManager.GetClaimsAsync(user);
         var mustChange = claims.FirstOrDefault(c => c.Type == SystemClaims.CLAIM_TYPE && c.Value == SystemClaims.MUST_CHANGE_PASSWORD);
         if (mustChange != null)
@@ -97,10 +132,21 @@ public class AccountController(
             await userManager.RemoveClaimAsync(user, mustChange);
         }
         await audit.LogSecurityAsync(AuditActionType.PasswordChanged, user.UserName, "User changed own password");
-        return Ok();
+
+        // The new password came with a new security stamp, which ends every session opened before, this one included:
+        // it goes on with a new token (the 30-minute one of a temporary password gets the usual 8 hours).
+        access.Forget(user.Id);
+        var expires = mustChange is null && long.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Exp), out var exp)
+            ? DateTimeOffset.FromUnixTimeSeconds(exp).UtcDateTime
+            : DateTime.UtcNow.AddHours(8);
+        var token = await GenerateJwtTokenAsync(user, await userManager.GetRolesAsync(user), await userManager.GetClaimsAsync(user), expires);
+        return Ok(new { token, mustChangePassword = false });
     }
 
-    private string GenerateJwtToken(IdentityUser user, IList<string> roles, IList<Claim> extraClaims, bool rememberMe)
+    private static bool MustChangePassword(IEnumerable<Claim> claims)
+        => claims.Any(c => c.Type == SystemClaims.CLAIM_TYPE && c.Value == SystemClaims.MUST_CHANGE_PASSWORD);
+
+    private async Task<string> GenerateJwtTokenAsync(IdentityUser user, IList<string> roles, IList<Claim> extraClaims, DateTime expires)
     {
         var jwtKey = configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key is not configured.");
         var jwtIssuer = configuration["Jwt:Issuer"] ?? throw new InvalidOperationException("Jwt:Issuer is not configured.");
@@ -111,10 +157,12 @@ public class AccountController(
 
         List<Claim> claims =
         [
-            new(JwtRegisteredClaimNames.Sub, user.UserName ?? string.Empty),
+            // The user id: ASP.NET reads "sub" as the user identifier (GetUserAsync, UserAccess), so it must not be the name.
+            new(JwtRegisteredClaimNames.Sub, user.Id),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new(ClaimTypes.NameIdentifier, user.Id),
-            new(ClaimTypes.Name, user.UserName ?? string.Empty)
+            new(ClaimTypes.Name, user.UserName ?? string.Empty),
+            new(SystemClaims.SECURITY_STAMP, await userManager.GetSecurityStampAsync(user))
         ];
 
         foreach (var role in roles)
@@ -125,9 +173,6 @@ public class AccountController(
             if (!claims.Any(x => x.Type == c.Type && x.Value == c.Value))
                 claims.Add(c);
         }
-
-        var hasMustChange = extraClaims.Any(c => c.Type == SystemClaims.CLAIM_TYPE && c.Value == SystemClaims.MUST_CHANGE_PASSWORD);
-        var expires = hasMustChange ? DateTime.UtcNow.AddMinutes(30) : (rememberMe ? DateTime.UtcNow.AddDays(30) : DateTime.UtcNow.AddHours(8));
 
         var token = new JwtSecurityToken(
             issuer: jwtIssuer,

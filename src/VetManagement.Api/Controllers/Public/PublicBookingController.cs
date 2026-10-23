@@ -13,7 +13,7 @@ namespace VetManagement.Api.Controllers.Public;
 /// <summary>Deployment settings of the clinic's public booking portal (section BookingPortal).</summary>
 public sealed class BookingPortalOptions
 {
-    /// <summary>Where the portal is hosted, e.g. https://reservas.spvetclinic.cl (the API redirects there after paying).</summary>
+    /// <summary>Where the portal is hosted, e.g. https://reservas.example.cl (the API redirects there after paying).</summary>
     public string BaseUrl { get; set; } = "https://localhost:7300";
     /// <summary>Public URL of this API, used as the payment return URL. Defaults to the incoming request's host.</summary>
     public string? ApiBaseUrl { get; set; }

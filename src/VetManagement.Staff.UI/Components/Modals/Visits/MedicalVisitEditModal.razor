@@ -39,8 +39,8 @@
             <MudText Typo="Typo.subtitle1">@L["Clinical record"]</MudText>
             <MudGrid Class="mb-2">
                 <MudItem xs="12"><MudTextField Label="@L["Reason for visit"]" @bind-Value="Model.Reason" MaxLength="500" /></MudItem>
-                <MudItem xs="6" sm="3"><MudNumericField T="decimal?" Label="@L["Weight (kg)"]" @bind-Value="Model.WeightKg" Min="0" Step="0.1m" /></MudItem>
-                <MudItem xs="6" sm="3"><MudNumericField T="decimal?" Label="@L["Temperature (°C)"]" @bind-Value="Model.TemperatureC" Min="25" Max="45" Step="0.1m" /></MudItem>
+                <MudItem xs="6" sm="3"><MudNumericField Culture="CultureInfo.CurrentCulture" T="decimal?" Label="@L["Weight (kg)"]" @bind-Value="Model.WeightKg" Min="0" Step="0.1m" /></MudItem>
+                <MudItem xs="6" sm="3"><MudNumericField Culture="CultureInfo.CurrentCulture" T="decimal?" Label="@L["Temperature (°C)"]" @bind-Value="Model.TemperatureC" Min="25" Max="45" Step="0.1m" /></MudItem>
                 <MudItem xs="12" sm="6"><MudTextField Label="@L["Diagnosis"]" @bind-Value="Model.Diagnosis" MaxLength="2000" /></MudItem>
                 <MudItem xs="12" sm="6"><MudTextField Label="@L["Anamnesis"]" @bind-Value="Model.Anamnesis" Lines="3" MaxLength="4000" /></MudItem>
                 <MudItem xs="12" sm="6"><MudTextField Label="@L["Physical examination"]" @bind-Value="Model.Examination" Lines="3" MaxLength="4000" /></MudItem>

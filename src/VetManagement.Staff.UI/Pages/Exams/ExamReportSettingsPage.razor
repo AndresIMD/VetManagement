@@ -1,11 +1,15 @@
 @page "/exam-reports/settings"
+@using System.Text.Json
 @using VetManagement.Contracts.Exams
 @using VetManagement.Domain.Exams
 @inject ExamReportsApiService ReportsApi
 @inject ISnackbar Snackbar
+@inject IJSRuntime Js
+@inject IDialogService DialogService
 @attribute [Authorize(Policy = "Exams.Update")]
 
 <PageTitle>@L["Report Design"]</PageTitle>
+<NavigationLock OnBeforeInternalNavigation="ConfirmLeaveAsync" ConfirmExternalNavigation="@HasChanges" />
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mx-auto px-2 mt-8">
     <PageHeader Title="@L["Report Design"]"
@@ -42,7 +46,7 @@
                                 @if (_logo is not null)
                                 {
                                     <MudButton Size="Size.Small" Color="Color.Error"
-                                               OnClick="() => RemoveAsync(ClinicImageKind.ReportLogo)">@L["Remove"]</MudButton>
+                                               OnClick="() => RemoveImage(ClinicImageKind.ReportLogo)">@L["Remove"]</MudButton>
                                 }
                             </MudStack>
                             <MudCheckBox T="bool" @bind-Value="_settings.LogoKeepRatio" Label="@L["Keep the logo's proportions"]" Dense="true" />
@@ -69,7 +73,7 @@
                                 @if (_background is not null)
                                 {
                                     <MudButton Size="Size.Small" Color="Color.Error"
-                                               OnClick="() => RemoveAsync(ClinicImageKind.ReportBackground)">@L["Remove"]</MudButton>
+                                               OnClick="() => RemoveImage(ClinicImageKind.ReportBackground)">@L["Remove"]</MudButton>
                                 }
                             </MudStack>
                             <MudSelect T="BackgroundArea" Label="@L["Background covers"]" @bind-Value="_settings.BackgroundArea" Class="mt-2" Dense="true">
@@ -97,12 +101,16 @@
                                 @L["Background strength: {0}% (lower it to turn the image into a watermark)", (_settings.BackgroundOpacity * 100).ToString("0")]
                             </MudSlider>
                         </div>
+                        @if (_imageChanges.Count > 0)
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Warning">@L["The image changes are applied when you press Save."]</MudText>
+                        }
                         <MudAlert Severity="Severity.Info" Dense="true" NoIcon="true">
-                            <b>@L["For your designer"]</b> @L["(images up to 3 MB, PNG, JPEG or WebP):"]
+                            <b>@L["Recommended image specifications"]</b> @L["(up to 3 MB; PNG, JPEG or WebP):"]
                             <ul class="mt-1 mb-0">
-                                <li><b>@L["Logo:"]</b> @L["PNG with a transparent background, about 1200 × 400 px. Printed top left at the height chosen above."]</li>
-                                <li><b>@L["Background:"]</b> @L["a full page, portrait, {0} px (300 dpi; half that is fine for a lighter file). It is stretched to the whole sheet (or to the results box, when chosen above). Keep text and strong colours out of the content area: {1} mm from the top, {2} mm from the bottom, {3} mm left and {4} mm right are free for frames or artwork. A watermark should be light: results are printed on top of it.", BackgroundPixels, _settings.MarginsMm.Top, _settings.MarginsMm.Bottom, _settings.MarginsMm.Left, _settings.MarginsMm.Right]</li>
-                                <li><b>@L["Colours:"]</b> @L["the two bars below use your brand colours as #RRGGBB."]</li>
+                                <li><b>@L["Logo:"]</b> @L["PNG with a transparent background, approximately 1200 × 400 px. Printed at the top left, at the height set above."]</li>
+                                <li><b>@L["Background:"]</b> @L["full portrait page of {0} px (300 dpi; 150 dpi is enough for a lighter file). It covers the whole sheet, or the results box when that option is selected. The content area should stay free of text and strong colours; the margins ({1} mm top, {2} mm bottom, {3} mm left, {4} mm right) can hold frames or artwork. Watermarks should be light, since results are printed over them.", BackgroundPixels, _settings.MarginsMm.Top, _settings.MarginsMm.Bottom, _settings.MarginsMm.Left, _settings.MarginsMm.Right]</li>
+                                <li><b>@L["Colours:"]</b> @L["the two bars below use the clinic's brand colours, in #RRGGBB format."]</li>
                             </ul>
                                 </MudAlert>
                             </MudStack>
@@ -124,6 +132,25 @@
                                             <MudSelectItem Value="@font"><span style="font-family:'@font'">@font</span></MudSelectItem>
                                         }
                                     </MudSelect>
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudSlider T="double" @bind-Value="_settings.PatientFontPt" Min="ExamReportSettings.MinFontPt"
+                                               Max="ExamReportSettings.MaxFontPt" Step="0.5">
+                                        @L["Pet and owner data text: {0} pt", _settings.PatientFontPt.ToString("0.#")]
+                                    </MudSlider>
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudSlider T="double" @bind-Value="_settings.ResultsFontPt" Min="ExamReportSettings.MinFontPt"
+                                               Max="ExamReportSettings.MaxFontPt" Step="0.5">
+                                        @L["Results text: {0} pt", _settings.ResultsFontPt.ToString("0.#")]
+                                    </MudSlider>
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <div class="d-flex align-center">
+                                        <MudSwitch T="bool" Value="_settings.PatientDataOnLaterPages" ValueChanged="SetPatientDataOnLaterPages"
+                                                   Color="Color.Primary" Label="@L["Pet and owner data on the following pages"]" />
+                                        <HelpTip Text="@L["The pages after the first repeat the patient, owner and reception date in a slim box under the header, so a loose page can still be matched to its patient. Turned off, their results start right under the header."]" />
+                                    </div>
                                 </MudItem>
                                 <MudItem xs="6" sm="3">
                                     <MudText Typo="Typo.caption">@L["Patient bar"]</MudText>
@@ -156,15 +183,30 @@
                                                   ValueChanged="v => _settings.HeaderLines = Lines(v)" />
                                 </MudItem>
                                 <MudItem xs="12">
-                                    <MudTextField T="string" Label="@L["Footer lines (clinic name, tax id, address, phone...)"]" Lines="4"
-                                                  Value="@string.Join("\n", _settings.FooterLines)"
-                                                  ValueChanged="v => _settings.FooterLines = Lines(v)" />
+                                    @* data-bold-markup: Ctrl+B toggles bold in the field (text-format.js). *@
+                                    <div id="report-footer" data-bold-markup>
+                                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                            <MudText Typo="Typo.caption">@L["Footer (clinic name, tax id, address, phone...)"]</MudText>
+                                            <MudTooltip Text="@L["Bold (Ctrl+B): select the text first, or place the cursor on a line"]">
+                                                <MudIconButton Icon="@Icons.Material.Filled.FormatBold" Size="Size.Small" OnClick="BoldFooterAsync"
+                                                               aria-label="@L["Bold"]" />
+                                            </MudTooltip>
+                                        </MudStack>
+                                        <MudTextField @bind-Value="_settings.Footer" Variant="Variant.Outlined" Lines="7" Immediate="true"
+                                                      DebounceInterval="250" MaxLength="ExamReportSettings.MaxFooterLength"
+                                                      HelperText="@L["Each line prints as written and an empty line leaves a gap. **Text** between double asterisks prints in bold."]" />
+                                    </div>
                                 </MudItem>
                                 <MudItem xs="12">
-                                    <MudTextField Label="@L["Note under the footer"]" @bind-Value="_settings.Disclaimer" Lines="2" />
+                                    <MudTextField Label="@L["Note under the footer"]" @bind-Value="_settings.Disclaimer" Lines="2"
+                                                  HelperText="@L["Leave it empty if the note is already part of the footer."]" />
                                 </MudItem>
                             </MudGrid>
-                            <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-3">
+                            <MudStack Row="true" Justify="Justify.FlexEnd" AlignItems="AlignItems.Center" Class="mt-3">
+                                @if (HasChanges)
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Warning">@L["Unsaved changes"]</MudText>
+                                }
                                 <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_saving" OnClick="SaveAsync">
                                     @L["Save"]</MudButton>
                                 </MudStack>
@@ -172,9 +214,10 @@
                         </MudItem>
 
                         <MudItem xs="12" lg="7">
+                            <MudSwitch T="bool" @bind-Value="_longPreview" Color="Color.Primary" Label="@L["Preview a report of several pages"]" />
                             <div style="overflow-x:auto">
                                 <div style="width:fit-content;margin:auto">
-                                    <ExamReportSheet Settings="_settings" Report="ExamReportSheet.PlaceholderReport()"
+                                    <ExamReportSheet Settings="_settings" Report="Preview"
                                                      Placeholder="true" LogoUrl="@_logo" BackgroundUrl="@_background" />
                                 </div>
                             </div>
@@ -192,33 +235,101 @@
     private string? _background;
     private string? _error;
     private bool _saving;
+    private string _savedSettings = string.Empty;
+
+    /// <summary>Images uploaded or removed on screen: they reach the server only on Save (no data = remove it).</summary>
+    private readonly Dictionary<ClinicImageKind, ImageChange> _imageChanges = [];
+    /// <summary>The images the server has, so removing one it doesn't have needs no call.</summary>
+    private readonly HashSet<ClinicImageKind> _storedImages = [];
+
+    private sealed record ImageChange(string? ContentType, byte[]? Data);
 
     private string BackgroundPixels => _settings?.Paper == PaperSize.A4 ? "2480 × 3508" : "2550 × 3300";
 
+    /// <summary>The preview shows a report long enough for a second page: what later pages repeat only shows there.</summary>
+    private bool _longPreview;
+
+    private ExamReportDto Preview => _longPreview
+        ? ExamReportSheet.PlaceholderReport(results: LongReportLines(), interpretation: Strings.T("Interpretation of the result."))
+        : ExamReportSheet.PlaceholderReport();
+
+    /// <summary>Sample lines under two section titles: enough to fill the first page and go on to a second one.</summary>
+    private static List<ExamReportResultDto> LongReportLines()
+    {
+        var lines = new List<ExamReportResultDto>();
+        for (var i = 1; i <= 24; i++)
+        {
+            if (i % 15 == 1)
+                lines.Add(new ExamReportResultDto { Name = Strings.T("Section title"), Kind = ReportParameterKind.Section });
+            lines.Add(i % 5 == 0
+                ? new ExamReportResultDto { Name = $"{Strings.T("Parameter")} {i}", Value = "6.4", Unit = Strings.T("Unit"), Reference = "3.5 - 5.8", BarMin = 3.5m, BarMax = 5.8m, Abnormal = true, Direction = ResultDirection.High }
+                : new ExamReportResultDto { Name = $"{Strings.T("Parameter")} {i}", Value = Strings.T("Result"), Unit = Strings.T("Unit"), Reference = Strings.T("Reference value") });
+        }
+        return lines;
+    }
+
+    /// <summary>The option only shows from the second page on, so the preview gets one.</summary>
+    private void SetPatientDataOnLaterPages(bool value)
+    {
+        _settings!.PatientDataOnLaterPages = value;
+        _longPreview = true;
+    }
+
+    private bool HasChanges => _settings is not null && (_imageChanges.Count > 0 || Snapshot() != _savedSettings);
+
+    private string Snapshot() => JsonSerializer.Serialize(_settings);
 
     protected override async Task OnInitializedAsync()
     {
         (_settings, _version) = await ReportsApi.GetSettingsAsync();
+        _savedSettings = Snapshot();
         _logo = await ReportsApi.GetImageDataUrlAsync(ClinicImageKind.ReportLogo);
         _background = await ReportsApi.GetImageDataUrlAsync(ClinicImageKind.ReportBackground);
+        if (_logo is not null) _storedImages.Add(ClinicImageKind.ReportLogo);
+        if (_background is not null) _storedImages.Add(ClinicImageKind.ReportBackground);
     }
 
     private static List<string> Lines(string? text)
         => (text ?? string.Empty).Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList();
 
+    private async Task BoldFooterAsync() => await Js.InvokeVoidAsync("appText.bold", "report-footer");
+
+    /// <summary>Saves the design, then the image changes; an image that fails stays pending to try again.</summary>
     private async Task SaveAsync()
     {
         _saving = true;
-        var result = await ReportsApi.SaveSettingsAsync(_settings!, _version);
-        _saving = false;
-        if (!result.Ok)
+        try
         {
-            _error = result.Error;
-            return;
+            var result = await ReportsApi.SaveSettingsAsync(_settings!, _version);
+            if (!result.Ok)
+            {
+                _error = result.Error;
+                return;
+            }
+            _error = null;
+            _version = result.Body?.GetProperty("version").GetInt32() ?? _version + 1;
+            _savedSettings = Snapshot();
+
+            foreach (var (kind, change) in _imageChanges.ToList())
+            {
+                var imageResult = change.Data is not null ? await ReportsApi.SetImageAsync(kind, change.ContentType!, change.Data)
+                    : _storedImages.Contains(kind) ? await ReportsApi.DeleteImageAsync(kind)
+                    : null;
+                if (imageResult is { Ok: false })
+                {
+                    _error = imageResult.Error;
+                    continue;
+                }
+                _imageChanges.Remove(kind);
+                if (change.Data is null) _storedImages.Remove(kind); else _storedImages.Add(kind);
+            }
+            if (_error is null)
+                Snackbar.Add(L["Report design saved."], Severity.Success);
         }
-        _error = null;
-        _version = result.Body?.GetProperty("version").GetInt32() ?? _version + 1;
-        Snackbar.Add(L["Report design saved."], Severity.Success);
+        finally
+        {
+            _saving = false;
+        }
     }
 
     private async Task UploadAsync(InputFileChangeEventArgs e, ClinicImageKind kind)
@@ -230,27 +341,37 @@
         }
         using var buffer = new MemoryStream();
         await e.File.OpenReadStream(MAX_IMAGE_BYTES).CopyToAsync(buffer);
-        var result = await ReportsApi.SetImageAsync(kind, e.File.ContentType, buffer.ToArray());
-        if (!result.Ok)
-        {
-            _error = result.Error;
-            return;
-        }
-        await ReloadImageAsync(kind);
-        Snackbar.Add(L["Image saved."], Severity.Success);
+        var data = buffer.ToArray();
+        _imageChanges[kind] = new ImageChange(e.File.ContentType, data);
+        ShowImage(kind, $"data:{e.File.ContentType};base64,{Convert.ToBase64String(data)}");
     }
 
-    private async Task RemoveAsync(ClinicImageKind kind)
+    private void RemoveImage(ClinicImageKind kind)
     {
-        var result = await ReportsApi.DeleteImageAsync(kind);
-        if (!result.Ok)
-            _error = result.Error;
-        await ReloadImageAsync(kind);
+        _imageChanges[kind] = new ImageChange(null, null);
+        ShowImage(kind, null);
     }
 
-    private async Task ReloadImageAsync(ClinicImageKind kind)
+    private void ShowImage(ClinicImageKind kind, string? url)
     {
-        var url = await ReportsApi.GetImageDataUrlAsync(kind);
         if (kind == ClinicImageKind.ReportLogo) _logo = url; else _background = url;
+    }
+
+    private async Task ConfirmLeaveAsync(LocationChangingContext context)
+    {
+        if (!HasChanges)
+            return;
+        var parameters = new DialogParameters<Components.Modals.Common.ConfirmModal>
+        {
+            { x => x.Title, L["Discard changes"].Value },
+            { x => x.Message, L["There are unsaved changes. Do you want to exit without saving?"].Value },
+            { x => x.ButtonConfirmText, L["Exit"].Value },
+            { x => x.ButtonCancelText, L["Keep editing"].Value },
+            { x => x.TitleIcon, Icons.Material.Filled.Warning },
+            { x => x.TitleColor, Color.Warning }
+        };
+        var dialog = await DialogService.ShowAsync<Components.Modals.Common.ConfirmModal>(null, parameters, new DialogOptions { MaxWidth = MaxWidth.Small });
+        if (await dialog.Result is not { Canceled: false })
+            context.PreventNavigation();
     }
 }

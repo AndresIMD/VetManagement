@@ -9,11 +9,18 @@ public static class ApiRouteConstants
     public const string ITEMS_PAGED = "api/items/paged";
 
     // Inventory Movements
-    public const string INVENTORY_MOVEMENTS_BASE = "api/inventory/movements";
     public const string INVENTORY_MOVEMENT_BY_ITEM = "api/inventory/movements/{0}";
     public const string INVENTORY_ADJUST_STOCK = "api/inventory/movements/adjust-stock";
     public const string INVENTORY_MASS_INGRESS = "api/inventory/movements/mass-ingress";
     public const string INVENTORY_MASS_EGRESS = "api/inventory/movements/mass-egress";
+    public const string INVENTORY_METRICS = "api/inventory/metrics";
+
+    // Consumption sheets (supplies used on each patient)
+    public const string CONSUMPTION_SHEETS = "api/consumption-sheets";
+    public const string CONSUMPTION_SHEET_BY_ID = "api/consumption-sheets/{0}";
+    public const string CONSUMPTION_SHEET_ENTRIES = "api/consumption-sheets/{0}/entries";
+    public const string CONSUMPTION_SHEET_DISCARD_REST = "api/consumption-sheets/{0}/items/{1}/discard-rest";
+    public const string CONSUMPTION_PRICING = "api/consumption-sheets/pricing";
 
     // Clients & Pets
     public const string CLIENTS = "api/clientpet/clients";
@@ -24,6 +31,8 @@ public static class ApiRouteConstants
     // Exams
     public const string EXAMS = "api/exams";
     public const string EXAM_BY_ID = "api/exams/{0}";
+    public const string LAB_MACHINES = "api/lab-machines";
+    public const string LAB_MACHINE_BY_ID = "api/lab-machines/{0}";
 
     // Medical Visits
     public const string MEDICAL_VISITS = "api/medical-visits";
@@ -33,11 +42,13 @@ public static class ApiRouteConstants
     public const string ACCOUNT_LOGIN = "api/account/login";
     public const string ACCOUNT_USER_INFO = "api/account/user-info";
     public const string ACCOUNT_CHANGE_PASSWORD = "api/account/change-password";
+    public const string ACCOUNT_REFRESH = "api/account/refresh";
 
     // User Management (Admin)
     public const string USERS_BASE = "api/admin/users";
     public const string USER_ROLES = "api/admin/users/{0}/roles";
     public const string USERS_ROLES_ALL = "api/admin/users/roles";
+    public const string USER_BY_ID = "api/admin/users/{0}";
 
     // Audit
     public const string AUDIT_LOGS_PAGED = "api/audit/logs/paged";

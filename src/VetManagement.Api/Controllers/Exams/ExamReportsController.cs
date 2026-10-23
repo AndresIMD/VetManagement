@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Net.Http.Headers;
 using VetManagement.Application.Configuration;
 using VetManagement.Application.Exams;
 using VetManagement.Contracts.Exams;
@@ -90,9 +91,19 @@ public class ExamReportsController(ExamReportService service, ExamReportSettings
         };
     }
 
+    /// <summary>
+    /// The image, revalidated on every use: while it is unchanged the browser gets a 304 and keeps its copy, so the
+    /// report pages don't download the logo and background (up to 3 MB each) again.
+    /// </summary>
     [HttpGet("images/{kind}")]
     public async Task<IActionResult> GetImageAsync(ClinicImageKind kind)
-        => await service.GetImageAsync(kind) is { } image ? File(image.Data, image.ContentType) : NotFound();
+    {
+        if (await service.GetImageAsync(kind) is not { } image)
+            return NotFound();
+        Response.Headers.CacheControl = "private, no-cache";
+        return File(image.Data, image.ContentType, new DateTimeOffset(DateTime.SpecifyKind(image.UpdatedAtUtc, DateTimeKind.Utc)),
+            new EntityTagHeaderValue($"\"{image.UpdatedAtUtc.Ticks}\""));
+    }
 
     [HttpPut("images/{kind}")]
     [Authorize(Policy = "Exams.Update")]

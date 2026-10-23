@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using VetManagement.Domain.Enums;
 using VetManagement.Domain.Localization;
@@ -26,16 +27,58 @@ public class ExamReportSettings
     /// <summary>Lines next to the logo, e.g. "LABORATORIO" and the address.</summary>
     public List<string> HeaderLines { get; set; } = [];
 
-    /// <summary>Clinic details printed at the bottom (name, tax id, address, phone).</summary>
-    public List<string> FooterLines { get; set; } = [];
+    /// <summary>
+    /// Clinic details printed at the bottom (name, tax id, address, phone), written as a paragraph: each line prints as
+    /// written, an empty line leaves a gap and **text** prints in bold (see <see cref="ReportText"/>).
+    /// </summary>
+    public string Footer { get; set; } = string.Empty;
+
+    public const int MaxFooterLines = 12;
+    public const int MaxFooterLength = 1000;
+
+    /// <summary>
+    /// Earlier documents kept the footer as a list of lines, the first one in bold: read into <see cref="Footer"/>, never written.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<string>? FooterLines
+    {
+        get => null;
+        set
+        {
+            if (value is { Count: > 0 } && string.IsNullOrWhiteSpace(Footer))
+                Footer = string.Join("\n", value.Select((line, i) => i == 0 ? $"{ReportText.BOLD}{line}{ReportText.BOLD}" : line));
+        }
+    }
 
     public string Disclaimer { get; set; } = Texts.T("The result of this exam is not a diagnosis; please consult your referring vet.");
 
-    /// <summary>Font of the whole report; one of <see cref="Fonts"/>, which every Windows PC has.</summary>
+    /// <summary>Font of the whole report; one of <see cref="Fonts"/>.</summary>
     public string FontFamily { get; set; } = "Segoe UI";
 
-    public static readonly string[] Fonts =
+    /// <summary>Fonts every Windows PC has.</summary>
+    public static readonly string[] SystemFonts =
         ["Segoe UI", "Arial", "Calibri", "Verdana", "Tahoma", "Trebuchet MS", "Century Gothic", "Georgia", "Cambria", "Times New Roman"];
+
+    /// <summary>
+    /// Open-licence fonts (SIL OFL) shipped with the staff app and embedded in the printed report, so they look the same on
+    /// every computer: Inter and Figtree (close to Aptos), Jost (close to Futura).
+    /// </summary>
+    public static readonly string[] BundledFonts = ["Inter", "Figtree", "Jost"];
+
+    public static readonly string[] Fonts = [.. SystemFonts, .. BundledFonts];
+
+    public const double DefaultFontPt = 10.5;
+    public const double MinFontPt = 8;
+    public const double MaxFontPt = 14;
+
+    /// <summary>Text size of the pet and owner data, in points.</summary>
+    public double PatientFontPt { get; set; } = DefaultFontPt;
+
+    /// <summary>Text size of the results (table, interpretation, criteria), in points; the smaller texts in it keep their proportion.</summary>
+    public double ResultsFontPt { get; set; } = DefaultFontPt;
+
+    /// <summary>Later pages repeat the patient, owner and reception date in a slim box; off, their results start under the header.</summary>
+    public bool PatientDataOnLaterPages { get; set; } = true;
 
     /// <summary>1 = background image as uploaded; lower values fade it into a watermark.</summary>
     public double BackgroundOpacity { get; set; } = 1;
@@ -77,8 +120,12 @@ public class ExamReportSettings
             errors.Add(Texts.T("Colours must be written as #RRGGBB."));
         if (!Fonts.Contains(FontFamily))
             errors.Add(Texts.T("FontFamily must be one of: {0}.", string.Join(", ", Fonts)));
-        if (HeaderLines.Count > 6 || FooterLines.Count > 8)
-            errors.Add(Texts.T("Use at most 6 header lines and 8 footer lines."));
+        if (PatientFontPt is < MinFontPt or > MaxFontPt || ResultsFontPt is < MinFontPt or > MaxFontPt)
+            errors.Add(Texts.T("Text sizes must be between {0} and {1} pt.", MinFontPt, MaxFontPt));
+        if (HeaderLines.Count > 6 || ReportText.Lines(Footer).Length > MaxFooterLines)
+            errors.Add(Texts.T("Use at most 6 header lines and {0} footer lines.", MaxFooterLines));
+        if (Footer.Length > MaxFooterLength)
+            errors.Add(Texts.T("The footer can be at most {0} characters long.", MaxFooterLength));
 
         foreach (var examId in Templates.GroupBy(t => t.ExamId).Where(g => g.Count() > 1).Select(g => g.Key))
             errors.Add(Texts.T("Exam {0} has more than one report template.", examId));
@@ -119,6 +166,29 @@ public class ExamReportTemplate
     public ReportParameter? FindParameter(string code)
         => Parameters.FirstOrDefault(p => string.Equals(p.Code, code, StringComparison.OrdinalIgnoreCase));
 
+    /// <summary>
+    /// The printed lines for the values given, in the template's order. A section title prints above the first value of
+    /// its own (the parameters after it, up to the next title), and not at all when none of them has a value.
+    /// </summary>
+    public List<ExamReportResult> ResultsFor(IReadOnlyDictionary<string, string> values, Species species)
+    {
+        var results = new List<ExamReportResult>();
+        ReportParameter? section = null;
+        foreach (var parameter in Parameters)
+        {
+            if (parameter.IsSection)
+                section = parameter;
+            else if (values.TryGetValue(parameter.Code, out var value))
+            {
+                if (section is not null)
+                    results.Add(new ExamReportResult { Code = section.Code, Name = section.Name, Kind = ReportParameterKind.Section });
+                section = null;
+                results.Add(parameter.ToResult(value, species));
+            }
+        }
+        return results;
+    }
+
     /// <summary>The automatic interpretation: the first rule whose conditions all hold, otherwise the band labels.</summary>
     public string? Interpret(IReadOnlyList<ExamReportResult> results)
     {
@@ -133,7 +203,7 @@ public class ExamReportTemplate
         var name = string.IsNullOrWhiteSpace(Title) ? $"Exam {ExamId}" : Title;
         if (ExamId <= 0) errors.Add(Texts.T("Template '{0}': ExamId is required.", name));
         if (string.IsNullOrWhiteSpace(Title)) errors.Add(Texts.T("Template for exam {0}: Title is required.", ExamId));
-        if (Parameters.Count == 0) errors.Add(Texts.T("Template '{0}': add at least one parameter.", name));
+        if (Parameters.All(p => p.IsSection)) errors.Add(Texts.T("Template '{0}': add at least one parameter.", name));
         foreach (var code in Parameters.GroupBy(p => p.Code, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1).Select(g => g.Key))
             errors.Add(Texts.T("Template '{0}': duplicate parameter code '{1}'.", name, code));
         foreach (var p in Parameters)
@@ -226,6 +296,11 @@ public class ReportParameter
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public ReportParameterKind Kind { get; set; } = ReportParameterKind.Number;
+
+    /// <summary>A section title: only its name is used, printed above the parameters that follow it.</summary>
+    [JsonIgnore]
+    public bool IsSection => Kind == ReportParameterKind.Section;
+
     public string? Unit { get; set; }
     /// <summary>What the reference column shows: the normal range (default), a written text, or nothing.</summary>
     public ReferenceDisplay Reference { get; set; } = ReferenceDisplay.Range;

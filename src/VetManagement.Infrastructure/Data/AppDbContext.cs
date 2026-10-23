@@ -26,6 +26,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
 
     // New exam-related entities
     public DbSet<ExternalLab> ExternalLabs { get; set; }
+    public DbSet<LabMachine> LabMachines { get; set; }
     public DbSet<ExamRequestItem> ExamRequestItems { get; set; }
 
     // New medical visits
@@ -43,6 +44,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<VetManagement.Domain.Billing.SaleLine> SaleLines { get; set; }
     public DbSet<VetManagement.Domain.Billing.SalePayment> SalePayments { get; set; }
     public DbSet<VetManagement.Domain.Billing.CashClose> CashCloses { get; set; }
+    public DbSet<VetManagement.Domain.Consumption.ConsumptionSheet> ConsumptionSheets { get; set; }
+    public DbSet<VetManagement.Domain.Consumption.ConsumptionEntry> ConsumptionEntries { get; set; }
+    public DbSet<VetManagement.Domain.Consumption.ConsumptionPricing> ConsumptionPricings { get; set; }
 
     private static readonly JsonSerializerOptions _jsonOptions = new();
     private static string SerializeDict(Dictionary<string, string>? v)
@@ -69,8 +73,20 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         // (Domain types are persistence-ignorant, so the schema lives here).
         builder.Entity<Item>().Property(i => i.Barcode).HasMaxLength(100);
         builder.Entity<Item>().Property(i => i.BrandBarcode).HasMaxLength(100);
+        // Scanner lookups. Not unique: items created without a code share the placeholder one.
+        builder.Entity<Item>().HasIndex(i => i.Barcode);
         builder.Entity<InventoryMovement>().Property(m => m.Reason).HasMaxLength(200);
         builder.Entity<InventoryMovement>().Property(m => m.Responsible).HasMaxLength(100);
+        // The metrics read movements by date range.
+        builder.Entity<InventoryMovement>().HasIndex(m => m.Date);
+
+        // The audit pages list one kind of entity newest first, or the history of one entity.
+        builder.Entity<AuditLog>(e =>
+        {
+            e.Property(a => a.EntityName).HasMaxLength(100);
+            e.HasIndex(a => new { a.EntityName, a.Date });
+            e.HasIndex(a => new { a.EntityId, a.EntityName });
+        });
 
         // One row per configuration document; Version rejects a save based on a stale read.
         builder.Entity<ClinicSetting>().HasIndex(s => s.Key).IsUnique();
@@ -86,6 +102,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         builder.Entity<ExamReport>(e =>
         {
             e.HasIndex(r => r.PetId);
+            // The report list is the latest reports by reception date.
+            e.HasIndex(r => r.ReceivedOn);
             e.Property(r => r.Title).HasMaxLength(200);
             e.Property(r => r.Method).HasMaxLength(200);
             e.Property(r => r.ReferringVet).HasMaxLength(200);
@@ -194,6 +212,43 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         .WithMany()
         .HasForeignKey(i => i.ExternalLabId)
         .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<LabMachine>(e =>
+        {
+            e.Property(m => m.Brand).HasMaxLength(100);
+            e.Property(m => m.Model).HasMaxLength(100);
+            e.HasIndex(m => new { m.Brand, m.Model }).IsUnique();
+        });
+
+        // Consumption sheets: a registered pet may be deleted later, the sheet keeps the name it printed with.
+        builder.Entity<VetManagement.Domain.Consumption.ConsumptionSheet>(e =>
+        {
+            e.Property(s => s.PatientName).HasMaxLength(100);
+            e.Property(s => s.OwnerName).HasMaxLength(200);
+            e.Property(s => s.Notes).HasMaxLength(500);
+            e.Property(s => s.OpenedBy).HasMaxLength(100);
+            e.Property(s => s.ClosedBy).HasMaxLength(100);
+            e.Ignore(s => s.IsClosed);
+            e.HasOne<Pet>().WithMany().HasForeignKey(s => s.PetId).OnDelete(DeleteBehavior.SetNull);
+            e.HasMany(s => s.Entries).WithOne().HasForeignKey(x => x.SheetId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(s => s.ClosedAtUtc);
+        });
+        builder.Entity<VetManagement.Domain.Consumption.ConsumptionEntry>(e =>
+        {
+            e.Property(x => x.ItemName).HasMaxLength(200);
+            e.Property(x => x.Notes).HasMaxLength(200);
+            e.Property(x => x.CreatedBy).HasMaxLength(100);
+            e.Property(x => x.Quantity).HasPrecision(10, 2);
+            e.Property(x => x.ContainerMl).HasPrecision(10, 2);
+            e.HasIndex(x => x.ItemId);
+        });
+        builder.Entity<VetManagement.Domain.Consumption.ConsumptionPricing>(e =>
+        {
+            e.Property(p => p.ContainerMl).HasPrecision(10, 2);
+            e.Property(p => p.UpdatedBy).HasMaxLength(100);
+            e.HasOne<Item>().WithMany().HasForeignKey(p => p.ItemId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(p => p.ItemId).IsUnique();
+        });
 
         // Map Attributes (Dictionary<string,string>) as JSON with a value comparer
         var dictComparer = new ValueComparer<Dictionary<string, string>>(

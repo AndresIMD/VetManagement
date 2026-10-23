@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -46,7 +47,9 @@ public class LoginRateLimitTests : IClassFixture<CustomWebAppFactory>
     [Fact]
     public async Task EleventhLoginWithinAMinute_IsRejectedWith429()
     {
-        var client = _factory.CreateClient();
+        // The other test classes raise the limit (they sign in many times); this one checks the default.
+        using var app = _factory.WithWebHostBuilder(builder => builder.UseSetting("RateLimits:LoginPerMinute", "10"));
+        var client = app.CreateClient();
         var statuses = new List<HttpStatusCode>();
         for (var i = 0; i < 11; i++)
         {

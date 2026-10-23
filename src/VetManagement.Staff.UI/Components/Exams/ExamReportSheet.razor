@@ -1,10 +1,13 @@
 @using System.Globalization
 @using VetManagement.Contracts.Exams
 @using VetManagement.Domain.Exams
+@inject IJSRuntime Js
+@inject NavigationManager Navigation
 @* The report as printed pages. Styles are inline (not app.css) so the element prints the same on its own (print.js). *@
 
 <div id="@ElementId" class="xr-doc" style="font-family:'@Settings.FontFamily', Arial, sans-serif">
     <style>
+        @BundledFontFaces
         @@page { size: @PageSize(Settings); margin: 0; }
         .xr-page { position: relative; overflow: hidden; background: #fff; color: #222; font-size: 10.5pt; line-height: 1.35; box-sizing: border-box; break-after: page; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .xr-page:last-child { break-after: auto; }
@@ -19,21 +22,34 @@
         .xr-results-box { position: relative; overflow: hidden; flex: 1; display: flex; flex-direction: column; }
         .xr-results-box > .xr-bar, .xr-results-box > .xr-results { position: relative; z-index: 1; }
         .xr-bar { color: #fff; font-weight: 700; text-align: center; padding: 1.6mm; font-size: 11.5pt; letter-spacing: .4px; }
-        .xr-patient { display: grid; grid-template-columns: 1fr 1fr; gap: 1mm 8mm; padding: 3mm 8mm; text-transform: uppercase; }
-        .xr-continued { font-size: 9.5pt; text-transform: uppercase; }
+        /* Two columns that grow on their own: a long value wraps beside its label without pushing the other column down. */
+        .xr-patient { display: grid; grid-template-columns: 1fr 1fr; gap: 0 8mm; padding: 3mm 8mm; text-transform: uppercase; }
+        .xr-patient-col { display: flex; flex-direction: column; gap: 1mm; min-width: 0; }
+        .xr-field { display: flex; align-items: baseline; gap: 1.5mm; }
+        .xr-field b { white-space: nowrap; }
+        .xr-field span { min-width: 0; overflow-wrap: anywhere; }
+        /* Later pages: who the report is about, in a slim box like the patient one. */
+        .xr-continued { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1mm 8mm; padding: 2mm 8mm; text-transform: uppercase; }
         /* A hair shorter than the paper when printing, so rounding never pushes the footer onto an extra page. */
         @@media print { .xr-page { height: @(Mm(PageHeight - 0.6))mm !important; } }
-        .xr-patient b { margin-right: 1.5mm; }
         .xr-results { padding: 3mm 6mm 5mm; flex: 1; display: flex; flex-direction: column; }
         .xr-table { width: 100%; align-self: stretch; table-layout: fixed; border-collapse: collapse; }
-        .xr-table th { text-align: left; vertical-align: bottom; font-size: 9pt; text-transform: uppercase; padding: 2mm 1.5mm; border-bottom: 0.4mm solid #ccc; overflow-wrap: break-word; hyphens: auto; }
+        .xr-table th { text-align: left; vertical-align: bottom; font-size: .86em; text-transform: uppercase; padding: 2mm 1.5mm; border-bottom: 0.4mm solid #ccc; overflow-wrap: break-word; hyphens: auto; }
         .xr-table td { padding: 1.6mm 1.5mm; vertical-align: top; border-bottom: 0.2mm solid #eee; overflow-wrap: anywhere; }
         .xr-flag { font-weight: 700; color: #C62828; }
         .xr-previous { color: #555; }
         .xr-table th.xr-previous { white-space: nowrap; }
         .xr-qual-row { display: flex; align-items: center; gap: 4mm; padding: 2mm 1.5mm; border-bottom: 0.2mm solid #eee; }
         .xr-qual-name { flex: 1; font-weight: 600; }
-        .xr-qual-previous { font-size: 9pt; }
+        /* Section titles over the parameters that follow them, in the patient bar's colour, across the whole box like its bars:
+           over the results area's side padding (6 mm), the table cell with a strip on each side (the box clips any excess). */
+        .xr-section td, .xr-qual-section { color: #fff; font-weight: 700; text-align: center; text-transform: uppercase; letter-spacing: .4px; padding: 1.4mm 1.5mm; border-bottom: 0; }
+        .xr-section td { position: relative; }
+        .xr-section td::before, .xr-section td::after { content: ''; position: absolute; top: 0; bottom: 0; width: 7mm; background: inherit; }
+        .xr-section td::before { right: calc(100% - 0.2mm); }
+        .xr-section td::after { left: calc(100% - 0.2mm); }
+        .xr-qual-section { margin: 2mm -6mm 0; }
+        .xr-qual-previous { font-size: .86em; }
         .xr-pill { min-width: 34mm; padding: 1.2mm 4mm; border: 0.5mm solid; border-radius: 3mm; text-align: center; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
         .xr-gauge { display: flex; align-items: center; height: 4mm; margin-top: 0.8mm; max-width: 55mm; }
         .xr-gauge-box { position: relative; flex: 1; height: 3.2mm; border: 0.25mm solid #333; }
@@ -44,16 +60,19 @@
         .xr-gauge-edge { position: absolute; top: 50%; width: 0; height: 0; transform: translateY(-50%); border-top: 1.1mm solid transparent; border-bottom: 1.1mm solid transparent; }
         .xr-gauge-edge.low { left: 0.4mm; border-right: 1.6mm solid #C62828; }
         .xr-gauge-edge.high { right: 0.4mm; border-left: 1.6mm solid #C62828; }
+        /* Legend, criteria, interpretation, signature and method: they fill the rest of the box, the method at its foot. */
+        .xr-closing { flex: 1; display: flex; flex-direction: column; }
         .xr-interpretation { margin-top: 5mm; white-space: pre-line; }
         .xr-interpretation b { margin-right: 2.5mm; }
         .xr-method { align-self: center; margin-top: auto; padding: 1.4mm 6mm; border-radius: 3mm; color: #fff; font-weight: 700; }
-        .xr-signed { margin-top: 4mm; text-align: right; font-size: 9.5pt; }
+        .xr-signed { margin-top: 4mm; text-align: right; font-size: .9em; }
         .xr-footer { text-align: center; font-size: 9.5pt; }
-        .xr-footer-name { font-weight: 700; }
+        /* An empty line of the footer keeps its height, so it prints as a gap. */
+        .xr-footer-line { min-height: 1.35em; }
         .xr-disclaimer { margin-top: 1.5mm; }
         .xr-pageno { margin-top: 1.5mm; text-align: right; font-size: 8.5pt; color: #555; }
-        .xr-note { font-size: 8pt; color: #666; margin-top: 1mm; }
-        .xr-criteria { margin-top: 5mm; font-size: 8.5pt; }
+        .xr-note { font-size: .76em; color: #666; margin-top: 1mm; }
+        .xr-criteria { margin-top: 5mm; font-size: .81em; }
         .xr-criteria-title { font-weight: 700; margin-bottom: 1.5mm; }
         .xr-criteria table { width: 100%; table-layout: fixed; border-collapse: collapse; }
         .xr-criteria th { color: #fff; font-weight: 600; padding: 1.2mm 1.5mm; }
@@ -64,7 +83,7 @@
     @{ var pages = Paginate(); }
     @for (var i = 0; i < pages.Count; i++)
     {
-        var rows = pages[i];
+        var rows = pages[i].Select(index => Report.Results[index]).ToList();
         var first = i == 0;
         var last = i == pages.Count - 1;
         <div class="xr-page" style="width:@(Mm(PageWidth))mm;height:@(Mm(PageHeight))mm">
@@ -92,22 +111,37 @@
 
                 @if (first && Report.Sections.PatientData)
                 {
-                    <div class="xr-box" style="border-color:@Settings.HeaderColor">
+                    <div class="xr-box xr-patient-box" style="border-color:@Settings.HeaderColor">
                         <div class="xr-bar" style="background:@Settings.HeaderColor">@L["PET AND OWNER DATA"]</div>
-                        <div class="xr-patient">
-                            <div><b>@L["PATIENT:"]</b> @Report.PetName</div>
-                            <div><b>@L["OWNER:"]</b> @Report.OwnerName</div>
-                            <div><b>@L["SPECIES:"]</b> @(Placeholder ? L["SPECIES – BREED"] : SpeciesAndBreed)</div>
-                            <div><b>@L["REFERRING VET:"]</b> @Report.ReferringVet</div>
-                            <div><b>@L["AGE:"]</b> @(Placeholder ? Upper(L["Age"]) : Age)</div>
-                            <div><b>@L["RECEIVED ON:"]</b> @(Placeholder ? Upper(L["dd/mm/yyyy"]) : Report.ReceivedOn.ToString("dd/MM/yyyy"))</div>
-                            <div><b>@L["SEX:"]</b> @(Placeholder ? Upper(L["Sex"]) : SexName)</div>
+                        <div class="xr-patient" style="font-size:@(Mm(Settings.PatientFontPt))pt">
+                            <div class="xr-patient-col">
+                                <div class="xr-field"><b>@L["PATIENT:"]</b><span>@Report.PetName</span></div>
+                                <div class="xr-field"><b>@L["SPECIES:"]</b><span>@(Placeholder ? L["SPECIES – BREED"] : SpeciesAndBreed)</span></div>
+                                <div class="xr-field"><b>@L["AGE:"]</b><span>@(Placeholder ? Upper(L["Age"]) : Age)</span></div>
+                                <div class="xr-field"><b>@L["SEX:"]</b><span>@(Placeholder ? Upper(L["Sex"]) : SexName)</span></div>
+                            </div>
+                            <div class="xr-patient-col">
+                                <div class="xr-field"><b>@L["OWNER:"]</b><span>@Report.OwnerName</span></div>
+                                <div class="xr-field"><b>@L["REFERRING VET:"]</b><span>@Report.ReferringVet</span></div>
+                                <div class="xr-field"><b>@L["RECEIVED ON:"]</b><span>@ReceivedOn</span></div>
+                            </div>
                         </div>
                     </div>
                 }
-                else if (!first)
+                else if (!first && Settings.PatientDataOnLaterPages)
                 {
-                    <div class="xr-continued"><b>@Report.PetName</b> · @Report.OwnerName · @Report.ReceivedOn.ToString("dd/MM/yyyy")</div>
+                    @* Later pages: the patient box's bar over who the report is about, spread across the box. *@
+                    <div class="xr-box xr-continued-box" style="border-color:@Settings.HeaderColor">
+                        <div class="xr-bar" style="background:@Settings.HeaderColor">@L["PET AND OWNER DATA"]</div>
+                        <div class="xr-continued" style="font-size:@(Mm(Settings.PatientFontPt))pt">
+                            <div class="xr-field"><b>@L["PATIENT:"]</b><span>@Report.PetName</span></div>
+                            @if (!string.IsNullOrWhiteSpace(Report.OwnerName))
+                            {
+                                <div class="xr-field"><b>@L["OWNER:"]</b><span>@Report.OwnerName</span></div>
+                            }
+                            <div class="xr-field"><b>@L["RECEIVED ON:"]</b><span>@ReceivedOn</span></div>
+                        </div>
+                    </div>
                 }
 
                 <div class="xr-box xr-results-box" style="border-color:@Settings.AccentColor">
@@ -115,14 +149,19 @@
                     {
                         @Background
                     }
-                    <div class="xr-bar" style="background:@Settings.AccentColor">@Report.Title@(first ? null : L[" (continued)"])</div>
-                    <div class="xr-results">
+                    <div class="xr-bar" style="background:@Settings.AccentColor">@ReportText.Title(Report.Title)</div>
+                    <div class="xr-results" style="font-size:@(Mm(Settings.ResultsFontPt))pt">
                         @if (rows.Count > 0 && Qualitative)
                         {
                             <div>
                                 @foreach (var line in rows)
                                 {
-                                    <div class="xr-qual-row">
+                                    @if (line.Kind == ReportParameterKind.Section)
+                                    {
+                                        <div class="xr-qual-section" style="background:@Settings.HeaderColor" data-row="@RowIndex(line)">@line.Name</div>
+                                        continue;
+                                    }
+                                    <div class="xr-qual-row" data-row="@RowIndex(line)">
                                         <span class="xr-qual-name">@line.Name</span>
                                         @if (HasPrevious && !string.IsNullOrEmpty(line.PreviousValue))
                                         {
@@ -158,7 +197,12 @@
                                 <tbody>
                                     @foreach (var line in rows)
                                     {
-                                        <tr>
+                                        @if (line.Kind == ReportParameterKind.Section)
+                                        {
+                                            <tr class="xr-section" data-row="@RowIndex(line)"><td colspan="@ColumnWidths.Length" style="background:@Settings.HeaderColor">@line.Name</td></tr>
+                                            continue;
+                                        }
+                                        <tr data-row="@RowIndex(line)">
                                             <td>@line.Name</td>
                                             <td class="@(line.Abnormal ? "xr-flag" : null)">@line.Value @Mark(line)</td>
                                             <td>@line.Unit</td>
@@ -177,6 +221,7 @@
                         }
                         @if (last)
                         {
+                            <div class="xr-closing">
                             @if (Legend is { } legend)
                             {
                                 <div class="xr-note">@legend</div>
@@ -219,14 +264,15 @@
                             {
                                 <div class="xr-method" style="background:@Settings.HeaderColor">@methodLine</div>
                             }
+                            </div>
                         }
                     </div>
                 </div>
 
                 <div class="xr-footer">
-                    @for (var f = 0; f < Settings.FooterLines.Count; f++)
+                    @foreach (var footerLine in ReportText.Lines(Settings.Footer))
                     {
-                        <div class="@(f == 0 ? "xr-footer-name" : null)">@Settings.FooterLines[f]</div>
+                        <div class="xr-footer-line">@foreach (var span in ReportText.Spans(footerLine)) { if (span.Bold) { <b>@span.Text</b> } else { <text>@span.Text</text> } }</div>
                     }
                     @if (!string.IsNullOrWhiteSpace(Settings.Disclaimer))
                     {
@@ -286,6 +332,7 @@
     private double PageWidth => Settings.Paper == PaperSize.A4 ? 210 : 215.9;
     private double PageHeight => Settings.Paper == PaperSize.A4 ? 297 : 279.4;
     private static string Mm(double value) => value.ToString(CultureInfo.InvariantCulture);
+    private string ReceivedOn => Placeholder ? Upper(L["dd/mm/yyyy"]) : Report.ReceivedOn.ToString("dd/MM/yyyy");
     /// <summary>Printed labels and values are upper case: the same texts as the screens, upper-cased.</summary>
     private static string Upper(string text) => text.ToUpper(CultureInfo.CurrentCulture);
     private bool HasHeader => LogoUrl is not null || Settings.HeaderLines.Count > 0;
@@ -304,7 +351,10 @@
     };
 
     /// <summary>Only text results (Positivo / Negativo, blood types): each prints as a highlighted result, no table.</summary>
-    private bool Qualitative => Report.Results.Count > 0 && Report.Results.All(r => r.Kind == ReportParameterKind.Text);
+    private bool Qualitative => Values.Any() && Values.All(r => r.Kind == ReportParameterKind.Text);
+
+    /// <summary>The results without the section titles.</summary>
+    private IEnumerable<ExamReportResultDto> Values => Report.Results.Where(r => r.Kind != ReportParameterKind.Section);
 
     /// <summary>Abnormal results in solid red; the others outlined in the clinic's result colour.</summary>
     private string PillStyle(ExamReportResultDto line) => line.Abnormal
@@ -410,44 +460,104 @@
     };
 
     // Estimates in mm, deliberately on the high side: a page holds a little less than it could rather than clip a row.
+    // They lay out the sheet until it is measured (report-sheet.js), and stand in when it can't be (e.g. hidden).
     private const double LINE_MM = 5.0;
     private const double CHAR_MM = 1.95;
     private const double GAP_MM = 5;
+    /// <summary>Kept free on each page of a measured sheet, against rounding and the browser's print layout.</summary>
+    private const double SAFETY_MM = 2;
 
-    /// <summary>Splits the result lines into pages; the closing blocks (interpretation, method) go on the last one.</summary>
-    private List<List<ExamReportResultDto>> Paginate()
+    /// <summary>The rendered sheet's sizes in mm (see report-sheet.js).</summary>
+    private sealed record SheetMeasures(double FirstRoom, double? NextRoom, double PatientBox, double? Continued, double Header, double Closing,
+        double[] Rows);
+
+    private SheetMeasures? _measures;
+    private string? _measuredFor;
+    private string? _layout;
+
+    /// <summary>What the page layout depends on; when it changes, the sheet is measured again.</summary>
+    private string Layout() => System.Text.Json.JsonSerializer.Serialize(new
     {
-        var footerMm = Settings.FooterLines.Count * LINE_MM + Lines(Settings.Disclaimer, ContentWidth) * LINE_MM + 8;
+        Report, Placeholder, Logo = LogoUrl?.Length, Settings.Paper, Settings.MarginsMm, Settings.FontFamily, Settings.PatientFontPt,
+        Settings.ResultsFontPt, Settings.PatientDataOnLaterPages, Settings.HeaderLines, Settings.Footer, Settings.Disclaimer,
+        Settings.LogoHeightMm, Settings.LogoWidthMm, Settings.LogoKeepRatio
+    });
+
+    protected override void OnParametersSet()
+    {
+        _layout = Layout();
+        if (_layout != _measuredFor)
+            _measures = null;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_measures is not null || _layout is null || _layout == _measuredFor)
+            return;
+        var layout = _layout;
+        var measures = await Js.InvokeAsync<SheetMeasures?>("appReportSheet.measure", ElementId, PageHeight);
+        _measuredFor = layout;
+        if (measures is null || layout != _layout)
+            return;
+        _measures = measures;
+        StateHasChanged();
+    }
+
+    private int RowIndex(ExamReportResultDto line) => Report.Results.IndexOf(line);
+
+    /// <summary>
+    /// The fonts shipped with the app (wwwroot/fonts), by absolute address so the copy printed on its own finds them too. A
+    /// browser only downloads the one in use.
+    /// </summary>
+    private string BundledFontFaces => string.Concat(ExamReportSettings.BundledFonts.SelectMany(font =>
+    {
+        var file = font.ToLowerInvariant();
+        return new[]
+        {
+            ("latin", "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"),
+            ("latin-ext", "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF")
+        }.Select(subset => $"@font-face {{ font-family: '{font}'; font-weight: 100 900; font-display: block; " +
+                            $"src: url('{Navigation.BaseUri}_content/VetManagement.Staff.UI/fonts/{file}/{file}-{subset.Item1}-wght-normal.woff2') format('woff2'); " +
+                            $"unicode-range: {subset.Item2}; }}\n");
+    }));
+
+    /// <summary>Splits the result lines into pages (indexes into the results); the closing blocks go on the last one.</summary>
+    private List<List<int>> Paginate()
+    {
+        var sections = Report.Results.Select(r => r.Kind == ReportParameterKind.Section).ToList();
+        if (_measures is { } m && m.Rows.Length == Report.Results.Count)
+        {
+            var header = Qualitative ? 0 : m.Header;
+            // A later page has the slim patient box instead of the first page's one, or none when the design leaves it out.
+            var laterBox = Settings.PatientDataOnLaterPages ? m.Continued ?? 16 : 0;
+            var next = m.NextRoom ?? ReportPagination.LaterRoom(m.FirstRoom, m.PatientBox, laterBox, GAP_MM);
+            return ReportPagination.Split(m.Rows, sections, m.FirstRoom - header - SAFETY_MM, next - header - SAFETY_MM, m.Closing);
+        }
+        var (first, later, closing) = Estimates();
+        return ReportPagination.Split(Report.Results.Select(RowMm).ToList(), sections, first, later, closing);
+    }
+
+    /// <summary>Room for lines on the first and later pages, and the closing blocks' height, estimated.</summary>
+    private (double First, double Next, double Closing) Estimates()
+    {
+        var disclaimerLines = string.IsNullOrWhiteSpace(Settings.Disclaimer) ? 0 : Lines(Settings.Disclaimer, ContentWidth);
+        var footerMm = ReportText.Lines(Settings.Footer).Length * LINE_MM + disclaimerLines * LINE_MM + 8;
         var frameMm = PageHeight - Settings.MarginsMm.Top - Settings.MarginsMm.Bottom
             - (HasHeader ? HeaderMm + 2 + GAP_MM : 0) - footerMm - GAP_MM
             - 26; // result bar, table header and box padding
-        var firstMm = frameMm - (Report.Sections.PatientData ? 38 + GAP_MM : 0);
-        var nextMm = frameMm - 6 - GAP_MM; // continuation line with the patient's name
+        // Patient box: its bar and padding, plus four lines of data at the chosen size.
+        var firstMm = frameMm - (Report.Sections.PatientData ? 16 + 22 * Settings.PatientFontPt / ExamReportSettings.DefaultFontPt + GAP_MM : 0);
+        // The slim patient box of later pages, unless the design leaves it out.
+        var nextMm = frameMm - (Settings.PatientDataOnLaterPages ? 18 * Settings.PatientFontPt / ExamReportSettings.DefaultFontPt + GAP_MM : 0);
 
         var closingMm = 6.0
             + (Report.Sections.Interpretation && !string.IsNullOrWhiteSpace(Report.Interpretation)
-                ? 5 + (Report.Interpretation.Split('\n').Sum(l => Lines(l, ContentWidth)) + 0.5) * LINE_MM : 0)
+                ? 5 + (Report.Interpretation.Split('\n').Sum(l => ResultLines(l, ContentWidth)) + 0.5) * ResultLineMm : 0)
             + (Report.Sections.ReportedBy ? 9 : 0)
             + (MethodLine is null ? 0 : 12)
             + CriteriaMm();
 
-        var pages = new List<List<ExamReportResultDto>> { new() };
-        var used = 0.0;
-        foreach (var line in Report.Results)
-        {
-            var height = RowMm(line);
-            var room = pages.Count == 1 ? firstMm : nextMm;
-            if (used + height > room && pages[^1].Count > 0)
-            {
-                pages.Add([]);
-                used = 0;
-            }
-            pages[^1].Add(line);
-            used += height;
-        }
-        if (used + closingMm > (pages.Count == 1 ? firstMm : nextMm) && pages[^1].Count > 0)
-            pages.Add([]);
-        return pages;
+        return (firstMm, nextMm, closingMm);
     }
 
     private double ContentWidth => PageWidth - Settings.MarginsMm.Left - Settings.MarginsMm.Right - 14;
@@ -455,12 +565,14 @@
     private double RowMm(ExamReportResultDto line)
     {
         var widths = ColumnWidths.Select(w => ContentWidth * w / 100 - 3).ToArray();
+        if (line.Kind == ReportParameterKind.Section)
+            return ResultLines(line.Name, ContentWidth) * ResultLineMm + (Qualitative ? 5 : 3);
         if (Qualitative)
-            return Math.Max(1, Lines(line.Name, ContentWidth - 80)) * LINE_MM + 6;
-        var reference = !HasReference ? 0 : (string.IsNullOrEmpty(line.Reference) ? 0 : Lines(line.Reference, widths[3])) + (HasBar(line) ? 1 : 0);
-        var previous = HasPrevious ? Lines(line.PreviousValue, widths[^1]) : 1;
-        var lines = new[] { Lines(line.Name, widths[0]), Lines($"{line.Value} *", widths[1]), Lines(line.Unit, widths[2]), reference, previous }.Max();
-        return lines * LINE_MM + 3.6;
+            return Math.Max(1, ResultLines(line.Name, ContentWidth - 80)) * ResultLineMm + 6;
+        var reference = !HasReference ? 0 : (string.IsNullOrEmpty(line.Reference) ? 0 : ResultLines(line.Reference, widths[3])) + (HasBar(line) ? 1 : 0);
+        var previous = HasPrevious ? ResultLines(line.PreviousValue, widths[^1]) : 1;
+        var lines = new[] { ResultLines(line.Name, widths[0]), ResultLines($"{line.Value} *", widths[1]), ResultLines(line.Unit, widths[2]), reference, previous }.Max();
+        return lines * ResultLineMm + 3.6;
     }
 
     /// <summary>The criteria table: title, header and each row as tall as its fullest cell (smaller print, ~0.85 of a line).</summary>
@@ -469,10 +581,15 @@
         if (Report.Criteria is not { Columns.Count: > 0 } table)
             return 0;
         var width = ContentWidth / table.Columns.Count - 3;
-        double RowLines(IEnumerable<string?> cells) => cells.Max(c => (c ?? string.Empty).Split('\n').Sum(l => Lines(l, width)));
+        double RowLines(IEnumerable<string?> cells) => cells.Max(c => (c ?? string.Empty).Split('\n').Sum(l => ResultLines(l, width)));
         var lines = RowLines(table.Columns) + table.Rows.Sum(r => r.Count == 0 ? 1 : RowLines(r));
-        return 5 + (string.IsNullOrWhiteSpace(table.Title) ? 0 : LINE_MM + 1.5) + lines * LINE_MM * 0.85 + (table.Rows.Count + 1) * 2.4;
+        return 5 + (string.IsNullOrWhiteSpace(table.Title) ? 0 : ResultLineMm + 1.5) + lines * ResultLineMm * 0.85 + (table.Rows.Count + 1) * 2.4;
     }
+
+    /// <summary>Results print at their own size: lines are taller and hold fewer characters as it grows.</summary>
+    private double ResultScale => Settings.ResultsFontPt / ExamReportSettings.DefaultFontPt;
+    private double ResultLineMm => LINE_MM * ResultScale;
+    private int ResultLines(string? text, double widthMm) => Lines(text, widthMm / ResultScale);
 
     private static int Lines(string? text, double widthMm)
         => string.IsNullOrEmpty(text) ? 1 : Math.Max(1, (int)Math.Ceiling(text.Length * CHAR_MM / Math.Max(widthMm, 10)));

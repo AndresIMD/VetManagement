@@ -1,0 +1,148 @@
+@page "/lab-machines"
+@attribute [Authorize(Policy = "Exams.Update")]
+@using VetManagement.Contracts.Exams
+@using VetManagement.Staff.UI.Components.Modals.Common
+@using VetManagement.Staff.UI.Components.Modals.Exams
+@using VetManagement.Staff.UI.Services.Api
+@inject ExamApiService ExamApi
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<PageTitle>@L["Lab Machines"]</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
+    <PageHeader Title="@L["Lab Machines"]" Subtitle="@L["The brands and models the exam catalog picks from."]" Icon="@Icons.Material.Filled.Biotech" />
+
+    <MudPaper Class="pa-6 mb-4 elevation-3 rounded-lg app-surface">
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4" Wrap="Wrap.Wrap">
+            <MudTextField @bind-Value="_search" Label="@L["Search by brand or model..."]" Variant="Variant.Outlined" Margin="Margin.Dense"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Immediate="true" Clearable="true" Style="max-width: 360px;" />
+            @if (_canCreate)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="AddAsync">@L["New machine"]</MudButton>
+            }
+        </MudStack>
+
+        <MudTable T="LabMachineDto" Items="@Filtered" Loading="@_loading" Hover="true" Dense="true" Breakpoint="Breakpoint.Sm" RowsPerPage="25">
+            <HeaderContent>
+                <MudTh>@L["Brand"]</MudTh>
+                <MudTh>@L["Model"]</MudTh>
+                <MudTh Style="text-align: right;">@L["Exams"]</MudTh>
+                <MudTh Style="text-align: right;">@L["Actions"]</MudTh>
+            </HeaderContent>
+            <RowTemplate Context="machine">
+                <MudTd DataLabel="@L["Brand"]">@machine.Brand</MudTd>
+                <MudTd DataLabel="@L["Model"]">@machine.Model</MudTd>
+                <MudTd DataLabel="@L["Exams"]" Style="text-align: right;">
+                    @if (machine.ExamCount > 0)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">@machine.ExamCount</MudChip>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@L["Not used"]</MudText>
+                    }
+                </MudTd>
+                <MudTd DataLabel="@L["Actions"]" Style="text-align: right; white-space: nowrap;">
+                    @if (_canUpdate)
+                    {
+                        <MudTooltip Text="@L["Edit"]">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => EditAsync(machine))" />
+                        </MudTooltip>
+                    }
+                    @if (_canDelete)
+                    {
+                        <MudTooltip Text="@(machine.ExamCount > 0 ? L["Exams run on it: move them to another machine before deleting it."] : L["Delete"])">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" Disabled="@(machine.ExamCount > 0)"
+                                           OnClick="@(() => DeleteAsync(machine))" />
+                        </MudTooltip>
+                    }
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText Color="Color.Secondary">@(string.IsNullOrWhiteSpace(_search) ? L["No machines yet. Add the brands and models of the lab's analysers."] : L["No machines match the search."])</MudText>
+            </NoRecordsContent>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private List<LabMachineDto> _machines = [];
+    private string? _search;
+    private bool _loading;
+    private bool _canCreate;
+    private bool _canUpdate;
+    private bool _canDelete;
+
+    [CascadingParameter] private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
+
+    private IEnumerable<LabMachineDto> Filtered => string.IsNullOrWhiteSpace(_search)
+        ? _machines
+        : _machines.Where(m => m.Brand.Contains(_search.Trim(), StringComparison.OrdinalIgnoreCase)
+                            || m.Model.Contains(_search.Trim(), StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = (await AuthStateTask).User;
+        _canCreate = user.HasClaim("perm", "exams.create");
+        _canUpdate = user.HasClaim("perm", "exams.update");
+        _canDelete = user.HasClaim("perm", "exams.delete");
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _machines = await ExamApi.GetLabMachinesAsync();
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private Task AddAsync() => OpenEditorAsync(null, L["New machine"]);
+
+    private Task EditAsync(LabMachineDto machine) => OpenEditorAsync(machine, L["Edit machine"]);
+
+    private async Task OpenEditorAsync(LabMachineDto? machine, string title)
+    {
+        var parameters = new DialogParameters<LabMachineEditModal>
+        {
+            { x => x.Machine, machine },
+            { x => x.Brands, _machines.Select(m => m.Brand).Distinct(StringComparer.OrdinalIgnoreCase).Order().ToList() }
+        };
+        var dialog = await DialogService.ShowAsync<LabMachineEditModal>(title, parameters, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        if (await dialog.Result is { Canceled: false })
+            await LoadAsync();
+    }
+
+    private async Task DeleteAsync(LabMachineDto machine)
+    {
+        var parameters = new DialogParameters<ConfirmModal>
+        {
+            { x => x.Title, L["Delete machine"].Value },
+            { x => x.Message, L["Delete '{0} {1}' from the list?", machine.Brand, machine.Model].Value },
+            { x => x.ButtonConfirmText, L["Delete"].Value },
+            { x => x.TitleIcon, Icons.Material.Filled.Delete },
+            { x => x.TitleColor, Color.Error }
+        };
+        var dialog = await DialogService.ShowAsync<ConfirmModal>(null, parameters, new DialogOptions { MaxWidth = MaxWidth.Small });
+        if (await dialog.Result is not { Canceled: false })
+            return;
+
+        var result = await ExamApi.DeleteLabMachineAsync(machine.Id);
+        if (result.Ok)
+        {
+            _machines.Remove(machine);
+            Snackbar.Add(L["Machine deleted."], Severity.Success);
+        }
+        else
+            Snackbar.Add(result.Error ?? L["Could not delete the machine."], Severity.Error);
+    }
+}

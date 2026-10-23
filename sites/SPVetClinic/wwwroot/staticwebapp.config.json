@@ -1,9 +1,0 @@
-{
-  "navigationFallback": {
-    "rewrite": "/index.html",
-    "exclude": ["/_framework/*", "/css/*", "/js/*", "/images/*", "/*.{ico,png,txt,xml}"]
-  },
-  "mimeTypes": {
-    ".avif": "image/avif"
-  }
-}

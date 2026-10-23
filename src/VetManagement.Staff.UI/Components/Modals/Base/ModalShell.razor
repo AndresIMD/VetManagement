@@ -28,9 +28,9 @@
             else
             {
                 <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
-                    <MudLoadingButton Loading="@IsLoading"
+                    <MudLoadingButton Loading="@(IsLoading || _running)"
                                       Disabled="@(PrimaryDisabled || !IsValid)"
-                                      OnClick="OnPrimaryClick"
+                                      OnClick="PrimaryAsync"
                                       Color="@PrimaryColor"
                                       Variant="Variant.Filled"
                                       LoadingText="@PrimaryLoadingText">
@@ -70,4 +70,25 @@
 
     // Styles
     [Parameter] public string ActionsClass { get; set; } = "pa-3";
+
+    private bool _running;
+
+    /// <summary>
+    /// Runs the primary action once at a time: a second click while it is still saving (e.g. a quick double click on
+    /// Save) is ignored instead of saving the same thing twice.
+    /// </summary>
+    private async Task PrimaryAsync()
+    {
+        if (_running)
+            return;
+        _running = true;
+        try
+        {
+            await OnPrimaryClick.InvokeAsync();
+        }
+        finally
+        {
+            _running = false;
+        }
+    }
 }

@@ -5,6 +5,7 @@
 @inject AlertsApiService AlertsService
 @inject InventoryAlertsApiService SchedulesApi
 @inject ISnackbar Snackbar
+@attribute [Authorize(Policy = "System.SendEmail")]
 
 <PageTitle>@L["Inventory Email Alerts"]</PageTitle>
 
@@ -27,9 +28,9 @@
                             <MudTextField Label="@L["CC (optional, comma separated)"]" @bind-Value="Cc" Variant="Variant.Outlined" Class="mt-2" />
                             <MudTextField Label="@L["Subject"]" @bind-Value="Subject" Variant="Variant.Outlined" Class="mt-2" />
                             <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Class="mt-2">
-                                <MudSwitch T="bool" @bind-Checked="IncludeLowStock" Color="Color.Warning" />
+                                <MudSwitch T="bool" @bind-Value="IncludeLowStock" Color="Color.Warning" />
                                 <MudText>@L["Include \"Low stock\""]</MudText>
-                                <MudSwitch T="bool" @bind-Checked="IncludeOutOfStock" Color="Color.Error" Class="ml-4" />
+                                <MudSwitch T="bool" @bind-Value="IncludeOutOfStock" Color="Color.Error" Class="ml-4" />
                                 <MudText>@L["Include \"Out of stock\""]</MudText>
                             </MudStack>
                             <MudText Typo="Typo.subtitle2" Class="mt-3">@L["Preview"]</MudText>
@@ -42,7 +43,7 @@
                         </MudTabPanel>
                         <MudTabPanel Text="@L["Schedule"]">
                             <MudStack Spacing="2">
-                                <MudSwitch T="bool" @bind-Checked="ScheduleEnabled" Color="Color.Primary" />
+                                <MudSwitch T="bool" @bind-Value="ScheduleEnabled" Color="Color.Primary" />
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">@L["Enable weekly automatic send"]</MudText>
                                 <MudGrid>
                                     <MudItem xs="12" sm="6">
@@ -64,9 +65,9 @@
                                 <MudTextField Label="@L["CC (optional)"]" @bind-Value="ScheduleCc" Variant="Variant.Outlined" />
                                 <MudTextField Label="@L["Subject"]" @bind-Value="ScheduleSubject" Variant="Variant.Outlined" />
                                 <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
-                                    <MudSwitch T="bool" @bind-Checked="ScheduleIncludeLow" Color="Color.Warning" />
+                                    <MudSwitch T="bool" @bind-Value="ScheduleIncludeLow" Color="Color.Warning" />
                                     <MudText>@L["Include \"Low stock\""]</MudText>
-                                    <MudSwitch T="bool" @bind-Checked="ScheduleIncludeZero" Color="Color.Error" Class="ml-4" />
+                                    <MudSwitch T="bool" @bind-Value="ScheduleIncludeZero" Color="Color.Error" Class="ml-4" />
                                     <MudText>@L["Include \"Out of stock\""]</MudText>
                                 </MudStack>
                                 <MudStack Row="true" Spacing="2" Class="mt-2">
@@ -282,8 +283,11 @@
             IncludeOutOfStock: ScheduleIncludeZero,
             LastSentUtc: LastSent
             );
-            await SchedulesApi.SaveScheduleAsync(dto);
-            Snackbar.Add(L["Schedule saved."], Severity.Success);
+            var result = await SchedulesApi.SaveScheduleAsync(dto);
+            if (result.Ok)
+                Snackbar.Add(L["Schedule saved."], Severity.Success);
+            else
+                Snackbar.Add(L["Error saving schedule: {0}", result.Error ?? string.Empty], Severity.Error);
         }
         catch (Exception ex)
         {

@@ -41,7 +41,7 @@
 </MudContainer>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2">
-    <MudTable @ref="_table" TItem="AuditLog" ServerData="LoadServerData" Striped="true" Hover="true" Bordered="true"
+    <MudTable @ref="_table" T="AuditLog" ServerData="LoadServerData" Striped="true" Hover="true" Bordered="true"
         FixedHeader="true" Dense="true">
         <ToolBarContent></ToolBarContent>
         <HeaderContent>
@@ -161,98 +161,33 @@
         }
     }
 
+    /// <summary>
+    /// One page from the API, which filters and pages the log. The item name is matched here against the item list and
+    /// sent as the ids of the matching items.
+    /// </summary>
     private async Task<TableData<AuditLog>> LoadServerData(TableState state, CancellationToken ct)
     {
-        DateTime? fromDate = FilterDateRange?.Start?.Date;
-        DateTime? toDate = FilterDateRange?.End?.Date.AddDays(1).AddTicks(-1);
-
-        if (FilterActions.Any())
+        List<int>? itemIds = null;
+        if (!string.IsNullOrWhiteSpace(FilterItemName))
         {
-            var allLogs = new List<AuditLog>();
-            var seenIds = new HashSet<int>();
-
-            foreach (var action in FilterActions)
-            {
-                var result = await AuditService.GetLogsPagedAsync(
-                page: 0,
-                pageSize: 10000,
-                entityName: "Item",
-                action: action,
-                user: string.IsNullOrWhiteSpace(FilterResponsible) ? null : FilterResponsible,
-                from: fromDate,
-                to: toDate,
-                ct: ct
-                );
-
-                if (result?.Items != null)
-                {
-                    foreach (var log in result.Items)
-                    {
-                        if (seenIds.Add(log.Id))
-                        {
-                            allLogs.Add(log);
-                        }
-                    }
-                }
-            }
-
-            if (!string.IsNullOrWhiteSpace(FilterItemName))
-            {
-                allLogs = allLogs.Where(log =>
-                {
-                    var itemName = GetItemName(log.EntityId);
-                    return itemName.Contains(FilterItemName, StringComparison.OrdinalIgnoreCase);
-                }).ToList();
-            }
-
-            allLogs = allLogs.OrderByDescending(l => l.Date).ToList();
-
-            var pagedItems = allLogs
-            .Skip(state.Page * state.PageSize)
-            .Take(state.PageSize)
-            .ToList();
-
-            return new TableData<AuditLog>
-            {
-                Items = pagedItems,
-                TotalItems = allLogs.Count
-            };
+            var name = FilterItemName.Trim();
+            itemIds = _itemNames.Where(i => i.Value.Contains(name, StringComparison.OrdinalIgnoreCase)).Select(i => i.Key).ToList();
+            if (itemIds.Count == 0)
+                return new TableData<AuditLog> { Items = [], TotalItems = 0 };
         }
-        else
-        {
-            var result = await AuditService.GetLogsPagedAsync(
-            page: 0,
-            pageSize: 10000,
+
+        var result = await AuditService.GetLogsPagedAsync(
+            page: state.Page,
+            pageSize: state.PageSize,
             entityName: "Item",
-            action: null,
+            actions: FilterActions,
             user: string.IsNullOrWhiteSpace(FilterResponsible) ? null : FilterResponsible,
-            from: fromDate,
-            to: toDate,
-            ct: ct
-            );
+            from: FilterDateRange?.Start?.Date,
+            to: FilterDateRange?.End?.Date.AddDays(1).AddTicks(-1),
+            entityIds: itemIds,
+            ct: ct);
 
-            var allLogs = result?.Items ?? [];
-
-            if (!string.IsNullOrWhiteSpace(FilterItemName))
-            {
-                allLogs = allLogs.Where(log =>
-                {
-                    var itemName = GetItemName(log.EntityId);
-                    return itemName.Contains(FilterItemName, StringComparison.OrdinalIgnoreCase);
-                }).ToList();
-            }
-
-            var pagedItems = allLogs
-            .Skip(state.Page * state.PageSize)
-            .Take(state.PageSize)
-            .ToList();
-
-            return new TableData<AuditLog>
-            {
-                Items = pagedItems,
-                TotalItems = allLogs.Count
-            };
-        }
+        return new TableData<AuditLog> { Items = result?.Items ?? [], TotalItems = result?.TotalCount ?? 0 };
     }
 
     private void ClearFilters()

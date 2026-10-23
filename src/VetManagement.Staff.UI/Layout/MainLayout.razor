@@ -51,6 +51,7 @@
     [Inject] public BackgroundService Bg { get; set; } = default!;
     [Inject] public ThemeService ThemeService { get; set; } = default!;
     [Inject] public AppStatusService Status { get; set; } = default!;
+    [Inject] public VetManagement.Staff.UI.Services.Auth.SessionRefresher Session { get; set; } = default!;
     [Inject] public VetManagement.Staff.UI.Models.Configuration.AppBootstrapError? _bootstrapError { get; set; }
 
     private MudTheme _theme = AppTheme.Theme;
@@ -65,6 +66,7 @@
         {
             await ThemeService.InitializeAsync();
             await Bg.InitializeAsync();
+            Session.Start();
             StateHasChanged();
         }
     }

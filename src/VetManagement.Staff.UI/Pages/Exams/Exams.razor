@@ -6,7 +6,7 @@
 @inject ExamApiService ExamApi
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
-@attribute [Authorize(Policy = "Exams.Read")]
+@attribute [Authorize(Policy = "Exams.Update")]
 
 <PageTitle>@L["Exams"]</PageTitle>
 
@@ -34,20 +34,20 @@
 </MudContainer>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2">
-    <MudTable TItem="Exam" Items="@_filtered" Loading="@_isLoading" Striped="true" Hover="true" Bordered="true"
+    <MudTable T="Exam" Items="@_filtered" Loading="@_isLoading" Striped="true" Hover="true" Bordered="true"
         FixedHeader="true" RowsPerPage="25">
         <ToolBarContent></ToolBarContent>
         <HeaderContent>
             <MudTh style="width:25%">@L["Name"]</MudTh>
             <MudTh style="width:20%">@L["Brand"]</MudTh>
-            <MudTh style="width:20%">@L["Machine"]</MudTh>
+            <MudTh style="width:20%">@L["Model"]</MudTh>
             <MudTh style="width:15%">@L["Cost"]</MudTh>
             <MudTh style="width:20%; text-align:right">@L["Actions"]</MudTh>
         </HeaderContent>
         <RowTemplate Context="exam">
             <MudTd DataLabel="@L["Name"]">@exam.Name</MudTd>
             <MudTd DataLabel="@L["Brand"]">@exam.Brand</MudTd>
-            <MudTd DataLabel="@L["Machine"]">@exam.Machine</MudTd>
+            <MudTd DataLabel="@L["Model"]">@exam.Machine</MudTd>
             <MudTd DataLabel="@L["Cost"]">$@exam.BuyPrice</MudTd>
             <MudTd DataLabel="@L["Actions"]" Class="text-end">
                 <MudStack Row="true" Spacing="1" Justify="Justify.FlexEnd">

@@ -12,40 +12,20 @@ namespace VetManagement.Staff.UI.Services.Api;
 
 public class InventoryMovementApiService(HttpClient http)
 {
+    /// <summary>The stock flow of a period (clinic-local dates), or the API's message (e.g. range too long).</summary>
+    public async Task<(InventoryMetricsDto? Metrics, string? Error)> GetMetricsAsync(DateOnly from, DateOnly to, IEnumerable<int> itemIds,
+        CancellationToken cancellationToken = default)
+    {
+        var query = $"from={from:yyyy-MM-dd}&to={to:yyyy-MM-dd}" + string.Concat(itemIds.Select(id => $"&itemIds={id}"));
+        var response = await http.GetAsync($"{ApiRouteConstants.INVENTORY_METRICS}?{query}", cancellationToken);
+        if (response.IsSuccessStatusCode)
+            return (await response.Content.ReadFromJsonAsync<InventoryMetricsDto>(cancellationToken), null);
+        return (null, (await ApiResult.FromResponseAsync(response)).Error);
+    }
+
     public async Task<List<InventoryMovement>> GetMovementsByItemIdAsync(int itemId)
     {
         var response = await http.GetAsync(string.Format(ApiRouteConstants.INVENTORY_MOVEMENT_BY_ITEM, itemId));
-        response.EnsureSuccessStatusCode();
-        var movements = await response.Content.ReadFromJsonAsync<List<MovementDto>>();
-        return movements?.Select(MapToShared).ToList() ?? [];
-    }
-
-    public async Task<List<InventoryMovement>> GetMovementsFilteredAsync(
-    int? itemId = null,
-    string? itemName = null,
-    InventoryMovementType? type = null,
-    string? responsible = null,
-    DateTime? from = null,
-    DateTime? to = null)
-    {
-        var parameters = new List<string>();
-        if (itemId.HasValue)
-            parameters.Add($"itemId={itemId.Value}");
-        if (!string.IsNullOrWhiteSpace(itemName))
-            parameters.Add($"itemName={Uri.EscapeDataString(itemName)}");
-        if (type.HasValue && type.Value != InventoryMovementType.None)
-            parameters.Add($"type={type}");
-        if (!string.IsNullOrWhiteSpace(responsible))
-            parameters.Add($"responsible={Uri.EscapeDataString(responsible)}");
-        if (from.HasValue)
-            parameters.Add($"from={from.Value:O}");
-        if (to.HasValue)
-            parameters.Add($"to={to.Value:O}");
-        string url = ApiRouteConstants.INVENTORY_MOVEMENTS_BASE;
-        if (parameters.Count > 0)
-            url += "?" + string.Join("&", parameters);
-
-        var response = await http.GetAsync(url);
         response.EnsureSuccessStatusCode();
         var movements = await response.Content.ReadFromJsonAsync<List<MovementDto>>();
         return movements?.Select(MapToShared).ToList() ?? [];

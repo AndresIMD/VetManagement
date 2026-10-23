@@ -7,7 +7,7 @@ its own deployment (database, API) and its own branded public website.
 ## Projects and dependency direction
 
 ```text
-   Staff.Web (WASM)   Staff.Maui (desktop)       Booking.Web (WASM)        sites/<Clinic> (public web)
+   Staff.Web (WASM)   Staff.Maui (desktop)       Booking.Web (WASM)        clinic site (own repo)
             \             /                    booking + client portal      links to Booking.Web
              Staff.UI (pages, components,               |                            |
              view models, API clients)                  |                            |
@@ -30,7 +30,7 @@ its own deployment (database, API) and its own branded public website.
 | `Staff.UI` | Staff UI shared by web and MAUI: pages, components, view models, `*ApiService` clients. | Domain, Contracts |
 | `Staff.Web` / `Staff.Maui` | Thin hosts for `Staff.UI`. | Staff.UI |
 | `Booking.Web` | Public portal: online booking with deposit, booking status/cancel, client portal ("Mis mascotas"). Anonymous. | Contracts |
-| `sites/*` | One branded public website per clinic. Not part of the product. | (links to Booking.Web) |
+| Clinic sites | One branded public website per clinic, in the clinic's own repository. Not part of the product. | (links to Booking.Web) |
 
 The backend never references `Staff.UI`. `ArchitectureTests` fails the build if that changes.
 
@@ -69,9 +69,13 @@ Rules:
 exist for the clinic; a module that is off grants no permissions, so its menus, pages and endpoints are gone for
 everyone, and `[RequiresModule]` hides its anonymous endpoints. Roles say who sees what inside: `Admin` (all), area
 roles `Inventory`, `Laboratory`, `Reception`, `Clinical`, `Cashier` (daily work of the area), and `Supervisor`, which
-adds deleting and settings in the user's own areas plus audit and the reports dashboard. A user's permissions are the
-union of their roles (`Permissions.ForRoles`), filtered by the enabled modules and stored as claims at login. Pages and
-endpoints always check permissions, never role names.
+adds deleting, settings and management data (e.g. inventory metrics) in the user's own areas plus audit and the
+reports dashboard. Email (`system.send-email`, inventory email alerts) is Admin only. A user's permissions are the union
+of their roles (`Permissions.ForRoles`), filtered by the enabled modules. Pages and endpoints always check permissions,
+never role names. The token only identifies the user: each request takes the current roles from the database
+(`UserAccess`, cached for a minute), so role changes apply at once and a blocked user's sessions stop; the staff app
+refreshes its token every minute (`api/account/refresh`) so menus follow. Blocking (no-end lockout) is how staff who
+leave lose access; the last active Admin can't be blocked, deleted or demoted.
 
 **Per-clinic settings.** Each module with policies has one versioned JSON document in `ClinicSettings`
 (`scheduling`, `billing`, `clinical`, `exam-reports`), served by a `ClinicSettingsService<T>`: created from defaults on

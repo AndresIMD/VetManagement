@@ -1,0 +1,51 @@
+@using System.ComponentModel.DataAnnotations
+@using VetManagement.Contracts.Accounts
+@using VetManagement.Staff.UI.Services.Api
+@inject ISnackbar Snackbar
+@inject UserManagementApiService UserManagementService
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form" @bind-IsValid="valid">
+            <MudTextField @bind-Value="model.UserName" Label="@L["Username"]" Required="true" RequiredError="@L["Username is required."]" Class="mb-2" />
+            <MudTextField @bind-Value="model.Email" Label="@L["Email"]" Required="true" RequiredError="@L["Email is required."]"
+                          Validation="@(new Func<string, string?>(ValidateEmail))" Class="mb-2" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Secondary" OnClick="() => MudDialog.Cancel()" Disabled="@saving">@L["Cancel"]</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveAsync" Disabled="@(!valid || saving)">@L["Save"]</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public UserDto User { get; set; } = new();
+
+    private MudForm? form;
+    private EditUserRequest model = new();
+    private bool valid;
+    private bool saving;
+
+    protected override void OnInitialized() => model = new EditUserRequest { UserName = User.UserName, Email = User.Email };
+
+    private string? ValidateEmail(string email)
+        => new EmailAddressAttribute().IsValid(email) ? null : L["Invalid email format."];
+
+    private async Task SaveAsync()
+    {
+        await form!.ValidateAsync();
+        if (!form.IsValid)
+            return;
+        saving = true;
+        var result = await UserManagementService.UpdateUserAsync(User.Id, model);
+        saving = false;
+        if (result.Ok)
+        {
+            Snackbar.Add(L["User '{0}' updated.", model.UserName], Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        else
+            Snackbar.Add(L["Could not update the user: {0}", result.Error ?? ""], Severity.Error);
+    }
+}

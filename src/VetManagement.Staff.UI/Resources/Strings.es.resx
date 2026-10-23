@@ -611,14 +611,9 @@
   <data name="Bottom" xml:space="preserve"><value>Abajo</value></data>
   <data name="Right" xml:space="preserve"><value>Derecha</value></data>
   <data name="Background strength: {0}% (lower it to turn the image into a watermark)" xml:space="preserve"><value>Intensidad del fondo: {0}% (bájala para convertir la imagen en marca de agua)</value></data>
-  <data name="For your designer" xml:space="preserve"><value>Para tu diseñador</value></data>
-  <data name="(images up to 3 MB, PNG, JPEG or WebP):" xml:space="preserve"><value>(imágenes de hasta 3 MB, PNG, JPEG o WebP):</value></data>
   <data name="Logo:" xml:space="preserve"><value>Logo:</value></data>
-  <data name="PNG with a transparent background, about 1200 × 400 px. Printed top left at the height chosen above." xml:space="preserve"><value>PNG con fondo transparente, de unos 1200 × 400 px. Se imprime arriba a la izquierda, con el alto elegido arriba.</value></data>
   <data name="Background:" xml:space="preserve"><value>Fondo:</value></data>
-  <data name="a full page, portrait, {0} px (300 dpi; half that is fine for a lighter file). It is stretched to the whole sheet (or to the results box, when chosen above). Keep text and strong colours out of the content area: {1} mm from the top, {2} mm from the bottom, {3} mm left and {4} mm right are free for frames or artwork. A watermark should be light: results are printed on top of it." xml:space="preserve"><value>una página completa, vertical, de {0} px (300 dpi; la mitad sirve para un archivo más liviano). Se estira a toda la hoja (o al recuadro de resultados, si se eligió arriba). Deja el texto y los colores fuertes fuera del área de contenido: {1} mm desde arriba, {2} mm desde abajo, {3} mm a la izquierda y {4} mm a la derecha quedan libres para marcos o diseño. Una marca de agua debe ser suave: los resultados se imprimen encima.</value></data>
   <data name="Colours:" xml:space="preserve"><value>Colores:</value></data>
-  <data name="the two bars below use your brand colours as #RRGGBB." xml:space="preserve"><value>las dos barras de abajo usan los colores de tu marca, en formato #RRGGBB.</value></data>
   <data name="Page" xml:space="preserve"><value>Página</value></data>
   <data name="Paper" xml:space="preserve"><value>Papel</value></data>
   <data name="Letter (21.6 × 27.9 cm)" xml:space="preserve"><value>Carta (21,6 × 27,9 cm)</value></data>
@@ -627,11 +622,9 @@
   <data name="Result bar" xml:space="preserve"><value>Barra de resultados</value></data>
   <data name="Top (mm)" xml:space="preserve"><value>Arriba (mm)</value></data>
   <data name="Header lines (next to the logo, one per line)" xml:space="preserve"><value>Líneas del encabezado (junto al logo, una por línea)</value></data>
-  <data name="Footer lines (clinic name, tax id, address, phone...)" xml:space="preserve"><value>Líneas del pie (nombre de la clínica, identificación fiscal, dirección, teléfono...)</value></data>
   <data name="Note under the footer" xml:space="preserve"><value>Nota bajo el pie</value></data>
   <data name="Report design saved." xml:space="preserve"><value>Diseño del informe guardado.</value></data>
   <data name="The image must be 3 MB or smaller." xml:space="preserve"><value>La imagen debe pesar 3 MB o menos.</value></data>
-  <data name="Image saved." xml:space="preserve"><value>Imagen guardada.</value></data>
   <data name="Title printed on the result bar" xml:space="preserve"><value>Título impreso en la barra de resultados</value></data>
   <data name="Print on this report" xml:space="preserve"><value>Imprimir en este informe</value></data>
   <data name="Patient and owner data" xml:space="preserve"><value>Datos del paciente y del dueño</value></data>
@@ -699,7 +692,6 @@
   <data name="AGE:" xml:space="preserve"><value>EDAD:</value></data>
   <data name="RECEIVED ON:" xml:space="preserve"><value>FECHA RECEPCIÓN:</value></data>
   <data name="SEX:" xml:space="preserve"><value>SEXO:</value></data>
-  <data name=" (continued)" xml:space="preserve"><value> (continuación)</value></data>
   <data name="Reference value" xml:space="preserve"><value>Valor referencial</value></data>
   <data name="INTERPRETATION:" xml:space="preserve"><value>INTERPRETACIÓN:</value></data>
   <data name="Reported by: {0}" xml:space="preserve"><value>Informado por: {0}</value></data>
@@ -1047,4 +1039,228 @@
   <data name="Brand barcode" xml:space="preserve"><value>Código de barras de la marca</value></data>
   <data name="Dosage dog" xml:space="preserve"><value>Dosis perro</value></data>
   <data name="Dosage cat" xml:space="preserve"><value>Dosis gato</value></data>
+  <data name="Active" xml:space="preserve"><value>Activo</value></data>
+  <data name="At least {0} characters, with uppercase, lowercase, a number and a symbol." xml:space="preserve"><value>Al menos {0} caracteres, con mayúsculas, minúsculas, un número y un símbolo.</value></data>
+  <data name="Block" xml:space="preserve"><value>Bloquear</value></data>
+  <data name="Block '{0}'? They won't be able to sign in and their open sessions end within a minute. You can unblock them later." xml:space="preserve"><value>¿Bloquear a '{0}'? No podrá iniciar sesión y sus sesiones abiertas terminarán en menos de un minuto. Puedes desbloquearlo más adelante.</value></data>
+  <data name="Block user" xml:space="preserve"><value>Bloquear usuario</value></data>
+  <data name="Blocked" xml:space="preserve"><value>Bloqueado</value></data>
+  <data name="Click a role to assign or remove it. Block the accounts of staff who leave the clinic." xml:space="preserve"><value>Haz clic en un rol para asignarlo o quitarlo. Bloquea las cuentas del personal que deja la clínica.</value></data>
+  <data name="Could not assign role: {0}" xml:space="preserve"><value>No se pudo asignar el rol: {0}</value></data>
+  <data name="Could not change password: {0}" xml:space="preserve"><value>No se pudo cambiar la contraseña: {0}</value></data>
+  <data name="Could not delete the user: {0}" xml:space="preserve"><value>No se pudo eliminar el usuario: {0}</value></data>
+  <data name="Could not remove role: {0}" xml:space="preserve"><value>No se pudo quitar el rol: {0}</value></data>
+  <data name="Could not reset the password: {0}" xml:space="preserve"><value>No se pudo restablecer la contraseña: {0}</value></data>
+  <data name="Could not update the user: {0}" xml:space="preserve"><value>No se pudo actualizar el usuario: {0}</value></data>
+  <data name="Delete '{0}' permanently? This can't be undone. For staff who left the clinic, blocking the account is usually better." xml:space="preserve"><value>¿Eliminar a '{0}' de forma permanente? No se puede deshacer. Para personal que dejó la clínica, normalmente es mejor bloquear la cuenta.</value></data>
+  <data name="Delete user" xml:space="preserve"><value>Eliminar usuario</value></data>
+  <data name="Edit user" xml:space="preserve"><value>Editar usuario</value></data>
+  <data name="Failed to update profile: {0}" xml:space="preserve"><value>No se pudo actualizar el perfil: {0}</value></data>
+  <data name="Give this temporary password to {0}: they will have to change it the next time they sign in." xml:space="preserve"><value>Entrega esta contraseña temporal a {0}: deberá cambiarla la próxima vez que inicie sesión.</value></data>
+  <data name="No users found." xml:space="preserve"><value>No se encontraron usuarios.</value></data>
+  <data name="Password must be at least {0} characters long." xml:space="preserve"><value>La contraseña debe tener al menos {0} caracteres.</value></data>
+  <data name="Password must contain at least one symbol, such as # or !." xml:space="preserve"><value>La contraseña debe contener al menos un símbolo, como # o !.</value></data>
+  <data name="Password of '{0}' reset." xml:space="preserve"><value>Contraseña de '{0}' restablecida.</value></data>
+  <data name="Reset password" xml:space="preserve"><value>Restablecer contraseña</value></data>
+  <data name="Staff accounts, their roles and access." xml:space="preserve"><value>Cuentas del personal, sus roles y accesos.</value></data>
+  <data name="Temporary password" xml:space="preserve"><value>Contraseña temporal</value></data>
+  <data name="Unblock" xml:space="preserve"><value>Desbloquear</value></data>
+  <data name="Unblock '{0}'? They will be able to sign in again with their roles." xml:space="preserve"><value>¿Desbloquear a '{0}'? Podrá volver a iniciar sesión con sus roles.</value></data>
+  <data name="Unblock user" xml:space="preserve"><value>Desbloquear usuario</value></data>
+  <data name="User '{0}' blocked." xml:space="preserve"><value>Usuario '{0}' bloqueado.</value></data>
+  <data name="User '{0}' deleted." xml:space="preserve"><value>Usuario '{0}' eliminado.</value></data>
+  <data name="User '{0}' unblocked." xml:space="preserve"><value>Usuario '{0}' desbloqueado.</value></data>
+  <data name="User '{0}' updated." xml:space="preserve"><value>Usuario '{0}' actualizado.</value></data>
+  <data name="Your account has no roles yet. Ask an administrator to assign the roles you need." xml:space="preserve"><value>Tu cuenta aún no tiene roles. Pide a un administrador que te asigne los roles que necesitas.</value></data>
+  <data name="you" xml:space="preserve"><value>tú</value></data>
+  <data name="User Updated" xml:space="preserve"><value>Usuario actualizado</value></data>
+  <data name="User Blocked" xml:space="preserve"><value>Usuario bloqueado</value></data>
+  <data name="User Unblocked" xml:space="preserve"><value>Usuario desbloqueado</value></data>
+  <data name="Password Reset" xml:space="preserve"><value>Contraseña restablecida</value></data>
+  <data name="User Deleted" xml:space="preserve"><value>Usuario eliminado</value></data>
+  <data name="You don't have permission to access this page." xml:space="preserve"><value>No tienes permiso para ver esta página.</value></data>
+  <data name="At this period's pace, their stock lasts less than {0} days." xml:space="preserve"><value>Al ritmo de este período, su stock dura menos de {0} días.</value></data>
+  <data name="Cost {0} · at today's prices" xml:space="preserve"><value>Costo {0} · a precios actuales</value></data>
+  <data name="Could not load the metrics. Check the connection and try again." xml:space="preserve"><value>No se pudieron cargar las métricas. Revisa la conexión e inténtalo de nuevo.</value></data>
+  <data name="Custom range" xml:space="preserve"><value>Rango personalizado</value></data>
+  <data name="Filter by items (optional)" xml:space="preserve"><value>Filtrar por productos (opcional)</value></data>
+  <data name="In" xml:space="preserve"><value>Entradas</value></data>
+  <data name="Items with the most units out in the period." xml:space="preserve"><value>Productos con más unidades salidas en el período.</value></data>
+  <data name="Lasts" xml:space="preserve"><value>Alcanza para</value></data>
+  <data name="Most used" xml:space="preserve"><value>Más usados</value></data>
+  <data name="No item runs out soon at this pace." xml:space="preserve"><value>Ningún producto se agota pronto a este ritmo.</value></data>
+  <data name="No movements in this period." xml:space="preserve"><value>No hay movimientos en este período.</value></data>
+  <data name="Nothing went out in this period." xml:space="preserve"><value>No hubo salidas en este período.</value></data>
+  <data name="Out" xml:space="preserve"><value>Salidas</value></data>
+  <data name="Over a year" xml:space="preserve"><value>Más de un año</value></data>
+  <data name="Per day" xml:space="preserve"><value>Por día</value></data>
+  <data name="Per hour" xml:space="preserve"><value>Por hora</value></data>
+  <data name="Per month" xml:space="preserve"><value>Por mes</value></data>
+  <data name="Per week" xml:space="preserve"><value>Por semana</value></data>
+  <data name="Period" xml:space="preserve"><value>Período</value></data>
+  <data name="Running out" xml:space="preserve"><value>Por agotarse</value></data>
+  <data name="Show on the chart" xml:space="preserve"><value>Mostrar en el gráfico</value></data>
+  <data name="Stock alerts" xml:space="preserve"><value>Alertas de stock</value></data>
+  <data name="Units in" xml:space="preserve"><value>Unidades ingresadas</value></data>
+  <data name="Units in and out" xml:space="preserve"><value>Entradas y salidas de unidades</value></data>
+  <data name="Units out" xml:space="preserve"><value>Unidades salidas</value></data>
+  <data name="Units out per item" xml:space="preserve"><value>Unidades salidas por producto</value></data>
+  <data name="Up to {0} items, each drawn as its own line. Without any, the figures cover the whole inventory." xml:space="preserve"><value>Hasta {0} productos, cada uno con su propia línea. Sin ninguno, las cifras cubren todo el inventario.</value></data>
+  <data name="Value of what went out" xml:space="preserve"><value>Valor de las salidas</value></data>
+  <data name="Week of {0}" xml:space="preserve"><value>Semana del {0}</value></data>
+  <data name="What goes out, what comes in and what will run out soon." xml:space="preserve"><value>Qué sale, qué entra y qué se agotará pronto.</value></data>
+  <data name="{0} days" xml:space="preserve"><value>{0} días</value></data>
+  <data name="{0} items moved" xml:space="preserve"><value>{0} productos con movimiento</value></data>
+  <data name="{0} movements · {1} items" xml:space="preserve"><value>{0} movimientos · {1} productos</value></data>
+  <data name="{0}% vs. previous period" xml:space="preserve"><value>{0}% vs. período anterior</value></data>
+  <data name="Items moved" xml:space="preserve"><value>Productos con movimiento</value></data>
+  <data name="{0} movements in the period" xml:space="preserve"><value>{0} movimientos en el período</value></data>
+  <data name="Add them in Lab Machines." xml:space="preserve"><value>Agrégalos en Equipos de laboratorio.</value></data>
+  <data name="Could not delete the machine." xml:space="preserve"><value>No se pudo eliminar el equipo.</value></data>
+  <data name="Could not save the machine." xml:space="preserve"><value>No se pudo guardar el equipo.</value></data>
+  <data name="Delete '{0} {1}' from the list?" xml:space="preserve"><value>¿Eliminar «{0} {1}» de la lista?</value></data>
+  <data name="Delete machine" xml:space="preserve"><value>Eliminar equipo</value></data>
+  <data name="Edit machine" xml:space="preserve"><value>Editar equipo</value></data>
+  <data name="Enter the brand." xml:space="preserve"><value>Ingresa la marca.</value></data>
+  <data name="Enter the model." xml:space="preserve"><value>Ingresa el modelo.</value></data>
+  <data name="Exams run on it: move them to another machine before deleting it." xml:space="preserve"><value>Hay exámenes que usan este equipo: cámbialos a otro equipo antes de eliminarlo.</value></data>
+  <data name="Lab Machines" xml:space="preserve"><value>Equipos de laboratorio</value></data>
+  <data name="Machine deleted." xml:space="preserve"><value>Equipo eliminado.</value></data>
+  <data name="Machine saved." xml:space="preserve"><value>Equipo guardado.</value></data>
+  <data name="Machine saved. {0} exams now show the new name." xml:space="preserve"><value>Equipo guardado. {0} exámenes muestran ahora el nuevo nombre.</value></data>
+  <data name="Model" xml:space="preserve"><value>Modelo</value></data>
+  <data name="New machine" xml:space="preserve"><value>Nuevo equipo</value></data>
+  <data name="No machines match the search." xml:space="preserve"><value>Ningún equipo coincide con la búsqueda.</value></data>
+  <data name="No machines yet. Add the brands and models of the lab's analysers." xml:space="preserve"><value>Aún no hay equipos. Agrega las marcas y modelos de los analizadores del laboratorio.</value></data>
+  <data name="Not used" xml:space="preserve"><value>Sin uso</value></data>
+  <data name="Search by brand or model..." xml:space="preserve"><value>Buscar por marca o modelo...</value></data>
+  <data name="The brands and models the exam catalog picks from." xml:space="preserve"><value>Las marcas y modelos que se eligen en el catálogo de exámenes.</value></data>
+  <data name="There are no lab machines yet." xml:space="preserve"><value>Aún no hay equipos de laboratorio.</value></data>
+  <data name="e.g. Catalyst One, ProCyte Dx, Vcheck V200" xml:space="preserve"><value>p. ej. Catalyst One, ProCyte Dx, Vcheck V200</value></data>
+  <data name="{0} catalog exams run on this machine and will show the new name. Issued reports keep theirs." xml:space="preserve"><value>{0} exámenes del catálogo usan este equipo y mostrarán el nuevo nombre. Los informes ya emitidos conservan el suyo.</value></data>
+  <data name="Footer (clinic name, tax id, address, phone...)" xml:space="preserve"><value>Pie de página (nombre de la clínica, identificación fiscal, dirección, teléfono...)</value></data>
+  <data name="Bold (Ctrl+B): select the text first, or place the cursor on a line" xml:space="preserve"><value>Negrita (Ctrl+B): selecciona primero el texto, o deja el cursor en una línea</value></data>
+  <data name="Bold" xml:space="preserve"><value>Negrita</value></data>
+  <data name="Each line prints as written and an empty line leaves a gap. **Text** between double asterisks prints in bold." xml:space="preserve"><value>Cada línea se imprime tal como la escribes y una línea vacía deja un espacio. El **texto** entre dobles asteriscos se imprime en negrita.</value></data>
+  <data name="Leave it empty if the note is already part of the footer." xml:space="preserve"><value>Déjala vacía si la nota ya está en el pie de página.</value></data>
+  <data name="Recommended image specifications" xml:space="preserve"><value>Especificaciones recomendadas para las imágenes</value></data>
+  <data name="(up to 3 MB; PNG, JPEG or WebP):" xml:space="preserve"><value>(hasta 3 MB; PNG, JPEG o WebP):</value></data>
+  <data name="PNG with a transparent background, approximately 1200 × 400 px. Printed at the top left, at the height set above." xml:space="preserve"><value>PNG con fondo transparente, de aproximadamente 1200 × 400 px. Se imprime en la esquina superior izquierda, con la altura definida arriba.</value></data>
+  <data name="full portrait page of {0} px (300 dpi; 150 dpi is enough for a lighter file). It covers the whole sheet, or the results box when that option is selected. The content area should stay free of text and strong colours; the margins ({1} mm top, {2} mm bottom, {3} mm left, {4} mm right) can hold frames or artwork. Watermarks should be light, since results are printed over them." xml:space="preserve"><value>página completa en orientación vertical, de {0} px (300 dpi; con 150 dpi basta para un archivo más liviano). Cubre toda la hoja, o el recuadro de resultados si se elige esa opción. El área de contenido debe quedar libre de textos y colores intensos; los márgenes ({1} mm arriba, {2} mm abajo, {3} mm a la izquierda y {4} mm a la derecha) pueden llevar marcos o diseños. Las marcas de agua deben ser suaves, ya que los resultados se imprimen sobre ellas.</value></data>
+  <data name="the two bars below use the clinic's brand colours, in #RRGGBB format." xml:space="preserve"><value>las dos barras de abajo usan los colores institucionales de la clínica, en formato #RRGGBB.</value></data>
+  <data name="Plasma" xml:space="preserve"><value>Plasma</value></data>
+  <data name="Serum" xml:space="preserve"><value>Suero</value></data>
+  <data name="Supernatant" xml:space="preserve"><value>Sobrenadante</value></data>
+  <data name="Red tube" xml:space="preserve"><value>Tubo rojo</value></data>
+  <data name="Light blue tube" xml:space="preserve"><value>Tubo celeste</value></data>
+  <data name="Green tube" xml:space="preserve"><value>Tubo verde</value></data>
+  <data name="Yellow tube" xml:space="preserve"><value>Tubo amarillo</value></data>
+  <data name="Lavender tube" xml:space="preserve"><value>Tubo lila</value></data>
+  <data name="When the first word is in capitals, the whole title prints in capitals." xml:space="preserve"><value>Si la primera palabra está en mayúsculas, todo el título se imprime en mayúsculas.</value></data>
+  <data name="Unsaved changes" xml:space="preserve"><value>Cambios sin guardar</value></data>
+  <data name="The image changes are applied when you press Save." xml:space="preserve"><value>Los cambios de imágenes se aplican al presionar Guardar.</value></data>
+  <data name="Tutorial" xml:space="preserve"><value>Tutorial</value></data>
+  <data name="This screen has a short tutorial." xml:space="preserve"><value>Esta pantalla tiene un tutorial corto.</value></data>
+  <data name="Show me" xml:space="preserve"><value>Verlo</value></data>
+  <data name="Previous" xml:space="preserve"><value>Anterior</value></data>
+  <data name="Done" xml:space="preserve"><value>Listo</value></data>
+  <data name="{{current}} of {{total}}" xml:space="preserve"><value>{{current}} de {{total}}</value></data>
+  <data name="Tutorials" xml:space="preserve"><value>Tutoriales</value></data>
+  <data name="Offer the tutorial the first time I open a screen" xml:space="preserve"><value>Ofrecer el tutorial la primera vez que abro una pantalla</value></data>
+  <data name="The &quot;Tutorial&quot; button on each screen shows it at any time." xml:space="preserve"><value>El botón "Tutorial" de cada pantalla lo muestra cuando quieras.</value></data>
+  <data name="Patient seen before?" xml:space="preserve"><value>¿Paciente ya ingresado?</value></data>
+  <data name="Results" xml:space="preserve"><value>Resultados</value></data>
+  <data name="Choose a registered pet of the clinic, or type the patient only for this report (the usual case for lab samples)." xml:space="preserve"><value>Elige una mascota registrada en la clínica, o escribe el paciente solo para este informe (lo habitual en muestras de laboratorio).</value></data>
+  <data name="Search by patient or owner name. Picking one fills in its data and links its reports, so the previous result can be printed next to the new one." xml:space="preserve"><value>Busca por nombre del paciente o del dueño. Al elegirlo se completan sus datos y se enlazan sus informes, para poder imprimir el resultado anterior junto al nuevo.</value></data>
+  <data name="Type the pet's number, shown in the client's record." xml:space="preserve"><value>Escribe el número de la mascota, que aparece en la ficha del cliente.</value></data>
+  <data name="The species picks the normal ranges, so choose it before typing the results." xml:space="preserve"><value>La especie define los rangos normales, así que elígela antes de escribir los resultados.</value></data>
+  <data name="Type the age in years and months when the birth date isn't known; the date is worked out from the reception date." xml:space="preserve"><value>Escribe la edad en años y meses si no se sabe la fecha de nacimiento; la fecha se calcula a partir de la fecha de recepción.</value></data>
+  <data name="Only exams with a report template are listed. Changing the exam clears the results already typed." xml:space="preserve"><value>Solo aparecen los exámenes que tienen plantilla de informe. Al cambiar de examen se borran los resultados ya escritos.</value></data>
+  <data name="The date the sample arrived; today by default." xml:space="preserve"><value>La fecha en que llegó la muestra; por defecto, hoy.</value></data>
+  <data name="The vet who requested the exam. It prints as 'Médico tratante'." xml:space="preserve"><value>El veterinario que pidió el examen. Se imprime como 'Médico tratante'.</value></data>
+  <data name="Type each value. Values outside the normal range are marked as you type, and the range for the species is shown next to each one." xml:space="preserve"><value>Escribe cada valor. Los valores fuera del rango normal se marcan mientras escribes, y junto a cada uno se muestra el rango de la especie.</value></data>
+  <data name="When the exam has interpretation rules, the automatic interpretation shows in grey: leave the field empty to print it, or write your own." xml:space="preserve"><value>Cuando el examen tiene reglas de interpretación, la interpretación automática aparece en gris: deja el campo vacío para imprimirla o escribe la tuya.</value></data>
+  <data name="Saves the report and opens it, ready to print or save as PDF. A saved report can be corrected later." xml:space="preserve"><value>Guarda el informe y lo abre, listo para imprimir o guardar en PDF. Un informe guardado se puede corregir después.</value></data>
+  <data name="Pet and owner data text: {0} pt" xml:space="preserve"><value>Texto de datos del paciente y tutor: {0} pt</value></data>
+  <data name="Results text: {0} pt" xml:space="preserve"><value>Texto de resultados: {0} pt</value></data>
+  <data name="Altered" xml:space="preserve"><value>Alterado</value></data>
+  <data name="All sheets" xml:space="preserve"><value>Todas las hojas</value></data>
+  <data name="Back to per unit at the sale price" xml:space="preserve"><value>Volver a cobrar por unidad al precio de venta</value></data>
+  <data name="Charged per mL: {0} each mL." xml:space="preserve"><value>Se cobra por mL: {0} cada mL.</value></data>
+  <data name="Charged per unit: {0} each." xml:space="preserve"><value>Se cobra por unidad: {0} cada una.</value></data>
+  <data name="Close the sheet? It takes no more uses, and what is left in open containers counts as discarded." xml:space="preserve"><value>¿Cerrar la hoja? No admite más usos, y lo que quede en envases abiertos se registra como descartado.</value></data>
+  <data name="Consumption sheet" xml:space="preserve"><value>Hoja de consumo</value></data>
+  <data name="Consumption summary" xml:space="preserve"><value>Resumen de consumo</value></data>
+  <data name="Controlled" xml:space="preserve"><value>Controlado</value></data>
+  <data name="Delete sheet" xml:space="preserve"><value>Eliminar hoja</value></data>
+  <data name="Delete this sheet and everything recorded on it? This can't be undone." xml:space="preserve"><value>¿Eliminar esta hoja y todo lo registrado en ella? No se puede deshacer.</value></data>
+  <data name="Discard" xml:space="preserve"><value>Descartar</value></data>
+  <data name="Discard rest" xml:space="preserve"><value>Descartar resto</value></data>
+  <data name="Discharge" xml:space="preserve"><value>Dar de alta</value></data>
+  <data name="Discharged {0}" xml:space="preserve"><value>Alta {0}</value></data>
+  <data name="E.g. hospitalised, box 3" xml:space="preserve"><value>Ej. hospitalizado, box 3</value></data>
+  <data name="E.g. infusion, single dose" xml:space="preserve"><value>Ej. infusión, dosis única</value></data>
+  <data name="Each container started on a patient is charged whole at the sale price; the rest stays for that patient (e.g. a 10 mL fentanyl ampoule)." xml:space="preserve"><value>Cada envase que se empieza en un paciente se cobra completo al precio de venta; lo que sobra queda para ese paciente (ej. ampolla de fentanilo de 10 mL).</value></data>
+  <data name="Every item is charged per unit at its sale price." xml:space="preserve"><value>Todos los insumos se cobran por unidad a su precio de venta.</value></data>
+  <data name="How supplies are charged" xml:space="preserve"><value>Cómo se cobran los insumos</value></data>
+  <data name="New sheet" xml:space="preserve"><value>Nueva hoja</value></data>
+  <data name="No open sheets." xml:space="preserve"><value>No hay hojas abiertas.</value></data>
+  <data name="Note" xml:space="preserve"><value>Nota</value></data>
+  <data name="Note (optional)" xml:space="preserve"><value>Nota (opcional)</value></data>
+  <data name="Notes (optional)" xml:space="preserve"><value>Notas (opcional)</value></data>
+  <data name="Nothing recorded yet." xml:space="preserve"><value>Aún no hay nada registrado.</value></data>
+  <data name="On the patient consumption sheets. Items not listed are charged per unit at their sale price." xml:space="preserve"><value>En las hojas de gasto por paciente. Los insumos que no estén en la lista se cobran por unidad a su precio de venta.</value></data>
+  <data name="Open sheet" xml:space="preserve"><value>Abrir hoja</value></data>
+  <data name="Opened" xml:space="preserve"><value>Ingreso</value></data>
+  <data name="Opened {0}" xml:space="preserve"><value>Ingreso {0}</value></data>
+  <data name="Owner's name and last name" xml:space="preserve"><value>Nombre y apellido del tutor</value></data>
+  <data name="Patient consumption" xml:space="preserve"><value>Gasto por paciente</value></data>
+  <data name="Patient typed in" xml:space="preserve"><value>Paciente escrito a mano</value></data>
+  <data name="Price per mL" xml:space="preserve"><value>Precio por mL</value></data>
+  <data name="Print summary" xml:space="preserve"><value>Imprimir resumen</value></data>
+  <data name="Printed on {0}." xml:space="preserve"><value>Impreso el {0}.</value></data>
+  <data name="Record a use" xml:space="preserve"><value>Registrar un uso</value></data>
+  <data name="Recorded by" xml:space="preserve"><value>Registrado por</value></data>
+  <data name="Remove (recorded by mistake)" xml:space="preserve"><value>Quitar (registrado por error)</value></data>
+  <data name="Remove use" xml:space="preserve"><value>Quitar uso</value></data>
+  <data name="Remove {0} {1} of {2}, recorded {3}?" xml:space="preserve"><value>¿Quitar {0} {1} de {2}, registrado el {3}?</value></data>
+  <data name="Reopen" xml:space="preserve"><value>Reabrir</value></data>
+  <data name="Sale price: {0}" xml:space="preserve"><value>Precio de venta: {0}</value></data>
+  <data name="Saved: {0}." xml:space="preserve"><value>Guardado: {0}.</value></data>
+  <data name="Sheets" xml:space="preserve"><value>Hojas</value></data>
+  <data name="Show discharged in the last {0} days" xml:space="preserve"><value>Mostrar altas de los últimos {0} días</value></data>
+  <data name="Supplies used on each patient during a stay, added up for the charge at discharge." xml:space="preserve"><value>Insumos usados en cada paciente durante su estadía, sumados para el cobro al alta.</value></data>
+  <data name="The mL given are charged at the price per mL (e.g. diazepam from a vial shared by several patients)." xml:space="preserve"><value>Se cobran los mL administrados al precio por mL (ej. diazepam de un frasco que se usa en varios pacientes).</value></data>
+  <data name="The sheet was not found." xml:space="preserve"><value>No se encontró la hoja.</value></data>
+  <data name="Throw away the {0} mL left of {1}? The next use starts a new container." xml:space="preserve"><value>¿Descartar los {0} mL que quedan de {1}? El próximo uso empieza un envase nuevo.</value></data>
+  <data name="Throw away what is left; the next use starts a new container." xml:space="preserve"><value>Descarta lo que queda; el próximo uso empieza un envase nuevo.</value></data>
+  <data name="To charge" xml:space="preserve"><value>A cobrar</value></data>
+  <data name="Type the mL given. Each {0} mL container started is charged whole ({1})." xml:space="preserve"><value>Escribe los mL administrados. Cada envase de {0} mL que se empieza se cobra completo ({1}).</value></data>
+  <data name="Used" xml:space="preserve"><value>Usado</value></data>
+  <data name="Uses" xml:space="preserve"><value>Usos</value></data>
+  <data name="Uses recorded" xml:space="preserve"><value>Usos registrados</value></data>
+  <data name="Whole units at the sale price (syringes, catheters...)." xml:space="preserve"><value>Unidades completas al precio de venta (jeringas, catéteres...).</value></data>
+  <data name="discarded" xml:space="preserve"><value>descartado</value></data>
+  <data name="mL per container" xml:space="preserve"><value>mL por envase</value></data>
+  <data name="u." xml:space="preserve"><value>u.</value></data>
+  <data name="{0} / container" xml:space="preserve"><value>{0} / envase</value></data>
+  <data name="{0} / mL" xml:space="preserve"><value>{0} / mL</value></data>
+  <data name="{0} / u." xml:space="preserve"><value>{0} / u.</value></data>
+  <data name="{0} mL discarded" xml:space="preserve"><value>{0} mL descartados</value></data>
+  <data name="{0} mL left in the open one" xml:space="preserve"><value>Quedan {0} mL en el envase abierto</value></data>
+  <data name="Per unit" xml:space="preserve"><value>Por unidad</value></data>
+  <data name="Per mL used" xml:space="preserve"><value>Por mL usado</value></data>
+  <data name="Whole container" xml:space="preserve"><value>Envase completo</value></data>
+  <data name="Charged as" xml:space="preserve"><value>Se cobra</value></data>
+  <data name="1 container of {0} mL" xml:space="preserve"><value>1 envase de {0} mL</value></data>
+  <data name="{0} containers of {1} mL" xml:space="preserve"><value>{0} envases de {1} mL</value></data>
+  <data name="Section title" xml:space="preserve"><value>Título de sección</value></data>
+  <data name="E.g. OXIMETRY VALUES" xml:space="preserve"><value>Ej. VALORES DE OXIMETRÍA</value></data>
+  <data name="Move down" xml:space="preserve"><value>Bajar</value></data>
+  <data name="Remove section" xml:space="preserve"><value>Quitar sección</value></data>
+  <data name="Printed as a band over the parameters below it, up to the next section; left out when none of them has a result." xml:space="preserve"><value>Se imprime como una franja sobre los parámetros que siguen, hasta la próxima sección; no se imprime si ninguno tiene resultado.</value></data>
+  <data name="Add section" xml:space="preserve"><value>Agregar sección</value></data>
+  <data name="Pet and owner data on the following pages" xml:space="preserve"><value>Datos del paciente y tutor en las hojas siguientes</value></data>
+  <data name="The pages after the first repeat the patient, owner and reception date in a slim box under the header, so a loose page can still be matched to its patient. Turned off, their results start right under the header." xml:space="preserve"><value>Las hojas después de la primera repiten el paciente, el tutor y la fecha de recepción en un recuadro delgado bajo el encabezado, para que una hoja suelta se pueda asociar a su paciente. Si lo desactivas, sus resultados empiezan justo bajo el encabezado.</value></data>
+  <data name="Preview a report of several pages" xml:space="preserve"><value>Vista previa de un informe de varias hojas</value></data>
 </root>

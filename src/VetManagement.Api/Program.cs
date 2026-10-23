@@ -15,6 +15,7 @@ using VetManagement.Infrastructure.Data;
 using VetManagement.Infrastructure.Persistence;
 using VetManagement.Domain.Clients;
 using VetManagement.Domain.Inventory;
+using VetManagement.Domain.Localization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,6 +67,7 @@ builder.Services.AddIdentityCore<IdentityUser>(options =>
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
 })
 .AddRoles<IdentityRole>()
+.AddErrorDescriber<LocalizedIdentityErrors>()
 .AddEntityFrameworkStores<AppDbContext>();
 
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key is not configured.");
@@ -107,9 +109,17 @@ builder.Services.AddAuthentication(options =>
             if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
                 context.Token = accessToken;
             return Task.CompletedTask;
+        },
+        // Roles and permissions of each request come from the database, not from the token (see UserAccess).
+        OnTokenValidated = async context =>
+        {
+            var services = context.HttpContext.RequestServices;
+            if (!await services.GetRequiredService<UserAccess>().ApplyAsync(context.Principal!, services))
+                context.Fail("The user is blocked or no longer exists.");
         }
     };
 });
+builder.Services.AddSingleton<UserAccess>();
 
 builder.Services.AddAuthorizationBuilder()
     .SetFallbackPolicy(new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build())
@@ -117,6 +127,10 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy("Inventory.Create", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.INVENTORY.CREATE))
     .AddPolicy("Inventory.Update", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.INVENTORY.UPDATE))
     .AddPolicy("Inventory.Delete", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.INVENTORY.DELETE))
+    .AddPolicy("Inventory.Metrics", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.INVENTORY.METRICS))
+    .AddPolicy("Consumption.Read", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.CONSUMPTION.READ))
+    .AddPolicy("Consumption.Record", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.CONSUMPTION.RECORD))
+    .AddPolicy("Consumption.Manage", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.CONSUMPTION.MANAGE))
     .AddPolicy("Exams.Read", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.EXAMS.READ))
     .AddPolicy("Exams.Create", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.EXAMS.CREATE))
     .AddPolicy("Exams.Update", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.EXAMS.UPDATE))
@@ -137,10 +151,13 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy("ClientsPets.Create", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.CLIENTS_PETS.CREATE))
     .AddPolicy("ClientsPets.Update", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.CLIENTS_PETS.UPDATE))
     .AddPolicy("ClientsPets.Delete", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.CLIENTS_PETS.DELETE))
+    .AddPolicy("ClientsPets.List", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.CLIENTS_PETS.LIST))
     .AddPolicy("Audit.Read", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.AUDIT.READ))
     .AddPolicy("Users.Read", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.USERS.READ))
     .AddPolicy("Users.Create", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.USERS.CREATE))
     .AddPolicy("Users.ManageRoles", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.USERS.MANAGE_ROLES))
+    .AddPolicy("Users.Update", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.USERS.UPDATE))
+    .AddPolicy("Users.Delete", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.USERS.DELETE))
     .AddPolicy("System.SendEmail", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.SYSTEM.SEND_EMAIL))
     .AddPolicy("Scheduling.Read", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.SCHEDULING.READ))
     .AddPolicy("Scheduling.Book", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.SCHEDULING.BOOK))
@@ -161,6 +178,8 @@ builder.Services.AddScoped<VetManagement.Application.Services.AuditService>();
 builder.Services.AddScoped<VetManagement.Application.Services.ExamService>();
 builder.Services.AddScoped<VetManagement.Application.Services.ExamPerformedService>();
 builder.Services.AddScoped<VetManagement.Application.Services.ExternalLabService>();
+builder.Services.AddScoped<VetManagement.Application.Exams.LabMachineService>();
+builder.Services.AddScoped<VetManagement.Application.Consumption.ConsumptionService>();
 builder.Services.AddScoped<VetManagement.Application.Services.ClientPetService>();
 builder.Services.AddScoped<VetManagement.Application.Services.MedicalVisitService>();
 builder.Services.AddSingleton(new VetManagement.Application.Scheduling.SchedulingDefaults(
@@ -176,6 +195,7 @@ builder.Services.AddScoped<VetManagement.Application.Billing.BillingService>();
 builder.Services.AddScoped<VetManagement.Application.Clinical.ClinicalSettingsService>();
 builder.Services.AddScoped<VetManagement.Application.Clinical.ClinicalService>();
 builder.Services.AddScoped<VetManagement.Application.Reports.ReportsService>();
+builder.Services.AddScoped<VetManagement.Application.Inventory.InventoryMetricsService>();
 var enabledModules = new EnabledModules(builder.Configuration);
 builder.Services.AddSingleton(enabledModules);
 builder.Services.AddScoped<VetManagement.Application.Exams.ExamReportSettingsService>();
@@ -191,8 +211,7 @@ builder.Services.AddMemoryCache(options =>
     options.SizeLimit = 1024;
     options.CompactionPercentage = 0.25;
 });
-builder.Services.AddScoped<OptimizedCacheService>();
-builder.Services.AddScoped<OptimizedQueryService>();
+builder.Services.AddScoped<InventoryEmailScheduleService>();
 
 builder.Services.AddScoped<VetManagement.Application.Contracts.Services.IRealtimeNotificationService, RealtimeNotificationService>();
 builder.Services.AddScoped<EmailService>();
@@ -261,12 +280,12 @@ builder.Services.AddRateLimiter(options =>
         context.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
         _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions { PermitLimit = builder.Configuration.GetValue("RateLimits:PublicWritePerMinute", 10), Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
 
-    // Login attempts per client IP, on top of the global limit and the per-account lockout.
+    // Login attempts per client IP, on top of the global limit and the per-account lockout (RateLimits:LoginPerMinute, default 10).
     options.AddPolicy("login", context => System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
         context.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
         _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
         {
-            PermitLimit = 10,
+            PermitLimit = builder.Configuration.GetValue("RateLimits:LoginPerMinute", 10),
             Window = TimeSpan.FromMinutes(1),
             QueueLimit = 0
         }));
@@ -286,8 +305,8 @@ builder.Services.AddRateLimiter(options =>
 
         var userIdentifier = context.User?.Identity?.Name ?? context.Connection.RemoteIpAddress?.ToString() ?? "anonymous";
 
-        // More permissive limits in development
-        var permitLimit = builder.Environment.IsDevelopment() ? 1000 : 100;
+        // More permissive limits in development; RateLimits:UserPerMinute tunes the others (default 100).
+        var permitLimit = builder.Environment.IsDevelopment() ? 1000 : builder.Configuration.GetValue("RateLimits:UserPerMinute", 100);
         var window = builder.Environment.IsDevelopment() ? TimeSpan.FromMinutes(5) : TimeSpan.FromMinutes(1);
 
         return System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
@@ -308,8 +327,27 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 });
 
 builder.Services.AddProblemDetails();
+// Browsers keep to HTTPS for a year (the default is 30 days).
+builder.Services.AddHsts(options =>
+{
+    options.MaxAge = TimeSpan.FromDays(365);
+    options.IncludeSubDomains = true;
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// JSON answers compressed (App Service on Linux doesn't): item lists and report templates shrink to a fifth. Safe over
+// HTTPS here because the session is a bearer token the browser never sends on its own, so another site can't make
+// it fetch pages to compare their compressed sizes (BREACH). Images are already compressed and stay as they are.
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProvider>();
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProvider>();
+    options.MimeTypes = ["application/json", "application/problem+json"];
+});
+builder.Services.Configure<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProviderOptions>(
+    options => options.Level = System.IO.Compression.CompressionLevel.Fastest);
 
 var app = builder.Build();
 
@@ -317,6 +355,8 @@ var app = builder.Build();
 // using the options above; adding it twice would read one forwarded entry too many.
 if (proxyForwardLimit is > 0 && !string.Equals(Environment.GetEnvironmentVariable("ASPNETCORE_FORWARDEDHEADERS_ENABLED"), "true", StringComparison.OrdinalIgnoreCase))
     app.UseForwardedHeaders();
+
+app.UseResponseCompression();
 
 var securityConfig = builder.Configuration.GetSection("Security");
 var enableHttpsRedirection = securityConfig.GetValue<bool>("EnableHttpsRedirection", true);
@@ -352,6 +392,21 @@ else
 app.UseRateLimiter();
 app.UseCors("LocalOnly");
 app.UseAuthentication();
+// A session opened with a temporary password can only change it (the staff app sends the user there first).
+app.Use(async (context, next) =>
+{
+    if (context.User.HasClaim(SystemClaims.CLAIM_TYPE, SystemClaims.MUST_CHANGE_PASSWORD)
+        && !SystemClaims.TEMPORARY_PASSWORD_PATHS.Any(path => context.Request.Path.StartsWithSegments(path)))
+    {
+        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        await context.Response.WriteAsJsonAsync(new Microsoft.AspNetCore.Mvc.ProblemDetails
+        {
+            Status = StatusCodes.Status403Forbidden, Title = Texts.T("Change your temporary password first.")
+        });
+        return;
+    }
+    await next();
+});
 app.UseAuthorization();
 app.MapControllers();
 app.MapHub<InventoryHub>("/hubs/inventory");

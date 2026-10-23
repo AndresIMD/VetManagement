@@ -37,8 +37,6 @@ src/
   VetManagement.Staff.Web/       staff web (Blazor WebAssembly)
   VetManagement.Staff.Maui/      staff desktop/mobile (.NET MAUI)
   VetManagement.Booking.Web/     public booking portal + client portal (Blazor WebAssembly)
-sites/
-  SPVetClinic/                   branded public website of one clinic
 tests/
   VetManagement.Tests/           unit, integration and architecture tests
 docs/                            documentation (index: docs/README.md)

@@ -43,27 +43,6 @@ public class InventoryMovementServiceTests
     }
 
     [Fact]
-    public async Task GetAllMovementsAsync_ShouldReturnAllMovements()
-    {
-        // Arrange
-        var movements = new List<DomainInventoryMovement>
-        {
-            new DomainInventoryMovement { Id = 1, ItemId = 1, Quantity = 10, Type = DomainInventoryMovementType.Ingress },
-            new DomainInventoryMovement { Id = 2, ItemId = 1, Quantity = 5, Type = DomainInventoryMovementType.Egress }
-        };
-
-        _mockMovementRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(movements);
-
-        // Act
-        var result = await _service.GetAllMovementsAsync();
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Should().HaveCount(2);
-        result.Should().BeEquivalentTo(movements);
-    }
-
-    [Fact]
     public async Task AddMovementAsync_ShouldAddMovement_LogAudit_AndNotify()
     {
         // Arrange

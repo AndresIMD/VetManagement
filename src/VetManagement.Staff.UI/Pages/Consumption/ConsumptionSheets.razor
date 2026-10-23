@@ -1,0 +1,178 @@
+@page "/consumption"
+@using VetManagement.Contracts.Consumption
+@inject ConsumptionApiService Api
+@inject ClientPetApiService ClientPetApi
+@inject NavigationManager Navigation
+@attribute [Authorize(Policy = "Consumption.Read")]
+
+<PageTitle>@L["Patient consumption"]</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
+    <PageHeader Title="@L["Patient consumption"]" Icon="@Icons.Material.Filled.Vaccines"
+                Subtitle="@L["Supplies used on each patient during a stay, added up for the charge at discharge."]" />
+
+    @if (_error is not null)
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-3" ShowCloseIcon="true" CloseIconClicked="() => _error = null">@_error</MudAlert>
+    }
+
+    <AuthorizeView Policy="Consumption.Record" Context="auth">
+        <MudPaper Class="pa-4 mb-3" Elevation="1">
+            <MudText Typo="Typo.h6" Class="mb-2">@L["New sheet"]</MudText>
+            <MudRadioGroup T="bool" @bind-Value="_registered">
+                <MudRadio T="bool" Value="false">@L["Patient typed in"]</MudRadio>
+                <MudRadio T="bool" Value="true">@L["Registered pet"]</MudRadio>
+            </MudRadioGroup>
+            <MudGrid Spacing="2">
+                @if (_registered)
+                {
+                    <MudItem xs="12" sm="4">
+                        <MudNumericField T="int?" Label="@L["Pet ID"]" Value="_petId" ValueChanged="OnPetChangedAsync" Min="1" HideSpinButtons="true" />
+                    </MudItem>
+                    <MudItem xs="12" sm="8" Class="d-flex align-center">
+                        @if (_petName is not null)
+                        {
+                            <MudText><b>@_petName</b></MudText>
+                        }
+                        else if (_petId is not null)
+                        {
+                            <MudText Color="Color.Warning">@L["Pet #{0} was not found.", _petId]</MudText>
+                        }
+                    </MudItem>
+                }
+                else
+                {
+                    <MudItem xs="12" sm="4">
+                        <MudTextField Label="@L["Patient name"]" @bind-Value="_patientName" MaxLength="100" Required="true" />
+                    </MudItem>
+                    <MudItem xs="12" sm="4">
+                        <MudTextField Label="@L["Owner's name and last name"]" @bind-Value="_ownerName" MaxLength="200" />
+                    </MudItem>
+                }
+                <MudItem xs="12" sm="@(_registered ? 12 : 4)">
+                    <MudTextField Label="@L["Notes (optional)"]" @bind-Value="_notes" MaxLength="500" Placeholder="@L["E.g. hospitalised, box 3"]" />
+                </MudItem>
+            </MudGrid>
+            <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-3">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                           Disabled="@(_busy || !CanOpen)" OnClick="OpenAsync">@L["Open sheet"]</MudButton>
+            </MudStack>
+        </MudPaper>
+    </AuthorizeView>
+
+    <MudPaper Class="pa-4" Elevation="1">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mb-2">
+            <MudText Typo="Typo.h6">@L["Sheets"]</MudText>
+            <MudSpacer />
+            <MudSwitch T="bool" Value="_showClosed" ValueChanged="ShowClosedAsync" Color="Color.Primary"
+                       Label="@L["Show discharged in the last {0} days", CLOSED_DAYS]" />
+            <AuthorizeView Policy="Consumption.Manage" Context="auth">
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.PriceChange" Href="consumption/pricing">@L["How supplies are charged"]</MudButton>
+            </AuthorizeView>
+        </MudStack>
+        @if (_sheets is null)
+        {
+            <MudProgressLinear Indeterminate="true" />
+        }
+        else
+        {
+            <MudTable Items="_sheets" Hover="true" Dense="true" T="ConsumptionSheetSummaryDto" OnRowClick="OpenSheet" RowStyle="cursor:pointer">
+                <HeaderContent>
+                    <MudTh>@L["Patient"]</MudTh>
+                    <MudTh>@L["Owner"]</MudTh>
+                    <MudTh>@L["Opened"]</MudTh>
+                    <MudTh Style="text-align:right">@L["Uses"]</MudTh>
+                    <MudTh Style="text-align:right">@L["Total"]</MudTh>
+                    <MudTh>@L["Status"]</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd><b>@context.PatientName</b></MudTd>
+                    <MudTd>@context.OwnerName</MudTd>
+                    <MudTd>@context.OpenedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</MudTd>
+                    <MudTd Style="text-align:right">@context.EntryCount</MudTd>
+                    <MudTd Style="text-align:right">@Money.Clp(context.Total)</MudTd>
+                    <MudTd>
+                        @if (context.ClosedAtUtc is { } closed)
+                        {
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@L["Discharged {0}", closed.ToLocalTime().ToString("dd/MM HH:mm")]</MudChip>
+                        }
+                        else
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Success">@L["Open"]</MudChip>
+                        }
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Color="Color.Secondary">@L["No open sheets."]</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private const int CLOSED_DAYS = 30;
+
+    private List<ConsumptionSheetSummaryDto>? _sheets;
+    private bool _showClosed;
+    private bool _registered;
+    private int? _petId;
+    private string? _petName;
+    private string? _patientName;
+    private string? _ownerName;
+    private string? _notes;
+    private bool _busy;
+    private string? _error;
+
+    private bool CanOpen => _registered ? _petName is not null : !string.IsNullOrWhiteSpace(_patientName);
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync() => _sheets = await Api.ListAsync(_showClosed ? CLOSED_DAYS : 0);
+
+    private async Task ShowClosedAsync(bool show)
+    {
+        _showClosed = show;
+        await LoadAsync();
+    }
+
+    private async Task OnPetChangedAsync(int? petId)
+    {
+        _petId = petId;
+        _petName = null;
+        if (petId is not > 0)
+            return;
+        try
+        {
+            if (await ClientPetApi.GetPetByIdAsync(petId.Value) is { } pet)
+            {
+                var owner = await ClientPetApi.GetClientByIdAsync(pet.OwnerId);
+                _petName = owner is null ? pet.Name : $"{pet.Name} · {owner.Name} {owner.LastName}".Trim();
+            }
+        }
+        catch (HttpRequestException)
+        {
+        }
+    }
+
+    private void OpenSheet(TableRowClickEventArgs<ConsumptionSheetSummaryDto> e) => Navigation.NavigateTo($"consumption/{e.Item!.Id}");
+
+    private async Task OpenAsync()
+    {
+        _busy = true;
+        var result = await Api.OpenAsync(new OpenConsumptionSheetRequest
+        {
+            PetId = _registered ? _petId : null,
+            PatientName = _registered ? null : _patientName,
+            OwnerName = _registered ? null : _ownerName,
+            Notes = _notes
+        });
+        _busy = false;
+        if (!result.Ok)
+        {
+            _error = result.Error;
+            return;
+        }
+        Navigation.NavigateTo($"consumption/{result.Id}");
+    }
+}

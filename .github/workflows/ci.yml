@@ -28,10 +28,10 @@ jobs:
     env:
       VETMANAGEMENT_TEST_SQLSERVER: Server=localhost,1433;User Id=sa;Password=Ci-Throwaway-Pass1;TrustServerCertificate=True
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
@@ -43,7 +43,6 @@ jobs:
           dotnet restore tests/VetManagement.Tests/VetManagement.Tests.csproj
           dotnet restore src/VetManagement.Staff.Web/VetManagement.Staff.Web.csproj
           dotnet restore src/VetManagement.Booking.Web/VetManagement.Booking.Web.csproj
-          dotnet restore sites/SPVetClinic/SPVetClinic.csproj
 
       - name: Build backend + tests (Api, Application, Infrastructure, Domain, Contracts, Staff.UI)
         run: dotnet build tests/VetManagement.Tests/VetManagement.Tests.csproj --no-restore
@@ -53,9 +52,6 @@ jobs:
 
       - name: Build public booking portal
         run: dotnet build src/VetManagement.Booking.Web/VetManagement.Booking.Web.csproj --no-restore
-
-      - name: Build clinic sites
-        run: dotnet build sites/SPVetClinic/SPVetClinic.csproj --no-restore
 
       - name: Test
         run: dotnet test tests/VetManagement.Tests/VetManagement.Tests.csproj --no-restore --no-build --verbosity minimal

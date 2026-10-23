@@ -19,6 +19,8 @@ Environment variable names use `__` for sections, e.g. `Payments__WebPayPlus__Ap
 | `Payments:WebPayPlus:CommerceCode`, `ApiKeySecret` | **ApiKeySecret is secret.** Issued by Transbank to the clinic. |
 | `Smtp:Host`, `Port`, `User`, `Pass`, `From`, `EnableSsl` | **Pass is secret.** Client emails (confirmation, reminders, changes). |
 | `RateLimits:PublicReadPerMinute`, `PublicWritePerMinute` | Public portal limits per IP (defaults 120 / 10). |
+| `RateLimits:UserPerMinute` | Requests per signed-in user per minute (default 100; development 1000 per 5 minutes). |
+| `RateLimits:LoginPerMinute` | Sign-in attempts per IP per minute (default 10), on top of the account lockout after 5 failures. |
 | `SeedAdmin:*` | First admin user; disable after first start. **Password is secret.** |
 | `Security:*` | HTTPS redirection / HSTS (on by default). |
 | `Proxy:ForwardLimit` | Number of proxies in front of the API (cloud front ends, CDN). Client IPs (rate limits) and the scheme (HTTPS redirect) are then read from `X-Forwarded-For` / `-Proto`. Azure App Service = `1`; App Service behind Cloudflare's proxy (orange cloud) = `2`. Unset on a server in the clinic's own network. Too low: the whole clinic shares one login limit; too high: a client can fake its IP. |
@@ -54,15 +56,16 @@ in again to see the new screens.
 Static Blazor WebAssembly app. Set `wwwroot/appsettings.json` → `ApiBaseUrl` to the API's public URL.
 Branding comes from the API at runtime, so the same build serves any clinic.
 
-## Clinic public site (e.g. `sites/SPVetClinic`)
+## Clinic public site
 
-`wwwroot/appsettings.json` → `BookingUrl`. `{returnUrl}` is replaced with the site's address:
+Each clinic's branded website lives in the clinic's own repository, not here. Its booking buttons open the booking
+portal with the site's address as `returnUrl`, so the portal can send clients back after booking (only to the origins in
+`BookingPortal:AllowedReturnOrigins`). A Blazor site can read the link from `wwwroot/appsettings.json` and replace
+`{returnUrl}` with its own address:
 
 ```json
 { "BookingUrl": "https://reservas.example.cl/?returnUrl={returnUrl}" }
 ```
-
-SPVetClinic production still points to its current external booking system until the clinic switches.
 
 ## Hosting on Azure
 
@@ -80,9 +83,15 @@ private repository, not here.
 2. App Service → Environment variables: the keys of the API table above (`ConnectionStrings__DefaultConnection`,
    `Jwt__Key`, `AllowedOrigins__0`, `Modules__Enabled__0`, `Localization__Culture`, ...), `ASPNETCORE_ENVIRONMENT=Production` and
    `Proxy__ForwardLimit`. The first start creates the schema (migrations run on start-up) and the `SeedAdmin` user.
+   The connection string uses the API's own database user ([below](#the-apis-database-user)), not the server admin.
 3. GitHub → Settings → Environments → one per clinic, with the variables and secrets listed at the top of
    `.github/workflows/deploy-azure.yml`; then Actions → **Deploy to Azure** → Run workflow with that environment. It runs
    the tests, publishes the API and the staff web, and writes the staff web's `config.json` (`ApiBaseUrl`, and `Culture` from the optional `STAFF_CULTURE` variable).
+   It also narrows the page's Content-Security-Policy so the browser connects only to that API (`connect-src`); the
+   repository's `index.html` allows any HTTPS site and localhost, for development.
+   The run logs show the clinic's resource names and URLs, and this repository is public: a clinic's private repository
+   can hold the environment and call this workflow instead (`workflow_call`, see the comment at its top), so its logs
+   and secrets stay there.
 4. Custom domains, DNS at Cloudflare: a `CNAME` per subdomain to the Azure default host name, plus the `TXT asuid.<sub>`
    record App Service asks for. Keep the records **DNS only (grey cloud)** until Azure has validated the domain and issued
    its certificate; with the proxy on afterwards, use SSL mode **Full (strict)** and set `Proxy:ForwardLimit` to 2.
@@ -92,29 +101,38 @@ private repository, not here.
 
 A hosted system needs the internet: with no connection at the clinic there's no system, unlike a server on its network.
 
-## Moving a clinic from the legacy SPLabHybrid app (San Pablo)
+### The API's database user
 
-The legacy app (EF migration `20250913015650_v0_0_3`, .NET 9 on IIS) has its own schema; this API can't migrate it in
-place. The data is copied into a **new** database and the legacy one is left untouched (going back = point IIS at the
-old site again). Tested on a copy of the clinic's database of 2026-10-06: every row of users, items, movements, audit
-log and exams arrived; legacy passwords keep working.
+The server admin can do anything on the server; the API only needs its own database. Connected to the clinic's
+database as the admin (e.g. the portal's Query editor), create a user for the API. Migrations run when the API starts,
+so besides reading and writing rows it changes the schema (`db_ddladmin`); it can't manage users or permissions.
 
-1. Server: install the **ASP.NET Core 10 Hosting Bundle**, then `iisreset` (it coexists with .NET 9).
-2. Backup of the legacy database (`COPY_ONLY`, so the clinic's own backup chain is not affected):
-   `sqlcmd -S localhost\SQLEXPRESS -E -Q "BACKUP DATABASE [SPVetClinic] TO DISK=N'...\SPVetClinic_before.bak' WITH COPY_ONLY, INIT"`
-3. Schema script, on the dev PC: `dotnet ef migrations script --idempotent --project src/VetManagement.Api -o schema.sql`
-4. On the server, create the new database and its schema, then copy the data. **Before the API starts**: on start-up it
-   seeds roles, and the copy refuses a database that isn't empty. Both commands need `-I` (filtered indexes).
-   ```
-   sqlcmd -S localhost\SQLEXPRESS -E -Q "CREATE DATABASE [VetManagement]"
-   sqlcmd -S localhost\SQLEXPRESS -E -I -d VetManagement -b -i schema.sql
-   sqlcmd -S localhost\SQLEXPRESS -E -I -d VetManagement -b -v Source=SPVetClinic -i deploy\migrate-from-splabhybrid.sql
-   ```
-   The last command prints source and target counts per table; they must match.
-5. Publish the API and staff web to new IIS sites (application pool: *No Managed Code*), with the keys of the table above.
-   New `Jwt:Key`, `Jwt:Issuer`, `Jwt:Audience`; `AllowedOrigins` = the staff web URL. The pool identity needs access to
-   the new database (as it had to the old one).
-6. Set `Modules:Enabled` to `["Inventory", "Clients", "Exams"]` (what San Pablo uses today).
-7. Everyone logs in again. On its first start the API turns the legacy roles into area roles with the same access
-   (Employee → the five areas, Manager → the five areas + Supervisor, Laboratorio → Laboratory); then the admin narrows
-   each person in Administration → Users. Items arrive with sale price = legacy price and cost 0 (all were 0).
+```sql
+CREATE USER [vetmanagement_api] WITH PASSWORD = '<long random password>', DEFAULT_SCHEMA = dbo;
+ALTER ROLE db_datareader ADD MEMBER [vetmanagement_api];
+ALTER ROLE db_datawriter ADD MEMBER [vetmanagement_api];
+ALTER ROLE db_ddladmin ADD MEMBER [vetmanagement_api];
+```
+
+Then `ConnectionStrings__DefaultConnection` uses `User ID=vetmanagement_api;Password=...`, and the admin's password
+stays out of the app's settings. Every migration applies with these roles.
+
+### Checks after the first deploy
+
+- App Service → Configuration: **Always on** and **Web sockets** on, **HTTPS only** on, minimum TLS 1.2. FTP basic
+  authentication can be off; SCM basic authentication stays on (the deploy's publish profile uses it).
+- Azure SQL → Networking: delete the firewall rules of the PCs used to import the data. *Allow Azure services* lets any
+  service hosted on Azure, of any customer, reach the server (it still needs a password); to narrow it, allow only the
+  App Service's outbound IP addresses (App Service → Properties), which change if the plan's tier changes.
+- Azure SQL → Metrics: *DTU percentage* over a busy week; Basic (5 DTU) staying near 100% means moving up to S0.
+- Cost Management → Budgets: an alert on the clinic's resource group.
+
+## Moving a clinic from another app
+
+Its data is copied into a **new** database and the old one is left untouched. The copy runs once the schema exists and
+**before the API's first start**: on start-up the API seeds roles, which would clash with the copied ones. The copy
+script depends on the app the clinic comes from, so it lives with that clinic's deployment, in its private repository.
+On Azure SQL, which can't restore a `.bak`, make the copy on another server and import it as a `.bacpac` (step 5 of
+[Hosting on Azure](#hosting-on-azure)). Users with the roles `Manager`, `Employee` or `Laboratorio` get area roles with
+the same access on the API's first start (`DataSeeder.LegacyRoles`); the admin then narrows each person in
+Administration → Users.

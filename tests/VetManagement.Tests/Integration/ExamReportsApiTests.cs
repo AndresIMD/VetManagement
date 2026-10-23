@@ -107,6 +107,43 @@ public class ExamReportsApiTests : IClassFixture<CustomWebAppFactory>
     }
 
     [Fact]
+    public async Task SectionTitles_PrintAboveTheirOwnResults_AndOnlyWhenOneOfThemHasAValue()
+    {
+        var (petId, examId) = await AddPetAndExamAsync(Species.Dog);
+        static ReportParameter Section(string code, string name) => new() { Code = code, Name = name, Kind = ReportParameterKind.Section };
+        static ReportParameter Value(string code) => new() { Code = code, Name = code, Unit = "mmHg" };
+        await AddTemplateAsync(new ExamReportTemplate
+        {
+            ExamId = examId, Title = "PRUEBA GASES EN SANGRE",
+            Parameters = [Section("gas", "VALOR DE LA SANGRE Y EL GAS"), Value("ph"), Value("pco2"), Section("oxi", "VALORES DE OXIMETRÍA"), Value("hct"),
+                Section("met", "VALOR DE LOS METABOLITOS"), Value("lac")]
+        });
+
+        var report = await CreateAsync(_employee, new
+        {
+            PetId = petId, ExamId = examId, ReceivedOn = new DateOnly(2026, 10, 21),
+            Values = new Dictionary<string, string> { ["ph"] = "7.33", ["pco2"] = "38.8", ["lac"] = "1.22" }
+        });
+
+        report.Results.Select(r => (r.Kind, r.Name)).Should().Equal(
+            (ReportParameterKind.Section, "VALOR DE LA SANGRE Y EL GAS"), (ReportParameterKind.Number, "ph"), (ReportParameterKind.Number, "pco2"),
+            (ReportParameterKind.Section, "VALOR DE LOS METABOLITOS"), (ReportParameterKind.Number, "lac"));
+
+        var valueForATitle = await _employee.PostAsJsonAsync("/api/exam-reports", new
+        {
+            PetId = petId, ExamId = examId, ReceivedOn = new DateOnly(2026, 10, 21), Values = new Dictionary<string, string> { ["oxi"] = "1" }
+        });
+        valueForATitle.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public void Template_WithOnlySectionTitles_HasNoParameters()
+        => new ExamReportTemplate
+        {
+            ExamId = 1, Title = "X", Parameters = [new ReportParameter { Code = "a", Name = "A", Kind = ReportParameterKind.Section }]
+        }.Validate().Should().ContainSingle().Which.Should().Contain("at least one parameter");
+
+    [Fact]
     public async Task WrittenInterpretation_ReplacesTheAutomaticOne_AndTemplateChangesDontAlterIssuedReports()
     {
         var (petId, examId) = await AddPetAndExamAsync(Species.Dog);
@@ -448,6 +485,85 @@ public class ExamReportsApiTests : IClassFixture<CustomWebAppFactory>
         settings.Validate().Should().HaveCount(valid ? 0 : 1);
     }
 
+    [Theory]
+    [InlineData(10.5, 10.5, true)]
+    [InlineData(8, 14, true)]
+    [InlineData(7.5, 10.5, false)]
+    [InlineData(10.5, 14.5, false)]
+    public void TextSizes_OfPatientDataAndResults_StayReadable(double patientPt, double resultsPt, bool valid)
+    {
+        var settings = new ExamReportSettings { PatientFontPt = patientPt, ResultsFontPt = resultsPt };
+
+        settings.Validate().Should().HaveCount(valid ? 0 : 1);
+    }
+
+    [Fact]
+    public void Design_SavedBeforeTextSizes_PrintsAtTheUsualSize()
+    {
+        var settings = SettingsJson.Deserialize<ExamReportSettings>("""{ "fontFamily": "Arial" }""");
+
+        settings.PatientFontPt.Should().Be(ExamReportSettings.DefaultFontPt);
+        settings.ResultsFontPt.Should().Be(ExamReportSettings.DefaultFontPt);
+    }
+
+    [Fact]
+    public void Design_SavedBeforeTheOption_KeepsThePatientDataOnLaterPages()
+    {
+        SettingsJson.Deserialize<ExamReportSettings>("""{ "fontFamily": "Arial" }""").PatientDataOnLaterPages.Should().BeTrue();
+        SettingsJson.Deserialize<ExamReportSettings>("""{ "patientDataOnLaterPages": false }""").PatientDataOnLaterPages.Should().BeFalse();
+    }
+
+    [Fact]
+    public void FooterMarkup_KeepsGaps_AndPrintsDoubleAsterisksInBold()
+    {
+        ReportText.Lines("\r\n**Clínica Demo**\r\nRUT: 11.111.111-1\r\n\r\n  Calle 1  \n\n").Should().Equal("**Clínica Demo**", "RUT: 11.111.111-1", "", "Calle 1");
+        ReportText.Lines("  ").Should().BeEmpty();
+
+        ReportText.Spans("Fono: **+56 9 1234 5678** - **24 h**").Should().Equal(
+            new ReportTextSpan("Fono: ", false), new ReportTextSpan("+56 9 1234 5678", true), new ReportTextSpan(" - ", false), new ReportTextSpan("24 h", true));
+        ReportText.Spans("5 ** 2").Should().Equal(new ReportTextSpan("5 ", false), new ReportTextSpan("** 2", false));
+    }
+
+    [Theory]
+    [InlineData("EXAMEN Gases en sangre", "EXAMEN GASES EN SANGRE")]
+    [InlineData("PRUEBA Coagulación", "PRUEBA COAGULACIÓN")]
+    [InlineData(" Panel de coagulación ", "Panel de coagulación")]
+    [InlineData("T4 total", "T4 total")]
+    [InlineData("", "")]
+    public void Title_StartingInCapitals_PrintsAllInCapitals(string title, string printed)
+        => ReportText.Title(title).Should().Be(printed);
+
+    [Fact]
+    public void Footer_SavedAsLines_IsReadAsAParagraph_WithTheNameInBold()
+    {
+        var settings = SettingsJson.Deserialize<ExamReportSettings>("""{ "footerLines": ["Clínica Demo", "Calle 1"] }""");
+
+        settings.Footer.Should().Be("**Clínica Demo**\nCalle 1");
+        SettingsJson.Serialize(settings).Should().NotContain("footerLines");
+        SettingsJson.Deserialize<ExamReportSettings>("""{ "footer": "Nueva", "footerLines": ["Vieja"] }""").Footer.Should().Be("Nueva");
+
+        settings.Footer = string.Join("\n", Enumerable.Repeat("x", ExamReportSettings.MaxFooterLines + 1));
+        settings.Validate().Should().ContainSingle().Which.Should().Contain("footer lines");
+    }
+
+    [Fact]
+    public async Task Footer_KeepsItsLineBreaks_AndBold_WhenSaved()
+    {
+        const string footer = "**CLÍNICA DEMO**\nRUT: 11.111.111-1\n\nEl resultado no es un diagnóstico.\nFono: **+56 9 1234 5678**";
+        var document = (await _admin.GetFromJsonAsync<ExamReportSettingsDocument>("/api/exam-reports/settings"))!;
+        var settings = document.Settings.Deserialize<ExamReportSettings>(SettingsJson.Options)!;
+        settings.Footer = footer;
+
+        (await _admin.PutAsJsonAsync("/api/exam-reports/settings", new ExamReportSettingsDocument
+        {
+            Version = document.Version,
+            Settings = JsonSerializer.SerializeToElement(settings, SettingsJson.Options)
+        })).EnsureSuccessStatusCode();
+
+        var saved = (await _admin.GetFromJsonAsync<ExamReportSettingsDocument>("/api/exam-reports/settings"))!;
+        saved.Settings.Deserialize<ExamReportSettings>(SettingsJson.Options)!.Footer.Should().Be(footer);
+    }
+
     [Fact]
     public async Task ExamWithoutTemplate_OrUnknownParameter_IsRejected()
     {
@@ -477,6 +593,12 @@ public class ExamReportsApiTests : IClassFixture<CustomWebAppFactory>
         var served = await _employee.GetAsync("/api/exam-reports/images/ReportLogo");
         served.Content.Headers.ContentType!.MediaType.Should().Be("image/png");
         (await served.Content.ReadAsByteArrayAsync()).Should().Equal(png);
+
+        // Revalidated on each use: unchanged, the browser keeps its copy (304, no body).
+        served.Headers.CacheControl!.NoCache.Should().BeTrue();
+        using var again = new HttpRequestMessage(HttpMethod.Get, "/api/exam-reports/images/ReportLogo");
+        again.Headers.IfNoneMatch.Add(served.Headers.ETag!);
+        (await _employee.SendAsync(again)).StatusCode.Should().Be(HttpStatusCode.NotModified);
     }
 
     [Theory]

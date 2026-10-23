@@ -3,6 +3,7 @@
 # ═══════════════════════════════════════════════════════════
 .github/*
 !.github/workflows/
+!.github/dependabot.yml
 .ToDo/
 .docs/
 .private/

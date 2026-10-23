@@ -17,7 +17,7 @@ namespace VetManagement.Api.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.10")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -243,12 +243,17 @@ namespace VetManagement.Api.Migrations
 
                     b.Property<string>("EntityName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("User")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("EntityId", "EntityName");
+
+                    b.HasIndex("EntityName", "Date");
 
                     b.ToTable("AuditLogs");
                 });
@@ -755,6 +760,148 @@ namespace VetManagement.Api.Migrations
                     b.ToTable("ClinicSettings");
                 });
 
+            modelBuilder.Entity("VetManagement.Domain.Consumption.ConsumptionEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Charge")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("ContainerMl")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("Discarded")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("ItemId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ItemName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<int>("SheetId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UnitPrice")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UsedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemId");
+
+                    b.HasIndex("SheetId");
+
+                    b.ToTable("ConsumptionEntries");
+                });
+
+            modelBuilder.Entity("VetManagement.Domain.Consumption.ConsumptionPricing", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Charge")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("ContainerMl")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<bool>("Controlled")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("ItemId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("PricePerMl")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemId")
+                        .IsUnique();
+
+                    b.ToTable("ConsumptionPricings");
+                });
+
+            modelBuilder.Entity("VetManagement.Domain.Consumption.ConsumptionSheet", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("ClosedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ClosedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("OpenedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("OpenedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("OwnerName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("PatientName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("PetId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClosedAtUtc");
+
+                    b.HasIndex("PetId");
+
+                    b.ToTable("ConsumptionSheets");
+                });
+
             modelBuilder.Entity("VetManagement.Domain.Exams.Exam", b =>
                 {
                     b.Property<int>("Id")
@@ -875,6 +1022,8 @@ namespace VetManagement.Api.Migrations
 
                     b.HasIndex("PetId");
 
+                    b.HasIndex("ReceivedOn");
+
                     b.ToTable("ExamReports");
                 });
 
@@ -952,6 +1101,32 @@ namespace VetManagement.Api.Migrations
                     b.ToTable("ExternalLabs");
                 });
 
+            modelBuilder.Entity("VetManagement.Domain.Exams.LabMachine", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Brand")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Brand", "Model")
+                        .IsUnique();
+
+                    b.ToTable("LabMachines");
+                });
+
             modelBuilder.Entity("VetManagement.Domain.Inventory.InventoryMovement", b =>
                 {
                     b.Property<int>("Id")
@@ -982,6 +1157,8 @@ namespace VetManagement.Api.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Date");
 
                     b.HasIndex("ItemId");
 
@@ -1033,6 +1210,8 @@ namespace VetManagement.Api.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Barcode");
 
                     b.ToTable("Items");
 
@@ -1384,6 +1563,32 @@ namespace VetManagement.Api.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("VetManagement.Domain.Consumption.ConsumptionEntry", b =>
+                {
+                    b.HasOne("VetManagement.Domain.Consumption.ConsumptionSheet", null)
+                        .WithMany("Entries")
+                        .HasForeignKey("SheetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("VetManagement.Domain.Consumption.ConsumptionPricing", b =>
+                {
+                    b.HasOne("VetManagement.Domain.Inventory.Item", null)
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("VetManagement.Domain.Consumption.ConsumptionSheet", b =>
+                {
+                    b.HasOne("VetManagement.Domain.Clients.Pet", null)
+                        .WithMany()
+                        .HasForeignKey("PetId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
             modelBuilder.Entity("VetManagement.Domain.Exams.ExamReport", b =>
                 {
                     b.OwnsOne("VetManagement.Domain.Exams.CriteriaTable", "Criteria", b1 =>
@@ -1653,6 +1858,11 @@ namespace VetManagement.Api.Migrations
             modelBuilder.Entity("VetManagement.Domain.Clients.Client", b =>
                 {
                     b.Navigation("Pets");
+                });
+
+            modelBuilder.Entity("VetManagement.Domain.Consumption.ConsumptionSheet", b =>
+                {
+                    b.Navigation("Entries");
                 });
 
             modelBuilder.Entity("VetManagement.Domain.Exams.ExamPerformed", b =>

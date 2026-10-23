@@ -24,8 +24,8 @@ public class AuditLogRepository(AppDbContext context) : Repository<AuditLog>(con
 
         if (!string.IsNullOrWhiteSpace(user))
         {
-            var term = user.Trim();
-            query = query.Where(a => a.User != null && a.User.Contains(term, StringComparison.OrdinalIgnoreCase));
+            var term = user.Trim().ToLower();
+            query = query.Where(a => a.User != null && a.User.ToLower().Contains(term));
         }
 
         if (from.HasValue)
@@ -53,18 +53,18 @@ public class AuditLogRepository(AppDbContext context) : Repository<AuditLog>(con
     public async Task<(List<AuditLog> Items, int TotalCount)> GetFilteredPagedAsync(
         int page = 0,
         int pageSize = 25,
-        int? entityId = null,
+        IReadOnlyCollection<int>? entityIds = null,
         string? entityName = null,
-        AuditActionType? action = null,
+        IReadOnlyCollection<AuditActionType>? actions = null,
         string? user = null,
         DateTime? from = null,
         DateTime? to = null)
     {
         var query = _context.AuditLogs.AsNoTracking();
 
-        if (entityId.HasValue)
+        if (entityIds is { Count: > 0 })
         {
-            query = query.Where(a => a.EntityId == entityId.Value);
+            query = query.Where(a => entityIds.Contains(a.EntityId));
         }
 
         if (!string.IsNullOrWhiteSpace(entityName))
@@ -72,15 +72,15 @@ public class AuditLogRepository(AppDbContext context) : Repository<AuditLog>(con
             query = query.Where(a => a.EntityName == entityName);
         }
 
-        if (action.HasValue)
+        if (actions is { Count: > 0 })
         {
-            query = query.Where(a => a.Action == action.Value);
+            query = query.Where(a => actions.Contains(a.Action));
         }
 
         if (!string.IsNullOrWhiteSpace(user))
         {
-            var term = user.Trim();
-            query = query.Where(a => a.User != null && a.User.Contains(term, StringComparison.OrdinalIgnoreCase));
+            var term = user.Trim().ToLower();
+            query = query.Where(a => a.User != null && a.User.ToLower().Contains(term));
         }
 
         if (from.HasValue)
