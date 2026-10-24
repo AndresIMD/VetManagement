@@ -99,7 +99,8 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
     }
 
     /// <summary>Corrects a report: values are re-evaluated against the template as it is now.</summary>
-    public async Task<ExamReportResultStatus> UpdateAsync(int id, ExamReportInput input, string userName)
+    /// <param name="auditNote">Heads the audit entry, e.g. to tell a format update from a correction.</param>
+    public async Task<ExamReportResultStatus> UpdateAsync(int id, ExamReportInput input, string userName, string? auditNote = null)
     {
         var report = await unitOfWork.ExamReports.GetByIdAsync(id);
         if (report is null)
@@ -112,8 +113,32 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
         report.UpdatedBy = userName;
 
         await unitOfWork.SaveChangesAsync();
-        await audit.LogAsync(nameof(ExamReport), report.Id, AuditActionType.Edit, $"Before: {before}\nAfter: {JsonSerializer.Serialize(report)}", userName);
+        await audit.LogAsync(nameof(ExamReport), report.Id, AuditActionType.Edit, $"{auditNote}Before: {before}\nAfter: {JsonSerializer.Serialize(report)}", userName);
         return new ExamReportResultStatus(ExamReportStatus.Done, report.Id);
+    }
+
+    /// <summary>
+    /// "Update format": applies the exam's template and catalog as they are now (title, printed blocks, names, units,
+    /// ranges and flags, bars, sections, method) to the report's own data, as a correction that changes nothing would.
+    /// Values (as typed), patient, dates, referring vet, lot, a written interpretation and what it took from inventory stay;
+    /// refused, leaving the report as it was, when a value's parameter is no longer in the template.
+    /// </summary>
+    public async Task<ExamReportResultStatus> RenewAsync(int id, string userName)
+    {
+        var report = await unitOfWork.ExamReports.GetByIdAsNoTrackingAsync(id);
+        if (report is null)
+            return new ExamReportResultStatus(ExamReportStatus.NotFound);
+
+        var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var line in report.Results.Where(r => r.Kind.TakesValue()))
+            if (string.IsNullOrWhiteSpace(line.Code) || !values.TryAdd(line.Code, line.Value))
+                return new ExamReportResultStatus(ExamReportStatus.Invalid,
+                    Error: Texts.T("This report can't be updated automatically; correct it instead."));
+
+        // A typed patient goes as typed: the report keeps its provisional pet.
+        var input = new ExamReportInput(report.Patient is null ? report.PetId : null, report.Patient, report.ExamId, report.ReceivedOn,
+            report.ReferringVet, values, report.Interpretation, report.LotNumber);
+        return await UpdateAsync(id, input, userName, "Format updated to the current template.\n");
     }
 
     /// <summary>Deletes a report; what it took from inventory goes back to stock.</summary>

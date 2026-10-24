@@ -51,6 +51,12 @@ public class ExamReportsController(ExamReportService service, ExamReportSettings
     public async Task<IActionResult> UpdateAsync(int id, [FromBody] ExamReportRequest request)
         => ToActionResult(await service.UpdateAsync(id, ToInput(request), GetUserName()));
 
+    /// <summary>"Update format": applies the exam's current template to the report's own data (values, patient and dates stay).</summary>
+    [HttpPost("{id:int}/renew")]
+    [Authorize(Policy = "ExamsPerformed.Update")]
+    public async Task<IActionResult> RenewAsync(int id)
+        => ToActionResult(await service.RenewAsync(id, GetUserName()));
+
     /// <summary>Patients typed into earlier reports, to fill the form again.</summary>
     [HttpGet("provisional-patients")]
     [Authorize(Policy = "ExamsPerformed.Create")]

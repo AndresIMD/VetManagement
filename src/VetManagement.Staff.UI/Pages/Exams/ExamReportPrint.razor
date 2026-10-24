@@ -25,6 +25,9 @@
             <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Print" OnClick="PrintAsync">@L["Print / Save PDF"]</MudButton>
             <AuthorizeView Policy="ExamsPerformed.Update">
                 <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Edit" Href="@($"exam-reports/{Id}/edit")">@L["Correct"]</MudButton>
+                <MudTooltip Text="@L["Apply the exam's current template to this report, keeping its data"]">
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Autorenew" Disabled="_renewing" OnClick="RenewAsync">@L["Update format"]</MudButton>
+                </MudTooltip>
             </AuthorizeView>
             <AuthorizeView Policy="ExamsPerformed.Create">
                 <MudTooltip Text="@L["Another exam for this patient, with its data already filled in"]">
@@ -137,6 +140,35 @@
     private async Task PrintAsync()
         => await Js.InvokeVoidAsync("appPrint.element", ExamReportSheet.ElementId, ExamReportSheet.FileName(_report!),
             ExamReportSheet.PageSize(_settings!));
+
+    private bool _renewing;
+
+    /// <summary>Applies the exam's current template to the report after a confirmation that says what changes and what stays.</summary>
+    private async Task RenewAsync()
+    {
+        var parameters = new DialogParameters<ConfirmModal>
+        {
+            { x => x.Title, L["Update format"].Value },
+            { x => x.Message, L["The exam's current template will be applied: title, printed blocks, names, units, ranges, bars and sections. The values, patient, dates, referring vet, lot, interpretation and what was deducted from inventory stay as they are. If the template's ranges changed, the report may flag values differently."].Value },
+            { x => x.ButtonConfirmText, L["Update"].Value },
+            { x => x.ButtonCancelText, L["Cancel"].Value },
+            { x => x.TitleIcon, Icons.Material.Filled.Autorenew }
+        };
+        var dialog = await DialogService.ShowAsync<ConfirmModal>(L["Update format"], parameters, new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small });
+        if (await dialog.Result is not { Canceled: false })
+            return;
+
+        _renewing = true;
+        var result = await ReportsApi.RenewAsync(Id);
+        _renewing = false;
+        if (!result.Ok)
+        {
+            Snackbar.Add(result.Error ?? L["The report could not be updated."], Severity.Error);
+            return;
+        }
+        Snackbar.Add(L["Report updated to the current format."], Severity.Success);
+        _report = await ReportsApi.GetAsync(Id) ?? _report;
+    }
 
     private bool _stockBusy;
 
