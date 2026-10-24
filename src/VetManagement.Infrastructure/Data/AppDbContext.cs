@@ -111,6 +111,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             e.Property(r => r.Interpretation).HasMaxLength(2000);
             e.Property(r => r.CreatedBy).HasMaxLength(256);
             e.Property(r => r.UpdatedBy).HasMaxLength(256);
+            // The product taken from inventory is copied by name, like a visit's supplies: no key to the item.
+            e.Property(r => r.StockItemName).HasMaxLength(200);
+            e.Property(r => r.StockDeductedBy).HasMaxLength(256);
+            e.Ignore(r => r.StockDeducted);
             e.OwnsOne(r => r.Sections);
             e.OwnsOne(r => r.Patient, p =>
             {

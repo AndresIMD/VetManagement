@@ -1,6 +1,7 @@
 using System.Text.Json;
 using VetManagement.Application.Configuration;
 using VetManagement.Application.Contracts.Persistence;
+using VetManagement.Application.Inventory;
 using VetManagement.Application.Services;
 using VetManagement.Domain.Clients;
 using VetManagement.Domain.Configuration;
@@ -22,8 +23,11 @@ public class ExamReportSettingsService(IUnitOfWork unitOfWork, AuditService audi
 public sealed record ExamReportInput(int? PetId, ReportPatient? Patient, int ExamId, DateOnly ReceivedOn, string? ReferringVet,
     IReadOnlyDictionary<string, string> Values, string? Interpretation, string? LotNumber = null);
 
+/// <summary>An inventory product a report can deduct: its exam's linked one, units per exam and the stock now.</summary>
+public sealed record ExamReportStock(string ItemName, int Quantity, int InStock);
+
 /// <summary>A report with its registered pet and owner; both null when the patient was typed into the report.</summary>
-public sealed record ExamReportView(ExamReport Report, Pet? Pet, Client? Owner, string? ExamName = null);
+public sealed record ExamReportView(ExamReport Report, Pet? Pet, Client? Owner, string? ExamName = null, ExamReportStock? StockToDeduct = null);
 
 public enum ExamReportStatus
 {
@@ -40,19 +44,24 @@ public sealed record ExamReportResultStatus(ExamReportStatus Status, int? Id = n
 /// </summary>
 public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService settingsService, AuditService audit, TimeProvider clock)
 {
-    public async Task<ExamReportView?> GetAsync(int id)
+    /// <param name="withStock">Also look up the exam's inventory product the report can deduct (the Inventory module is on).</param>
+    public async Task<ExamReportView?> GetAsync(int id, bool withStock = false)
     {
         var report = await unitOfWork.ExamReports.GetByIdAsNoTrackingAsync(id);
         if (report is null)
             return null;
         var exam = await unitOfWork.Exams.GetByIdAsNoTrackingAsync(report.ExamId);
+        var stock = withStock && !report.StockDeducted && exam?.ItemId is int itemId
+            && await unitOfWork.Items.GetByIdAsNoTrackingAsync(itemId) is { } item
+            ? new ExamReportStock(item.Name, exam.ItemQuantity, item.Stock)
+            : null;
         // A typed patient prints as typed; its provisional pet only links the reports' history.
         if (report.Patient is not null || report.PetId is not int petId)
-            return new ExamReportView(report, null, null, exam?.Name);
+            return new ExamReportView(report, null, null, exam?.Name, stock);
         var pet = await unitOfWork.Pets.GetByIdAsNoTrackingAsync(petId);
         if (pet is null)
             return null;
-        return new ExamReportView(report, pet, await unitOfWork.Clients.GetByIdAsNoTrackingAsync(pet.OwnerId), exam?.Name);
+        return new ExamReportView(report, pet, await unitOfWork.Clients.GetByIdAsNoTrackingAsync(pet.OwnerId), exam?.Name, stock);
     }
 
     /// <summary>Reports of a pet, or the latest 200 of the clinic; newest first.</summary>
@@ -107,17 +116,113 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
         return new ExamReportResultStatus(ExamReportStatus.Done, report.Id);
     }
 
+    /// <summary>Deletes a report; what it took from inventory goes back to stock.</summary>
     public async Task<ExamReportResultStatus> DeleteAsync(int id, string userName)
     {
-        var report = await unitOfWork.ExamReports.GetByIdAsync(id);
-        if (report is null)
-            return new ExamReportResultStatus(ExamReportStatus.NotFound);
+        string? snapshot = null;
+        var result = await unitOfWork.ExecuteExclusiveAsync(Stock.LockKey, async () =>
+        {
+            var report = await unitOfWork.ExamReports.GetByIdAsync(id);
+            if (report is null)
+                return new ExamReportResultStatus(ExamReportStatus.NotFound);
 
-        var snapshot = JsonSerializer.Serialize(report);
-        unitOfWork.ExamReports.Remove(report);
-        await unitOfWork.SaveChangesAsync();
-        await audit.LogAsync(nameof(ExamReport), id, AuditActionType.Delete, snapshot, userName);
-        return new ExamReportResultStatus(ExamReportStatus.Done, id);
+            snapshot = JsonSerializer.Serialize(report);
+            if (report.StockDeducted)
+                await PutStockBackAsync(report, "Exam report #{0} – {1} (deleted)", userName);
+            unitOfWork.ExamReports.Remove(report);
+            await unitOfWork.SaveChangesAsync();
+            return new ExamReportResultStatus(ExamReportStatus.Done, id);
+        });
+
+        if (result.Status == ExamReportStatus.Done)
+            await audit.LogAsync(nameof(ExamReport), id, AuditActionType.Delete, snapshot!, userName);
+        return result;
+    }
+
+    /// <summary>
+    /// Takes the exam's inventory product (e.g. its test kit) for this report, once: a movement "Exam report #N – PATIENT",
+    /// under the clinic-wide stock lock like every stock change; refused when the report already took it or stock is short.
+    /// </summary>
+    public async Task<ExamReportResultStatus> DeductStockAsync(int id, string userName)
+    {
+        var now = clock.GetUtcNow().UtcDateTime;
+        string? taken = null;
+        var result = await unitOfWork.ExecuteExclusiveAsync(Stock.LockKey, async () =>
+        {
+            var report = await unitOfWork.ExamReports.GetByIdAsync(id);
+            if (report is null)
+                return new ExamReportResultStatus(ExamReportStatus.NotFound);
+            if (report.StockDeducted)
+                return new ExamReportResultStatus(ExamReportStatus.Invalid,
+                    Error: Texts.T("This report already took '{0}' from inventory.", report.StockItemName ?? string.Empty));
+            var exam = await unitOfWork.Exams.GetByIdAsNoTrackingAsync(report.ExamId);
+            if (exam?.ItemId is not int itemId)
+                return new ExamReportResultStatus(ExamReportStatus.Invalid, Error: Texts.T("The exam has no inventory product to deduct."));
+            var item = await unitOfWork.Items.GetByIdAsNoTrackingAsync(itemId);
+            if (item is null)
+                return new ExamReportResultStatus(ExamReportStatus.Invalid, Error: Texts.T("The inventory item doesn't exist."));
+            if (exam.ItemQuantity > item.Stock)
+                return new ExamReportResultStatus(ExamReportStatus.Invalid, Error: Texts.T("Only {0} of '{1}' left in stock.", item.Stock, item.Name));
+
+            await Stock.MoveAsync(unitOfWork, item.Id, exam.ItemQuantity, InventoryMovementType.Egress,
+                await StockReasonAsync(report, "Exam report #{0} – {1}"), userName, now);
+            (report.StockItemId, report.StockItemName, report.StockQuantity, report.StockDeductedAtUtc, report.StockDeductedBy)
+                = (item.Id, item.Name, exam.ItemQuantity, now, userName);
+            await unitOfWork.SaveChangesAsync();
+            taken = $"item {item.Id} '{item.Name}' x{exam.ItemQuantity}";
+            return new ExamReportResultStatus(ExamReportStatus.Done, id);
+        });
+
+        if (result.Status == ExamReportStatus.Done)
+            await audit.LogAsync(nameof(ExamReport), id, AuditActionType.Edit, $"Deducted from inventory: {taken}", userName);
+        return result;
+    }
+
+    /// <summary>Puts back what the report took from inventory (taken by mistake); it can be deducted again later.</summary>
+    public async Task<ExamReportResultStatus> ReturnStockAsync(int id, string userName)
+    {
+        string? returned = null;
+        var result = await unitOfWork.ExecuteExclusiveAsync(Stock.LockKey, async () =>
+        {
+            var report = await unitOfWork.ExamReports.GetByIdAsync(id);
+            if (report is null)
+                return new ExamReportResultStatus(ExamReportStatus.NotFound);
+            if (!report.StockDeducted)
+                return new ExamReportResultStatus(ExamReportStatus.Invalid, Error: Texts.T("This report took nothing from inventory."));
+
+            returned = $"item {report.StockItemId} '{report.StockItemName}' x{report.StockQuantity}";
+            await PutStockBackAsync(report, "Exam report #{0} – {1} (returned)", userName);
+            await unitOfWork.SaveChangesAsync();
+            return new ExamReportResultStatus(ExamReportStatus.Done, id);
+        });
+
+        if (result.Status == ExamReportStatus.Done)
+            await audit.LogAsync(nameof(ExamReport), id, AuditActionType.Edit, $"Returned to inventory: {returned}", userName);
+        return result;
+    }
+
+    /// <summary>Moves what the report took back into stock (unless the product no longer exists) and clears it from the report.</summary>
+    private async Task PutStockBackAsync(ExamReport report, string reasonFormat, string userName)
+    {
+        await Stock.MoveAsync(unitOfWork, report.StockItemId!.Value, report.StockQuantity, InventoryMovementType.Ingress,
+            await StockReasonAsync(report, reasonFormat), userName, clock.GetUtcNow().UtcDateTime);
+        (report.StockItemId, report.StockItemName, report.StockQuantity, report.StockDeductedAtUtc, report.StockDeductedBy) = (null, null, 0, null, null);
+    }
+
+    /// <summary>
+    /// The movement's reason: the report and its patient as the PDF names them, pet and owner's surname in capitals
+    /// ("Exam report #123 – ROCKY PARKER"), cut to fit the movement's 200 characters.
+    /// </summary>
+    private async Task<string> StockReasonAsync(ExamReport report, string format)
+    {
+        string? name = null, lastName = null;
+        if (report.Patient is { } typed)
+            (name, lastName) = (typed.Name, typed.OwnerLastName);
+        else if (report.PetId is int petId && await unitOfWork.Pets.GetByIdAsNoTrackingAsync(petId) is { } pet)
+            (name, lastName) = (pet.Name, (await unitOfWork.Clients.GetByIdAsNoTrackingAsync(pet.OwnerId))?.LastName);
+        var patient = string.Join(" ", new[] { name, lastName }.Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s!.Trim()))
+            .ToUpperInvariant();
+        return Texts.T(format, report.Id, patient.Length switch { 0 => "—", > 120 => patient[..120], _ => patient });
     }
 
     public async Task<ClinicImage?> GetImageAsync(ClinicImageKind kind)

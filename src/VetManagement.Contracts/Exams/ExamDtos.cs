@@ -24,6 +24,21 @@ public sealed class ExamRequest
 
     [Range(0, int.MaxValue)]
     public int SellPrice { get; init; }
+
+    /// <summary>Inventory product one exam uses up (e.g. its test kit), deducted from the report; null = none. Needs the Inventory module.</summary>
+    [Range(1, int.MaxValue)]
+    public int? ItemId { get; init; }
+
+    [Range(1, 1000)]
+    public int ItemQuantity { get; init; } = 1;
+}
+
+/// <summary>An inventory product the catalog can link to an exam, with its current stock.</summary>
+public sealed class ExamStockItemDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public int Stock { get; set; }
 }
 
 /// <summary>Body for creating or updating an external lab.</summary>
@@ -91,6 +106,10 @@ public sealed class ExamDto
     public SampleContainer SampleContainer { get; set; }
     public int BuyPrice { get; set; }
     public int SellPrice { get; set; }
+    /// <summary>The linked inventory product (null when none, or the Inventory module is off) and units per exam.</summary>
+    public int? ItemId { get; set; }
+    public string? ItemName { get; set; }
+    public int ItemQuantity { get; set; } = 1;
 }
 
 public sealed class ExternalLabDto

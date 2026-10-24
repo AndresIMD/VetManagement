@@ -917,6 +917,12 @@ namespace VetManagement.Api.Migrations
                     b.Property<int>("BuyPrice")
                         .HasColumnType("int");
 
+                    b.Property<int?>("ItemId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ItemQuantity")
+                        .HasColumnType("int");
+
                     b.Property<string>("Machine")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -1005,6 +1011,23 @@ namespace VetManagement.Api.Migrations
                     b.Property<string>("ReferringVet")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("StockDeductedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("StockDeductedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<int?>("StockItemId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StockItemName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("StockQuantity")
+                        .HasColumnType("int");
 
                     b.Property<string>("Title")
                         .IsRequired()

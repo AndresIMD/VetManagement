@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
+using VetManagement.Api.Authorization;
 using VetManagement.Application.Configuration;
 using VetManagement.Application.Exams;
 using VetManagement.Contracts.Exams;
@@ -14,16 +15,31 @@ namespace VetManagement.Api.Controllers.Exams;
 /// <summary>Printable exam reports, their per-exam templates and the clinic's report branding.</summary>
 [Route("api/exam-reports")]
 [Authorize(Policy = "ExamsPerformed.Read")]
-public class ExamReportsController(ExamReportService service, ExamReportSettingsService settingsService) : ApiControllerBase
+public class ExamReportsController(ExamReportService service, ExamReportSettingsService settingsService, EnabledModules modules) : ApiControllerBase
 {
     /// <summary>Reports of a pet, or the clinic's latest 200; newest first.</summary>
     [HttpGet]
     public async Task<ActionResult<List<ExamReportDto>>> ListAsync([FromQuery] int? petId)
         => Ok((await service.ListAsync(petId)).Select(ToDto).ToList());
 
+    /// <summary>A report; with the Inventory module on, also the exam's product it can deduct.</summary>
     [HttpGet("{id:int}")]
     public async Task<ActionResult<ExamReportDto>> GetAsync(int id)
-        => await service.GetAsync(id) is { } view ? Ok(ToDto(view)) : NotFound();
+        => await service.GetAsync(id, withStock: modules.IsEnabled(AppModule.Inventory)) is { } view ? Ok(ToDto(view)) : NotFound();
+
+    /// <summary>Deducts the exam's inventory product (e.g. its test kit) for this report, once; whoever makes reports can.</summary>
+    [HttpPost("{id:int}/stock")]
+    [Authorize(Policy = "ExamsPerformed.Create")]
+    [RequiresModule(AppModule.Inventory)]
+    public async Task<IActionResult> DeductStockAsync(int id)
+        => ToActionResult(await service.DeductStockAsync(id, GetUserName()));
+
+    /// <summary>Puts back what the report took from inventory; a correction, like editing the report.</summary>
+    [HttpDelete("{id:int}/stock")]
+    [Authorize(Policy = "ExamsPerformed.Update")]
+    [RequiresModule(AppModule.Inventory)]
+    public async Task<IActionResult> ReturnStockAsync(int id)
+        => ToActionResult(await service.ReturnStockAsync(id, GetUserName()));
 
     [HttpPost]
     [Authorize(Policy = "ExamsPerformed.Create")]
@@ -184,7 +200,17 @@ public class ExamReportsController(ExamReportService service, ExamReportSettings
         OwnerName = view.Owner is { } owner
             ? $"{owner.Name} {owner.LastName}".Trim()
             : NullIfEmpty($"{view.Report.Patient?.OwnerName} {view.Report.Patient?.OwnerLastName}".Trim()),
-        OwnerLastName = view.Owner?.LastName ?? view.Report.Patient?.OwnerLastName
+        OwnerLastName = view.Owner?.LastName ?? view.Report.Patient?.OwnerLastName,
+        StockToDeduct = view.StockToDeduct is { } stock
+            ? new ExamReportStockDto { ItemName = stock.ItemName, Quantity = stock.Quantity, InStock = stock.InStock }
+            : null,
+        StockDeducted = view.Report.StockDeducted
+            ? new ExamReportStockDto
+            {
+                ItemName = view.Report.StockItemName ?? string.Empty, Quantity = view.Report.StockQuantity,
+                AtUtc = view.Report.StockDeductedAtUtc, By = view.Report.StockDeductedBy
+            }
+            : null
     };
 
     private static ExamReportPatientDto ToPatientDto(ReportPatient p) => new()

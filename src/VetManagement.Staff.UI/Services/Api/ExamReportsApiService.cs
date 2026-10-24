@@ -42,6 +42,14 @@ public class ExamReportsApiService(HttpClient http)
     public async Task<ApiResult> DeleteAsync(int id)
         => await ApiResult.FromResponseAsync(await http.DeleteAsync(string.Format(ApiRouteConstants.EXAM_REPORT_BY_ID, id)));
 
+    /// <summary>Deducts the exam's inventory product (e.g. its test kit) for the report.</summary>
+    public async Task<ApiResult> DeductStockAsync(int id)
+        => await ApiResult.FromResponseAsync(await http.PostAsync(string.Format(ApiRouteConstants.EXAM_REPORT_STOCK, id), null));
+
+    /// <summary>Puts back what the report took from inventory.</summary>
+    public async Task<ApiResult> ReturnStockAsync(int id)
+        => await ApiResult.FromResponseAsync(await http.DeleteAsync(string.Format(ApiRouteConstants.EXAM_REPORT_STOCK, id)));
+
     public async Task<ExamReportSettingsState> GetSettingsAsync()
     {
         var document = await http.GetFromJsonAsync<ExamReportSettingsDocument>(ApiRouteConstants.EXAM_REPORT_SETTINGS)

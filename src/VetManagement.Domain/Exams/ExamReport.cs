@@ -53,6 +53,18 @@ public class ExamReport : Entity<int>
 
     public string? UpdatedBy { get; set; }
 
+    /// <summary>
+    /// The inventory product this report took ("deduct from inventory"), with its name and quantity at the time, so returning
+    /// it puts back exactly that whatever the catalog says later. Null when nothing was taken, or it was returned.
+    /// </summary>
+    public int? StockItemId { get; set; }
+    public string? StockItemName { get; set; }
+    public int StockQuantity { get; set; }
+    public DateTime? StockDeductedAtUtc { get; set; }
+    public string? StockDeductedBy { get; set; }
+
+    public bool StockDeducted => StockItemId is not null;
+
     /// <summary>The band labels: just the label for a one-parameter exam, "Name: label" lines otherwise.</summary>
     public static string? InterpretationFrom(IReadOnlyList<ExamReportResult> results)
     {

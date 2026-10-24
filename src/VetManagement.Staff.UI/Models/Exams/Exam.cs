@@ -28,4 +28,13 @@ public class Exam
 
     [Range(0, int.MaxValue, ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.PriceNotNegative))]
     public int SellPrice { get; set; }
+
+    /// <summary>Inventory product one exam uses up (e.g. its test kit), which its reports can deduct; null = none.</summary>
+    public int? ItemId { get; set; }
+
+    /// <summary>The linked product's name, as the API sends it.</summary>
+    public string? ItemName { get; set; }
+
+    [Range(1, 1000, ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.QuantityPerExamRange))]
+    public int ItemQuantity { get; set; } = 1;
 }

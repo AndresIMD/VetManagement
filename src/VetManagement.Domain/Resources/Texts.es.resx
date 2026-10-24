@@ -254,4 +254,10 @@
   <data name="Change your temporary password first." xml:space="preserve"><value>Primero cambia tu contraseña temporal.</value></data>
   <data name="Choose a valid day and time." xml:space="preserve"><value>Elige un día y una hora válidos.</value></data>
   <data name="Write at least one email address to send the alerts to." xml:space="preserve"><value>Escribe al menos un correo al que enviar las alertas.</value></data>
+  <data name="This report already took '{0}' from inventory." xml:space="preserve"><value>Este informe ya descontó '{0}' del inventario.</value></data>
+  <data name="The exam has no inventory product to deduct." xml:space="preserve"><value>El examen no tiene un producto de inventario para descontar.</value></data>
+  <data name="This report took nothing from inventory." xml:space="preserve"><value>Este informe no ha descontado nada del inventario.</value></data>
+  <data name="Exam report #{0} – {1}" xml:space="preserve"><value>Informe #{0} – {1}</value></data>
+  <data name="Exam report #{0} – {1} (returned)" xml:space="preserve"><value>Informe #{0} – {1} (devuelto)</value></data>
+  <data name="Exam report #{0} – {1} (deleted)" xml:space="preserve"><value>Informe #{0} – {1} (eliminado)</value></data>
 </root>

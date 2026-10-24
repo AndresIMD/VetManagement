@@ -54,6 +54,30 @@
             <MudText Typo="Typo.body2" Color="Color.Secondary">@L["To send it, choose \"Save as PDF\" in the print dialog and attach the file."]</MudText>
         </MudStack>
 
+        @* The exam's inventory product (e.g. its test kit): deducted once from the report, and returned if it was a mistake. *@
+        @if (_report.StockDeducted is { } taken)
+        {
+            <MudAlert Severity="Severity.Success" Dense="true" Class="mb-3" Icon="@Icons.Material.Filled.Inventory2">
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                    <span>@L["Deducted from inventory: {0} × {1} ({2}, {3}).", taken.Quantity, taken.ItemName, taken.AtUtc?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "", taken.By ?? ""]</span>
+                    <AuthorizeView Policy="ExamsPerformed.Update">
+                        <MudButton Size="Size.Small" Variant="Variant.Text" Disabled="_stockBusy" OnClick="ReturnStockAsync">@L["Return to inventory"]</MudButton>
+                    </AuthorizeView>
+                </MudStack>
+            </MudAlert>
+        }
+        else if (_report.StockToDeduct is { } stock)
+        {
+            <AuthorizeView Policy="ExamsPerformed.Create">
+                <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3" Icon="@Icons.Material.Filled.Inventory2">
+                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                        <span>@L["This exam uses {0} × {1} ({2} in stock).", stock.Quantity, stock.ItemName, stock.InStock ?? 0]</span>
+                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" Disabled="_stockBusy" OnClick="DeductStockAsync">@L["Deduct from inventory"]</MudButton>
+                    </MudStack>
+                </MudAlert>
+            </AuthorizeView>
+        }
+
         <div class="d-flex justify-center pb-8" style="overflow-x:auto">
             <div>
                 <ExamReportSheet Settings="_settings" Report="_report" LogoUrl="@_logo" BackgroundUrl="@_background" />
@@ -113,4 +137,27 @@
     private async Task PrintAsync()
         => await Js.InvokeVoidAsync("appPrint.element", ExamReportSheet.ElementId, ExamReportSheet.FileName(_report!),
             ExamReportSheet.PageSize(_settings!));
+
+    private bool _stockBusy;
+
+    private Task DeductStockAsync()
+        => ChangeStockAsync(ReportsApi.DeductStockAsync, L["Deducted from inventory."], L["The product could not be deducted."]);
+
+    private Task ReturnStockAsync()
+        => ChangeStockAsync(ReportsApi.ReturnStockAsync, L["Returned to inventory."], L["The product could not be returned."]);
+
+    /// <summary>Deducts or returns the exam's product, then reads the report again to show what it took.</summary>
+    private async Task ChangeStockAsync(Func<int, Task<ApiResult>> change, string done, string failed)
+    {
+        _stockBusy = true;
+        var result = await change(Id);
+        _stockBusy = false;
+        if (!result.Ok)
+        {
+            Snackbar.Add(result.Error ?? failed, Severity.Error);
+            return;
+        }
+        Snackbar.Add(done, Severity.Success);
+        _report = await ReportsApi.GetAsync(Id) ?? _report;
+    }
 }

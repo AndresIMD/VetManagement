@@ -1,6 +1,8 @@
-﻿@using VetManagement.Domain.Enums
+﻿@using VetManagement.Contracts.Exams
+@using VetManagement.Domain.Enums
 @using VetManagement.Staff.UI.Models.Exams
 @using VetManagement.Staff.UI.Models.Medical
+@inject ExamApiService ExamApi
 
 <MudForm @ref="_mudForm" Model="ExamModel" @bind-IsValid="IsValid" FieldChanged="OnFormFieldChanged">
     <MudGrid>
@@ -47,6 +49,20 @@
         <MudItem xs="12" sm="6">
             <MudNumericField T="int" Label="@L["Price (sell)"]" @bind-Value="ExamModel.SellPrice" For="@(() => ExamModel.SellPrice)" Step="1000" Required="true" />
         </MudItem>
+        @if (_canLinkStock)
+        {
+            <MudItem xs="12" sm="8">
+                <MudAutocomplete T="ExamStockItemDto" Value="_stockItem" ValueChanged="OnStockItemChanged" Label="@L["Inventory product (optional)"]"
+                                 SearchFunc="SearchStockItemsAsync" ToStringFunc="@(i => i?.Name ?? string.Empty)" Clearable="true" ResetValueOnEmptyText="true"
+                                 DebounceInterval="300" HelperText="@L["What one exam uses up (e.g. its test kit). Its reports can deduct it from inventory."]">
+                    <ItemTemplate>@L["{0} ({1} in stock)", context.Name, context.Stock]</ItemTemplate>
+                </MudAutocomplete>
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudNumericField T="int" Label="@L["Quantity per exam"]" @bind-Value="ExamModel.ItemQuantity" For="@(() => ExamModel.ItemQuantity)"
+                                 Min="1" Max="1000" Disabled="@(ExamModel.ItemId is null)" />
+            </MudItem>
+        }
     </MudGrid>
     @if (_mudForm != null && _mudForm.Errors?.Any() == true)
     {
@@ -70,6 +86,27 @@
 
     private MudForm? _mudForm;
     public bool IsValid { get; set; }
+
+    // The inventory product field shows when the clinic has the Inventory module (the search answers); the linked one by name.
+    private bool _canLinkStock;
+    private ExamStockItemDto? _stockItem;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _canLinkStock = await ExamApi.SearchStockItemsAsync(null) is not null;
+        if (ExamModel.ItemId is int id)
+            _stockItem = new ExamStockItemDto { Id = id, Name = ExamModel.ItemName ?? string.Empty };
+    }
+
+    private async Task<IEnumerable<ExamStockItemDto>> SearchStockItemsAsync(string text, CancellationToken ct)
+        => await ExamApi.SearchStockItemsAsync(text, ct) ?? [];
+
+    private void OnStockItemChanged(ExamStockItemDto? item)
+    {
+        _stockItem = item;
+        (ExamModel.ItemId, ExamModel.ItemName) = (item?.Id, item?.Name);
+        IsDirty = true;
+    }
 
     private bool _isDirty;
     public bool IsDirty

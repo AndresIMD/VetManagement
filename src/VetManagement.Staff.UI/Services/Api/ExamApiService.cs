@@ -19,6 +19,13 @@ public class ExamApiService(HttpClient http)
     public async Task DeleteExamAsync(int id)
         => (await http.DeleteAsync(string.Format(ApiRouteConstants.EXAM_BY_ID, id))).EnsureSuccessStatusCode();
 
+    /// <summary>Inventory products to link to an exam; null when the clinic has no Inventory module or the user can't edit exams.</summary>
+    public async Task<List<ExamStockItemDto>?> SearchStockItemsAsync(string? search, CancellationToken cancellationToken = default)
+    {
+        var response = await http.GetAsync($"{ApiRouteConstants.EXAM_STOCK_ITEMS}?search={Uri.EscapeDataString(search ?? string.Empty)}", cancellationToken);
+        return response.IsSuccessStatusCode ? await response.Content.ReadFromJsonAsync<List<ExamStockItemDto>>(cancellationToken) : null;
+    }
+
     public async Task<List<LabMachineDto>> GetLabMachinesAsync()
         => await http.GetFromJsonAsync<List<LabMachineDto>>(ApiRouteConstants.LAB_MACHINES) ?? [];
 
