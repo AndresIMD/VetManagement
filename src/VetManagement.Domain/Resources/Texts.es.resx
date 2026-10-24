@@ -260,4 +260,5 @@
   <data name="Exam report #{0} – {1}" xml:space="preserve"><value>Informe #{0} – {1}</value></data>
   <data name="Exam report #{0} – {1} (returned)" xml:space="preserve"><value>Informe #{0} – {1} (devuelto)</value></data>
   <data name="Exam report #{0} – {1} (deleted)" xml:space="preserve"><value>Informe #{0} – {1} (eliminado)</value></data>
+  <data name="This report can't be updated automatically; correct it instead." xml:space="preserve"><value>Este informe no se puede actualizar automáticamente; corrígelo a mano.</value></data>
 </root>

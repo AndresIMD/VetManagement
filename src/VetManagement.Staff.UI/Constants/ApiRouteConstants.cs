@@ -101,6 +101,7 @@ public static class ApiRouteConstants
     public const string EXAM_REPORT_PROVISIONAL_PATIENTS = "api/exam-reports/provisional-patients";
     public const string EXAM_REPORT_REGISTER_PATIENT = "api/exam-reports/{0}/register-patient";
     public const string EXAM_REPORT_STOCK = "api/exam-reports/{0}/stock";
+    public const string EXAM_REPORT_RENEW = "api/exam-reports/{0}/renew";
 
     // Sample data (development only)
     public const string TEST_DATA = "api/dev/test-data";

@@ -42,6 +42,10 @@ public class ExamReportsApiService(HttpClient http)
     public async Task<ApiResult> DeleteAsync(int id)
         => await ApiResult.FromResponseAsync(await http.DeleteAsync(string.Format(ApiRouteConstants.EXAM_REPORT_BY_ID, id)));
 
+    /// <summary>"Update format": applies the exam's current template to the report, keeping its data.</summary>
+    public async Task<ApiResult> RenewAsync(int id)
+        => await ApiResult.FromResponseAsync(await http.PostAsync(string.Format(ApiRouteConstants.EXAM_REPORT_RENEW, id), null));
+
     /// <summary>Deducts the exam's inventory product (e.g. its test kit) for the report.</summary>
     public async Task<ApiResult> DeductStockAsync(int id)
         => await ApiResult.FromResponseAsync(await http.PostAsync(string.Format(ApiRouteConstants.EXAM_REPORT_STOCK, id), null));

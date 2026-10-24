@@ -69,8 +69,13 @@ Asked in the form (per template): the lot number, so the form only shows the fie
 
 Saving a report copies the title, blocks and every line (name, unit, reference, band, flag, direction, bar range) from
 the template, so editing a template never changes a report already handed out. "Correct" re-evaluates against the
-current template. A registered pet's patient and owner data are read live (a corrected pet name shows on reprint);
-age is computed at the reception date.
+current template. **Update format** (report page, `POST api/exam-reports/{id}/renew`, a correction) does the same without
+the form: the exam's current template and catalog (title, printed blocks, names, units, ranges and flags, bars,
+sections, method) are applied to the report's own data, while the values as typed, patient, reception and creation
+dates, referring vet, lot, a written interpretation and what it took from inventory stay; it is refused, leaving the
+report as it was, when a value's parameter is no longer in the template. The look (colours, font, column alignment,
+bars' size) needs no update: it comes from Report Design every time a report is drawn. A registered pet's patient and
+owner data are read live (a corrected pet name shows on reprint); age is computed at the reception date.
 
 **Typed patients.** Patients aren't registered yet, so a report can be issued for a patient typed in the form (name,
 species, breed, sex, birth date, owner). The report keeps it as typed (`Patient`) and prints it so; it is also

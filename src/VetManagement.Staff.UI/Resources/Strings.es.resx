@@ -1284,4 +1284,10 @@
   <data name="The parameter names always align left." xml:space="preserve"><value>Los nombres de los parámetros siempre van a la izquierda.</value></data>
   <data name="Centered" xml:space="preserve"><value>Centradas</value></data>
   <data name="Aligned left" xml:space="preserve"><value>Alineadas a la izquierda</value></data>
+  <data name="Apply the exam's current template to this report, keeping its data" xml:space="preserve"><value>Aplica la plantilla actual del examen a este informe, conservando sus datos</value></data>
+  <data name="Update format" xml:space="preserve"><value>Actualizar formato</value></data>
+  <data name="The exam's current template will be applied: title, printed blocks, names, units, ranges, bars and sections. The values, patient, dates, referring vet, lot, interpretation and what was deducted from inventory stay as they are. If the template's ranges changed, the report may flag values differently." xml:space="preserve"><value>Se aplicará la plantilla actual del examen: título, bloques impresos, nombres, unidades, rangos, barras y secciones. Los valores, el paciente, las fechas, el médico tratante, el lote, la interpretación y lo descontado del inventario se conservan. Si cambiaron los rangos de la plantilla, el informe puede marcar valores distinto.</value></data>
+  <data name="Update" xml:space="preserve"><value>Actualizar</value></data>
+  <data name="The report could not be updated." xml:space="preserve"><value>No se pudo actualizar el informe.</value></data>
+  <data name="Report updated to the current format." xml:space="preserve"><value>Informe actualizado al formato actual.</value></data>
 </root>
