@@ -1268,4 +1268,16 @@
   <data name="Add page break" xml:space="preserve"><value>Agregar salto de página</value></data>
   <data name="Remove page break" xml:space="preserve"><value>Quitar salto de página</value></data>
   <data name="Not printed: what follows starts on a new page, and a section title right above it goes along. Left out at the start or end of a report." xml:space="preserve"><value>No se imprime: lo que sigue empieza en una hoja nueva, y un título de sección justo antes se va con ello. Se omite al principio o al final de un informe.</value></data>
+  <data name="Inventory product (optional)" xml:space="preserve"><value>Producto de inventario (opcional)</value></data>
+  <data name="What one exam uses up (e.g. its test kit). Its reports can deduct it from inventory." xml:space="preserve"><value>Lo que gasta un examen (por ejemplo, su kit). Sus informes pueden descontarlo del inventario.</value></data>
+  <data name="Quantity per exam" xml:space="preserve"><value>Cantidad por examen</value></data>
+  <data name="The quantity per exam must be between 1 and 1000." xml:space="preserve"><value>La cantidad por examen debe estar entre 1 y 1000.</value></data>
+  <data name="Deducted from inventory: {0} × {1} ({2}, {3})." xml:space="preserve"><value>Descontado del inventario: {0} × {1} ({2}, {3}).</value></data>
+  <data name="Return to inventory" xml:space="preserve"><value>Devolver al inventario</value></data>
+  <data name="This exam uses {0} × {1} ({2} in stock)." xml:space="preserve"><value>Este examen usa {0} × {1} ({2} en stock).</value></data>
+  <data name="Deduct from inventory" xml:space="preserve"><value>Descontar del inventario</value></data>
+  <data name="Deducted from inventory." xml:space="preserve"><value>Descontado del inventario.</value></data>
+  <data name="The product could not be deducted." xml:space="preserve"><value>No se pudo descontar el producto.</value></data>
+  <data name="Returned to inventory." xml:space="preserve"><value>Devuelto al inventario.</value></data>
+  <data name="The product could not be returned." xml:space="preserve"><value>No se pudo devolver el producto.</value></data>
 </root>

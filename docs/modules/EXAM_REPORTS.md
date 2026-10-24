@@ -115,6 +115,23 @@ Every change is audited (who, when, what): reports (create; correct with before/
 and the design document with every template (`ExamReportSettings`), like the exam catalog, requests and external labs.
 Printed labels are Spanish (client-facing); staff screens are English, like the rest of the CRM.
 
+## Inventory (the exam's test kit)
+
+A catalog exam can name the inventory product one exam uses up (`Exam.ItemId`, e.g. its test kit) and how many units
+(`ItemQuantity`, default 1); the catalog form shows the field only with the Inventory module, through a narrow search
+(`api/exams/stock-items`: name and stock) so a lab supervisor needs no inventory permissions to link it.
+
+- **Deduct** (report page, "Deduct from inventory"; `POST api/exam-reports/{id}/stock`, whoever makes reports):
+  under the clinic-wide `stock` lock, the report must not have deducted yet (two clicks or two desks take it once) and
+  the stock must cover the quantity; the product leaves stock with the movement "Exam report #N – PET SURNAME" (pet
+  and owner's surname as in the PDF name, typed patients as typed) and the report keeps what it took: product, name,
+  quantity, when and who (`StockItemId`…).
+- **Return** ("Return to inventory"; `DELETE api/exam-reports/{id}/stock`, a correction: Laboratory) puts back what was
+  taken ("… (returned)"); the report can deduct again. Deleting a report puts it back too ("… (deleted)"), in the same
+  transaction. What goes back is what the report took, whatever the catalog or a correction says since.
+- With the Inventory module off the endpoints answer 404, reports show nothing about stock and saving an exam keeps its
+  link. A product deleted from inventory counts as no link; returning to a deleted product clears the report only.
+
 ## Limits
 
 - Rules join conditions with "and" only; an "or" is written as two rules with the same meaning.

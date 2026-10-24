@@ -23,4 +23,10 @@ public class Exam : Entity<int>
     public int BuyPrice { get; set; }
 
     public int SellPrice { get; set; }
+
+    /// <summary>Inventory product one exam uses up (e.g. its test kit), which its reports can deduct; null = none.</summary>
+    public int? ItemId { get; set; }
+
+    /// <summary>Units of <see cref="ItemId"/> one exam uses.</summary>
+    public int ItemQuantity { get; set; } = 1;
 }

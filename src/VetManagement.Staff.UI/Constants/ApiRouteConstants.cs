@@ -31,6 +31,7 @@ public static class ApiRouteConstants
     // Exams
     public const string EXAMS = "api/exams";
     public const string EXAM_BY_ID = "api/exams/{0}";
+    public const string EXAM_STOCK_ITEMS = "api/exams/stock-items";
     public const string LAB_MACHINES = "api/lab-machines";
     public const string LAB_MACHINE_BY_ID = "api/lab-machines/{0}";
 
@@ -99,6 +100,7 @@ public static class ApiRouteConstants
     public const string EXAM_REPORT_IMAGE = "api/exam-reports/images/{0}";
     public const string EXAM_REPORT_PROVISIONAL_PATIENTS = "api/exam-reports/provisional-patients";
     public const string EXAM_REPORT_REGISTER_PATIENT = "api/exam-reports/{0}/register-patient";
+    public const string EXAM_REPORT_STOCK = "api/exam-reports/{0}/stock";
 
     // Sample data (development only)
     public const string TEST_DATA = "api/dev/test-data";

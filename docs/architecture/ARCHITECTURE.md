@@ -60,7 +60,7 @@ Rules:
    shape as the DTOs; newer modules bind pages to the Contracts DTOs directly. `WireContractTests` guards
    the view models.
 5. Stock changes only with a movement: `Application/Inventory/Stock.MoveAsync` (sales, visit supplies,
-   doses) or the inventory screens. Never set `Item.Stock` without one.
+   doses, exam reports' test kits) or the inventory screens. Never set `Item.Stock` without one.
 6. Business policies are per-clinic settings, never constants (see below).
 
 ## Shared mechanisms

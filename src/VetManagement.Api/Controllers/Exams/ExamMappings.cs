@@ -9,7 +9,8 @@ namespace VetManagement.Api.Controllers.Exams;
 /// </summary>
 internal static class ExamMappings
 {
-    public static ExamDto ToDto(this Exam exam) => new()
+    /// <param name="itemNames">Names of the linked inventory products by id; null when the Inventory module is off (no link shown).</param>
+    public static ExamDto ToDto(this Exam exam, IReadOnlyDictionary<int, string>? itemNames = null) => new()
     {
         Id = exam.Id,
         Name = exam.Name,
@@ -18,7 +19,11 @@ internal static class ExamMappings
         SampleType = exam.SampleType,
         SampleContainer = exam.SampleContainer,
         BuyPrice = exam.BuyPrice,
-        SellPrice = exam.SellPrice
+        SellPrice = exam.SellPrice,
+        // A product deleted from inventory since counts as no link.
+        ItemId = exam.ItemId is int itemId && itemNames?.ContainsKey(itemId) == true ? itemId : null,
+        ItemName = exam.ItemId is int id && itemNames?.TryGetValue(id, out var name) == true ? name : null,
+        ItemQuantity = exam.ItemQuantity
     };
 
     public static Exam ToDomain(this ExamRequest request, int id) => new()
@@ -30,7 +35,9 @@ internal static class ExamMappings
         SampleType = request.SampleType,
         SampleContainer = request.SampleContainer,
         BuyPrice = request.BuyPrice,
-        SellPrice = request.SellPrice
+        SellPrice = request.SellPrice,
+        ItemId = request.ItemId,
+        ItemQuantity = request.ItemQuantity
     };
 
     public static ExternalLabDto ToDto(this ExternalLab lab) => new()

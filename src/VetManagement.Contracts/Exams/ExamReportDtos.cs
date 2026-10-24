@@ -85,6 +85,21 @@ public sealed class ExamReportDto
     public DateTime? Birthdate { get; set; }
     public string? OwnerName { get; set; }
     public string? OwnerLastName { get; set; }
+
+    /// <summary>The exam's inventory product the report can still deduct; null when none, already deducted or Inventory is off.</summary>
+    public ExamReportStockDto? StockToDeduct { get; set; }
+    /// <summary>What the report took from inventory; null when nothing (or it was returned).</summary>
+    public ExamReportStockDto? StockDeducted { get; set; }
+}
+
+/// <summary>An inventory product and quantity for a report: what it can deduct (with the stock now) or what it took (when, who).</summary>
+public sealed class ExamReportStockDto
+{
+    public string ItemName { get; set; } = string.Empty;
+    public int Quantity { get; set; }
+    public int? InStock { get; set; }
+    public DateTime? AtUtc { get; set; }
+    public string? By { get; set; }
 }
 
 public sealed class ExamReportSectionsDto

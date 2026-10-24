@@ -69,10 +69,18 @@ public class WireContractTests
         var ui = new UiExam
         {
             Id = 4, Name = "Hemograma", Brand = "Idexx", Machine = "ProCyte", SampleType = SampleType.Blood,
-            SampleContainer = SampleContainer.Tube, BuyPrice = 5000, SellPrice = 12000
+            SampleContainer = SampleContainer.Tube, BuyPrice = 5000, SellPrice = 12000, ItemId = 12, ItemQuantity = 2
         };
 
         RoundTrip<ExamRequest>(ui).Should().BeEquivalentTo(ui, o => o.ExcludingMissingMembers());
+    }
+
+    [Fact]
+    public void ExamDto_BindsTo_UiExam_WithItsInventoryProduct()
+    {
+        var dto = new ExamDto { Id = 4, Name = "SNAP 4Dx", Brand = "Idexx", Machine = "SNAP", ItemId = 12, ItemName = "Kit SNAP 4Dx", ItemQuantity = 1 };
+
+        RoundTrip<UiExam>(dto).Should().BeEquivalentTo(dto, o => o.ExcludingMissingMembers());
     }
 
     [Fact]

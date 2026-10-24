@@ -3,6 +3,7 @@ using VetManagement.Application.Contracts.Persistence;
 using VetManagement.Application.Contracts.Services;
 using VetManagement.Domain.Enums;
 using VetManagement.Domain.Exams;
+using VetManagement.Domain.Inventory;
 
 namespace VetManagement.Application.Services;
 
@@ -19,6 +20,17 @@ public class ExamService(IUnitOfWork unitOfWork, IRealtimeNotificationService? n
 
     public async Task<Exam?> GetByIdAsNoTrackingAsync(int id)
         => await unitOfWork.Exams.GetByIdAsNoTrackingAsync(id);
+
+    /// <summary>Inventory products whose name, brand or barcode contains <paramref name="search"/>, to link one to an exam.</summary>
+    public async Task<List<Item>> SearchStockItemsAsync(string? search)
+        => (await unitOfWork.Items.SearchAsync(searchTerm: search)).OrderBy(i => i.Name).Take(15).ToList();
+
+    /// <summary>Names of the inventory products linked to the exams, by id; a product deleted since is missing.</summary>
+    public async Task<Dictionary<int, string>> StockItemNamesAsync(IEnumerable<Exam> exams)
+    {
+        var ids = exams.Select(e => e.ItemId).OfType<int>().Distinct().ToList();
+        return ids.Count == 0 ? [] : (await unitOfWork.Items.FindAsync(i => ids.Contains(i.Id))).ToDictionary(i => i.Id, i => i.Name);
+    }
 
     public async Task AddAsync(Exam exam, string userName)
     {

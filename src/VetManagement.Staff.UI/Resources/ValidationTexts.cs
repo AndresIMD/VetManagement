@@ -15,4 +15,5 @@ public static class ValidationTexts
     public static string BuyPriceNotNegative => Strings.T("The purchase price must be 0 or greater.");
     public static string LowStockThresholdNotNegative => Strings.T("The low stock threshold must be 0 or greater.");
     public static string PriceNotNegative => Strings.T("The price cannot be less than 0.");
+    public static string QuantityPerExamRange => Strings.T("The quantity per exam must be between 1 and 1000.");
 }

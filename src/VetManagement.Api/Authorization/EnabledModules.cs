@@ -32,8 +32,11 @@ public sealed class EnabledModules
         => permissions.Where(p => Permissions.ModuleOf(p) is not { } module || IsEnabled(module)).ToHashSet();
 }
 
-/// <summary>Answers 404 when the module is off; for anonymous endpoints, which permissions don't cover.</summary>
-[AttributeUsage(AttributeTargets.Class)]
+/// <summary>
+/// Answers 404 when the module is off: for anonymous endpoints, which permissions don't cover, and for endpoints of one
+/// module that act on another (e.g. an exam report deducting from inventory).
+/// </summary>
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
 public sealed class RequiresModuleAttribute(AppModule module) : Attribute, IResourceFilter
 {
     public void OnResourceExecuting(ResourceExecutingContext context)
