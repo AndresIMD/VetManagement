@@ -34,8 +34,10 @@
         @@media print { .xr-page { height: @(Mm(PageHeight - 0.6))mm !important; } }
         .xr-results { padding: 3mm 6mm 5mm; flex: 1; display: flex; flex-direction: column; }
         .xr-table { width: 100%; align-self: stretch; table-layout: fixed; border-collapse: collapse; }
-        .xr-table th { text-align: left; vertical-align: bottom; font-size: .86em; text-transform: uppercase; padding: 2mm 1.5mm; border-bottom: 0.4mm solid #ccc; overflow-wrap: break-word; hyphens: auto; }
-        .xr-table td { padding: 1.6mm 1.5mm; vertical-align: top; border-bottom: 0.2mm solid #eee; overflow-wrap: anywhere; }
+        .xr-table th { text-align: @ColumnTextAlign; vertical-align: bottom; font-size: .86em; text-transform: uppercase; padding: 2mm 1.5mm; border-bottom: 0.4mm solid #ccc; overflow-wrap: break-word; hyphens: auto; }
+        .xr-table td { text-align: @ColumnTextAlign; padding: 1.6mm 1.5mm; vertical-align: top; border-bottom: 0.2mm solid #eee; overflow-wrap: anywhere; }
+        /* The parameter names always align left; the other columns as the design says (centered unless chosen). */
+        .xr-table th:first-child, .xr-table tr:not(.xr-section) > td:first-child { text-align: left; }
         .xr-flag { font-weight: 700; color: #C62828; }
         .xr-previous { color: #555; }
         .xr-table th.xr-previous { white-space: nowrap; }
@@ -44,7 +46,8 @@
         /* Section titles over the parameters that follow them, in the section colour (the patient bar's unless chosen), across the
            whole box like its bars:
            over the results area's side padding (6 mm), the table cell with a strip on each side (the box clips any excess). */
-        .xr-section td, .xr-qual-section { color: #fff; font-weight: 700; text-align: center; text-transform: uppercase; letter-spacing: .4px; padding: 1.4mm 1.5mm; border-bottom: 0; }
+        /* A notch under the main bars (11.5 pt), so they read as subsections of the exam: smaller text, slimmer band. */
+        .xr-section td, .xr-qual-section { color: #fff; font-weight: 700; text-align: center; text-transform: uppercase; letter-spacing: .3px; font-size: min(.9em, 10.5pt); padding: 1mm 1.5mm; border-bottom: 0; }
         .xr-section td { position: relative; }
         .xr-section td::before, .xr-section td::after { content: ''; position: absolute; top: 0; bottom: 0; width: 7mm; background: inherit; }
         .xr-section td::before { right: calc(100% - 0.2mm); }
@@ -52,12 +55,10 @@
         .xr-qual-section { margin: 2mm -6mm 0; }
         .xr-qual-previous { font-size: .86em; }
         .xr-pill { min-width: 34mm; padding: 1.2mm 4mm; border: 0.5mm solid; border-radius: 3mm; text-align: center; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
-        /* The bar beside the reference, after the room of the widest range so the bars line up; as tall as a line of text
-           (centred on the first one), so a line with a bar is no taller than one without. */
-        .xr-ref { display: flex; align-items: flex-start; gap: @(Mm(GAUGE_GAP_MM))mm; }
-        .xr-ref > span { flex: 0 1 @(Mm(Math.Round(_rangeMm, 2)))mm; min-width: 0; }
-        .xr-gauge { flex: 0 0 @(Mm(GAUGE_MM))mm; display: flex; align-items: center; height: 1.35em; }
-        .xr-gauge-box { position: relative; flex: 1; height: .7em; border: 0.2mm solid #333; }
+        /* The bar in its own column under "Reference value", as tall as a line of text (centred on the first one), so a line
+           with a bar is no taller than one without. */
+        .xr-gauge { display: flex; align-items: center; width: @(Mm(GAUGE_MM))mm; height: 1.35em; margin: 0 @(Settings.ColumnAlign == ColumnAlign.Center ? "auto" : "0"); }
+        .xr-gauge-box { position: relative; flex: 1; height: .8em; border: 0.2mm solid #333; }
         .xr-gauge-tick { position: absolute; top: 0; bottom: 0; width: 0.2mm; background: #333; }
         .xr-gauge-mark { position: absolute; top: -0.2mm; bottom: -0.2mm; width: 0.8mm; margin-left: -0.4mm; background: #111; }
         .xr-gauge-mark.out { background: #C62828; }
@@ -195,7 +196,8 @@
                                         <th>@L["Parameter"]</th><th>@L["Result"]</th><th>@L["Unit"]</th>
                                         @if (HasReference)
                                         {
-                                            <th>@L["Reference value"]</th>
+                                            @* Over the range and, when the report has bars, their column too. *@
+                                            <th colspan="@ReferenceColumns">@L["Reference value"]</th>
                                         }
                                         @if (HasPrevious)
                                         {
@@ -219,18 +221,15 @@
                                             <td>@line.Name</td>
                                             <td class="@(line.Abnormal ? "xr-flag" : null)">@line.Value @Mark(line)</td>
                                             <td>@line.Unit</td>
-                                            @if (HasReference)
+                                            @if (HasReference && HasBar(line))
                                             {
-                                                <td>
-                                                    @if (HasBar(line))
-                                                    {
-                                                        <div class="xr-ref"><span>@line.Reference</span>@Gauge(line)</div>
-                                                    }
-                                                    else
-                                                    {
-                                                        @line.Reference
-                                                    }
-                                                </td>
+                                                <td>@line.Reference</td>
+                                                <td>@Gauge(line)</td>
+                                            }
+                                            else if (HasReference)
+                                            {
+                                                @* A line without a bar writes its reference across the bars' column too. *@
+                                                <td colspan="@ReferenceColumns">@line.Reference</td>
                                             }
                                             @if (HasPrevious)
                                             {
@@ -363,25 +362,28 @@
     private string PreviousHeader => Report.PreviousReceivedOn?.ToString("dd/MM/yyyy") ?? Upper(L["dd/mm/yyyy"]);
     /// <summary>Exams read without a reference (e.g. cortisol samples judged together by the rules) drop the column.</summary>
     private bool HasReference => Report.Results.Any(r => !string.IsNullOrWhiteSpace(r.Reference) || HasBar(r));
+    /// <summary>The report draws bars: they get a column of their own under "Reference value", next to the ranges.</summary>
+    private bool HasBars => Values.Any(HasBar);
+    /// <summary>Columns under "Reference value": the range, and the bars when there are any.</summary>
+    private int ReferenceColumns => HasBars ? 2 : 1;
+    private string ColumnTextAlign => Settings.ColumnAlign == ColumnAlign.Left ? "left" : "center";
+
     /// <summary>
-    /// The table's columns: parameter, result, unit, [reference (with the bar beside it)], [previous result]; each as wide as
-    /// this report's widest text in it, the room left shared out equally (see <see cref="ReportColumns"/>).
+    /// The table's columns: parameter, result, unit, [reference: range, bars], [previous result]; each as wide as this
+    /// report's widest text in it, the room left shared out evenly (see <see cref="ReportColumns"/>).
     /// </summary>
-    private ReportColumns.Layout _columns = new([100], [0], 0);
-    /// <summary>Room for the range beside a bar, in mm: the widest range and the gap before the bars.</summary>
-    private double _rangeMm;
+    private ReportColumns.Layout _columns = new([100], [0]);
 
     /// <summary>
     /// Works the columns out from the texts of the report, each at least as wide as its header. Names wrap past 40 % of the
-    /// table and written references past 45 %, rather than crowd the other columns.
+    /// table and written references past 45 %, rather than crowd the other columns. "Reference value" spans the ranges and
+    /// the bars: a reference without a bar, and the header, may use both.
     /// </summary>
     private void LayOutColumns()
     {
         var values = Values.ToList();
         double Widest(IEnumerable<string?> texts, bool bold = false) => texts.Select(t => TextMm(t, bold: bold)).DefaultIfEmpty(0).Max();
         double Header(string text) => TextMm(Upper(text), HEADER_EM, bold: true);
-        var range = Widest(values.Where(HasBar).Select(r => r.Reference));
-        var bars = values.Any(HasBar);
         var widest = new List<double>
         {
             Math.Min(Widest(values.Select(r => r.Name)), ContentWidth * .4),
@@ -391,17 +393,25 @@
         var headers = new List<double> { Header(L["Parameter"]), Header(L["Result"]), Header(L["Unit"]) };
         if (HasReference)
         {
-            widest.Add(Math.Min(Math.Max(Widest(values.Where(r => !HasBar(r)).Select(r => r.Reference)),
-                bars ? range + GAUGE_GAP_MM + GAUGE_MM : 0), ContentWidth * .45));
-            headers.Add(Header(L["Reference value"]));
+            var spanning = Math.Max(Widest(values.Where(r => !HasBar(r)).Select(r => r.Reference)), Header(L["Reference value"]));
+            if (HasBars)
+            {
+                var barCell = GAUGE_MM + CELL_PADDING_MM;
+                widest.AddRange([Math.Min(Math.Max(Widest(values.Where(HasBar).Select(r => r.Reference)), spanning - barCell), ContentWidth * .45), GAUGE_MM]);
+                headers.AddRange([0, 0]);
+            }
+            else
+            {
+                widest.Add(Math.Min(spanning, ContentWidth * .45));
+                headers.Add(Header(L["Reference value"]));
+            }
         }
         if (HasPrevious)
         {
             widest.Add(Widest(values.Select(r => r.PreviousValue)));
             headers.Add(TextMm(PreviousHeader, HEADER_EM, bold: true));
         }
-        _columns = ReportColumns.Lay(widest, headers, ContentWidth, CELL_PADDING_MM, bars ? 3 : -1);
-        _rangeMm = range + _columns.BarGap;
+        _columns = ReportColumns.Lay(widest, headers, ContentWidth, CELL_PADDING_MM, centered: Settings.ColumnAlign == ColumnAlign.Center);
     }
 
     /// <summary>
@@ -513,9 +523,8 @@
         }
     }
 
-    /// <summary>Width of the bar beside the reference, and the least gap between them, in mm.</summary>
-    private const double GAUGE_MM = 21;
-    private const double GAUGE_GAP_MM = 2;
+    /// <summary>Width of the bar, in mm.</summary>
+    private const double GAUGE_MM = 25;
 
     /// <summary>
     /// IDEXX-style bar, beside the reference: the normal range is the middle third; the mark sits where the value falls,
@@ -574,7 +583,7 @@
     {
         Report, Placeholder, Logo = LogoUrl?.Length, Settings.Paper, Settings.MarginsMm, Settings.FontFamily, Settings.PatientFontPt,
         Settings.ResultsFontPt, Settings.PatientDataOnLaterPages, Settings.HeaderLines, Settings.Footer, Settings.Disclaimer,
-        Settings.LogoHeightMm, Settings.LogoWidthMm, Settings.LogoKeepRatio
+        Settings.LogoHeightMm, Settings.LogoWidthMm, Settings.LogoKeepRatio, Settings.ColumnAlign
     });
 
     protected override void OnParametersSet()
@@ -667,9 +676,9 @@
             return ResultLines(line.Name, ContentWidth) * ResultLineMm + (Qualitative ? 5 : 3);
         if (Qualitative)
             return Math.Max(1, ResultLines(line.Name, ContentWidth - 80)) * ResultLineMm + 6;
-        // The bar sits beside the reference, in the same line: the range wraps in the room before the bars.
+        // A range next to its bar wraps in its own column; a reference without a bar also has the bars' column.
         var reference = !HasReference || string.IsNullOrEmpty(line.Reference) ? 0
-            : ResultLines(line.Reference, HasBar(line) ? Math.Min(_rangeMm, widths[3] - GAUGE_MM - GAUGE_GAP_MM) : widths[3]);
+            : ResultLines(line.Reference, HasBars && !HasBar(line) ? widths[3] + widths[4] + CELL_PADDING_MM : widths[3]);
         var previous = HasPrevious ? ResultLines(line.PreviousValue, widths[^1]) : 1;
         var lines = new[] { ResultLines(line.Name, widths[0]), ResultLines($"{line.Value} *", widths[1]), ResultLines(line.Unit, widths[2]), reference, previous }.Max();
         return lines * ResultLineMm + 3.6;

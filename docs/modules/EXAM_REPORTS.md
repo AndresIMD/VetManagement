@@ -38,14 +38,16 @@ Asked in the form (per template): the lot number, so the form only shows the fie
   A written interpretation replaces it.
 - Reference column, chosen per parameter: **Normal range** ("3.5 - 5.8"; without a range, the labelled bands),
   **Written text** (e.g. "Sin rango de referencia") or **Nothing**. With a range of both limits, **Show bar** draws the
-  value IDEXX-style beside the reference, on the same line: the normal range is the middle third, a value beyond the bar
-  shows as an arrow at its edge. The bars line up after the widest range and are one line of text tall, so a line with
-  a bar takes no more room than one without.
+  value IDEXX-style (25 mm) in a column of its own next to the range, both under one "Valor referencial" header: the
+  normal range is the middle third, a value beyond the bar shows as an arrow at its edge. A bar is one line of text tall,
+  so a line with a bar takes no more room than one without; a reference without a bar writes across both columns.
 - The table's columns follow the report's texts (`ReportColumns`): each is as wide as its widest text (never narrower
-  than its header) and the room left is shared out equally between the columns, the space before the bars counting as
-  one more, so the gaps look even whether the names are short (blood gases) or long (a blood count). Text widths are
-  estimated per font (figures and letters measured against Segoe UI). When the texts don't fit, the parameter names wrap
-  first; names wrap past 40 % of the width and written references past 45 %.
+  than its header) and the room left is shared out so the space between the texts of any two neighbouring columns is
+  the same, whether the names are short (blood gases) or long (a blood count). Text widths are estimated per font
+  (figures and letters measured against Segoe UI). When the texts don't fit, the parameter names wrap first; names wrap
+  past 40 % of the width and written references past 45 %.
+- Report Design → "Result columns" (`ColumnAlign`): the columns after the parameter names are **centered** (default, also
+  for designs saved before the setting) or **aligned left**; the names always align left.
 - Exams read without a reference (e.g. cortisol samples judged together by the rules): set each parameter's
   reference to **Nothing**; when no line has a reference or bar, the "Valor referencial" column is dropped.
 - The legend under the table explains only the marks the report prints.
@@ -56,7 +58,8 @@ Asked in the form (per template): the lot number, so the form only shows the fie
 - Parameter codes are generated from the first name and hidden; renaming a parameter keeps its code.
 - **Section titles** (`Kind: Section`) group the parameters after them, up to the next title; a report prints a title
   as a band across the results box above its first result, in the section colour of Report Design (dark text on a light
-  colour, white otherwise), and leaves it out when none of its parameters has a value. Parameters and titles are moved
+  colour, white otherwise), a notch smaller than the main bars (text 0.9 of the results', at most 10.5 pt, and a
+  slimmer band), and leaves it out when none of its parameters has a value. Parameters and titles are moved
   up and down in the editor, which is also how a parameter changes section.
 - **Page breaks** (`Kind: PageBreak`) print nothing: the lines after one start a new page, and a section title right
   above it goes along. A report keeps one only between values: never first or last, and several in a row count once.

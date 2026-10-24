@@ -169,6 +169,15 @@ public enum ImageFit
     Height
 }
 
+/// <summary>How the texts of a report's result columns sit; the parameter names always align left.</summary>
+public enum ColumnAlign
+{
+    [DisplayString("Centered")]
+    Center,
+    [DisplayString("Left")]
+    Left
+}
+
 /// <summary>Where an image that doesn't fill its whole area sits: top/left, centre or bottom/right.</summary>
 public enum ImageAlign
 {

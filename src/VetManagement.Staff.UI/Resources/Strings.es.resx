@@ -1280,4 +1280,8 @@
   <data name="The product could not be deducted." xml:space="preserve"><value>No se pudo descontar el producto.</value></data>
   <data name="Returned to inventory." xml:space="preserve"><value>Devuelto al inventario.</value></data>
   <data name="The product could not be returned." xml:space="preserve"><value>No se pudo devolver el producto.</value></data>
+  <data name="Result columns" xml:space="preserve"><value>Columnas de resultados</value></data>
+  <data name="The parameter names always align left." xml:space="preserve"><value>Los nombres de los parámetros siempre van a la izquierda.</value></data>
+  <data name="Centered" xml:space="preserve"><value>Centradas</value></data>
+  <data name="Aligned left" xml:space="preserve"><value>Alineadas a la izquierda</value></data>
 </root>

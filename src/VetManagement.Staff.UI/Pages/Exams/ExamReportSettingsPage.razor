@@ -134,6 +134,13 @@
                                     </MudSelect>
                                 </MudItem>
                                 <MudItem xs="12" sm="6">
+                                    <MudSelect T="ColumnAlign" Label="@L["Result columns"]" @bind-Value="_settings.ColumnAlign"
+                                               HelperText="@L["The parameter names always align left."]">
+                                        <MudSelectItem Value="ColumnAlign.Center">@L["Centered"]</MudSelectItem>
+                                        <MudSelectItem Value="ColumnAlign.Left">@L["Aligned left"]</MudSelectItem>
+                                    </MudSelect>
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
                                     <MudSlider T="double" @bind-Value="_settings.PatientFontPt" Min="ExamReportSettings.MinFontPt"
                                                Max="ExamReportSettings.MaxFontPt" Step="0.5">
                                         @L["Pet and owner data text: {0} pt", _settings.PatientFontPt.ToString("0.#")]
