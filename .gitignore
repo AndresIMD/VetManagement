@@ -39,6 +39,7 @@ secrets.json
 config.json
 **/config.json
 migration_debug.log
+scripts/backup-databases.log
 
 # ═══════════════════════════════════════════════════════════
 # BUILD RESULTS
