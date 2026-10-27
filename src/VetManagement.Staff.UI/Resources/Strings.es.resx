@@ -466,6 +466,7 @@
   <data name="Email sent." xml:space="preserve"><value>Correo enviado.</value></data>
   <data name="Error sending email: {0}" xml:space="preserve"><value>Error al enviar el correo: {0}</value></data>
   <data name="Schedule saved." xml:space="preserve"><value>Programación guardada.</value></data>
+  <data name="Could not copy: select the text and copy it with Ctrl+C." xml:space="preserve"><value>No se pudo copiar: selecciona el texto y cópialo con Ctrl+C.</value></data>
   <data name="Error saving schedule: {0}" xml:space="preserve"><value>Error al guardar la programación: {0}</value></data>
   <data name="Search by name..." xml:space="preserve"><value>Buscar por nombre...</value></data>
   <data name="Clear filters" xml:space="preserve"><value>Limpiar filtros</value></data>

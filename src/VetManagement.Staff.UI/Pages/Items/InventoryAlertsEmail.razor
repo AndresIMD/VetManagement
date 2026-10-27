@@ -237,7 +237,8 @@
     {
         if (string.IsNullOrWhiteSpace(BodyPreview)) return;
 
-        await Js.InvokeVoidAsync("navigator.clipboard.writeText", BodyPreview);
+        if (!await Js.InvokeAsync<bool>("appText.copy", BodyPreview))
+            Snackbar.Add(L["Could not copy: select the text and copy it with Ctrl+C."], Severity.Warning);
     }
 
     private void OpenEmailClient()
