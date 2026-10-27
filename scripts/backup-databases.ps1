@@ -54,7 +54,8 @@ param(
     [string]$BackupFolder,
     [string]$CopyTo,
     [ValidateRange(1, 3650)][int]$KeepDays = 30,
-    [string]$LogPath = (Join-Path $PSScriptRoot 'backup-databases.log')
+    # Default: backup-databases.log next to this script.
+    [string]$LogPath
 )
 
 $ErrorActionPreference = 'Stop'
@@ -89,6 +90,8 @@ function Remove-OldBackups([string]$Folder, [string]$Database) {
     }
 }
 
+# Windows PowerShell leaves $PSScriptRoot empty in parameter defaults of a script with mandatory parameters.
+if (-not $LogPath) { $LogPath = Join-Path $PSScriptRoot 'backup-databases.log' }
 $Databases = @($Databases | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
 $logFolder = Split-Path -Parent $LogPath
 if ($logFolder) { New-Item -ItemType Directory -Force -Path $logFolder | Out-Null }
