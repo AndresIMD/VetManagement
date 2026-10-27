@@ -40,6 +40,28 @@ window.appText = {
         field.setSelectionRange(start, end);
         field.dispatchEvent(new Event('input', { bubbles: true }));
         field.dispatchEvent(new Event('change', { bubbles: true }));
+    },
+
+    // Copies text to the clipboard and says whether it worked. navigator.clipboard only exists on HTTPS and localhost;
+    // a staff web served over plain http on the clinic's network falls back to a hidden textarea and execCommand.
+    async copy(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+            try {
+                await navigator.clipboard.writeText(text);
+                return true;
+            } catch { }
+        }
+        const area = document.createElement('textarea');
+        area.value = text;
+        area.setAttribute('readonly', '');
+        area.style.position = 'fixed';
+        area.style.opacity = '0';
+        document.body.appendChild(area);
+        area.select();
+        let copied = false;
+        try { copied = document.execCommand('copy'); } catch { }
+        area.remove();
+        return copied;
     }
 };
 
