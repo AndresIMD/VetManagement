@@ -83,7 +83,10 @@ public class UsersController(
         return Ok();
     }
 
-    /// <summary>Blocks the account (e.g. staff who left the clinic): no sign-in, and open sessions stop working.</summary>
+    /// <summary>
+    /// Blocks the account (e.g. staff who left the clinic): no sign-in, open sessions stop working and every role is
+    /// taken away; unblocking doesn't give them back, so the audit entry keeps the roles the user had.
+    /// </summary>
     [HttpPost("{id}/block")]
     [Authorize(Policy = "Users.Update")]
     public Task<IActionResult> BlockAsync(string id) => SetBlockedAsync(id, true);
@@ -102,8 +105,16 @@ public class UsersController(
         var result = await userService.SetBlockedAsync(user, blocked);
         if (!result.Succeeded)
             return IdentityProblem(result);
-        await audit.LogSecurityAsync(blocked ? AuditActionType.UserBlocked : AuditActionType.UserUnblocked, User.Identity?.Name, $"TargetUserId={id}; Target={user.UserName}");
-        return Ok();
+        // Roles go after the block: if removing them fails, the account is still blocked.
+        var rolesResult = IdentityResult.Success;
+        IList<string> removedRoles = [];
+        if (blocked)
+            (rolesResult, removedRoles) = await userService.RemoveAllRolesAsync(user);
+        var details = $"TargetUserId={id}; Target={user.UserName}";
+        if (removedRoles.Count > 0)
+            details += $"; RolesRemoved=[{string.Join(',', removedRoles)}]";
+        await audit.LogSecurityAsync(blocked ? AuditActionType.UserBlocked : AuditActionType.UserUnblocked, User.Identity?.Name, details);
+        return rolesResult.Succeeded ? Ok() : IdentityProblem(rolesResult);
     }
 
     [HttpPost("{id}/reset-password")]
@@ -140,6 +151,9 @@ public class UsersController(
     [Authorize(Policy = "Users.ManageRoles")]
     public async Task<IActionResult> AssignRoleAsync(string id, string role)
     {
+        // A blocked account keeps no roles (see BlockAsync).
+        if (await userManager.FindByIdAsync(id) is { } user && UserAccess.IsBlocked(user))
+            return BadRequestMessage(Texts.T("Unblock the account before assigning it roles."));
         var ok = await userService.AssignRoleAsync(id, role);
         if (!ok)
             return BadRequest();
@@ -151,9 +165,14 @@ public class UsersController(
     [Authorize(Policy = "Users.ManageRoles")]
     public async Task<IActionResult> RemoveRoleAsync(string id, string role)
     {
-        if (string.Equals(role, Permissions.ROLES.ADMIN, StringComparison.OrdinalIgnoreCase)
-            && await userManager.FindByIdAsync(id) is { } user && await userService.IsLastActiveAdminAsync(user))
-            return BadRequestMessage(Texts.T("At least one active administrator must remain."));
+        if (string.Equals(role, Permissions.ROLES.ADMIN, StringComparison.OrdinalIgnoreCase))
+        {
+            // Without it they couldn't manage users any more: only another administrator could give it back.
+            if (id == User.FindFirstValue(ClaimTypes.NameIdentifier))
+                return BadRequestMessage(Texts.T("You can't remove your own administrator role."));
+            if (await userManager.FindByIdAsync(id) is { } user && await userService.IsLastActiveAdminAsync(user))
+                return BadRequestMessage(Texts.T("At least one active administrator must remain."));
+        }
         var ok = await userService.RemoveRoleAsync(id, role);
         if (!ok)
             return BadRequest();

@@ -178,6 +178,44 @@ public class UserAccessTests(CustomWebAppFactory factory) : IClassFixture<Custom
     }
 
     [Fact]
+    public async Task Blocking_TakesEveryRoleAway_AndUnblockingDoesNotGiveThemBack()
+    {
+        string[] roles = [Permissions.ROLES.INVENTORY, Permissions.ROLES.SUPERVISOR];
+        await EnsureRolesAsync(factory, roles);
+        var user = await CreateUserAsync(factory);
+        foreach (var role in roles) // through the API, so the user gets the roles' permission claims
+            (await _admin.PostAsync($"/api/admin/users/{user.Id}/roles/{role}", null)).EnsureSuccessStatusCode();
+        (await PermissionClaimsAsync(user)).Should().NotBeEmpty();
+
+        (await _admin.PostAsync($"/api/admin/users/{user.Id}/block", null)).EnsureSuccessStatusCode();
+
+        (await ListAsync()).Single(u => u.Id == user.Id).Roles.Should().BeEmpty();
+        (await PermissionClaimsAsync(user)).Should().BeEmpty("the permissions go with the roles");
+        var assign = await _admin.PostAsync($"/api/admin/users/{user.Id}/roles/{Permissions.ROLES.INVENTORY}", null);
+        assign.StatusCode.Should().Be(HttpStatusCode.BadRequest, "a blocked account keeps no roles");
+        (await assign.Content.ReadAsStringAsync()).Should().Contain("Unblock the account");
+
+        (await _admin.PostAsync($"/api/admin/users/{user.Id}/unblock", null)).EnsureSuccessStatusCode();
+
+        (await ListAsync()).Single(u => u.Id == user.Id).Roles.Should().BeEmpty();
+        (await _admin.PostAsync($"/api/admin/users/{user.Id}/roles/{Permissions.ROLES.INVENTORY}", null)).EnsureSuccessStatusCode();
+    }
+
+    [Fact]
+    public async Task Admins_CannotRemoveTheirOwnAdminRole_ButAnotherAdminCan()
+    {
+        var admin = await CreateUserAsync(factory, Permissions.ROLES.ADMIN);
+        await CreateUserAsync(factory, Permissions.ROLES.ADMIN); // so the refusal below isn't the last-admin rule
+        var session = await SignInAsync(factory, admin.UserName!);
+
+        var own = await session.DeleteAsync($"/api/admin/users/{admin.Id}/roles/{Permissions.ROLES.ADMIN}");
+
+        own.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await own.Content.ReadAsStringAsync()).Should().Contain("your own administrator role");
+        (await _admin.DeleteAsync($"/api/admin/users/{admin.Id}/roles/{Permissions.ROLES.ADMIN}")).EnsureSuccessStatusCode();
+    }
+
+    [Fact]
     public async Task TheLastActiveAdmin_CannotBeBlockedDeletedOrDemoted()
     {
         await using var clinic = new CustomWebAppFactory(); // its own database: this admin is the only one
@@ -199,13 +237,27 @@ public class UserAccessTests(CustomWebAppFactory factory) : IClassFixture<Custom
     private async Task<List<UserDto>> ListAsync()
         => (await _admin.GetFromJsonAsync<List<UserDto>>("/api/admin/users"))!;
 
-    private static async Task<IdentityUser> CreateUserAsync(CustomWebAppFactory app, params string[] roles)
+    private async Task<List<string>> PermissionClaimsAsync(IdentityUser user)
+    {
+        using var scope = factory.Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        var claims = await users.GetClaimsAsync((await users.FindByIdAsync(user.Id))!);
+        return [.. claims.Where(c => c.Type == Permissions.CLAIM_TYPE).Select(c => c.Value)];
+    }
+
+    private static async Task EnsureRolesAsync(CustomWebAppFactory app, params string[] roles)
     {
         using var scope = app.Services.CreateScope();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         foreach (var role in roles)
             if (!await roleManager.RoleExistsAsync(role))
                 await roleManager.CreateAsync(new IdentityRole(role));
+    }
+
+    private static async Task<IdentityUser> CreateUserAsync(CustomWebAppFactory app, params string[] roles)
+    {
+        await EnsureRolesAsync(app, roles);
+        using var scope = app.Services.CreateScope();
         var users = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
         var userName = $"user-{Guid.NewGuid():N}";
         var user = new IdentityUser(userName) { Email = $"{userName}@example.test" };

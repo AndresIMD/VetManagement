@@ -75,7 +75,9 @@ of their roles (`Permissions.ForRoles`), filtered by the enabled modules. Pages 
 never role names. The token only identifies the user: each request takes the current roles from the database
 (`UserAccess`, cached for a minute), so role changes apply at once and a blocked user's sessions stop; the staff app
 refreshes its token every minute (`api/account/refresh`) so menus follow. Blocking (no-end lockout) is how staff who
-leave lose access; the last active Admin can't be blocked, deleted or demoted.
+leave lose access: it also takes every role away (the audit entry lists them; unblocking doesn't restore them), and a
+blocked account can't be given roles. The last active Admin can't be blocked, deleted or demoted, and an Admin can't
+remove their own Admin role.
 
 **Per-clinic settings.** Each module with policies has one versioned JSON document in `ClinicSettings`
 (`scheduling`, `billing`, `clinical`, `exam-reports`), served by a `ClinicSettingsService<T>`: created from defaults on

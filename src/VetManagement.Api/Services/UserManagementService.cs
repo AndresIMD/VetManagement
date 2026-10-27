@@ -39,6 +39,19 @@ public class UserManagementService(UserManager<IdentityUser> userManager, RoleMa
         return result;
     }
 
+    /// <summary>Takes every role away, with the permissions they gave; returns the roles the user had.</summary>
+    public async Task<(IdentityResult Result, IList<string> Removed)> RemoveAllRolesAsync(IdentityUser user)
+    {
+        var roles = await userManager.GetRolesAsync(user);
+        if (roles.Count == 0)
+            return (IdentityResult.Success, roles);
+        var result = await userManager.RemoveFromRolesAsync(user, roles);
+        if (result.Succeeded)
+            await SyncClaimsForUserAsync(user);
+        access?.Forget(user.Id);
+        return (result, result.Succeeded ? roles : Array.Empty<string>());
+    }
+
     /// <summary>Sets a temporary password that the user must change at their next sign-in.</summary>
     public async Task<IdentityResult> ResetPasswordAsync(IdentityUser user, string newPassword)
     {

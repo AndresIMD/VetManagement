@@ -1043,10 +1043,10 @@
   <data name="Active" xml:space="preserve"><value>Activo</value></data>
   <data name="At least {0} characters, with uppercase, lowercase, a number and a symbol." xml:space="preserve"><value>Al menos {0} caracteres, con mayúsculas, minúsculas, un número y un símbolo.</value></data>
   <data name="Block" xml:space="preserve"><value>Bloquear</value></data>
-  <data name="Block '{0}'? They won't be able to sign in and their open sessions end within a minute. You can unblock them later." xml:space="preserve"><value>¿Bloquear a '{0}'? No podrá iniciar sesión y sus sesiones abiertas terminarán en menos de un minuto. Puedes desbloquearlo más adelante.</value></data>
+  <data name="Block '{0}'? They won't be able to sign in, their open sessions end within a minute and all their roles are removed. You can unblock them later, but their roles must be assigned again." xml:space="preserve"><value>¿Bloquear a '{0}'? No podrá iniciar sesión, sus sesiones abiertas terminarán en menos de un minuto y se le quitarán todos sus roles. Puedes desbloquearlo más adelante, pero habrá que asignarle sus roles de nuevo.</value></data>
   <data name="Block user" xml:space="preserve"><value>Bloquear usuario</value></data>
   <data name="Blocked" xml:space="preserve"><value>Bloqueado</value></data>
-  <data name="Click a role to assign or remove it. Block the accounts of staff who leave the clinic." xml:space="preserve"><value>Haz clic en un rol para asignarlo o quitarlo. Bloquea las cuentas del personal que deja la clínica.</value></data>
+  <data name="Click a role to assign or remove it. Block the accounts of staff who leave the clinic: blocking also removes their roles." xml:space="preserve"><value>Haz clic en un rol para asignarlo o quitarlo. Bloquea las cuentas del personal que deja la clínica: al bloquearlas también se quitan sus roles.</value></data>
   <data name="Could not assign role: {0}" xml:space="preserve"><value>No se pudo asignar el rol: {0}</value></data>
   <data name="Could not change password: {0}" xml:space="preserve"><value>No se pudo cambiar la contraseña: {0}</value></data>
   <data name="Could not delete the user: {0}" xml:space="preserve"><value>No se pudo eliminar el usuario: {0}</value></data>
@@ -1066,7 +1066,7 @@
   <data name="Staff accounts, their roles and access." xml:space="preserve"><value>Cuentas del personal, sus roles y accesos.</value></data>
   <data name="Temporary password" xml:space="preserve"><value>Contraseña temporal</value></data>
   <data name="Unblock" xml:space="preserve"><value>Desbloquear</value></data>
-  <data name="Unblock '{0}'? They will be able to sign in again with their roles." xml:space="preserve"><value>¿Desbloquear a '{0}'? Podrá volver a iniciar sesión con sus roles.</value></data>
+  <data name="Unblock '{0}'? They will be able to sign in again, without roles: assign the ones they need." xml:space="preserve"><value>¿Desbloquear a '{0}'? Podrá volver a iniciar sesión, pero sin roles: asígnale los que necesite.</value></data>
   <data name="Unblock user" xml:space="preserve"><value>Desbloquear usuario</value></data>
   <data name="User '{0}' blocked." xml:space="preserve"><value>Usuario '{0}' bloqueado.</value></data>
   <data name="User '{0}' deleted." xml:space="preserve"><value>Usuario '{0}' eliminado.</value></data>

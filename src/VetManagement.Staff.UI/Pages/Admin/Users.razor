@@ -17,7 +17,7 @@
     <MudPaper Class="pa-6 mb-4 elevation-3 rounded-lg app-surface">
         <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4" Wrap="Wrap.Wrap">
             <MudText Typo="Typo.body2" Color="Color.Secondary">
-                @L["Click a role to assign or remove it. Block the accounts of staff who leave the clinic."]
+                @L["Click a role to assign or remove it. Block the accounts of staff who leave the clinic: blocking also removes their roles."]
             </MudText>
             @if (CanCreate)
             {
@@ -60,7 +60,7 @@
                     {
                         <MudChip T="string" Size="Size.Small" Color="@(user.Roles.Contains(role) ? Color.Primary : Color.Default)"
                                  Variant="@(user.Roles.Contains(role) ? Variant.Filled : Variant.Outlined)"
-                                 Disabled="@(!CanManageRoles)" OnClick="@(() => ToggleRole(user, role))">
+                                 Disabled="@(!CanManageRoles || user.IsBlocked || IsOwnAdminRole(user, role))" OnClick="@(() => ToggleRole(user, role))">
                             @L[role]
                         </MudChip>
                     }
@@ -108,6 +108,9 @@
 </MudContainer>
 
 @code {
+    // The API's Admin role: an administrator can't take it from themselves.
+    private const string AdminRole = "Admin";
+
     private List<UserDto> users = new();
     private List<string> allRoles = new();
     private bool _isLoading;
@@ -144,9 +147,12 @@
         }
     }
 
+    private bool IsOwnAdminRole(UserDto user, string role)
+        => user.Id == _myId && role == AdminRole && user.Roles.Contains(role);
+
     private async Task ToggleRole(UserDto user, string role)
     {
-        if (!CanManageRoles) return;
+        if (!CanManageRoles || user.IsBlocked || IsOwnAdminRole(user, role)) return;
         var removing = user.Roles.Contains(role);
         var result = removing
             ? await UserManagementService.RemoveRoleAsync(user.Id, role)
@@ -190,8 +196,8 @@
         var confirmed = await ConfirmAsync(
             blocked ? L["Block user"] : L["Unblock user"],
             blocked
-                ? L["Block '{0}'? They won't be able to sign in and their open sessions end within a minute. You can unblock them later.", user.UserName]
-                : L["Unblock '{0}'? They will be able to sign in again with their roles.", user.UserName],
+                ? L["Block '{0}'? They won't be able to sign in, their open sessions end within a minute and all their roles are removed. You can unblock them later, but their roles must be assigned again.", user.UserName]
+                : L["Unblock '{0}'? They will be able to sign in again, without roles: assign the ones they need.", user.UserName],
             blocked ? L["Block"] : L["Unblock"],
             blocked ? Color.Warning : Color.Success);
         if (!confirmed) return;
@@ -200,6 +206,8 @@
         if (result.Ok)
         {
             user.IsBlocked = blocked;
+            if (blocked)
+                user.Roles.Clear();
             Snackbar.Add(blocked ? L["User '{0}' blocked.", user.UserName] : L["User '{0}' unblocked.", user.UserName], Severity.Success);
         }
         else
