@@ -17,12 +17,13 @@ public sealed record MetricsBucketDto(DateTime Start, int UnitsIn, int UnitsOut)
 public sealed record ItemFlowDto(int ItemId, string Name, int UnitsOut, int UnitsIn, int Stock, int LowStockThreshold, long SaleValueOut,
     double? DaysOfCover);
 
-/// <summary>Units of one item that went out, per bucket.</summary>
-public sealed record ItemSeriesDto(int ItemId, string Name, List<int> UnitsOut);
+/// <summary>Units of one item that went out and came in, per bucket.</summary>
+public sealed record ItemSeriesDto(int ItemId, string Name, List<int> UnitsOut, List<int> UnitsIn);
 
 /// <summary>
-/// Stock flow between two clinic-local dates (inclusive), for all items or the chosen ones.
-/// Values use today's prices; "previous" is the period of the same length right before.
+/// Stock flow between two clinic-local dates (inclusive), for all items or the chosen ones; <see cref="TopItems"/> are
+/// always the whole inventory's, so more items can be chosen from them. Values use today's prices; "previous" is the
+/// period of the same length right before.
 /// </summary>
 public sealed record InventoryMetricsDto(
     DateOnly From,

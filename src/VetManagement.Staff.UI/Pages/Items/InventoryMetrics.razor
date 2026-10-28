@@ -8,6 +8,7 @@
 @inject ItemsApiService ItemsService
 @inject InventoryMovementApiService MovementService
 @inject IBrowserViewportService Viewport
+@inject IJSRuntime Js
 
 <PageTitle>@L["Inventory Metrics"]</PageTitle>
 
@@ -33,7 +34,7 @@
             <MudItem xs="12">
                 <MudAutocomplete T="InventoryItemDTO" @ref="_itemPicker" Value="_pickedItem" ValueChanged="OnItemPickedAsync" SearchFunc="SearchItemsAsync"
                                  ToStringFunc="@(i => i?.Name ?? string.Empty)" Label="@L["Filter by items (optional)"]"
-                                 HelperText="@L["Up to {0} items, each drawn as its own line. Without any, the figures cover the whole inventory.", MaxCompared]"
+                                 HelperText="@L["Up to {0} items, each with its units out and in. Without any, the figures cover the whole inventory.", MaxCompared]"
                                  Variant="Variant.Outlined" Margin="Margin.Dense" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
                                  Clearable="true" ResetValueOnEmptyText="true" DebounceInterval="250" MaxItems="15" Disabled="@(_compared.Count >= MaxCompared)" />
                 @if (_compared.Count > 0)
@@ -122,26 +123,35 @@
         <MudPaper Class="pa-4 mb-4 rounded-lg app-surface" Elevation="1">
             <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mb-2">
                 <div>
-                    <MudText Typo="Typo.h6">@(m.Series.Count > 0 ? L["Units out per item"] : L["Units in and out"])</MudText>
+                    <MudText Typo="Typo.h6">@(m.Series.Count > 0 ? L["Units in and out per item"] : L["Units in and out"])</MudText>
                     <MudText Typo="Typo.caption" Color="Color.Secondary">@GroupingText(m.Grouping) · @RangeText(m)</MudText>
                 </div>
                 @if (m.Movements > 0)
                 {
-                    @* Own legend: the chart's one overlaps the names; a click hides or shows that series. *@
-                    <div class="d-flex flex-wrap gap-1">
-                        @for (var i = 0; i < _chartSeries.Count; i++)
-                        {
-                            var series = _chartSeries[i];
-                            var color = Palette[i % Palette.Length];
-                            <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => series.Visible = !series.Visible)"
-                                       Style="@($"text-transform: none; opacity: {(series.Visible ? "1" : "0.45")};")">
-                                <span style="@($"display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; background: {color};")"></span>
-                                @series.Name
-                            </MudButton>
-                        }
-                    </div>
+                    <MudToggleGroup T="ChartKind" Value="Kind" ValueChanged="OnKindChangedAsync" Size="Size.Small" Color="Color.Primary"
+                                    Outlined="true" Delimiters="true" CheckMark="false" aria-label="@L["Chart type"]">
+                        <MudToggleItem Value="ChartKind.Bars" Text="@L["Bars"]" />
+                        <MudToggleItem Value="ChartKind.Lines" Text="@L["Lines"]" />
+                        <MudToggleItem Value="ChartKind.Area" Text="@L["Area"]" />
+                    </MudToggleGroup>
                 }
             </MudStack>
+            @if (m.Movements > 0)
+            {
+                @* Own legend: the chart's one overlaps the names; a click hides or shows that series. *@
+                <div class="d-flex flex-wrap gap-1 mb-2">
+                    @for (var i = 0; i < _chartSeries.Count; i++)
+                    {
+                        var series = _chartSeries[i];
+                        var color = _seriesColors[i];
+                        <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => series.Visible = !series.Visible)"
+                                   Style="@($"text-transform: none; opacity: {(series.Visible ? "1" : "0.45")};")">
+                            <span style="@($"display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; background: {color};")"></span>
+                            @series.Name
+                        </MudButton>
+                    }
+                </div>
+            }
             @if (m.Movements == 0)
             {
                 <MudStack AlignItems="AlignItems.Center" Class="py-12">
@@ -149,14 +159,14 @@
                     <MudText Color="Color.Secondary">@L["No movements in this period."]</MudText>
                 </MudStack>
             }
-            else if (m.Series.Count > 0)
+            else if (Kind == ChartKind.Bars)
             {
-                <MudChart T="double" ChartType="ChartType.Line" ChartSeries="@_chartSeries" ChartLabels="@_chartLabels" ChartOptions="@_lineOptions"
+                <MudChart T="double" ChartType="ChartType.Bar" ChartSeries="@_chartSeries" ChartLabels="@_chartLabels" ChartOptions="@_barOptions"
                           Width="100%" Height="340px" MatchBoundsToSize="true" />
             }
             else
             {
-                <MudChart T="double" ChartType="ChartType.Bar" ChartSeries="@_chartSeries" ChartLabels="@_chartLabels" ChartOptions="@_barOptions"
+                <MudChart T="double" ChartType="ChartType.Line" ChartSeries="@_chartSeries" ChartLabels="@_chartLabels" ChartOptions="@_lineOptions"
                           Width="100%" Height="340px" MatchBoundsToSize="true" />
             }
         </MudPaper>
@@ -198,10 +208,19 @@
                                             <td style="text-align: right;">@Number(item.Stock)</td>
                                             <td style="text-align: right; white-space: nowrap;">@CoverChip(item)</td>
                                             <td style="text-align: right; width: 1%;">
-                                                @if (!_compared.Any(c => c.Id == item.ItemId) && _compared.Count < MaxCompared)
+                                                @* The list stays the whole inventory's: an item on the chart can be taken off it here too. *@
+                                                @if (_compared.Any(c => c.Id == item.ItemId))
+                                                {
+                                                    <MudTooltip Text="@L["Remove from the chart"]">
+                                                        <MudIconButton Icon="@Icons.Material.Filled.RemoveCircleOutline" Size="Size.Small" Color="Color.Primary"
+                                                                       OnClick="@(() => RemoveItemAsync(item.ItemId))" aria-label="@L["Remove from the chart"]" />
+                                                    </MudTooltip>
+                                                }
+                                                else if (_compared.Count < MaxCompared)
                                                 {
                                                     <MudTooltip Text="@L["Show on the chart"]">
-                                                        <MudIconButton Icon="@Icons.Material.Filled.AddChart" Size="Size.Small" OnClick="@(() => AddItemAsync(item.ItemId, item.Name))" />
+                                                        <MudIconButton Icon="@Icons.Material.Filled.AddChart" Size="Size.Small" OnClick="@(() => AddItemAsync(item.ItemId, item.Name))"
+                                                                       aria-label="@L["Show on the chart"]" />
                                                     </MudTooltip>
                                                 }
                                             </td>
@@ -255,10 +274,17 @@
 
     private enum Period { Today, Last7, Last30, Last90, ThisMonth, Last12Months, Custom }
 
+    private enum ChartKind { Bars, Lines, Area }
+
+    /// <summary>The chart type a viewer picked, kept in this browser.</summary>
+    private const string ChartKindKey = "app.metrics.chart";
+
     private static readonly Period[] Periods = [Period.Today, Period.Last7, Period.Last30, Period.Last90, Period.ThisMonth, Period.Last12Months];
 
-    // Readable on light and dark themes; the first two are "out" and "in".
+    // Readable on light and dark themes; the first two are "out" and "in". Each chosen item keeps one hue: the strong
+    // shade for what went out, the light one for what came in.
     private static readonly string[] Palette = ["#1e88e5", "#43a047", "#fb8c00", "#8e24aa", "#e53935", "#00acc1", "#6d4c41", "#3949ab"];
+    private static readonly string[] LightPalette = ["#64b5f6", "#81c784", "#ffb74d", "#ba68c8", "#e57373", "#4dd0e1", "#a1887f", "#7986cb"];
 
     private Period _period = Period.Last30;
     private DateRange _range = new(DateTime.Today.AddDays(-29), DateTime.Today);
@@ -273,9 +299,16 @@
     private bool _narrow;
 
     private List<ChartSeries<double>> _chartSeries = [];
+    /// <summary>One colour per series, for the chart and its legend alike.</summary>
+    private string[] _seriesColors = [];
     private string[] _chartLabels = [];
     private readonly BarChartOptions _barOptions = new() { ChartPalette = Palette, YAxisFormat = "0", ShowLegend = false };
     private readonly LineChartOptions _lineOptions = new() { ChartPalette = Palette[..], YAxisFormat = "0", LineStrokeWidth = 3, ShowDataMarkers = true, ShowLegend = false };
+
+    private ChartKind? _chosenKind;
+
+    /// <summary>The viewer's pick; until then bars for the totals and lines for chosen items.</summary>
+    private ChartKind Kind => _chosenKind ?? (_metrics?.Series.Count > 0 ? ChartKind.Lines : ChartKind.Bars);
 
     protected override Task OnInitializedAsync() => LoadAsync();
 
@@ -284,10 +317,37 @@
         if (!firstRender)
             return;
         _narrow = await Viewport.GetCurrentBreakpointAsync() == Breakpoint.Xs;
-        if (_narrow && _metrics is not null)
+        _chosenKind = await StoredKindAsync();
+        if (_metrics is not null && (_narrow || _chosenKind is not null))
         {
             BuildChart(_metrics);
             StateHasChanged();
+        }
+    }
+
+    private async Task<ChartKind?> StoredKindAsync()
+    {
+        try
+        {
+            return Enum.TryParse<ChartKind>(await Js.InvokeAsync<string?>("localStorage.getItem", ChartKindKey), out var kind) ? kind : null;
+        }
+        catch (JSException)
+        {
+            return null;
+        }
+    }
+
+    private async Task OnKindChangedAsync(ChartKind kind)
+    {
+        _chosenKind = kind;
+        _lineOptions.LineDisplayType = kind == ChartKind.Area ? LineDisplayType.Area : LineDisplayType.Line;
+        try
+        {
+            await Js.InvokeVoidAsync("localStorage.setItem", ChartKindKey, kind.ToString());
+        }
+        catch (JSException)
+        {
+            // Not kept for the next visit; the chart changes all the same.
         }
     }
 
@@ -410,13 +470,30 @@
         var every = _narrow ? (int)Math.Ceiling(_chartLabels.Length / 8.0) : 1;
         if (every > 1)
             _chartLabels = [.. _chartLabels.Select((label, i) => i % every == 0 ? label : string.Empty)];
-        _chartSeries = m.Series.Count > 0
-            ? [.. m.Series.Select(s => new ChartSeries<double> { Name = s.Name, Data = s.UnitsOut.Select(v => (double)v).ToArray() })]
-            :
+        if (m.Series.Count > 0)
+        {
+            _chartSeries =
+            [
+                .. m.Series.SelectMany(s => new[]
+                {
+                    new ChartSeries<double> { Name = L["{0} · out", s.Name], Data = s.UnitsOut.Select(v => (double)v).ToArray() },
+                    new ChartSeries<double> { Name = L["{0} · in", s.Name], Data = s.UnitsIn.Select(v => (double)v).ToArray() }
+                })
+            ];
+            _seriesColors = [.. m.Series.SelectMany((_, i) => new[] { Palette[i % Palette.Length], LightPalette[i % LightPalette.Length] })];
+        }
+        else
+        {
+            _chartSeries =
             [
                 new ChartSeries<double> { Name = L["Out"], Data = m.Buckets.Select(b => (double)b.UnitsOut).ToArray() },
                 new ChartSeries<double> { Name = L["In"], Data = m.Buckets.Select(b => (double)b.UnitsIn).ToArray() }
             ];
+            _seriesColors = [Palette[0], Palette[1]];
+        }
+        _barOptions.ChartPalette = _seriesColors;
+        _lineOptions.ChartPalette = _seriesColors;
+        _lineOptions.LineDisplayType = Kind == ChartKind.Area ? LineDisplayType.Area : LineDisplayType.Line;
         // Many labels side by side overlap; tilted they fit.
         var rotation = _chartLabels.Length / every > (_narrow ? 5 : 14) ? 45 : 0;
         _barOptions.XAxisLabelRotation = rotation;

@@ -1105,8 +1105,15 @@
   <data name="Units in" xml:space="preserve"><value>Unidades ingresadas</value></data>
   <data name="Units in and out" xml:space="preserve"><value>Entradas y salidas de unidades</value></data>
   <data name="Units out" xml:space="preserve"><value>Unidades salidas</value></data>
-  <data name="Units out per item" xml:space="preserve"><value>Unidades salidas por producto</value></data>
-  <data name="Up to {0} items, each drawn as its own line. Without any, the figures cover the whole inventory." xml:space="preserve"><value>Hasta {0} productos, cada uno con su propia línea. Sin ninguno, las cifras cubren todo el inventario.</value></data>
+  <data name="Units in and out per item" xml:space="preserve"><value>Entradas y salidas por producto</value></data>
+  <data name="Up to {0} items, each with its units out and in. Without any, the figures cover the whole inventory." xml:space="preserve"><value>Hasta {0} productos, cada uno con sus salidas y entradas. Sin ninguno, las cifras cubren todo el inventario.</value></data>
+  <data name="{0} · out" xml:space="preserve"><value>{0} · salidas</value></data>
+  <data name="{0} · in" xml:space="preserve"><value>{0} · entradas</value></data>
+  <data name="Chart type" xml:space="preserve"><value>Tipo de gráfico</value></data>
+  <data name="Bars" xml:space="preserve"><value>Barras</value></data>
+  <data name="Lines" xml:space="preserve"><value>Líneas</value></data>
+  <data name="Area" xml:space="preserve"><value>Área</value></data>
+  <data name="Remove from the chart" xml:space="preserve"><value>Quitar del gráfico</value></data>
   <data name="Value of what went out" xml:space="preserve"><value>Valor de las salidas</value></data>
   <data name="Week of {0}" xml:space="preserve"><value>Semana del {0}</value></data>
   <data name="What goes out, what comes in and what will run out soon." xml:space="preserve"><value>Qué sale, qué entra y qué se agotará pronto.</value></data>
