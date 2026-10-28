@@ -84,6 +84,9 @@
         .xr-criteria th { color: #fff; font-weight: 600; padding: 1.2mm 1.5mm; }
         .xr-criteria th, .xr-criteria td { text-align: center; vertical-align: middle; white-space: pre-line; overflow-wrap: anywhere; }
         .xr-criteria td { padding: 1mm 1.5mm; border-bottom: 0.2mm solid #ccc; }
+        /* More than 6 columns: equal ones would cut words in half; each takes the room its text needs. */
+        .xr-criteria table.xr-wide { table-layout: auto; }
+        .xr-criteria table.xr-wide th, .xr-criteria table.xr-wide td { overflow-wrap: break-word; }
     </style>
 
     @{ var pages = Paginate(); }
@@ -254,7 +257,7 @@
                                     {
                                         <div class="xr-criteria-title">@criteria.Title</div>
                                     }
-                                    <table>
+                                    <table class="@(criteria.Columns.Count > 6 ? "xr-wide" : null)">
                                         <tr>
                                             @foreach (var column in criteria.Columns)
                                             {
