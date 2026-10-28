@@ -39,13 +39,13 @@ public class InventoryMetricsService(IUnitOfWork unitOfWork, SchedulingSettingsS
         var (fromUtc, toUtc) = AgendaRules.UtcRange(previousFrom, to, zone); // padded a day each side; filtered by local date below
 
         var chosen = itemIds is { Count: > 0 } ? itemIds.ToHashSet() : null;
-        var items = (await unitOfWork.Items.GetAllAsync())
-            .Where(i => chosen is null || chosen.Contains(i.Id))
-            .ToDictionary(i => i.Id);
-        var movements = (await unitOfWork.InventoryMovements.GetQuantitiesAsync(fromUtc, toUtc))
-            .Where(m => items.ContainsKey(m.ItemId))
+        var allItems = (await unitOfWork.Items.GetAllAsync()).ToDictionary(i => i.Id);
+        var items = chosen is null ? allItems : allItems.Values.Where(i => chosen.Contains(i.Id)).ToDictionary(i => i.Id);
+        var allMovements = (await unitOfWork.InventoryMovements.GetQuantitiesAsync(fromUtc, toUtc))
+            .Where(m => allItems.ContainsKey(m.ItemId))
             .Select(m => m with { Date = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(m.Date, DateTimeKind.Utc), zone) })
             .ToList();
+        var movements = allMovements.Where(m => items.ContainsKey(m.ItemId)).ToList();
         var inPeriod = movements.Where(m => DateOnly.FromDateTime(m.Date) >= from && DateOnly.FromDateTime(m.Date) <= to).ToList();
         var previousUnitsOut = movements
             .Where(m => IsOut(m.Type) && DateOnly.FromDateTime(m.Date) >= previousFrom && DateOnly.FromDateTime(m.Date) < from)
@@ -55,32 +55,41 @@ public class InventoryMetricsService(IUnitOfWork unitOfWork, SchedulingSettingsS
         var starts = BucketStarts(from, to, grouping, now);
         var unitsIn = new int[starts.Count];
         var unitsOut = new int[starts.Count];
-        var series = (chosen ?? []).Where(items.ContainsKey).ToDictionary(id => id, _ => new int[starts.Count]);
+        var series = (chosen ?? []).Where(items.ContainsKey).ToDictionary(id => id, _ => (Out: new int[starts.Count], In: new int[starts.Count]));
         foreach (var m in inPeriod)
         {
             var index = BucketIndex(m.Date, starts[0], grouping);
             if (index < 0 || index >= starts.Count)
                 continue;
+            var drawn = series.TryGetValue(m.ItemId, out var line);
             if (IsOut(m.Type))
             {
                 unitsOut[index] += m.Quantity;
-                if (series.TryGetValue(m.ItemId, out var line))
-                    line[index] += m.Quantity;
+                if (drawn)
+                    line.Out[index] += m.Quantity;
             }
             else if (IsIn(m.Type))
+            {
                 unitsIn[index] += m.Quantity;
+                if (drawn)
+                    line.In[index] += m.Quantity;
+            }
         }
 
         // The pace counts only the days that have happened, so a period ending in the future doesn't dilute it.
         var elapsedDays = Math.Max(1, Math.Min(to.DayNumber, today.DayNumber) - from.DayNumber + 1);
-        var flows = inPeriod.GroupBy(m => m.ItemId).Select(g =>
+        List<ItemFlowDto> Flows(IEnumerable<MovementQuantity> period) => period.GroupBy(m => m.ItemId).Select(g =>
         {
-            var item = items[g.Key];
+            var item = allItems[g.Key];
             var outUnits = g.Where(m => IsOut(m.Type)).Sum(m => m.Quantity);
             var inUnits = g.Where(m => IsIn(m.Type)).Sum(m => m.Quantity);
             double? cover = outUnits == 0 ? null : Math.Round(Math.Max(item.Stock, 0) / (outUnits / (double)elapsedDays), 1);
             return new ItemFlowDto(item.Id, item.Name, outUnits, inUnits, item.Stock, item.LowStockThreshold, (long)outUnits * item.SellPrice, cover);
         }).ToList();
+        var flows = Flows(inPeriod);
+        // The most used are the whole inventory's even with items chosen: the list is where more of them are picked.
+        var allFlows = chosen is null ? flows
+            : Flows(allMovements.Where(m => DateOnly.FromDateTime(m.Date) >= from && DateOnly.FromDateTime(m.Date) <= to));
 
         return new InventoryMetricsDto(from, to, grouping,
             UnitsOut: unitsOut.Sum(),
@@ -93,9 +102,9 @@ public class InventoryMetricsService(IUnitOfWork unitOfWork, SchedulingSettingsS
             LowStock: items.Values.Count(i => i.Stock > 0 && i.Stock <= i.LowStockThreshold),
             OutOfStock: items.Values.Count(i => i.Stock <= 0),
             Buckets: [.. starts.Select((s, i) => new MetricsBucketDto(s, unitsIn[i], unitsOut[i]))],
-            TopItems: [.. flows.Where(f => f.UnitsOut > 0).OrderByDescending(f => f.UnitsOut).ThenBy(f => f.Name).Take(ListSize)],
+            TopItems: [.. allFlows.Where(f => f.UnitsOut > 0).OrderByDescending(f => f.UnitsOut).ThenBy(f => f.Name).Take(ListSize)],
             RunningOut: [.. flows.Where(f => f.DaysOfCover < RunningOutDays).OrderBy(f => f.DaysOfCover).ThenByDescending(f => f.UnitsOut).Take(ListSize)],
-            Series: [.. series.Select(s => new ItemSeriesDto(s.Key, items[s.Key].Name, [.. s.Value])).OrderBy(s => s.Name)]);
+            Series: [.. series.Select(s => new ItemSeriesDto(s.Key, items[s.Key].Name, [.. s.Value.Out], [.. s.Value.In])).OrderBy(s => s.Name)]);
     }
 
     private static bool IsOut(InventoryMovementType type) => type is InventoryMovementType.Egress or InventoryMovementType.MassiveStockEgress;

@@ -49,14 +49,21 @@ public class ExamReportStockTests(CustomWebAppFactory factory) : IClassFixture<C
     private Task<List<InventoryMovement>> MovementsOfAsync(int itemId)
         => WithDbAsync(db => db.InventoryMovements.AsNoTracking().Where(m => m.ItemId == itemId).OrderBy(m => m.Id).ToListAsync());
 
-    /// <summary>Rocky, of Ana Parker, and a T4 exam with a one-line template; the exam uses <paramref name="quantity"/> of the item.</summary>
-    private async Task<(int PetId, int ExamId)> AddPetAndExamAsync(int? itemId, int quantity = 1)
+    /// <summary>
+    /// Rocky (a dog), of Ana Parker, and a T4 exam with a one-line template; the exam uses <paramref name="quantity"/> of the item,
+    /// and the species in <paramref name="speciesItems"/> their own product.
+    /// </summary>
+    private async Task<(int PetId, int ExamId)> AddPetAndExamAsync(int? itemId, int quantity = 1, List<ExamSpeciesItem>? speciesItems = null)
     {
         var (petId, examId) = await WithDbAsync(async db =>
         {
             var owner = new Client("Ana", "Parker", $"{Random.Shared.Next(1_000_000, 25_000_000)}-K", "Calle 1", 912345678, "ana@example.test");
             db.Clients.Add(owner);
-            var exam = new Exam { Name = $"T4 {Guid.NewGuid():N}", Brand = "BioNote", Machine = "Vcheck V200", ItemId = itemId, ItemQuantity = quantity };
+            var exam = new Exam
+            {
+                Name = $"T4 {Guid.NewGuid():N}", Brand = "BioNote", Machine = "Vcheck V200", ItemId = itemId, ItemQuantity = quantity,
+                SpeciesItems = speciesItems ?? []
+            };
             db.Exams.Add(exam);
             await db.SaveChangesAsync();
             var pet = new Pet { OwnerId = owner.Id, Name = "Rocky", Breed = "Golden", Species = Species.Dog };
@@ -231,6 +238,75 @@ public class ExamReportStockTests(CustomWebAppFactory factory) : IClassFixture<C
         (await MovementsOfAsync(itemId)).Single().Reason.Should().Be($"Exam report #{reportId} – LUNA ROJAS");
     }
 
+    private Task<int> CreateCatReportAsync(int examId) => CreateReportAsync(new
+    {
+        ExamId = examId, ReceivedOn = new DateOnly(2026, 10, 20), Values = new Dictionary<string, string> { ["t4"] = "2.1" },
+        Patient = new { Name = "Luna", Species = Species.Cat, OwnerName = "Eva", OwnerLastName = "Rojas" }
+    });
+
+    [Fact]
+    public async Task ASpeciesWithItsOwnProduct_TakesIt_AndTheOtherSpeciesTakeTheExams()
+    {
+        var canineKit = await AddItemAsync(stock: 10);
+        var felineKit = await AddItemAsync(stock: 10);
+        var (petId, examId) = await AddPetAndExamAsync(canineKit,
+            speciesItems: [new ExamSpeciesItem { Species = Species.Cat, ItemId = felineKit, Quantity = 2 }]);
+        var dogReport = await CreateReportAsync(petId, examId);
+        var catReport = await CreateCatReportAsync(examId);
+
+        (await ReportAsync(catReport)).StockToDeduct.Should().BeEquivalentTo(new { Quantity = 2, InStock = 10 });
+        (await _laboratory.PostAsync($"/api/exam-reports/{catReport}/stock", null)).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await _laboratory.PostAsync($"/api/exam-reports/{dogReport}/stock", null)).StatusCode.Should().Be(HttpStatusCode.OK);
+
+        (await StockOfAsync(felineKit)).Should().Be(8);
+        (await StockOfAsync(canineKit)).Should().Be(9);
+        (await MovementsOfAsync(felineKit)).Single().Reason.Should().Be($"Exam report #{catReport} – LUNA ROJAS");
+
+        // Returning puts back what the report took, whatever the catalog says now.
+        (await _laboratory.DeleteAsync($"/api/exam-reports/{catReport}/stock")).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await StockOfAsync(felineKit)).Should().Be(10);
+    }
+
+    [Fact]
+    public async Task AnExamWithOnlySpeciesProducts_HasNothingToDeduct_ForTheOtherSpecies()
+    {
+        var felineKit = await AddItemAsync(stock: 10);
+        var (petId, examId) = await AddPetAndExamAsync(itemId: null,
+            speciesItems: [new ExamSpeciesItem { Species = Species.Cat, ItemId = felineKit }]);
+        var dogReport = await CreateReportAsync(petId, examId);
+
+        (await ReportAsync(dogReport)).StockToDeduct.Should().BeNull();
+        (await _laboratory.PostAsync($"/api/exam-reports/{dogReport}/stock", null)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await ReportAsync(await CreateCatReportAsync(examId))).StockToDeduct.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task TheCatalog_TakesOneExistingProductPerNamedSpecies()
+    {
+        var canineKit = await AddItemAsync(stock: 7);
+        var felineKit = await AddItemAsync(stock: 3);
+        var felineName = await WithDbAsync(async db => (await db.Items.FindAsync(felineKit))!.Name);
+        var name = $"Lipasa {Guid.NewGuid():N}";
+        object Exam(params object[] speciesItems) => new
+        {
+            Name = name, Brand = "IDEXX", Machine = "SNAP", SampleType = SampleType.Blood, SampleContainer = SampleContainer.Tube, ItemId = canineKit, SpeciesItems = speciesItems
+        };
+
+        (await _admin.PostAsJsonAsync("/api/exams", Exam(new { Species = Species.Unknown, ItemId = felineKit }))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await _admin.PostAsJsonAsync("/api/exams", Exam(new { Species = Species.Cat, ItemId = felineKit }, new { Species = Species.Cat, ItemId = canineKit })))
+            .StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await _admin.PostAsJsonAsync("/api/exams", Exam(new { Species = Species.Cat, ItemId = 999_999 }))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await _admin.PostAsJsonAsync("/api/exams", Exam(new { Species = Species.Cat, ItemId = felineKit, Quantity = 2 }))).StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var saved = (await _admin.GetFromJsonAsync<List<ExamDto>>("/api/exams"))!.Single(e => e.Name == name);
+        saved.ItemId.Should().Be(canineKit);
+        saved.SpeciesItems.Should().BeEquivalentTo([new { Species = Species.Cat, ItemId = felineKit, ItemName = felineName, Quantity = 2 }]);
+
+        // Saving again replaces the list.
+        (await _admin.PutAsJsonAsync($"/api/exams/{saved.Id}", Exam())).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await _admin.GetFromJsonAsync<List<ExamDto>>("/api/exams"))!.Single(e => e.Id == saved.Id).SpeciesItems.Should().BeEmpty();
+    }
+
     [Fact]
     public async Task WhoeverMakesReports_CanDeduct_ButReturningIsACorrection()
     {
@@ -288,7 +364,11 @@ public class ExamReportStockWithoutInventoryTests(NoInventoryAppFactory factory)
             var owner = new Client("Ana", "Parker", $"{Random.Shared.Next(1_000_000, 25_000_000)}-K", "Calle 1", 912345678, "ana@example.test");
             db.Clients.Add(owner);
             await db.SaveChangesAsync();
-            var exam = new Exam { Name = "cPL", Brand = "BioNote", Machine = "Vcheck V200", ItemId = item.Id, ItemQuantity = 1 };
+            var exam = new Exam
+            {
+                Name = "cPL", Brand = "BioNote", Machine = "Vcheck V200", ItemId = item.Id, ItemQuantity = 1,
+                SpeciesItems = [new ExamSpeciesItem { Species = Species.Cat, ItemId = item.Id }]
+            };
             var pet = new Pet { OwnerId = owner.Id, Name = "Rocky", Breed = "Golden", Species = Species.Dog };
             db.AddRange(exam, pet);
             await db.SaveChangesAsync();
@@ -307,7 +387,8 @@ public class ExamReportStockWithoutInventoryTests(NoInventoryAppFactory factory)
         // The form can't show the link, so saving the exam doesn't drop it.
         (await _admin.PutAsJsonAsync($"/api/exams/{examId}", new { Name = "cPL", Brand = "BioNote", Machine = "Vcheck V200", ItemId = (int?)null }))
             .StatusCode.Should().Be(HttpStatusCode.OK);
-        var link = await ExamReportStockTests.WithDbAsync(factory, async db => (await db.Exams.AsNoTracking().FirstAsync(e => e.Id == examId)).ItemId);
-        link.Should().Be(itemId);
+        var saved = await ExamReportStockTests.WithDbAsync(factory, db => db.Exams.AsNoTracking().FirstAsync(e => e.Id == examId));
+        saved.ItemId.Should().Be(itemId);
+        saved.SpeciesItems.Should().ContainSingle().Which.Species.Should().Be(Species.Cat);
     }
 }

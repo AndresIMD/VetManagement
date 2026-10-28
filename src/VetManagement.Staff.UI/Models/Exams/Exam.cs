@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using VetManagement.Contracts.Exams;
 using VetManagement.Staff.UI.Constants;
 using VetManagement.Domain.Enums;
 
@@ -37,4 +38,7 @@ public class Exam
 
     [Range(1, 1000, ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.QuantityPerExamRange))]
     public int ItemQuantity { get; set; } = 1;
+
+    /// <summary>Products of their own for some species (e.g. the feline kit), used by their reports instead of <see cref="ItemId"/>.</summary>
+    public List<ExamSpeciesItemDto> SpeciesItems { get; set; } = [];
 }

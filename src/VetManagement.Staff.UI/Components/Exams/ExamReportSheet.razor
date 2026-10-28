@@ -34,8 +34,11 @@
         @@media print { .xr-page { height: @(Mm(PageHeight - 0.6))mm !important; } }
         .xr-results { padding: 3mm 6mm 5mm; flex: 1; display: flex; flex-direction: column; }
         .xr-table { width: 100%; align-self: stretch; table-layout: fixed; border-collapse: collapse; }
-        .xr-table th { text-align: @ColumnTextAlign; vertical-align: bottom; font-size: .86em; text-transform: uppercase; padding: 2mm 1.5mm; border-bottom: 0.4mm solid #ccc; overflow-wrap: break-word; hyphens: auto; }
+        /* A header word is never cut in half: a column at its header's estimated width may be a hair short of it. */
+        .xr-table th { text-align: @ColumnTextAlign; vertical-align: bottom; font-size: .86em; text-transform: uppercase; padding: 2mm 1.5mm; border-bottom: 0.4mm solid #ccc; overflow-wrap: normal; hyphens: auto; }
         .xr-table td { text-align: @ColumnTextAlign; padding: 1.6mm 1.5mm; vertical-align: top; border-bottom: 0.2mm solid #eee; overflow-wrap: anywhere; }
+        /* Bands one per line, or a written reference's own line breaks. */
+        .xr-table td.xr-ref { white-space: pre-line; }
         /* The parameter names always align left; the other columns as the design says (centered unless chosen). */
         .xr-table th:first-child, .xr-table tr:not(.xr-section) > td:first-child { text-align: left; }
         .xr-flag { font-weight: 700; color: #C62828; }
@@ -84,6 +87,9 @@
         .xr-criteria th { color: #fff; font-weight: 600; padding: 1.2mm 1.5mm; }
         .xr-criteria th, .xr-criteria td { text-align: center; vertical-align: middle; white-space: pre-line; overflow-wrap: anywhere; }
         .xr-criteria td { padding: 1mm 1.5mm; border-bottom: 0.2mm solid #ccc; }
+        /* More than 6 columns: equal ones would cut words in half; each takes the room its text needs. */
+        .xr-criteria table.xr-wide { table-layout: auto; }
+        .xr-criteria table.xr-wide th, .xr-criteria table.xr-wide td { overflow-wrap: break-word; }
     </style>
 
     @{ var pages = Paginate(); }
@@ -223,13 +229,13 @@
                                             <td>@line.Unit</td>
                                             @if (HasReference && HasBar(line))
                                             {
-                                                <td>@line.Reference</td>
+                                                <td class="xr-ref">@line.Reference</td>
                                                 <td>@Gauge(line)</td>
                                             }
                                             else if (HasReference)
                                             {
                                                 @* A line without a bar writes its reference across the bars' column too. *@
-                                                <td colspan="@ReferenceColumns">@line.Reference</td>
+                                                <td class="xr-ref" colspan="@ReferenceColumns">@line.Reference</td>
                                             }
                                             @if (HasPrevious)
                                             {
@@ -254,7 +260,7 @@
                                     {
                                         <div class="xr-criteria-title">@criteria.Title</div>
                                     }
-                                    <table>
+                                    <table class="@(criteria.Columns.Count > 6 ? "xr-wide" : null)">
                                         <tr>
                                             @foreach (var column in criteria.Columns)
                                             {
@@ -357,7 +363,12 @@
     /// <summary>Printed labels and values are upper case: the same texts as the screens, upper-cased.</summary>
     private static string Upper(string text) => text.ToUpper(CultureInfo.CurrentCulture);
     private bool HasHeader => LogoUrl is not null || Settings.HeaderLines.Count > 0;
-    private static bool HasBar(ExamReportResultDto line) => line is { BarMin: { } min, BarMax: { } max } && max > min;
+    /// <summary>
+    /// The line draws a bar: its range has both limits and the value is a number ("No medible" has nothing to mark). The
+    /// template's preview shows the bars of its empty values, to lay out the design.
+    /// </summary>
+    private bool HasBar(ExamReportResultDto line)
+        => line is { BarMin: { } min, BarMax: { } max } && max > min && (Placeholder || ReportParameter.ParseNumber(line.Value) is not null);
     private bool HasPrevious => Report.Sections.PreviousResult && (Report.PreviousReceivedOn is not null || Placeholder);
     private string PreviousHeader => Report.PreviousReceivedOn?.ToString("dd/MM/yyyy") ?? Upper(L["dd/mm/yyyy"]);
     /// <summary>Exams read without a reference (e.g. cortisol samples judged together by the rules) drop the column.</summary>
@@ -382,7 +393,9 @@
     private void LayOutColumns()
     {
         var values = Values.ToList();
-        double Widest(IEnumerable<string?> texts, bool bold = false) => texts.Select(t => TextMm(t, bold: bold)).DefaultIfEmpty(0).Max();
+        // A text on several lines (bands one per line) is as wide as its widest line.
+        double Widest(IEnumerable<string?> texts, bool bold = false)
+            => texts.SelectMany(t => (t ?? string.Empty).Split('\n')).Select(t => TextMm(t, bold: bold)).DefaultIfEmpty(0).Max();
         double Header(string text) => TextMm(Upper(text), HEADER_EM, bold: true);
         var widest = new List<double>
         {
@@ -698,7 +711,8 @@
     /// <summary>Results print at their own size: lines are taller and hold fewer characters as it grows.</summary>
     private double ResultScale => Settings.ResultsFontPt / ExamReportSettings.DefaultFontPt;
     private double ResultLineMm => LINE_MM * ResultScale;
-    private int ResultLines(string? text, double widthMm) => Lines(text, widthMm / ResultScale);
+    /// <summary>Lines a text takes at the results' size; each of its own lines wraps on its own.</summary>
+    private int ResultLines(string? text, double widthMm) => (text ?? string.Empty).Split('\n').Sum(line => Lines(line, widthMm / ResultScale));
 
     private static int Lines(string? text, double widthMm)
         => string.IsNullOrEmpty(text) ? 1 : Math.Max(1, (int)Math.Ceiling(text.Length * CHAR_MM / Math.Max(widthMm, 10)));

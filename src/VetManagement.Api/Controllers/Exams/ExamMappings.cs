@@ -23,7 +23,10 @@ internal static class ExamMappings
         // A product deleted from inventory since counts as no link.
         ItemId = exam.ItemId is int itemId && itemNames?.ContainsKey(itemId) == true ? itemId : null,
         ItemName = exam.ItemId is int id && itemNames?.TryGetValue(id, out var name) == true ? name : null,
-        ItemQuantity = exam.ItemQuantity
+        ItemQuantity = exam.ItemQuantity,
+        SpeciesItems = [.. exam.SpeciesItems
+            .Where(s => itemNames?.ContainsKey(s.ItemId) == true)
+            .Select(s => new ExamSpeciesItemDto { Species = s.Species, ItemId = s.ItemId, ItemName = itemNames![s.ItemId], Quantity = s.Quantity })]
     };
 
     public static Exam ToDomain(this ExamRequest request, int id) => new()
@@ -37,7 +40,8 @@ internal static class ExamMappings
         BuyPrice = request.BuyPrice,
         SellPrice = request.SellPrice,
         ItemId = request.ItemId,
-        ItemQuantity = request.ItemQuantity
+        ItemQuantity = request.ItemQuantity,
+        SpeciesItems = [.. request.SpeciesItems.Select(s => new ExamSpeciesItem { Species = s.Species, ItemId = s.ItemId, Quantity = s.Quantity })]
     };
 
     public static ExternalLabDto ToDto(this ExternalLab lab) => new()

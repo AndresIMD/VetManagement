@@ -78,7 +78,7 @@ public class InventoryMetricsApiTests
     }
 
     [Fact]
-    public async Task ChosenItems_NarrowTheFigures_AndEachGetsItsLine()
+    public async Task ChosenItems_NarrowTheFigures_AndEachGetsItsLines_ButTheMostUsedStayTheInventorys()
     {
         await using var app = new CustomWebAppFactory();
         var (gauze, _, _) = await SeedAsync(app);
@@ -90,7 +90,12 @@ public class InventoryMetricsApiTests
 
         m.UnitsOut.Should().Be(6);
         m.ItemsMoved.Should().Be(1);
-        m.Series.Should().ContainSingle().Which.UnitsOut.Sum().Should().Be(6);
+        m.RunningOut.Should().ContainSingle().Which.ItemId.Should().Be(gauze.Id);
+        var line = m.Series.Should().ContainSingle().Subject;
+        line.UnitsOut.Sum().Should().Be(6);
+        line.UnitsIn.Sum().Should().Be(10);
+        line.UnitsIn[^3].Should().Be(10, "it came in two days ago");
+        m.TopItems.Select(i => i.Name).Should().Equal(["Gauze", "Syringe", "Collar"], "more items are picked from this list");
     }
 
     [Fact]

@@ -56,7 +56,9 @@
                 SellPrice = Initial.SellPrice,
                 ItemId = Initial.ItemId,
                 ItemName = Initial.ItemName,
-                ItemQuantity = Initial.ItemQuantity
+                ItemQuantity = Initial.ItemQuantity,
+                // Copies, so cancelling the form leaves the list as it was.
+                SpeciesItems = [.. Initial.SpeciesItems.Select(s => new ExamSpeciesItemDto { Species = s.Species, ItemId = s.ItemId, ItemName = s.ItemName, Quantity = s.Quantity })]
             };
         }
         else

@@ -25,19 +25,24 @@ Asked in the form (per template): the lot number, so the form only shows the fie
   containing the value wins (order them; e.g. `≤ 200`, `200 – 399.9`, `≥ 400`). A value in an `Abnormal` band prints
   in red with `*`, even inside the normal range.
   Without a normal range, a value outside every band is flagged too.
-- Values are kept as typed. For evaluation `86,6` = `86.6`, and analyser bounds `< 1.0` / `>99` count as the bound.
+- Values are kept as typed. For evaluation `86,6` = `86.6`. An analyser's bound (`< 1.0`, `>1000`, `≤ 5`) counts only
+  where it settles the question: `< 1.0` is low against a range starting at 1.0, falls in the band `≤ 200` and meets
+  `8 h < 1.4`, but not `8 h ≥ 1.0`; its bar mark sits on the bound. A value that isn't a number (e.g. "Not measurable",
+  for an analyser that shows `...`, `/` or `-`) prints as typed, is never flagged and draws no bar. In the form, the
+  menu next to each number value types "Not measurable" (Spanish: "No medible") or puts `>` / `<` before the number.
 - **Text parameters** (Positivo / Negativo, DEA 1, blood type) may list options; options marked `AbnormalOptions`
   (e.g. "Positivo") are flagged. A report whose results are all text prints each one highlighted (name and a result
   pill: solid red when flagged, outlined in the result colour otherwise) instead of the table, without unit, reference
   or legend.
 - **Interpretation rules** read several values together (e.g. cortisol at 0, 4 and 8 h). A rule is a meaning plus
   conditions that must all hold; a condition compares a number parameter with a number or with a percentage of another
-  parameter ("4 h < 50 % of basal"). A missing or non-numeric value makes its condition false. Rules are checked in
-  order and the first match wins.
+  parameter ("4 h < 50 % of basal"). A missing or non-numeric value makes its condition false, and so does a bound
+  that doesn't settle it. Rules are checked in order and the first match wins.
 - Automatic interpretation: the first matching rule; otherwise the band label (one parameter) or `Name: label` lines.
   A written interpretation replaces it.
-- Reference column, chosen per parameter: **Normal range** ("3.5 - 5.8"; without a range, the labelled bands),
-  **Written text** (e.g. "Sin rango de referencia") or **Nothing**. With a range of both limits, **Show bar** draws the
+- Reference column, chosen per parameter: **Normal range** ("3.5 - 5.8"; without a range, the labelled bands, in a row
+  split by " / " or, with `BandsOnePerLine`, one under the other), **Written text** (e.g. "Sin rango de referencia"; its
+  line breaks print) or **Nothing**. With a range of both limits, **Show bar** draws the
   value IDEXX-style (25 mm) in a column of its own next to the range, both under one "Valor referencial" header: the
   normal range is the middle third, a value beyond the bar shows as an arrow at its edge. A bar is one line of text tall,
   so a line with a bar takes no more room than one without; a reference without a bar writes across both columns.
@@ -52,7 +57,7 @@ Asked in the form (per template): the lot number, so the form only shows the fie
   reference to **Nothing**; when no line has a reference or bar, the "Valor referencial" column is dropped.
 - The legend under the table explains only the marks the report prints.
 - **Criteria table** (per template, optional): a grid copied from the exam's instructions (e.g. the manufacturer's
-  dexamethasone suppression table: 4 h, 8 h, interpretation), up to 6 columns and 20 rows, printed as written under the
+  dexamethasone suppression table: 4 h, 8 h, interpretation), up to 8 columns and 20 rows, printed as written under the
   results on the last page. It is for the reader; the automatic interpretation still comes from the rules, since a
   table row with "or" is two rules. A report keeps a copy, like the rest of the template.
 - Parameter codes are generated from the first name and hidden; renaming a parameter keeps its code.
@@ -129,6 +134,11 @@ A catalog exam can name the inventory product one exam uses up (`Exam.ItemId`, e
 (`ItemQuantity`, default 1); the catalog form shows the field only with the Inventory module, through a narrow search
 (`api/exams/stock-items`: name and stock) so a lab supervisor needs no inventory permissions to link it.
 
+Some species can have a product of their own (`Exam.SpeciesItems`: species, product, units; e.g. the canine and feline
+pancreatic lipase kits are different products): a report of that species (the typed patient's or the registered pet's)
+takes it, the other species take `ItemId`, and with no `ItemId` they take nothing. One per species, never "Unknown";
+kept as JSON with the exam, by id like `ItemId`.
+
 - **Deduct** (report page, "Deduct from inventory"; `POST api/exam-reports/{id}/stock`, whoever makes reports):
   under the clinic-wide `stock` lock, the report must not have deducted yet (two clicks or two desks take it once) and
   the stock must cover the quantity; the product leaves stock with the movement "Exam report #N – PET SURNAME" (pet
@@ -138,7 +148,7 @@ A catalog exam can name the inventory product one exam uses up (`Exam.ItemId`, e
   taken ("… (returned)"); the report can deduct again. Deleting a report puts it back too ("… (deleted)"), in the same
   transaction. What goes back is what the report took, whatever the catalog or a correction says since.
 - With the Inventory module off the endpoints answer 404, reports show nothing about stock and saving an exam keeps its
-  link. A product deleted from inventory counts as no link; returning to a deleted product clears the report only.
+  links. A product deleted from inventory counts as no link; returning to a deleted product clears the report only.
 
 ## Limits
 

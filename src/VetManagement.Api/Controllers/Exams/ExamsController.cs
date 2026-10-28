@@ -64,22 +64,28 @@ public class ExamsController(ExamService service, EnabledModules modules) : ApiC
     }
 
     /// <summary>
-    /// The linked inventory product must exist. With the Inventory module off the form doesn't show the link, so the exam
-    /// keeps the one it had.
+    /// The linked inventory products must exist, and a species' own product names a species, once. With the Inventory
+    /// module off the form doesn't show the links, so the exam keeps the ones it had.
     /// </summary>
     private async Task<IActionResult?> CheckStockItemAsync(Exam exam, Exam? previous)
     {
         if (!modules.IsEnabled(AppModule.Inventory))
         {
-            (exam.ItemId, exam.ItemQuantity) = previous is null ? (null, 1) : (previous.ItemId, previous.ItemQuantity);
+            (exam.ItemId, exam.ItemQuantity, exam.SpeciesItems) = previous is null
+                ? (null, 1, [])
+                : (previous.ItemId, previous.ItemQuantity, previous.SpeciesItems);
             return null;
         }
-        if (exam.ItemId is not null && (await service.StockItemNamesAsync([exam])).Count == 0)
-            return ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]>
-            {
-                [nameof(ExamRequest.ItemId)] = [Texts.T("The inventory item doesn't exist.")]
-            }));
-        return null;
+        var names = await service.StockItemNamesAsync([exam]);
+        (string Field, string Message)? problem =
+            exam.ItemId is int itemId && !names.ContainsKey(itemId) ? (nameof(ExamRequest.ItemId), Texts.T("The inventory item doesn't exist."))
+            : exam.SpeciesItems.Any(s => s.Species == Species.Unknown) ? (nameof(ExamRequest.SpeciesItems), Texts.T("Choose the species of each species' product."))
+            : exam.SpeciesItems.GroupBy(s => s.Species).Any(g => g.Count() > 1) ? (nameof(ExamRequest.SpeciesItems), Texts.T("Each species can have only one product of its own."))
+            : exam.SpeciesItems.Any(s => !names.ContainsKey(s.ItemId)) ? (nameof(ExamRequest.SpeciesItems), Texts.T("The inventory item doesn't exist."))
+            : null;
+        return problem is { } p
+            ? ValidationProblem(new ValidationProblemDetails(new Dictionary<string, string[]> { [p.Field] = [p.Message] }))
+            : null;
     }
 
     /// <summary>Names of the linked products; null with the Inventory module off, so no link is shown.</summary>

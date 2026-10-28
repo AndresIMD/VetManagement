@@ -654,6 +654,8 @@
   <data name="A value in this band prints in red with * (not a normal result)" xml:space="preserve"><value>Un valor en esta franja se imprime en rojo con * (no es un resultado normal)</value></data>
   <data name="Abnormal" xml:space="preserve"><value>Alterado</value></data>
   <data name="Add band" xml:space="preserve"><value>Agregar franja</value></data>
+  <data name="Print the bands one under the other" xml:space="preserve"><value>Imprimir las franjas una bajo otra</value></data>
+  <data name="When there is no normal range, the Reference value column lists the bands with their meaning. Ticked, each one gets its own line instead of a row split by /." xml:space="preserve"><value>Sin rango normal, la columna Valor referencial muestra las franjas con su significado. Marcado, cada una va en su propia línea en vez de seguidas y separadas por /.</value></data>
   <data name="Try a value" xml:space="preserve"><value>Probar un valor</value></data>
   <data name="Not saved: shows the result in the preview." xml:space="preserve"><value>No se guarda: muestra el resultado en la vista previa.</value></data>
   <data name="As species" xml:space="preserve"><value>Como especie</value></data>
@@ -1105,8 +1107,15 @@
   <data name="Units in" xml:space="preserve"><value>Unidades ingresadas</value></data>
   <data name="Units in and out" xml:space="preserve"><value>Entradas y salidas de unidades</value></data>
   <data name="Units out" xml:space="preserve"><value>Unidades salidas</value></data>
-  <data name="Units out per item" xml:space="preserve"><value>Unidades salidas por producto</value></data>
-  <data name="Up to {0} items, each drawn as its own line. Without any, the figures cover the whole inventory." xml:space="preserve"><value>Hasta {0} productos, cada uno con su propia línea. Sin ninguno, las cifras cubren todo el inventario.</value></data>
+  <data name="Units in and out per item" xml:space="preserve"><value>Entradas y salidas por producto</value></data>
+  <data name="Up to {0} items, each with its units out and in. Without any, the figures cover the whole inventory." xml:space="preserve"><value>Hasta {0} productos, cada uno con sus salidas y entradas. Sin ninguno, las cifras cubren todo el inventario.</value></data>
+  <data name="{0} · out" xml:space="preserve"><value>{0} · salidas</value></data>
+  <data name="{0} · in" xml:space="preserve"><value>{0} · entradas</value></data>
+  <data name="Chart type" xml:space="preserve"><value>Tipo de gráfico</value></data>
+  <data name="Bars" xml:space="preserve"><value>Barras</value></data>
+  <data name="Lines" xml:space="preserve"><value>Líneas</value></data>
+  <data name="Area" xml:space="preserve"><value>Área</value></data>
+  <data name="Remove from the chart" xml:space="preserve"><value>Quitar del gráfico</value></data>
   <data name="Value of what went out" xml:space="preserve"><value>Valor de las salidas</value></data>
   <data name="Week of {0}" xml:space="preserve"><value>Semana del {0}</value></data>
   <data name="What goes out, what comes in and what will run out soon." xml:space="preserve"><value>Qué sale, qué entra y qué se agotará pronto.</value></data>
@@ -1179,7 +1188,12 @@
   <data name="Only exams with a report template are listed. Changing the exam clears the results already typed." xml:space="preserve"><value>Solo aparecen los exámenes que tienen plantilla de informe. Al cambiar de examen se borran los resultados ya escritos.</value></data>
   <data name="The date the sample arrived; today by default." xml:space="preserve"><value>La fecha en que llegó la muestra; por defecto, hoy.</value></data>
   <data name="The vet who requested the exam. It prints as 'Médico tratante'." xml:space="preserve"><value>El veterinario que pidió el examen. Se imprime como 'Médico tratante'.</value></data>
-  <data name="Type each value. Values outside the normal range are marked as you type, and the range for the species is shown next to each one." xml:space="preserve"><value>Escribe cada valor. Los valores fuera del rango normal se marcan mientras escribes, y junto a cada uno se muestra el rango de la especie.</value></data>
+  <data name="Type each value. Values outside the normal range are marked as you type, and the range for the species is shown next to each one. When the analyser gives no number, use the menu next to the value." xml:space="preserve"><value>Escribe cada valor. Los valores fuera del rango normal se marcan mientras escribes, y junto a cada uno se muestra el rango de la especie. Si la máquina no entrega un número, usa el menú junto al valor.</value></data>
+  <data name="The analyser gave no number" xml:space="preserve"><value>La máquina no entregó un número</value></data>
+  <data name="Not measurable" xml:space="preserve"><value>No medible</value></data>
+  <data name="Not measurable (the analyser shows ..., / or -)" xml:space="preserve"><value>No medible (la máquina muestra ..., / o -)</value></data>
+  <data name="Above what the analyser measures (&gt;)" xml:space="preserve"><value>Sobre lo que mide la máquina (&gt;)</value></data>
+  <data name="Below what the analyser measures (&lt;)" xml:space="preserve"><value>Bajo lo que mide la máquina (&lt;)</value></data>
   <data name="When the exam has interpretation rules, the automatic interpretation shows in grey: leave the field empty to print it, or write your own." xml:space="preserve"><value>Cuando el examen tiene reglas de interpretación, la interpretación automática aparece en gris: deja el campo vacío para imprimirla o escribe la tuya.</value></data>
   <data name="Saves the report and opens it, ready to print or save as PDF. A saved report can be corrected later." xml:space="preserve"><value>Guarda el informe y lo abre, listo para imprimir o guardar en PDF. Un informe guardado se puede corregir después.</value></data>
   <data name="Pet and owner data text: {0} pt" xml:space="preserve"><value>Texto de datos del paciente y tutor: {0} pt</value></data>
@@ -1273,6 +1287,10 @@
   <data name="What one exam uses up (e.g. its test kit). Its reports can deduct it from inventory." xml:space="preserve"><value>Lo que gasta un examen (por ejemplo, su kit). Sus informes pueden descontarlo del inventario.</value></data>
   <data name="Quantity per exam" xml:space="preserve"><value>Cantidad por examen</value></data>
   <data name="The quantity per exam must be between 1 and 1000." xml:space="preserve"><value>La cantidad por examen debe estar entre 1 y 1000.</value></data>
+  <data name="Product for this species" xml:space="preserve"><value>Producto de esta especie</value></data>
+  <data name="Another product for one species" xml:space="preserve"><value>Otro producto para una especie</value></data>
+  <data name="E.g. a different kit for cats. Reports of the other species use the product above." xml:space="preserve"><value>Por ejemplo, otro kit para gatos. Los informes de las demás especies usan el producto de arriba.</value></data>
+  <data name="Choose the product of each species, or remove its row." xml:space="preserve"><value>Elige el producto de cada especie, o quita su fila.</value></data>
   <data name="Deducted from inventory: {0} × {1} ({2}, {3})." xml:space="preserve"><value>Descontado del inventario: {0} × {1} ({2}, {3}).</value></data>
   <data name="Return to inventory" xml:space="preserve"><value>Devolver al inventario</value></data>
   <data name="This exam uses {0} × {1} ({2} in stock)." xml:space="preserve"><value>Este examen usa {0} × {1} ({2} en stock).</value></data>

@@ -51,17 +51,18 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
         if (report is null)
             return null;
         var exam = await unitOfWork.Exams.GetByIdAsNoTrackingAsync(report.ExamId);
-        var stock = withStock && !report.StockDeducted && exam?.ItemId is int itemId
-            && await unitOfWork.Items.GetByIdAsNoTrackingAsync(itemId) is { } item
-            ? new ExamReportStock(item.Name, exam.ItemQuantity, item.Stock)
-            : null;
         // A typed patient prints as typed; its provisional pet only links the reports' history.
-        if (report.Patient is not null || report.PetId is not int petId)
-            return new ExamReportView(report, null, null, exam?.Name, stock);
-        var pet = await unitOfWork.Pets.GetByIdAsNoTrackingAsync(petId);
-        if (pet is null)
+        var pet = report.Patient is null && report.PetId is int petId ? await unitOfWork.Pets.GetByIdAsNoTrackingAsync(petId) : null;
+        if (report.Patient is null && report.PetId is not null && pet is null)
             return null;
-        return new ExamReportView(report, pet, await unitOfWork.Clients.GetByIdAsNoTrackingAsync(pet.OwnerId), exam?.Name, stock);
+        // The product for the patient's species (e.g. the feline kit), or the exam's.
+        var stock = withStock && !report.StockDeducted && exam?.ItemFor(report.Patient?.Species ?? pet?.Species ?? Species.Unknown) is { } product
+            && await unitOfWork.Items.GetByIdAsNoTrackingAsync(product.ItemId) is { } item
+            ? new ExamReportStock(item.Name, product.Quantity, item.Stock)
+            : null;
+        return pet is null
+            ? new ExamReportView(report, null, null, exam?.Name, stock)
+            : new ExamReportView(report, pet, await unitOfWork.Clients.GetByIdAsNoTrackingAsync(pet.OwnerId), exam?.Name, stock);
     }
 
     /// <summary>Reports of a pet, or the latest 200 of the clinic; newest first.</summary>
@@ -165,8 +166,9 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
     }
 
     /// <summary>
-    /// Takes the exam's inventory product (e.g. its test kit) for this report, once: a movement "Exam report #N – PATIENT",
-    /// under the clinic-wide stock lock like every stock change; refused when the report already took it or stock is short.
+    /// Takes the exam's inventory product (e.g. its test kit; the patient's species' own one when it has one) for this report,
+    /// once: a movement "Exam report #N – PATIENT", under the clinic-wide stock lock like every stock change; refused when the
+    /// report already took it or stock is short.
     /// </summary>
     public async Task<ExamReportResultStatus> DeductStockAsync(int id, string userName)
     {
@@ -181,20 +183,20 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
                 return new ExamReportResultStatus(ExamReportStatus.Invalid,
                     Error: Texts.T("This report already took '{0}' from inventory.", report.StockItemName ?? string.Empty));
             var exam = await unitOfWork.Exams.GetByIdAsNoTrackingAsync(report.ExamId);
-            if (exam?.ItemId is not int itemId)
+            if (exam?.ItemFor(await SpeciesOfAsync(report)) is not { } product)
                 return new ExamReportResultStatus(ExamReportStatus.Invalid, Error: Texts.T("The exam has no inventory product to deduct."));
-            var item = await unitOfWork.Items.GetByIdAsNoTrackingAsync(itemId);
+            var item = await unitOfWork.Items.GetByIdAsNoTrackingAsync(product.ItemId);
             if (item is null)
                 return new ExamReportResultStatus(ExamReportStatus.Invalid, Error: Texts.T("The inventory item doesn't exist."));
-            if (exam.ItemQuantity > item.Stock)
+            if (product.Quantity > item.Stock)
                 return new ExamReportResultStatus(ExamReportStatus.Invalid, Error: Texts.T("Only {0} of '{1}' left in stock.", item.Stock, item.Name));
 
-            await Stock.MoveAsync(unitOfWork, item.Id, exam.ItemQuantity, InventoryMovementType.Egress,
+            await Stock.MoveAsync(unitOfWork, item.Id, product.Quantity, InventoryMovementType.Egress,
                 await StockReasonAsync(report, "Exam report #{0} – {1}"), userName, now);
             (report.StockItemId, report.StockItemName, report.StockQuantity, report.StockDeductedAtUtc, report.StockDeductedBy)
-                = (item.Id, item.Name, exam.ItemQuantity, now, userName);
+                = (item.Id, item.Name, product.Quantity, now, userName);
             await unitOfWork.SaveChangesAsync();
-            taken = $"item {item.Id} '{item.Name}' x{exam.ItemQuantity}";
+            taken = $"item {item.Id} '{item.Name}' x{product.Quantity}";
             return new ExamReportResultStatus(ExamReportStatus.Done, id);
         });
 
@@ -225,6 +227,12 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
             await audit.LogAsync(nameof(ExamReport), id, AuditActionType.Edit, $"Returned to inventory: {returned}", userName);
         return result;
     }
+
+    /// <summary>The report's species: the typed patient's, or the registered pet's.</summary>
+    private async Task<Species> SpeciesOfAsync(ExamReport report)
+        => report.Patient?.Species
+           ?? (report.PetId is int petId ? (await unitOfWork.Pets.GetByIdAsNoTrackingAsync(petId))?.Species : null)
+           ?? Species.Unknown;
 
     /// <summary>Moves what the report took back into stock (unless the product no longer exists) and clears it from the report.</summary>
     private async Task PutStockBackAsync(ExamReport report, string reasonFormat, string userName)
