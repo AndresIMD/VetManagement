@@ -25,10 +25,10 @@ public class ExamService(IUnitOfWork unitOfWork, IRealtimeNotificationService? n
     public async Task<List<Item>> SearchStockItemsAsync(string? search)
         => (await unitOfWork.Items.SearchAsync(searchTerm: search)).OrderBy(i => i.Name).Take(15).ToList();
 
-    /// <summary>Names of the inventory products linked to the exams, by id; a product deleted since is missing.</summary>
+    /// <summary>Names of the inventory products linked to the exams (theirs and their species'), by id; a product deleted since is missing.</summary>
     public async Task<Dictionary<int, string>> StockItemNamesAsync(IEnumerable<Exam> exams)
     {
-        var ids = exams.Select(e => e.ItemId).OfType<int>().Distinct().ToList();
+        var ids = exams.SelectMany(e => e.SpeciesItems.Select(s => (int?)s.ItemId).Append(e.ItemId)).OfType<int>().Distinct().ToList();
         return ids.Count == 0 ? [] : (await unitOfWork.Items.FindAsync(i => ids.Contains(i.Id))).ToDictionary(i => i.Id, i => i.Name);
     }
 

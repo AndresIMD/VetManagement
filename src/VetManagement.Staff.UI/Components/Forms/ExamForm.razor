@@ -62,6 +62,47 @@
                 <MudNumericField T="int" Label="@L["Quantity per exam"]" @bind-Value="ExamModel.ItemQuantity" For="@(() => ExamModel.ItemQuantity)"
                                  Min="1" Max="1000" Disabled="@(ExamModel.ItemId is null)" />
             </MudItem>
+            @* A species with a product of its own (e.g. the feline kit); the other species keep the one above. *@
+            @foreach (var row in ExamModel.SpeciesItems)
+            {
+                var current = row;
+                <MudItem xs="12" sm="3">
+                    <MudSelect T="Species" Label="@L["Species"]" Value="current.Species" ValueChanged="s => SetSpecies(current, s)">
+                        @foreach (var species in SpeciesFor(current))
+                        {
+                            <MudSelectItem Value="species">@species.ToText()</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="5">
+                    <MudAutocomplete T="ExamStockItemDto" Value="_rowItems.GetValueOrDefault(current)" ValueChanged="i => OnSpeciesItemChanged(current, i)"
+                                     Label="@L["Product for this species"]" SearchFunc="SearchStockItemsAsync" ToStringFunc="@(i => i?.Name ?? string.Empty)"
+                                     ResetValueOnEmptyText="true" DebounceInterval="300">
+                        <ItemTemplate>@L["{0} ({1} in stock)", context.Name, context.Stock]</ItemTemplate>
+                    </MudAutocomplete>
+                </MudItem>
+                <MudItem xs="10" sm="3">
+                    <MudNumericField T="int" Label="@L["Quantity per exam"]" Value="current.Quantity" ValueChanged="q => SetQuantity(current, q)" Min="1" Max="1000" />
+                </MudItem>
+                <MudItem xs="2" sm="1" Class="d-flex align-center">
+                    <MudTooltip Text="@L["Remove"]">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => RemoveSpeciesItem(current)"
+                                       aria-label="@L["Remove"]" />
+                    </MudTooltip>
+                </MudItem>
+            }
+            <MudItem xs="12" Class="pt-0">
+                <MudButton Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" Disabled="@(!SpeciesLeft.Any())" OnClick="AddSpeciesItem">
+                    @L["Another product for one species"]
+                </MudButton>
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="d-block">
+                    @L["E.g. a different kit for cats. Reports of the other species use the product above."]
+                </MudText>
+                @if (_speciesError is not null)
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Error" Class="d-block">@_speciesError</MudText>
+                }
+            </MudItem>
         }
     </MudGrid>
     @if (_mudForm != null && _mudForm.Errors?.Any() == true)
@@ -90,12 +131,60 @@
     // The inventory product field shows when the clinic has the Inventory module (the search answers); the linked one by name.
     private bool _canLinkStock;
     private ExamStockItemDto? _stockItem;
+    // Each species row's chosen product, kept as one object per row so its search box isn't reset on every render.
+    private readonly Dictionary<ExamSpeciesItemDto, ExamStockItemDto?> _rowItems = [];
+    private string? _speciesError;
 
     protected override async Task OnInitializedAsync()
     {
         _canLinkStock = await ExamApi.SearchStockItemsAsync(null) is not null;
         if (ExamModel.ItemId is int id)
             _stockItem = new ExamStockItemDto { Id = id, Name = ExamModel.ItemName ?? string.Empty };
+        foreach (var row in ExamModel.SpeciesItems)
+            _rowItems[row] = new ExamStockItemDto { Id = row.ItemId, Name = row.ItemName ?? string.Empty };
+    }
+
+    /// <summary>Species that have no product of their own yet.</summary>
+    private IEnumerable<Species> SpeciesLeft => Enum.GetValues<Species>()
+        .Where(s => s != Species.Unknown && ExamModel.SpeciesItems.All(row => row.Species != s));
+
+    /// <summary>A row's choices: its own species and those without a product.</summary>
+    private IEnumerable<Species> SpeciesFor(ExamSpeciesItemDto row) => Enum.GetValues<Species>()
+        .Where(s => s != Species.Unknown && (s == row.Species || ExamModel.SpeciesItems.All(other => other.Species != s)));
+
+    private void AddSpeciesItem()
+    {
+        var row = new ExamSpeciesItemDto { Species = SpeciesLeft.First() };
+        ExamModel.SpeciesItems.Add(row);
+        _rowItems[row] = null;
+        IsDirty = true;
+    }
+
+    private void RemoveSpeciesItem(ExamSpeciesItemDto row)
+    {
+        ExamModel.SpeciesItems.Remove(row);
+        _rowItems.Remove(row);
+        IsDirty = true;
+    }
+
+    private void SetSpecies(ExamSpeciesItemDto row, Species species)
+    {
+        row.Species = species;
+        IsDirty = true;
+    }
+
+    private void SetQuantity(ExamSpeciesItemDto row, int quantity)
+    {
+        row.Quantity = quantity;
+        IsDirty = true;
+    }
+
+    private void OnSpeciesItemChanged(ExamSpeciesItemDto row, ExamStockItemDto? item)
+    {
+        _rowItems[row] = item;
+        (row.ItemId, row.ItemName) = (item?.Id ?? 0, item?.Name);
+        _speciesError = null;
+        IsDirty = true;
     }
 
     private async Task<IEnumerable<ExamStockItemDto>> SearchStockItemsAsync(string text, CancellationToken ct)
@@ -123,10 +212,11 @@
     /// <summary>Validates the fields; the modal holding the form saves (its footer has the Save and Cancel buttons).</summary>
     public async Task<bool> ValidateAsync()
     {
+        _speciesError = ExamModel.SpeciesItems.Any(row => row.ItemId <= 0) ? L["Choose the product of each species, or remove its row."] : null;
         if (_mudForm is null)
-            return true;
+            return _speciesError is null;
         await _mudForm.ValidateAsync();
-        return _mudForm.IsValid;
+        return _mudForm.IsValid && _speciesError is null;
     }
 
     private async Task OnBrandChangedMud(string value)

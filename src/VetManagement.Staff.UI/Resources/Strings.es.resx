@@ -1285,6 +1285,10 @@
   <data name="What one exam uses up (e.g. its test kit). Its reports can deduct it from inventory." xml:space="preserve"><value>Lo que gasta un examen (por ejemplo, su kit). Sus informes pueden descontarlo del inventario.</value></data>
   <data name="Quantity per exam" xml:space="preserve"><value>Cantidad por examen</value></data>
   <data name="The quantity per exam must be between 1 and 1000." xml:space="preserve"><value>La cantidad por examen debe estar entre 1 y 1000.</value></data>
+  <data name="Product for this species" xml:space="preserve"><value>Producto de esta especie</value></data>
+  <data name="Another product for one species" xml:space="preserve"><value>Otro producto para una especie</value></data>
+  <data name="E.g. a different kit for cats. Reports of the other species use the product above." xml:space="preserve"><value>Por ejemplo, otro kit para gatos. Los informes de las demás especies usan el producto de arriba.</value></data>
+  <data name="Choose the product of each species, or remove its row." xml:space="preserve"><value>Elige el producto de cada especie, o quita su fila.</value></data>
   <data name="Deducted from inventory: {0} × {1} ({2}, {3})." xml:space="preserve"><value>Descontado del inventario: {0} × {1} ({2}, {3}).</value></data>
   <data name="Return to inventory" xml:space="preserve"><value>Devolver al inventario</value></data>
   <data name="This exam uses {0} × {1} ({2} in stock)." xml:space="preserve"><value>Este examen usa {0} × {1} ({2} en stock).</value></data>

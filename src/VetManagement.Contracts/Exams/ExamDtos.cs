@@ -31,6 +31,24 @@ public sealed class ExamRequest
 
     [Range(1, 1000)]
     public int ItemQuantity { get; init; } = 1;
+
+    /// <summary>A product of its own for some species (e.g. the feline kit), instead of <see cref="ItemId"/>; one per species.</summary>
+    public List<ExamSpeciesItemDto> SpeciesItems { get; init; } = [];
+}
+
+/// <summary>An exam's own inventory product for one species, and the units one exam uses.</summary>
+public sealed class ExamSpeciesItemDto
+{
+    public Species Species { get; set; }
+
+    [Range(1, int.MaxValue)]
+    public int ItemId { get; set; }
+
+    /// <summary>The product's name, as the API sends it; ignored when saving.</summary>
+    public string? ItemName { get; set; }
+
+    [Range(1, 1000)]
+    public int Quantity { get; set; } = 1;
 }
 
 /// <summary>An inventory product the catalog can link to an exam, with its current stock.</summary>
@@ -110,6 +128,8 @@ public sealed class ExamDto
     public int? ItemId { get; set; }
     public string? ItemName { get; set; }
     public int ItemQuantity { get; set; } = 1;
+    /// <summary>Products of their own for some species, instead of <see cref="ItemId"/> (empty with the Inventory module off).</summary>
+    public List<ExamSpeciesItemDto> SpeciesItems { get; set; } = [];
 }
 
 public sealed class ExternalLabDto

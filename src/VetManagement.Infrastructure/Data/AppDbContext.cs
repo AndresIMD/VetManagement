@@ -55,6 +55,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     => string.IsNullOrWhiteSpace(v)
     ? new Dictionary<string, string>()
     : (JsonSerializer.Deserialize<Dictionary<string, string>>(v!, _jsonOptions) ?? new Dictionary<string, string>());
+    private static string SerializeSpeciesItems(List<ExamSpeciesItem>? v)
+    => JsonSerializer.Serialize(v ?? [], _jsonOptions);
+    private static List<ExamSpeciesItem> DeserializeSpeciesItems(string? v)
+    => string.IsNullOrWhiteSpace(v) ? [] : (JsonSerializer.Deserialize<List<ExamSpeciesItem>>(v, _jsonOptions) ?? []);
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -265,6 +269,19 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         .Property(i => i.Attributes)
         .HasConversion(v => SerializeDict(v), v => DeserializeDict(v))
         .Metadata.SetValueComparer(dictComparer);
+
+        // A catalog exam's products per species, as JSON with it (no key to the items, like its ItemId). One value rather than
+        // owned rows, so saving the exam the catalog form sends replaces the whole list.
+        var speciesItemsComparer = new ValueComparer<List<ExamSpeciesItem>>(
+        (l, r) => SerializeSpeciesItems(l) == SerializeSpeciesItems(r),
+        v => SerializeSpeciesItems(v).GetHashCode(),
+        v => DeserializeSpeciesItems(SerializeSpeciesItems(v))
+        );
+
+        builder.Entity<Exam>()
+        .Property(e => e.SpeciesItems)
+        .HasConversion(v => SerializeSpeciesItems(v), v => DeserializeSpeciesItems(v))
+        .Metadata.SetValueComparer(speciesItemsComparer);
 
         // MedicalVisit relationships
         builder.Entity<MedicalVisit>()

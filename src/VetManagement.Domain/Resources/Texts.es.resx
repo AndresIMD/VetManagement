@@ -258,6 +258,8 @@
   <data name="Write at least one email address to send the alerts to." xml:space="preserve"><value>Escribe al menos un correo al que enviar las alertas.</value></data>
   <data name="This report already took '{0}' from inventory." xml:space="preserve"><value>Este informe ya descontó '{0}' del inventario.</value></data>
   <data name="The exam has no inventory product to deduct." xml:space="preserve"><value>El examen no tiene un producto de inventario para descontar.</value></data>
+  <data name="Choose the species of each species' product." xml:space="preserve"><value>Elige la especie de cada producto por especie.</value></data>
+  <data name="Each species can have only one product of its own." xml:space="preserve"><value>Cada especie puede tener un solo producto propio.</value></data>
   <data name="This report took nothing from inventory." xml:space="preserve"><value>Este informe no ha descontado nada del inventario.</value></data>
   <data name="Exam report #{0} – {1}" xml:space="preserve"><value>Informe #{0} – {1}</value></data>
   <data name="Exam report #{0} – {1} (returned)" xml:space="preserve"><value>Informe #{0} – {1} (devuelto)</value></data>

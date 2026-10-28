@@ -133,6 +133,11 @@ A catalog exam can name the inventory product one exam uses up (`Exam.ItemId`, e
 (`ItemQuantity`, default 1); the catalog form shows the field only with the Inventory module, through a narrow search
 (`api/exams/stock-items`: name and stock) so a lab supervisor needs no inventory permissions to link it.
 
+Some species can have a product of their own (`Exam.SpeciesItems`: species, product, units; e.g. the canine and feline
+pancreatic lipase kits are different products): a report of that species (the typed patient's or the registered pet's)
+takes it, the other species take `ItemId`, and with no `ItemId` they take nothing. One per species, never "Unknown";
+kept as JSON with the exam, by id like `ItemId`.
+
 - **Deduct** (report page, "Deduct from inventory"; `POST api/exam-reports/{id}/stock`, whoever makes reports):
   under the clinic-wide `stock` lock, the report must not have deducted yet (two clicks or two desks take it once) and
   the stock must cover the quantity; the product leaves stock with the movement "Exam report #N – PET SURNAME" (pet
@@ -142,7 +147,7 @@ A catalog exam can name the inventory product one exam uses up (`Exam.ItemId`, e
   taken ("… (returned)"); the report can deduct again. Deleting a report puts it back too ("… (deleted)"), in the same
   transaction. What goes back is what the report took, whatever the catalog or a correction says since.
 - With the Inventory module off the endpoints answer 404, reports show nothing about stock and saving an exam keeps its
-  link. A product deleted from inventory counts as no link; returning to a deleted product clears the report only.
+  links. A product deleted from inventory counts as no link; returning to a deleted product clears the report only.
 
 ## Limits
 

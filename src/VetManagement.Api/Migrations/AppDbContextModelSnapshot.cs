@@ -940,6 +940,10 @@ namespace VetManagement.Api.Migrations
                     b.Property<int>("SellPrice")
                         .HasColumnType("int");
 
+                    b.Property<string>("SpeciesItems")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.ToTable("Exams");
