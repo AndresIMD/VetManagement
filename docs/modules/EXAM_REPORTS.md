@@ -40,8 +40,9 @@ Asked in the form (per template): the lot number, so the form only shows the fie
   that doesn't settle it. Rules are checked in order and the first match wins.
 - Automatic interpretation: the first matching rule; otherwise the band label (one parameter) or `Name: label` lines.
   A written interpretation replaces it.
-- Reference column, chosen per parameter: **Normal range** ("3.5 - 5.8"; without a range, the labelled bands),
-  **Written text** (e.g. "Sin rango de referencia") or **Nothing**. With a range of both limits, **Show bar** draws the
+- Reference column, chosen per parameter: **Normal range** ("3.5 - 5.8"; without a range, the labelled bands, in a row
+  split by " / " or, with `BandsOnePerLine`, one under the other), **Written text** (e.g. "Sin rango de referencia"; its
+  line breaks print) or **Nothing**. With a range of both limits, **Show bar** draws the
   value IDEXX-style (25 mm) in a column of its own next to the range, both under one "Valor referencial" header: the
   normal range is the middle third, a value beyond the bar shows as an arrow at its edge. A bar is one line of text tall,
   so a line with a bar takes no more room than one without; a reference without a bar writes across both columns.

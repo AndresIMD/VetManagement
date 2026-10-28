@@ -133,7 +133,9 @@
                                 <MudItem xs="12" sm="8" Class="d-flex align-center">
                                     @if (p.Reference == ReferenceDisplay.Text)
                                     {
-                                        <MudTextField Label="@L["Text printed as reference"]" @bind-Value="p.ReferenceText" Placeholder="@L["No reference range"]" />
+                                        @* Several lines print as written (e.g. one range per line). *@
+                                        <MudTextField Label="@L["Text printed as reference"]" @bind-Value="p.ReferenceText" Placeholder="@L["No reference range"]"
+                                                      Sizing="InputSizing.Auto" Lines="1" MaxLines="5" />
                                     }
                                     else
                                     {
@@ -199,6 +201,14 @@
                                         </MudGrid>
                                     }
                                     <MudButton Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" Class="mt-1" OnClick="() => p.Bands.Add(new InterpretationBand())">@L["Add band"]</MudButton>
+                                    @* Without a normal range the bands are the printed reference: in a row, or one under the other. *@
+                                    @if (p.Reference == ReferenceDisplay.Range && p.Bands.Count > 1)
+                                    {
+                                        <div class="d-flex align-center">
+                                            <MudCheckBox T="bool" @bind-Value="p.BandsOnePerLine" Label="@L["Print the bands one under the other"]" Dense="true" />
+                                            <HelpTip Text="@L["When there is no normal range, the Reference value column lists the bands with their meaning. Ticked, each one gets its own line instead of a row split by /."]" />
+                                        </div>
+                                    }
                                 </MudItem>
                             }
                             @if (!p.IsSection)

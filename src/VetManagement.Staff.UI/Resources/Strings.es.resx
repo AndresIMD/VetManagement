@@ -654,6 +654,8 @@
   <data name="A value in this band prints in red with * (not a normal result)" xml:space="preserve"><value>Un valor en esta franja se imprime en rojo con * (no es un resultado normal)</value></data>
   <data name="Abnormal" xml:space="preserve"><value>Alterado</value></data>
   <data name="Add band" xml:space="preserve"><value>Agregar franja</value></data>
+  <data name="Print the bands one under the other" xml:space="preserve"><value>Imprimir las franjas una bajo otra</value></data>
+  <data name="When there is no normal range, the Reference value column lists the bands with their meaning. Ticked, each one gets its own line instead of a row split by /." xml:space="preserve"><value>Sin rango normal, la columna Valor referencial muestra las franjas con su significado. Marcado, cada una va en su propia línea en vez de seguidas y separadas por /.</value></data>
   <data name="Try a value" xml:space="preserve"><value>Probar un valor</value></data>
   <data name="Not saved: shows the result in the preview." xml:space="preserve"><value>No se guarda: muestra el resultado en la vista previa.</value></data>
   <data name="As species" xml:space="preserve"><value>Como especie</value></data>

@@ -359,6 +359,12 @@ public class ReportParameter
     /// <summary>Optional meanings by range (e.g. "Zona gris"); the first band that contains the value wins.</summary>
     public List<InterpretationBand> Bands { get; set; } = [];
 
+    /// <summary>
+    /// The labelled bands printed as the reference (when there is no normal range) go one under the other instead of in a
+    /// row split by " / ", so each meaning stays readable next to its range.
+    /// </summary>
+    public bool BandsOnePerLine { get; set; }
+
     /// <summary>The normal range for the species: its own one wins over one for all species; empty rows are ignored.</summary>
     public ReferenceRange? RangeFor(Species species)
     {
@@ -420,15 +426,15 @@ public class ReportParameter
     }
 
     /// <summary>
-    /// The reference column for the species: the written text; or the normal range ("3.5 - 5.8"), and without one the
-    /// labelled bands ("≤ 200 Normal / 200 - 400 Zona gris / ...").
+    /// The reference column for the species: the written text (its line breaks print); or the normal range ("3.5 - 5.8"),
+    /// and without one the labelled bands ("≤ 200 Normal / 200 - 400 Zona gris / ...", or one per line).
     /// </summary>
     public string ReferenceFor(Species species) => Reference switch
     {
         ReferenceDisplay.Text => ReferenceText ?? string.Empty,
         ReferenceDisplay.None => string.Empty,
         _ => RangeFor(species)?.RangeText()
-             ?? string.Join(" / ", BandsFor(species).Where(b => !string.IsNullOrWhiteSpace(b.Label)).Select(b => b.RangeText()))
+             ?? string.Join(BandsOnePerLine ? "\n" : " / ", BandsFor(species).Where(b => !string.IsNullOrWhiteSpace(b.Label)).Select(b => b.RangeText()))
     };
 
     /// <summary>
