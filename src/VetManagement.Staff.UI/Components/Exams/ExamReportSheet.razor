@@ -357,7 +357,12 @@
     /// <summary>Printed labels and values are upper case: the same texts as the screens, upper-cased.</summary>
     private static string Upper(string text) => text.ToUpper(CultureInfo.CurrentCulture);
     private bool HasHeader => LogoUrl is not null || Settings.HeaderLines.Count > 0;
-    private static bool HasBar(ExamReportResultDto line) => line is { BarMin: { } min, BarMax: { } max } && max > min;
+    /// <summary>
+    /// The line draws a bar: its range has both limits and the value is a number ("No medible" has nothing to mark). The
+    /// template's preview shows the bars of its empty values, to lay out the design.
+    /// </summary>
+    private bool HasBar(ExamReportResultDto line)
+        => line is { BarMin: { } min, BarMax: { } max } && max > min && (Placeholder || ReportParameter.ParseNumber(line.Value) is not null);
     private bool HasPrevious => Report.Sections.PreviousResult && (Report.PreviousReceivedOn is not null || Placeholder);
     private string PreviousHeader => Report.PreviousReceivedOn?.ToString("dd/MM/yyyy") ?? Upper(L["dd/mm/yyyy"]);
     /// <summary>Exams read without a reference (e.g. cortisol samples judged together by the rules) drop the column.</summary>

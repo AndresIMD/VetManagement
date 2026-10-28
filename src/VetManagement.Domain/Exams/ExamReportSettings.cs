@@ -226,7 +226,7 @@ public class ExamReportTemplate
     public string? Interpret(IReadOnlyList<ExamReportResult> results)
     {
         var numbers = results.GroupBy(r => r.Code, StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(g => g.Key, g => ReportParameter.ParseNumber(g.First().Value), StringComparer.OrdinalIgnoreCase);
+            .ToDictionary(g => g.Key, g => ReportNumber.Parse(g.First().Value), StringComparer.OrdinalIgnoreCase);
         return Rules.FirstOrDefault(r => r.Matches(numbers))?.Label ?? ExamReport.InterpretationFrom(results);
     }
 
@@ -307,7 +307,8 @@ public class ExamReportSections
 /// </summary>
 public class CriteriaTable
 {
-    public const int MaxColumns = 6;
+    /// <summary>Room for the widest manufacturer tables (low-dose dexamethasone suppression: 7) across a portrait page.</summary>
+    public const int MaxColumns = 8;
     public const int MaxRows = 20;
 
     /// <summary>Optional heading, e.g. "Prueba de supresión con dexametasona a dosis baja".</summary>
@@ -368,25 +369,29 @@ public class ReportParameter
     /// <summary>
     /// How a value reads for the species: below or above the normal range, the band it falls in, and whether it is
     /// flagged (outside the range, in an abnormal band, or outside every band when there is no range).
-    /// A text value is flagged when it is one of the <see cref="AbnormalOptions"/>; unparsable numbers never are.
+    /// A text value is flagged when it is one of the <see cref="AbnormalOptions"/>; unparsable numbers (e.g. "No medible")
+    /// never are. An analyser's bound counts only where it settles the question: "&lt; 1.0" is low against a range
+    /// starting at 1.0, but not against one starting at 0.5.
     /// </summary>
     public BandResult Evaluate(string? value, Species species)
     {
         if (Kind == ReportParameterKind.Text)
             return new BandResult(null, value is not null && AbnormalOptions.Contains(value.Trim(), StringComparer.OrdinalIgnoreCase));
-        if (ParseNumber(value) is not { } number)
+        if (ReportNumber.Parse(value) is not { } number)
             return new BandResult(null, false);
 
         var range = RangeFor(species);
         var direction = range switch
         {
-            { Min: { } min } when number < min => ResultDirection.Low,
-            { Max: { } max } when number > max => ResultDirection.High,
+            { Min: { } min } when number.IsLessThan(min) => ResultDirection.Low,
+            { Max: { } max } when number.IsGreaterThan(max) => ResultDirection.High,
             _ => ResultDirection.None
         };
         var bands = BandsFor(species);
-        var band = bands.FirstOrDefault(b => (b.Min is null || number >= b.Min) && (b.Max is null || number <= b.Max));
-        var outsideEveryBand = range is null && bands.Count > 0 && band is null;
+        var band = bands.FirstOrDefault(b => (b.Min is not { } min || number.IsAtLeast(min)) && (b.Max is not { } max || number.IsAtMost(max)));
+        // A bound that could still fall in a band isn't outside them all.
+        var outsideEveryBand = range is null && bands.Count > 0 && band is null
+            && bands.All(b => (b.Min is { } min && number.IsLessThan(min)) || (b.Max is { } max && number.IsGreaterThan(max)));
         return new BandResult(band, direction != ResultDirection.None || band?.Abnormal == true || outsideEveryBand, direction);
     }
 
@@ -427,15 +432,98 @@ public class ReportParameter
     };
 
     /// <summary>
-    /// Reads "86.6", "86,6" or an analyser's bound such as "&lt; 1.0" / "&gt;99" (evaluated as the bound).
+    /// Reads "86.6", "86,6" or an analyser's bound such as "&lt; 1.0" / "&gt;99" as its number (where the bar marks it);
+    /// <see cref="ReportNumber.Parse"/> keeps the side of a bound too.
     /// </summary>
-    public static decimal? ParseNumber(string? value)
+    public static decimal? ParseNumber(string? value) => ReportNumber.Parse(value)?.Value;
+}
+
+/// <summary>Where a typed value lies against its number: exactly on it, or only known to be below or above it.</summary>
+public enum ValueBound
+{
+    Exact,
+    /// <summary>"&lt; 1.0": an analyser's reading under what it measures.</summary>
+    Below,
+    /// <summary>"≤ 1.0" or "&lt;= 1.0".</summary>
+    AtMost,
+    /// <summary>"&gt; 1000": an analyser's reading over what it measures.</summary>
+    Above,
+    /// <summary>"≥ 1000" or "&gt;= 1000".</summary>
+    AtLeast
+}
+
+/// <summary>
+/// A result read as a number: "86,6" is exactly 86.6, "&lt; 1.0" is somewhere below 1.0. The comparisons hold only when
+/// they are certain, so a bound never passes for a value it may not be: "&lt; 1.0" is less than 1.0 (and than 1.4), but
+/// neither less nor more than 0.5.
+/// </summary>
+public readonly record struct ReportNumber(decimal Value, ValueBound Bound = ValueBound.Exact)
+{
+    /// <summary>"86.6", "86,6", "&lt; 1.0", "&gt;99", "≤ 5", "&gt;= 5"; null for anything else (e.g. "No medible", "---").</summary>
+    public static ReportNumber? Parse(string? text)
     {
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrWhiteSpace(text))
             return null;
-        var text = value.Trim().TrimStart('<', '>', '≤', '≥', '=').Trim().Replace(',', '.');
-        return decimal.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var number) ? number : null;
+        var trimmed = text.Trim();
+        var sign = trimmed[..(trimmed.Length - trimmed.TrimStart('<', '>', '≤', '≥', '=').Length)];
+        if (!decimal.TryParse(trimmed[sign.Length..].Trim().Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out var number))
+            return null;
+        var (below, above, orEqual) = (sign.IndexOfAny(['<', '≤']) >= 0, sign.IndexOfAny(['>', '≥']) >= 0, sign.IndexOfAny(['=', '≤', '≥']) >= 0);
+        return (below, above) switch
+        {
+            (true, true) => null, // "<>5" says nothing
+            (true, false) => new ReportNumber(number, orEqual ? ValueBound.AtMost : ValueBound.Below),
+            (false, true) => new ReportNumber(number, orEqual ? ValueBound.AtLeast : ValueBound.Above),
+            _ => new ReportNumber(number)
+        };
     }
+
+    /// <summary>Certainly below <paramref name="other"/>.</summary>
+    public bool IsLessThan(ReportNumber other)
+        => Highest is { } high && other.Lowest is { } low && (high.Value < low.Value || (high.Value == low.Value && (high.Open || low.Open)));
+
+    /// <summary>Certainly at or below <paramref name="other"/>.</summary>
+    public bool IsAtMost(ReportNumber other) => Highest is { } high && other.Lowest is { } low && high.Value <= low.Value;
+
+    public bool IsGreaterThan(ReportNumber other) => other.IsLessThan(this);
+
+    public bool IsAtLeast(ReportNumber other) => other.IsAtMost(this);
+
+    public bool IsLessThan(decimal other) => IsLessThan(new ReportNumber(other));
+    public bool IsAtMost(decimal other) => IsAtMost(new ReportNumber(other));
+    public bool IsGreaterThan(decimal other) => IsGreaterThan(new ReportNumber(other));
+    public bool IsAtLeast(decimal other) => IsAtLeast(new ReportNumber(other));
+
+    /// <summary>The value times <paramref name="factor"/> (e.g. 50 % of a basal "&gt; 20" is "&gt; 10").</summary>
+    public ReportNumber Times(decimal factor) => factor switch
+    {
+        0 => new ReportNumber(0),
+        > 0 => this with { Value = Value * factor },
+        _ => new ReportNumber(Value * factor, Bound switch
+        {
+            ValueBound.Below => ValueBound.Above,
+            ValueBound.AtMost => ValueBound.AtLeast,
+            ValueBound.Above => ValueBound.Below,
+            ValueBound.AtLeast => ValueBound.AtMost,
+            _ => ValueBound.Exact
+        })
+    };
+
+    /// <summary>The largest the value can be (open = not reached); null when it has no top, like "&gt; 1000".</summary>
+    private (decimal Value, bool Open)? Highest => Bound switch
+    {
+        ValueBound.Exact or ValueBound.AtMost => (Value, false),
+        ValueBound.Below => (Value, true),
+        _ => null
+    };
+
+    /// <summary>The smallest the value can be (open = not reached); null when it has no bottom, like "&lt; 1.0".</summary>
+    private (decimal Value, bool Open)? Lowest => Bound switch
+    {
+        ValueBound.Exact or ValueBound.AtLeast => (Value, false),
+        ValueBound.Above => (Value, true),
+        _ => null
+    };
 }
 
 /// <summary>A range of a numeric parameter with its meaning, e.g. 200–400 ng/mL "Zona gris". Bounds are inclusive.</summary>
@@ -490,8 +578,11 @@ public class InterpretationRule
     /// <summary>Printed as the interpretation.</summary>
     public string Label { get; set; } = string.Empty;
 
-    /// <summary>All conditions hold; a missing or non-numeric value makes its condition false.</summary>
-    public bool Matches(IReadOnlyDictionary<string, decimal?> values)
+    /// <summary>
+    /// All conditions hold; a missing or non-numeric value makes its condition false, and so does an analyser's bound that
+    /// doesn't settle it ("&lt; 1.0" against "8 h ≥ 1.0").
+    /// </summary>
+    public bool Matches(IReadOnlyDictionary<string, ReportNumber?> values)
         => Conditions.Count > 0 && Conditions.All(c => c.Holds(values));
 }
 
@@ -504,23 +595,23 @@ public class RuleCondition
     /// <summary>When set, the threshold is <see cref="Value"/> % of this parameter's value (e.g. 50 % of basal).</summary>
     public string? PercentOf { get; set; }
 
-    public bool Holds(IReadOnlyDictionary<string, decimal?> values)
+    public bool Holds(IReadOnlyDictionary<string, ReportNumber?> values)
     {
         if (values.GetValueOrDefault(Code) is not { } value)
             return false;
-        var threshold = Value;
+        var threshold = new ReportNumber(Value);
         if (!string.IsNullOrWhiteSpace(PercentOf))
         {
             if (values.GetValueOrDefault(PercentOf) is not { } basis)
                 return false;
-            threshold = basis * Value / 100;
+            threshold = basis.Times(Value / 100);
         }
         return Operator switch
         {
-            RuleOperator.LessThan => value < threshold,
-            RuleOperator.LessOrEqual => value <= threshold,
-            RuleOperator.GreaterThan => value > threshold,
-            _ => value >= threshold
+            RuleOperator.LessThan => value.IsLessThan(threshold),
+            RuleOperator.LessOrEqual => value.IsAtMost(threshold),
+            RuleOperator.GreaterThan => value.IsGreaterThan(threshold),
+            _ => value.IsAtLeast(threshold)
         };
     }
 }

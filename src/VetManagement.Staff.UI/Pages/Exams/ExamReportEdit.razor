@@ -152,6 +152,20 @@
                                     }
                                 </MudSelect>
                             }
+                            else if (current.Kind == ReportParameterKind.Number)
+                            {
+                                <div class="d-flex align-center">
+                                    <MudTextField T="string" Label="@current.Name" Value="@Value(current.Code)" ValueChanged="v => _values[current.Code] = v"
+                                                  Immediate="true" Adornment="Adornment.End" AdornmentText="@current.Unit" Class="flex-grow-1" />
+                                    @* What an analyser shows instead of a number: "...", "/" or "-", or a bound like ">1000". *@
+                                    <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Dense="true" AriaLabel="@L["The analyser gave no number"]"
+                                             AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Class="mt-3">
+                                        <MudMenuItem OnClick="() => _values[current.Code] = L[NotMeasurable]">@L["Not measurable (the analyser shows ..., / or -)"]</MudMenuItem>
+                                        <MudMenuItem OnClick="() => SetBound(current.Code, '>')">@L["Above what the analyser measures (>)"]</MudMenuItem>
+                                        <MudMenuItem OnClick="() => SetBound(current.Code, '<')">@L["Below what the analyser measures (<)"]</MudMenuItem>
+                                    </MudMenu>
+                                </div>
+                            }
                             else
                             {
                                 <MudTextField T="string" Label="@current.Name" Value="@Value(current.Code)" ValueChanged="v => _values[current.Code] = v"
@@ -192,6 +206,8 @@
 
 @code {
     private const string ReportRoute = "exam-reports/{0}";
+    /// <summary>Typed for a value the analyser didn't give: printed as is, never flagged, drawn on a bar or used by the rules.</summary>
+    private const string NotMeasurable = "Not measurable";
 
     [Parameter] public int? Id { get; set; }
     [SupplyParameterFromQuery(Name = "petId")] public int? QueryPetId { get; set; }
@@ -244,7 +260,7 @@
         new("exam", L["Exam"], L["Only exams with a report template are listed. Changing the exam clears the results already typed."]),
         new("received", L["Sample received"], L["The date the sample arrived; today by default."]),
         new("referring-vet", L["Referring vet"], L["The vet who requested the exam. It prints as 'Médico tratante'."]),
-        new("results", L["Results"], L["Type each value. Values outside the normal range are marked as you type, and the range for the species is shown next to each one."]),
+        new("results", L["Results"], L["Type each value. Values outside the normal range are marked as you type, and the range for the species is shown next to each one. When the analyser gives no number, use the menu next to the value."]),
         new("interpretation", L["Interpretation"], L["When the exam has interpretation rules, the automatic interpretation shows in grey: leave the field empty to print it, or write your own."]),
         new("save", L["Save and view"], L["Saves the report and opens it, ready to print or save as PDF. A saved report can be corrected later."])
     ];
@@ -337,6 +353,13 @@
         {
             return null;
         }
+    }
+
+    /// <summary>The analyser's bound: "&gt;" or "&lt;" before the number typed, or alone to type the number after it.</summary>
+    private void SetBound(string code, char sign)
+    {
+        var number = (Value(code) ?? string.Empty).Trim().TrimStart('<', '>', '≤', '≥', '=').Trim();
+        _values[code] = ReportNumber.Parse(number) is null ? sign.ToString() : $"{sign}{number}";
     }
 
     private void OnExamChanged(int examId)
