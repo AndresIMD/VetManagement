@@ -267,7 +267,7 @@ public class ExamReportTemplate
                 errors.Add(Texts.T("Template '{0}', rule {1}: write what it means.", name, index));
             if (rule.Conditions.Count == 0)
                 errors.Add(Texts.T("Template '{0}', rule {1}: add at least one condition.", name, index));
-            if (rule.Conditions.Any(c => !IsNumber(c.Code) || (!string.IsNullOrWhiteSpace(c.PercentOf) && !IsNumber(c.PercentOf))))
+            if (rule.Conditions.SelectMany(c => c.WithAlternatives()).Any(c => !IsNumber(c.Code) || (!string.IsNullOrWhiteSpace(c.PercentOf) && !IsNumber(c.PercentOf))))
                 errors.Add(Texts.T("Template '{0}', rule {1}: conditions must use number parameters of this template.", name, index));
         }
 
@@ -580,8 +580,8 @@ public class ReferenceRange
 }
 
 /// <summary>
-/// An interpretation that holds when all its conditions do, e.g. "8 h ≥ 1.4 and 4 h &lt; 50 % of basal" →
-/// "Compatible con hiperadrenocorticismo hipofisario".
+/// An interpretation that holds when all its conditions do, e.g. "(4 h &lt; 1.4 or 4 h &lt; 50 % of basal) and 8 h &gt; 1.4
+/// and 8 h &lt; 50 % of basal" → "Compatible con hiperadrenocorticismo hipofisario".
 /// </summary>
 public class InterpretationRule
 {
@@ -590,14 +590,14 @@ public class InterpretationRule
     public string Label { get; set; } = string.Empty;
 
     /// <summary>
-    /// All conditions hold; a missing or non-numeric value makes its condition false, and so does an analyser's bound that
-    /// doesn't settle it ("&lt; 1.0" against "8 h ≥ 1.0").
+    /// All conditions hold, each by its own comparison or one of its alternatives; a missing or non-numeric value makes a
+    /// comparison false, and so does an analyser's bound that doesn't settle it ("&lt; 1.0" against "8 h ≥ 1.0").
     /// </summary>
     public bool Matches(IReadOnlyDictionary<string, ReportNumber?> values)
         => Conditions.Count > 0 && Conditions.All(c => c.Holds(values));
 }
 
-/// <summary>A parameter compared with a number, or with a percentage of another parameter.</summary>
+/// <summary>A parameter compared with a number, or with a percentage of another parameter; or else one of its alternatives.</summary>
 public class RuleCondition
 {
     public string Code { get; set; } = string.Empty;
@@ -605,8 +605,15 @@ public class RuleCondition
     public decimal Value { get; set; }
     /// <summary>When set, the threshold is <see cref="Value"/> % of this parameter's value (e.g. 50 % of basal).</summary>
     public string? PercentOf { get; set; }
+    /// <summary>Comparisons that make the condition hold too ("or"), e.g. 4 h &lt; 1.4 or 4 h &lt; 50 % of basal.</summary>
+    public List<RuleCondition> Or { get; set; } = [];
 
-    public bool Holds(IReadOnlyDictionary<string, ReportNumber?> values)
+    public bool Holds(IReadOnlyDictionary<string, ReportNumber?> values) => Compares(values) || Or.Any(o => o.Holds(values));
+
+    /// <summary>This comparison and its alternatives, theirs included.</summary>
+    public IEnumerable<RuleCondition> WithAlternatives() => Or.SelectMany(o => o.WithAlternatives()).Prepend(this);
+
+    private bool Compares(IReadOnlyDictionary<string, ReportNumber?> values)
     {
         if (values.GetValueOrDefault(Code) is not { } value)
             return false;
