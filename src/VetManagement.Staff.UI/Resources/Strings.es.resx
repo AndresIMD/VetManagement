@@ -675,6 +675,9 @@
   <data name="Print a criteria table under the results (e.g. the manufacturer's interpretation table)" xml:space="preserve"><value>Imprimir una tabla de criterios bajo los resultados (por ejemplo, la tabla de interpretación del fabricante)</value></data>
   <data name="Table title (optional)" xml:space="preserve"><value>Título de la tabla (opcional)</value></data>
   <data name="Column {0}" xml:space="preserve"><value>Columna {0}</value></data>
+  <data name="Headers in the first row" xml:space="preserve"><value>Encabezados en la primera fila</value></data>
+  <data name="Headers in the first column" xml:space="preserve"><value>Encabezados en la primera columna</value></data>
+  <data name="Tick both for a two-way table, e.g. ranges by age across the top and by weight down the side." xml:space="preserve"><value>Marca ambas para una tabla de doble entrada, por ejemplo rangos según la edad (arriba) y según el peso (a la izquierda).</value></data>
   <data name="Add row" xml:space="preserve"><value>Agregar fila</value></data>
   <data name="Add column" xml:space="preserve"><value>Agregar columna</value></data>
   <data name="Add parameter" xml:space="preserve"><value>Agregar parámetro</value></data>

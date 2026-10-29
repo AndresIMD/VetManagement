@@ -190,7 +190,7 @@ public class ExamReportsController(ExamReportService service, ExamReportSettings
             Direction = r.Direction, BarMin = r.BarMin, BarMax = r.BarMax, PreviousValue = r.PreviousValue
         }).ToList(),
         Criteria = view.Report.Criteria is { } table
-            ? new CriteriaTableDto { Title = table.Title, Columns = table.Columns, Rows = table.Rows.Select(r => r.Cells).ToList() }
+            ? new CriteriaTableDto { Title = table.Title, Headers = table.Headers, Columns = table.Columns, Rows = table.Rows.Select(r => r.Cells).ToList() }
             : null,
         PreviousReceivedOn = view.Report.PreviousReceivedOn,
         CreatedAtUtc = view.Report.CreatedAtUtc,

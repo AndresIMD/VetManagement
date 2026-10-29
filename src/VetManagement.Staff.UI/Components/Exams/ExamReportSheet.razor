@@ -87,6 +87,9 @@
         .xr-criteria th { color: #fff; font-weight: 600; padding: 1.2mm 1.5mm; }
         .xr-criteria th, .xr-criteria td { text-align: center; vertical-align: middle; white-space: pre-line; overflow-wrap: anywhere; }
         .xr-criteria td { padding: 1mm 1.5mm; border-bottom: 0.2mm solid #ccc; }
+        /* Headings down the first column: a white line between them keeps each row apart. */
+        .xr-criteria th[scope=row] { padding: 1mm 1.5mm; }
+        .xr-criteria tr + tr > th[scope=row] { border-top: 0.2mm solid #fff; }
         /* More than 6 columns: equal ones would cut words in half; each takes the room its text needs. */
         .xr-criteria table.xr-wide { table-layout: auto; }
         .xr-criteria table.xr-wide th, .xr-criteria table.xr-wide td { overflow-wrap: break-word; }
@@ -262,17 +265,17 @@
                                     }
                                     <table class="@(criteria.Columns.Count > 6 ? "xr-wide" : null)">
                                         <tr>
-                                            @foreach (var column in criteria.Columns)
+                                            @for (var c = 0; c < criteria.Columns.Count; c++)
                                             {
-                                                <th style="background:@Settings.HeaderColor">@column</th>
+                                                @CriteriaCell(criteria, criteria.Columns[c], firstRow: true, c)
                                             }
                                         </tr>
                                         @foreach (var row in criteria.Rows)
                                         {
                                             <tr>
-                                                @foreach (var cell in row)
+                                                @for (var c = 0; c < row.Count; c++)
                                                 {
-                                                    <td>@cell</td>
+                                                    @CriteriaCell(criteria, row[c], firstRow: false, c)
                                                 }
                                             </tr>
                                         }
@@ -568,6 +571,20 @@
                 }
             </div>
         </div>
+    };
+
+    /// <summary>A criteria table cell: a heading in the header colour where the table's headers go, plain otherwise.</summary>
+    private RenderFragment CriteriaCell(CriteriaTableDto table, string? text, bool firstRow, int column) => __builder =>
+    {
+        var scope = firstRow && table.Headers.InFirstRow() ? "col" : column == 0 && table.Headers.InFirstColumn() ? "row" : null;
+        if (scope is null)
+        {
+            <td>@text</td>
+        }
+        else
+        {
+            <th scope="@scope" style="background:@Settings.HeaderColor">@text</th>
+        }
     };
 
     // Estimates in mm, deliberately on the high side: a page holds a little less than it could rather than clip a row.

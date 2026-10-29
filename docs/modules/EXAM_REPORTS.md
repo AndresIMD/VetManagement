@@ -59,7 +59,11 @@ Asked in the form (per template): the lot number, so the form only shows the fie
 - **Criteria table** (per template, optional): a grid copied from the exam's instructions (e.g. the manufacturer's
   dexamethasone suppression table: 4 h, 8 h, interpretation), up to 8 columns and 20 rows, printed as written under the
   results on the last page. It is for the reader; the automatic interpretation still comes from the rules, since a
-  table row with "or" is two rules. A report keeps a copy, like the rest of the template.
+  table row with "or" is two rules. A report keeps a copy, like the rest of the template. Its headings (`Headers`, in
+  the design's header colour) go in the first row (default, also for reports issued before the setting), the first
+  column, both (a two-way table, e.g. ranges by age across the top and by weight down the side) or nowhere; the
+  editor's two ticks work like Excel's "Header row" and "First column", and a first row that isn't a heading prints as
+  an ordinary row.
 - Parameter codes are generated from the first name and hidden; renaming a parameter keeps its code.
 - **Section titles** (`Kind: Section`) group the parameters after them, up to the next title; a report prints a title
   as a band across the results box above its first result, in the section colour of Report Design (dark text on a light
