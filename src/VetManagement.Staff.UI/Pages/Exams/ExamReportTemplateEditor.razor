@@ -257,7 +257,7 @@
                 {
                     <MudPaper Class="pa-4 mb-3" Elevation="1">
                         <HelpLabel Text="@L["Interpretation from several values (optional)"]"
-                                   Help="@L["For exams read as a whole, e.g. cortisol at 0, 4 and 8 h. Rules are checked from the top; the first one whose conditions all hold gives the automatic interpretation. If none holds, the bands' meanings are used. A condition compares a value with a number, or with a percentage of another value (e.g. 4 h < 50 % of basal)."]" />
+                                   Help="@L["For exams read as a whole, e.g. cortisol at 0, 4 and 8 h. Rules are checked from the top; the first one whose conditions all hold gives the automatic interpretation. If none holds, the bands' meanings are used. A condition compares a value with a number, or with a percentage of another value (e.g. 4 h < 50 % of basal). The or… button gives a condition alternatives: it holds when any of them does (e.g. 4 h < 1.4 or 4 h < 50 % of basal); each or belongs to the condition above it."]" />
                         @foreach (var rule in _template.Rules)
                         {
                             var rl = rule;
@@ -265,37 +265,14 @@
                                 @foreach (var condition in rl.Conditions)
                                 {
                                     var c = condition;
-                                    <MudGrid Spacing="1">
-                                        <MudItem xs="6" sm="3">
-                                            <MudSelect T="string" Label="@(rl.Conditions.IndexOf(c) == 0 ? L["If"] : L["and"])" @bind-Value="c.Code" Dense="true">
-                                                @foreach (var p in NumberParameters)
-                                                {
-                                                    <MudSelectItem Value="@p.Code">@p.Name</MudSelectItem>
-                                                }
-                                            </MudSelect>
-                                        </MudItem>
-                                        <MudItem xs="6" sm="2">
-                                            <MudSelect T="RuleOperator" Label="@L["is"]" @bind-Value="c.Operator" Dense="true">
-                                                @foreach (var op in Enum.GetValues<RuleOperator>())
-                                                {
-                                                    <MudSelectItem Value="op">@op.ToText()</MudSelectItem>
-                                                }
-                                            </MudSelect>
-                                        </MudItem>
-                                        <MudItem xs="5" sm="2"><MudNumericField Culture="CultureInfo.CurrentCulture" T="decimal" Label="@L["Value"]" @bind-Value="c.Value" HideSpinButtons="true" /></MudItem>
-                                        <MudItem xs="6" sm="4">
-                                            <MudSelect T="string" Label="@L["of"]" @bind-Value="c.PercentOf" Dense="true">
-                                                <MudSelectItem T="string" Value="null">@L["(the number itself)"]</MudSelectItem>
-                                                @foreach (var p in NumberParameters.Where(p => p.Code != c.Code))
-                                                {
-                                                    <MudSelectItem Value="@p.Code">@L["% of {0}", p.Name]</MudSelectItem>
-                                                }
-                                            </MudSelect>
-                                        </MudItem>
-                                        <MudItem xs="1" Class="d-flex align-center">
-                                            <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="() => rl.Conditions.Remove(c)" />
-                                        </MudItem>
-                                    </MudGrid>
+                                    @* A line in the margin keeps a condition and its "or" alternatives together; the fields stay in line with the rest. *@
+                                    <div style="@(c.Or.Count > 0 ? "border-left:2px solid var(--mud-palette-primary);padding-left:8px;margin:4px 0 4px -10px" : null)">
+                                        @ConditionRow(rl, c, alternativeOf: null)
+                                        @foreach (var alternative in c.Or)
+                                        {
+                                            @ConditionRow(rl, alternative, alternativeOf: c)
+                                        }
+                                    </div>
                                 }
                                 <MudButton Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" OnClick="() => rl.Conditions.Add(NewCondition())">@L["Add condition"]</MudButton>
                                 <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-1">
@@ -484,6 +461,70 @@
             return;
         parameters.RemoveAt(index);
         parameters.Insert(index + step, parameter);
+    }
+
+    /// <summary>
+    /// One comparison of a rule: "If" / "and" for a condition, "or" for one of its alternatives. A condition's "or…" adds
+    /// an alternative on the same parameter, the usual case (4 h &lt; 1.4 or 4 h &lt; 50 % of basal).
+    /// </summary>
+    private RenderFragment ConditionRow(InterpretationRule rule, RuleCondition c, RuleCondition? alternativeOf) => __builder =>
+    {
+        var label = alternativeOf is not null ? L["or"] : rule.Conditions.IndexOf(c) == 0 ? L["If"] : L["and"];
+        <MudGrid Spacing="1">
+            <MudItem xs="6" sm="3">
+                <MudSelect T="string" Label="@label" @bind-Value="c.Code" Dense="true">
+                    @foreach (var p in NumberParameters)
+                    {
+                        <MudSelectItem Value="@p.Code">@p.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="6" sm="2">
+                <MudSelect T="RuleOperator" Label="@L["is"]" @bind-Value="c.Operator" Dense="true">
+                    @foreach (var op in Enum.GetValues<RuleOperator>())
+                    {
+                        <MudSelectItem Value="op">@op.ToText()</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="5" sm="2"><MudNumericField Culture="CultureInfo.CurrentCulture" T="decimal" Label="@L["Value"]" @bind-Value="c.Value" HideSpinButtons="true" /></MudItem>
+            <MudItem xs="5" sm="3">
+                <MudSelect T="string" Label="@L["of"]" @bind-Value="c.PercentOf" Dense="true">
+                    <MudSelectItem T="string" Value="null">@L["(the number itself)"]</MudSelectItem>
+                    @foreach (var p in NumberParameters.Where(p => p.Code != c.Code))
+                    {
+                        <MudSelectItem Value="@p.Code">@L["% of {0}", p.Name]</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="2" sm="2" Class="d-flex align-center justify-end">
+                @if (alternativeOf is null)
+                {
+                    <MudTooltip Text="@L["Add another way this condition can hold"]">
+                        <MudButton Size="Size.Small" Color="Color.Primary" OnClick="() => c.Or.Add(new RuleCondition { Code = c.Code, Operator = c.Operator })">@L["or…"]</MudButton>
+                    </MudTooltip>
+                }
+                <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="() => RemoveCondition(rule, c, alternativeOf)" />
+            </MudItem>
+        </MudGrid>
+    };
+
+    /// <summary>Removes a comparison; when a condition goes, its first alternative takes its place so the rest of the "or" stays.</summary>
+    private static void RemoveCondition(InterpretationRule rule, RuleCondition condition, RuleCondition? alternativeOf)
+    {
+        if (alternativeOf is not null)
+        {
+            alternativeOf.Or.Remove(condition);
+            return;
+        }
+        var index = rule.Conditions.IndexOf(condition);
+        rule.Conditions.RemoveAt(index);
+        if (condition.Or.Count > 0)
+        {
+            var next = condition.Or[0];
+            next.Or = [.. condition.Or.Skip(1), .. next.Or];
+            rule.Conditions.Insert(index, next);
+        }
     }
 
     private void MoveUp(InterpretationRule rule)

@@ -352,6 +352,31 @@ public class ExamReportsApiTests : IClassFixture<CustomWebAppFactory>
     }
 
     [Fact]
+    public async Task Rules_AConditionWithAlternatives_IsKeptInTheTemplate_AndInterpretsTheReport()
+    {
+        var (petId, examId) = await AddPetAndExamAsync(Species.Dog);
+        var template = CortisolTemplate(examId);
+        template.Rules[1].Conditions[1] = new RuleCondition
+        {
+            Code = "4h", Operator = RuleOperator.LessThan, Value = 1.4m,
+            Or = [new RuleCondition { Code = "4h", Operator = RuleOperator.LessThan, Value = 50, PercentOf = "basal" }]
+        };
+        await AddTemplateAsync(template);
+
+        var document = (await _admin.GetFromJsonAsync<ExamReportSettingsDocument>("/api/exam-reports/settings"))!;
+        document.Settings.Deserialize<ExamReportSettings>(SettingsJson.Options)!.FindTemplate(examId)!.Rules[1].Conditions[1].Or
+            .Should().ContainSingle().Which.PercentOf.Should().Be("basal");
+        // 1.3 isn't below 50 % of a basal of 2.0, but it is below 1.4.
+        var report = await CreateAsync(_employee, new
+        {
+            PetId = petId, ExamId = examId, ReceivedOn = new DateOnly(2026, 10, 12),
+            Values = new Dictionary<string, string> { ["basal"] = "2.0", ["4h"] = "1.3", ["8h"] = "2.0" }
+        });
+
+        report.Interpretation.Should().Be("Compatible con origen hipofisario");
+    }
+
+    [Fact]
     public async Task CriteriaTable_IsCopiedIntoTheReport_OnlyWhenTurnedOn()
     {
         var (petId, examId) = await AddPetAndExamAsync(Species.Dog);

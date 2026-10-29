@@ -138,6 +138,37 @@ public class AnalyserValueTests
         Interpret(template, ("8h", "No medible")).Should().BeNull();
     }
 
+    [Theory]
+    [InlineData("1.2", "2.0", "Compatible con origen hipofisario")] // 4 h < 1.4
+    [InlineData("2.0", "2.0", "Compatible con origen hipofisario")] // 4 h < 50 % of basal
+    [InlineData("<1.0", "2.0", "Compatible con origen hipofisario")] // a bound that settles 4 h < 1.4
+    [InlineData("3.0", "2.0", null)] // neither alternative
+    [InlineData("1.2", "1.2", null)] // 8 h not above 1.4
+    public void Rules_AConditionHoldsByAnyOfItsAlternatives(string fourHours, string eightHours, string? expected)
+    {
+        // The clinic's reading: 4 h (< 1.4 or < 50 % of basal) and 8 h (> 1.4 and < 50 % of basal).
+        var template = Suppression(Rule("Compatible con origen hipofisario",
+            new RuleCondition
+            {
+                Code = "4h", Operator = RuleOperator.LessThan, Value = 1.4m,
+                Or = [new RuleCondition { Code = "4h", Operator = RuleOperator.LessThan, Value = 50, PercentOf = "basal" }]
+            },
+            new RuleCondition { Code = "8h", Operator = RuleOperator.GreaterThan, Value = 1.4m },
+            new RuleCondition { Code = "8h", Operator = RuleOperator.LessThan, Value = 50, PercentOf = "basal" }));
+
+        template.Validate().Should().BeEmpty();
+        Interpret(template, ("basal", "5.0"), ("4h", fourHours), ("8h", eightHours)).Should().Be(expected);
+    }
+
+    [Fact]
+    public void Rules_AnAlternativeUsingAnUnknownParameter_IsRejected()
+    {
+        var template = Suppression(Rule("Sin supresión",
+            new RuleCondition { Code = "8h", Operator = RuleOperator.GreaterOrEqual, Value = 1.4m, Or = [new RuleCondition { Code = "12h", Value = 1 }] }));
+
+        template.Validate().Should().ContainSingle().Which.Should().Contain("rule 1");
+    }
+
     [Fact]
     public void Times_ANegativeFactor_TurnsTheBoundAround()
         => new ReportNumber(4, ValueBound.Below).Times(-0.5m).Should().Be(new ReportNumber(-2, ValueBound.Above));

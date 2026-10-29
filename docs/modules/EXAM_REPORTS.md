@@ -36,8 +36,10 @@ Asked in the form (per template): the lot number, so the form only shows the fie
   or legend.
 - **Interpretation rules** read several values together (e.g. cortisol at 0, 4 and 8 h). A rule is a meaning plus
   conditions that must all hold; a condition compares a number parameter with a number or with a percentage of another
-  parameter ("4 h < 50 % of basal"). A missing or non-numeric value makes its condition false, and so does a bound
-  that doesn't settle it. Rules are checked in order and the first match wins.
+  parameter ("4 h < 50 % of basal"), and may have alternatives (`Or`, the editor's "or…"): it holds when its comparison
+  or any alternative does, e.g. "4 h < 1.4 or 4 h < 50 % of basal" and "8 h > 1.4" and "8 h < 50 % of basal" →
+  pituitary-dependent. A missing or non-numeric value makes its comparison false, and so does a bound that doesn't
+  settle it. Rules are checked in order and the first match wins.
 - Automatic interpretation: the first matching rule; otherwise the band label (one parameter) or `Name: label` lines.
   A written interpretation replaces it.
 - Reference column, chosen per parameter: **Normal range** ("3.5 - 5.8"; without a range, the labelled bands, in a row
@@ -58,8 +60,8 @@ Asked in the form (per template): the lot number, so the form only shows the fie
 - The legend under the table explains only the marks the report prints.
 - **Criteria table** (per template, optional): a grid copied from the exam's instructions (e.g. the manufacturer's
   dexamethasone suppression table: 4 h, 8 h, interpretation), up to 8 columns and 20 rows, printed as written under the
-  results on the last page. It is for the reader; the automatic interpretation still comes from the rules, since a
-  table row with "or" is two rules. A report keeps a copy, like the rest of the template. Its headings (`Headers`, in
+  results on the last page. It is for the reader; the automatic interpretation still comes from the rules (a row's
+  "or" is a condition's alternative). A report keeps a copy, like the rest of the template. Its headings (`Headers`, in
   the design's header colour) go in the first row (default, also for reports issued before the setting), the first
   column, both (a two-way table, e.g. ranges by age across the top and by weight down the side) or nowhere; the
   editor's two ticks work like Excel's "Header row" and "First column", and a first row that isn't a heading prints as
@@ -156,6 +158,7 @@ kept as JSON with the exam, by id like `ItemId`.
 
 ## Limits
 
-- Rules join conditions with "and" only; an "or" is written as two rules with the same meaning.
+- A rule joins its conditions with "and" and a condition's alternatives with "or"; any other shape, e.g. "(A and B) or
+  C", is written as two rules with the same meaning.
 - No server-side PDF, so the system can't email the report itself.
 - ponytail: the list loads the clinic's reports to keep the newest 200; a paged query when a clinic has many thousands.
