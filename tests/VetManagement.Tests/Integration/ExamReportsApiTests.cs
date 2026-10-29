@@ -395,6 +395,27 @@ public class ExamReportsApiTests : IClassFixture<CustomWebAppFactory>
     }
 
     [Fact]
+    public async Task CriteriaTable_Headers_AreKeptInTheTemplate_AndCopiedIntoTheReport()
+    {
+        var (petId, examId) = await AddPetAndExamAsync(Species.Dog);
+        var template = CortisolTemplate(examId);
+        template.Criteria = new CriteriaTable
+        {
+            Headers = CriteriaHeaders.Both,
+            Columns = ["Peso / Edad", "< 1 año", "≥ 1 año"],
+            Rows = [new CriteriaRow { Cells = ["< 10 kg", "1 - 5", "2 - 6"] }]
+        };
+        template.Sections.CriteriaTable = true;
+        await AddTemplateAsync(template);
+
+        var document = (await _admin.GetFromJsonAsync<ExamReportSettingsDocument>("/api/exam-reports/settings"))!;
+        document.Settings.Deserialize<ExamReportSettings>(SettingsJson.Options)!.FindTemplate(examId)!.Criteria.Headers.Should().Be(CriteriaHeaders.Both);
+        var report = await CreateAsync(_employee, new { PetId = petId, ExamId = examId, ReceivedOn = new DateOnly(2026, 10, 3), Values = new Dictionary<string, string> { ["basal"] = "5" } });
+
+        report.Criteria!.Headers.Should().Be(CriteriaHeaders.Both);
+    }
+
+    [Fact]
     public async Task PreviousResultColumn_CopiesThePetsLatestEarlierReportOfTheSameExam()
     {
         var (petId, examId) = await AddPetAndExamAsync(Species.Dog);

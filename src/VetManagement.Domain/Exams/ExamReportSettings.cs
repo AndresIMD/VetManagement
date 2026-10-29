@@ -313,6 +313,11 @@ public class CriteriaTable
 
     /// <summary>Optional heading, e.g. "Prueba de supresión con dexametasona a dosis baja".</summary>
     public string? Title { get; set; }
+
+    /// <summary>Which cells print as headings; reports issued before it existed keep the first row (the zero value).</summary>
+    public CriteriaHeaders Headers { get; set; }
+
+    /// <summary>The first row's texts: the column headings, unless <see cref="Headers"/> leaves that row plain.</summary>
     public List<string> Columns { get; set; } = [];
     public List<CriteriaRow> Rows { get; set; } = [];
 }

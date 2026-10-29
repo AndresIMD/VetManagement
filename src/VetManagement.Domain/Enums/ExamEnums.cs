@@ -151,6 +151,29 @@ public enum ReferenceDisplay
     None
 }
 
+/// <summary>
+/// Which cells of a report's criteria table print as headings: the first row (the default), the first column, both (a
+/// two-way table, e.g. ranges by age across the top and by weight down the side) or none.
+/// </summary>
+public enum CriteriaHeaders
+{
+    [DisplayString("First row")]
+    FirstRow,
+    [DisplayString("First column")]
+    FirstColumn,
+    [DisplayString("First row and column")]
+    Both,
+    [DisplayString("None")]
+    None
+}
+
+public static class CriteriaHeadersExtensions
+{
+    public static bool InFirstRow(this CriteriaHeaders headers) => headers is CriteriaHeaders.FirstRow or CriteriaHeaders.Both;
+
+    public static bool InFirstColumn(this CriteriaHeaders headers) => headers is CriteriaHeaders.FirstColumn or CriteriaHeaders.Both;
+}
+
 /// <summary>Where a report's background image is drawn.</summary>
 public enum BackgroundArea
 {

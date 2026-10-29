@@ -118,6 +118,8 @@ public sealed class ExamReportSectionsDto
 public sealed class CriteriaTableDto
 {
     public string? Title { get; set; }
+    /// <summary>Which cells print as headings; the first row's texts are <see cref="Columns"/>.</summary>
+    public CriteriaHeaders Headers { get; set; }
     public List<string> Columns { get; set; } = [];
     public List<List<string>> Rows { get; set; } = [];
 }

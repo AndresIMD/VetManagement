@@ -1625,6 +1625,8 @@ namespace VetManagement.Api.Migrations
                             b1.PrimitiveCollection<string>("Columns")
                                 .IsRequired();
 
+                            b1.Property<int>("Headers");
+
                             b1.Property<string>("Title");
 
                             b1.HasKey("ExamReportId");

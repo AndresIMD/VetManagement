@@ -361,6 +361,7 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
             ? new CriteriaTable
             {
                 Title = template.Criteria.Title,
+                Headers = template.Criteria.Headers,
                 Columns = [.. template.Criteria.Columns],
                 Rows = template.Criteria.Rows.Select(r => new CriteriaRow { Cells = [.. r.Cells] }).ToList()
             }

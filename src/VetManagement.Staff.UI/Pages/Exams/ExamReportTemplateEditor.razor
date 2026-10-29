@@ -325,16 +325,23 @@
                         var table = _template.Criteria;
                         <MudTextField Label="@L["Table title (optional)"]" @bind-Value="table.Title" MaxLength="200"
                                       Placeholder="@L["Low-dose dexamethasone suppression test"]" />
+                        <div class="d-flex align-center flex-wrap mt-1">
+                            <MudCheckBox T="bool" Value="table.Headers.InFirstRow()" ValueChanged="v => SetHeaders(v, table.Headers.InFirstColumn())"
+                                         Label="@L["Headers in the first row"]" />
+                            <MudCheckBox T="bool" Value="table.Headers.InFirstColumn()" ValueChanged="v => SetHeaders(table.Headers.InFirstRow(), v)"
+                                         Label="@L["Headers in the first column"]" />
+                            <HelpTip Text="@L["Tick both for a two-way table, e.g. ranges by age across the top and by weight down the side."]" />
+                        </div>
                         <div style="overflow-x:auto" class="mt-2">
                             <table style="border-collapse:collapse;width:100%">
                                 <tr>
                                     @for (var i = 0; i < table.Columns.Count; i++)
                                     {
                                         var column = i;
-                                        <td style="min-width:140px;padding:2px;vertical-align:bottom">
+                                        <td style="min-width:140px;padding:2px;vertical-align:bottom;@HeadingCell(table, firstRow: true, column)">
                                             <MudStack Row="true" AlignItems="AlignItems.End" Spacing="0">
                                                 <MudTextField T="string" Label="@L["Column {0}", column + 1]" Value="table.Columns[column]"
-                                                              ValueChanged="v => table.Columns[column] = v" Variant="Variant.Filled" />
+                                                              ValueChanged="v => table.Columns[column] = v" Variant="@(table.Headers.InFirstRow() ? Variant.Filled : Variant.Text)" />
                                                 <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" Disabled="table.Columns.Count == 1"
                                                                OnClick="() => RemoveColumn(column)" />
                                             </MudStack>
@@ -349,7 +356,7 @@
                                         @for (var i = 0; i < table.Columns.Count; i++)
                                         {
                                             var column = i;
-                                            <td style="padding:2px;vertical-align:top">
+                                            <td style="padding:2px;vertical-align:top;@HeadingCell(table, firstRow: false, column)">
                                                 <MudTextField T="string" Value="r.Cells[column]" ValueChanged="v => r.Cells[column] = v" Sizing="InputSizing.Auto" Lines="1" MaxLines="4" />
                                             </td>
                                         }
@@ -497,6 +504,24 @@
         table.Rows = [new CriteriaRow { Cells = table.Columns.Select(_ => string.Empty).ToList() }];
     }
 
+    /// <summary>The criteria table's two ticks, like Excel's "Header row" and "First column".</summary>
+    private void SetHeaders(bool firstRow, bool firstColumn) => _template!.Criteria.Headers = (firstRow, firstColumn) switch
+    {
+        (true, true) => CriteriaHeaders.Both,
+        (true, false) => CriteriaHeaders.FirstRow,
+        (false, true) => CriteriaHeaders.FirstColumn,
+        _ => CriteriaHeaders.None
+    };
+
+    /// <summary>
+    /// The grid shows which cells print as headings: the first row's fields are filled when it is one, and the first
+    /// column's cells get the same grey behind them (filled fields there would be taller than the rest of their row).
+    /// </summary>
+    private static string? HeadingCell(CriteriaTable table, bool firstRow, int column)
+        => column == 0 && table.Headers.InFirstColumn() && !(firstRow && table.Headers.InFirstRow())
+            ? "background:var(--mud-palette-action-disabled-background);border-radius:4px 4px 0 0;padding-left:8px"
+            : null;
+
     private void AddColumn()
     {
         var table = _template!.Criteria;
@@ -591,7 +616,7 @@
                 });
             var table = _template.Criteria;
             report.Criteria = _template.Sections.CriteriaTable
-                ? new CriteriaTableDto { Title = table.Title, Columns = table.Columns, Rows = table.Rows.Select(r => r.Cells).ToList() }
+                ? new CriteriaTableDto { Title = table.Title, Headers = table.Headers, Columns = table.Columns, Rows = table.Rows.Select(r => r.Cells).ToList() }
                 : null;
             return report;
         }
