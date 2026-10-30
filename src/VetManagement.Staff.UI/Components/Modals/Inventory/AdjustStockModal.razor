@@ -1,4 +1,5 @@
-﻿@inherits ModalBase<object>
+﻿@using VetManagement.Contracts.Inventory
+@inherits ModalBase<object>
 @inject InventoryMovementApiService InventoryService
 @inject IDialogService DialogService
 
@@ -9,15 +10,32 @@
             IsValid="@isValid"
             PrimaryText="@L["Save"]"
             PrimaryLoadingText="@L["Saving..."]"
-            PrimaryDisabled="@(AdjustAmount == 0)"
+            PrimaryDisabled="@(AdjustAmount == 0 || (ChoosesWarehouse && _warehouseId is null))"
             OnPrimaryClick="OnSave"
             OnCancelClick="OnCancelRequested">
     <MudForm @ref="_form" @bind-IsValid="isValid">
         <MudStack Spacing="2">
             <MudText Typo="Typo.subtitle2" Class="mb-2">@L["Adjust stock of"] <b>@Item?.Name</b></MudText>
-            <NumericStepper Value="@AdjustAmount" ValueChanged="OnAdjustAmountChanged" Min="@(-(Item?.Stock ?? 0))" Max="100" Step="1" />
-            <MudText Typo="Typo.caption" Color="Color.Secondary">@L["Current stock: {0}", Item?.Stock ?? 0]</MudText>
-            <MudTextField Label="@L["Reason"]" @bind-Value="AdjustReason" Variant="Variant.Outlined"/>
+            @if (ChoosesWarehouse)
+            {
+                @* No default: a purchase must land in the warehouse it belongs to (e.g. the locked one), not the daily-use one. *@
+                <MudSelect T="int?" Value="_warehouseId" ValueChanged="OnWarehouseChanged" Label="@L["Warehouse"]" Variant="Variant.Outlined" Required="true">
+                    @foreach (var warehouse in Warehouses)
+                    {
+                        <MudSelectItem T="int?" Value="@warehouse.Id">@warehouse.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+            @if (!ChoosesWarehouse || _warehouseId is not null)
+            {
+                <NumericStepper Value="@AdjustAmount" ValueChanged="OnAdjustAmountChanged" Min="@(-Current)" Max="100" Step="1" />
+                <MudText Typo="Typo.caption" Color="Color.Secondary">@L["Current stock: {0}", Current]</MudText>
+            }
+            <MudTextField Label="@L["Reason (optional)"]" @bind-Value="AdjustReason" Variant="Variant.Outlined" MaxLength="200"/>
+            @if (_error is not null)
+            {
+                <MudAlert Severity="Severity.Error" Dense="true">@_error</MudAlert>
+            }
         </MudStack>
     </MudForm>
 </ModalShell>
@@ -25,9 +43,27 @@
 @code {
     [Parameter] public InventoryItemDTO? Item { get; set; }
 
+    /// <summary>The warehouses the user may move stock in (not archived); with more than one, the user picks.</summary>
+    [Parameter] public List<WarehouseDto> Warehouses { get; set; } = [];
+
     private MudForm? _form;
     private int AdjustAmount { get; set; } = 0;
     private string AdjustReason { get; set; } = "";
+    private int? _warehouseId;
+    private string? _error;
+
+    private bool ChoosesWarehouse => Warehouses.Count > 1;
+
+    /// <summary>Units in the chosen warehouse (the user's only one otherwise).</summary>
+    private int Current => !ChoosesWarehouse
+        ? Item?.Stock ?? 0
+        : Item?.Warehouses.FirstOrDefault(w => w.WarehouseId == _warehouseId)?.Quantity ?? 0;
+
+    private void OnWarehouseChanged(int? value)
+    {
+        _warehouseId = value;
+        AdjustAmount = Math.Max(AdjustAmount, -Current);
+    }
 
     private async Task OnSave()
     {
@@ -47,7 +83,13 @@
                 }
             }
 
-            await InventoryService.AdjustStockAsync(itemId.Value, AdjustAmount, AdjustReason);
+            var result = await InventoryService.AdjustStockAsync(itemId.Value, AdjustAmount, AdjustReason,
+                ChoosesWarehouse ? _warehouseId : Warehouses.FirstOrDefault()?.Id);
+            if (!result.Ok)
+            {
+                _error = result.Error;
+                return;
+            }
             Snackbar.Add(L["Stock adjusted."], Severity.Success);
             MudDialog.Close(DialogResult.Ok(true));
         }

@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using VetManagement.Staff.UI.Constants;
+using VetManagement.Contracts.Inventory;
 using VetManagement.Domain.Enums;
 
 namespace VetManagement.Staff.UI.Models.Core;
@@ -68,6 +69,15 @@ public class Item
 
     [Range(0, int.MaxValue, ErrorMessageResourceType = typeof(VetManagement.Staff.UI.Resources.ValidationTexts), ErrorMessageResourceName = nameof(VetManagement.Staff.UI.Resources.ValidationTexts.LowStockThresholdNotNegative))]
     public int LowStockThreshold { get; set; } = 5;
+
+    /// <summary>Units in the daily-use warehouse (read from the API; <see cref="Stock"/> is what the user sees in all their warehouses).</summary>
+    public int DailyUseStock { get; set; }
+
+    /// <summary>Units per warehouse the user sees, the daily-use one first.</summary>
+    public List<WarehouseUnitsDto> Warehouses { get; set; } = [];
+
+    /// <summary>Other warehouses holding some, by name: where to ask for more.</summary>
+    public List<string> AskAt { get; set; } = [];
 
     public static Item GetEmpty()
     {

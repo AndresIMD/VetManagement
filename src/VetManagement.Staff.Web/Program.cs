@@ -138,6 +138,7 @@ void ConfigureHttpClient<TService>() where TService : class
 // Typed API services (protected with JWT)
 ConfigureHttpClient<ClientPetApiService>();
 ConfigureHttpClient<InventoryMovementApiService>();
+ConfigureHttpClient<WarehousesApiService>();
 ConfigureHttpClient<ExamApiService>();
 ConfigureHttpClient<ExamPerformedApiService>();
 ConfigureHttpClient<ExternalLabsApiService>();

@@ -5,9 +5,9 @@ using VetManagement.Staff.UI.Resources;
 
 namespace VetManagement.Staff.UI.Components.Modals.Inventory;
 
+/// <summary>Takes units out of a warehouse; at most what it holds of each item. The transfer dialog builds on it.</summary>
 public class MassiveEgressModal : MassiveBaseModal<InventoryMassUpdateDTO>
 {
-    private readonly Dictionary<int, int> _stockByItemId = [];
     private string? _errorMessage;
 
     protected override void OnInitialized()
@@ -21,20 +21,14 @@ public class MassiveEgressModal : MassiveBaseModal<InventoryMassUpdateDTO>
     protected override async Task<object?> GetItemByBarcode(string barcode)
     {
         var item = await ItemsService.GetItemByBarcodeAsync(barcode);
-        if (item is Item i)
-        {
-            _stockByItemId[i.Id] = i.Stock;
-        }
+        Remember(item);
         return item;
     }
 
     protected override InventoryMassUpdateDTO CreateNewItem(object item)
     {
         var i = item as Item;
-        if (i != null)
-        {
-            _stockByItemId[i.Id] = i.Stock;
-        }
+        Remember(i);
         return new InventoryMassUpdateDTO
         {
             ItemId = i?.Id ?? 0,
@@ -49,7 +43,7 @@ public class MassiveEgressModal : MassiveBaseModal<InventoryMassUpdateDTO>
     protected override int GetQuantity(InventoryMassUpdateDTO item) => item.Quantity;
     protected override void SetQuantity(InventoryMassUpdateDTO item, int value)
     {
-        if (_stockByItemId.TryGetValue(item.ItemId, out var stock))
+        if (UnitsInChosen(item.ItemId) is int stock)
         {
             if (value > stock)
             {
@@ -73,12 +67,7 @@ public class MassiveEgressModal : MassiveBaseModal<InventoryMassUpdateDTO>
         }
     }
 
-    protected override int? GetStock(InventoryMassUpdateDTO item)
-    {
-        if (_stockByItemId.TryGetValue(item.ItemId, out var stock))
-            return stock;
-        return null;
-    }
+    protected override int? GetStock(InventoryMassUpdateDTO item) => UnitsInChosen(item.ItemId);
 
     protected override int GetItemId(InventoryMassUpdateDTO item) => item.ItemId;
 
@@ -87,7 +76,8 @@ public class MassiveEgressModal : MassiveBaseModal<InventoryMassUpdateDTO>
         reason = null;
         if (entity is Item i)
         {
-            if (i.Stock <= 0)
+            Remember(i);
+            if (UnitsInChosen(i.Id) <= 0)
             {
                 reason = Strings.T("No stock available for '{0}'.", i.Name);
                 return false;

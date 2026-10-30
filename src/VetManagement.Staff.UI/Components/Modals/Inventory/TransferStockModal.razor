@@ -1,0 +1,87 @@
+@using VetManagement.Contracts.Inventory
+@inherits ModalBase<object>
+@inject InventoryMovementApiService InventoryService
+
+<ModalShell Title="@Title"
+            TitleIcon="@TitleIcon"
+            TitleColor="@TitleColor"
+            IsLoading="@isLoading"
+            IsValid="true"
+            PrimaryText="@L["Transfer units"]"
+            PrimaryLoadingText="@L["Saving..."]"
+            PrimaryDisabled="@(_from is null || _to is null || _from == _to || _quantity < 1 || _quantity > Available)"
+            OnPrimaryClick="OnSave"
+            OnCancelClick="OnCancel">
+    <MudStack Spacing="2">
+        <MudText Typo="Typo.subtitle2">@L["Transfer units of"] <b>@Item?.Name</b></MudText>
+        <MudGrid>
+            <MudItem xs="12" sm="6">
+                <MudSelect T="int?" Value="_from" ValueChanged="OnFromChanged" Label="@L["From warehouse"]" Variant="Variant.Outlined">
+                    @foreach (var warehouse in Warehouses)
+                    {
+                        <MudSelectItem T="int?" Value="@warehouse.Id">@($"{warehouse.Name} ({UnitsIn(warehouse.Id)})")</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudSelect T="int?" @bind-Value="_to" Label="@L["To warehouse"]" Variant="Variant.Outlined">
+                    @foreach (var warehouse in Warehouses.Where(w => w.Id != _from))
+                    {
+                        <MudSelectItem T="int?" Value="@warehouse.Id">@warehouse.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+        @if (_from is not null)
+        {
+            <NumericStepper Value="@_quantity" ValueChanged="v => _quantity = v" Min="1" Max="@Math.Max(1, Available)" Step="1" />
+            <MudText Typo="Typo.caption" Color="@(_quantity <= Available ? Color.Secondary : Color.Error)">@L["Available: {0}", Available]</MudText>
+        }
+        <MudTextField Label="@L["Note (optional)"]" @bind-Value="_reason" Variant="Variant.Outlined" MaxLength="150" />
+        @if (_error is not null)
+        {
+            <MudAlert Severity="Severity.Error" Dense="true">@_error</MudAlert>
+        }
+    </MudStack>
+</ModalShell>
+
+@code {
+    [Parameter] public InventoryItemDTO? Item { get; set; }
+
+    /// <summary>The warehouses the user may move stock in (not archived).</summary>
+    [Parameter] public List<WarehouseDto> Warehouses { get; set; } = [];
+
+    private int? _from;
+    private int? _to;
+    private int _quantity = 1;
+    private string? _reason;
+    private string? _error;
+
+    private int Available => _from is int id ? UnitsIn(id) : 0;
+
+    private int UnitsIn(int warehouseId) => Item?.Warehouses.FirstOrDefault(w => w.WarehouseId == warehouseId)?.Quantity ?? 0;
+
+    private void OnFromChanged(int? value)
+    {
+        _from = value;
+        if (_to == value)
+            _to = null;
+        _quantity = Math.Clamp(_quantity, 1, Math.Max(1, Available));
+    }
+
+    private async Task OnSave()
+    {
+        if (Item is null || _from is not int from || _to is not int to)
+            return;
+        isLoading = true;
+        var result = await InventoryService.TransferAsync(Item.Id, from, to, _quantity, string.IsNullOrWhiteSpace(_reason) ? null : _reason.Trim());
+        isLoading = false;
+        if (!result.Ok)
+        {
+            _error = result.Error;
+            return;
+        }
+        Snackbar.Add(L["Units transferred."], Severity.Success);
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}

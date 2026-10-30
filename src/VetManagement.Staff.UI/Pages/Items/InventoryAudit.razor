@@ -224,6 +224,7 @@
         AuditActionType.Ingress or AuditActionType.MassiveStockIngress => Color.Primary,
         AuditActionType.Egress or AuditActionType.MassiveStockEgress => Color.Warning,
         AuditActionType.Adjustment => Color.Secondary,
+        AuditActionType.Transfer => Color.Tertiary,
         _ => Color.Default
     };
 }

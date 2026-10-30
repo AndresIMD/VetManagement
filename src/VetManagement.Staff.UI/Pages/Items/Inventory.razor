@@ -103,14 +103,17 @@
                 <MudStack Row="true" Spacing="1" Style="flex-wrap:wrap;">
                     @foreach (var item in OutOfStockItems)
                     {
+                        @* None where the user looks, but another warehouse has some: where to ask, never how many. *@
+                        var color = item.AskAt is null ? Color.Error : Color.Info;
+                        var label = item.AskAt is null ? item.Name : L["{0} · ask {1}", item.Name, item.AskAt].Value;
                         @if (string.IsNullOrWhiteSpace(item.Details))
                         {
-                            <MudChip T="string" Color="Color.Error" Variant="Variant.Filled" Class="mr-1 mb-1" OnClick="@(() => GoToMovements(item.Name))">@item.Name</MudChip>
+                            <MudChip T="string" Color="@color" Variant="Variant.Filled" Class="mr-1 mb-1" OnClick="@(() => GoToMovements(item.Name))">@label</MudChip>
                         }
                         else
                         {
                             <MudTooltip Text="@item.Details">
-                                <MudChip T="string" Color="Color.Error" Variant="Variant.Filled" Class="mr-1 mb-1" OnClick="@(() => GoToMovements(item.Name))">@item.Name</MudChip>
+                                <MudChip T="string" Color="@color" Variant="Variant.Filled" Class="mr-1 mb-1" OnClick="@(() => GoToMovements(item.Name))">@label</MudChip>
                             </MudTooltip>
                         }
                     }
@@ -185,13 +188,13 @@
                 .Where(i => i is Drug d && !string.IsNullOrWhiteSpace(d.Compound))
                 .Cast<Drug>()
                 .GroupBy(d => d.Compound!.Trim(), StringComparer.OrdinalIgnoreCase)
-                .Select(g => new { Compound = g.First().Compound ?? g.Key, TotalStock = g.Sum(d => d.Stock), Details = string.Join("\n", g.Select(d => $"{d.Name}{(string.IsNullOrWhiteSpace(d.Brand) ? "" : $" ({d.Brand})")} - Stock: {d.Stock}")) })
+                .Select(g => new { Compound = g.First().Compound ?? g.Key, TotalStock = g.Sum(d => d.Stock), Details = string.Join("\n", g.Select(d => $"{d.Name}{(string.IsNullOrWhiteSpace(d.Brand) ? "" : $" ({d.Brand})")} - Stock: {d.Stock}")), AskAt = AskAtOf(g) })
                 .Where(x => x.TotalStock == 0)
-                .Select(x => new ItemAlert { Name = x.Compound, Stock = 0, Details = x.Details });
+                .Select(x => new ItemAlert { Name = x.Compound, Stock = 0, Details = x.Details, AskAt = x.AskAt });
 
             var nonDrugZero = items
                 .Where(i => i is not Drug && i.Stock == 0)
-                .Select(i => new ItemAlert { Name = i.Name, Stock = 0 });
+                .Select(i => new ItemAlert { Name = i.Name, Stock = 0, AskAt = AskAtOf([i]) });
 
             OutOfStockItems = drugZeroGroups
                 .Concat(nonDrugZero)
@@ -213,10 +216,15 @@
         _loading = false;
     }
 
+    /// <summary>The warehouses the user doesn't see that hold some, by name; null when none does.</summary>
+    private static string? AskAtOf(IEnumerable<Item> items)
+        => items.SelectMany(i => i.AskAt).Distinct().Order().ToList() is { Count: > 0 } names ? string.Join(", ", names) : null;
+
     public class ItemAlert
     {
         public string Name { get; set; } = string.Empty;
         public int Stock { get; set; }
         public string? Details { get; set; }
+        public string? AskAt { get; set; }
     }
 }

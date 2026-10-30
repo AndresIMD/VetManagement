@@ -112,7 +112,7 @@
                             break;
                         case SaleLineKind.Product:
                             <MudAutocomplete T="InventoryItemDTO" @bind-Value="_product" Label="@L["Product"]" SearchFunc="SearchItemsAsync"
-                                             ToStringFunc="@(i => i is null ? "" : L["{0} ({1} in stock · {2})", i.Name, i.Stock, Money.Clp(i.SellPrice)].Value)"
+                                             ToStringFunc="@(i => i is null ? "" : i.DailyUseStock <= 0 && i.AskAt.Count > 0 ? L["{0} (ask {1} · {2})", i.Name, string.Join(", ", i.AskAt), Money.Clp(i.SellPrice)].Value : L["{0} ({1} in stock · {2})", i.Name, i.DailyUseStock, Money.Clp(i.SellPrice)].Value)"
                                              DebounceInterval="300" MinCharacters="2" Style="min-width: 300px;" />
                             break;
                         default:

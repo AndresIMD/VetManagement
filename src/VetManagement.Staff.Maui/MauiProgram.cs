@@ -82,6 +82,9 @@ public static class MauiProgram
         builder.Services.AddHttpClient<InventoryMovementApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
             .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
 
+        builder.Services.AddHttpClient<WarehousesApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
+            .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
+
         builder.Services.AddHttpClient<ExamApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
             .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
 
