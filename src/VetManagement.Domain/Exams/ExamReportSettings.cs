@@ -299,6 +299,11 @@ public class ExamReportSections
     public bool LotNumber { get; set; }
     /// <summary>The template's criteria table (e.g. the manufacturer's cortisol table) under the results.</summary>
     public bool CriteriaTable { get; set; }
+    /// <summary>
+    /// The interpretation, criteria table and signature sit at the foot of the last page, just above the method bar,
+    /// instead of right under the results.
+    /// </summary>
+    public bool InterpretationAtFoot { get; set; }
 }
 
 /// <summary>

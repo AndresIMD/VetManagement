@@ -36,6 +36,10 @@
                         <MudCheckBox T="bool" @bind-Value="_template.Sections.ReportedBy" Label="@L["Issued by (staff member)"]" />
                         <MudCheckBox T="bool" @bind-Value="_template.Sections.DirectionArrows" Label="@L["↑ / ↓ arrows on values outside the normal range"]" />
                         <MudCheckBox T="bool" @bind-Value="_template.Sections.PreviousResult" Label="@L["Previous result column (the pet's last report of this exam, headed by its date)"]" />
+                        <div class="d-flex align-center">
+                            <MudCheckBox T="bool" @bind-Value="_template.Sections.InterpretationAtFoot" Label="@L["Interpretation and criteria table at the foot of the page"]" />
+                            <HelpTip Text="@L["The space under the results stays empty: the interpretation, the criteria table and the signature print just above the method bar."]" />
+                        </div>
                     </MudStack>
                     <HelpLabel Text="@L["Ask in the report form"]" Class="mt-3"
                                Help="@L["The form only shows what this exam needs: patient, exam, reception date, referring vet, these fields and the parameters."]" />
@@ -653,7 +657,8 @@
                     DirectionArrows = _template.Sections.DirectionArrows,
                     PreviousResult = _template.Sections.PreviousResult,
                     LotNumber = _template.Sections.LotNumber,
-                    CriteriaTable = _template.Sections.CriteriaTable
+                    CriteriaTable = _template.Sections.CriteriaTable,
+                    InterpretationAtFoot = _template.Sections.InterpretationAtFoot
                 });
             var table = _template.Criteria;
             report.Criteria = _template.Sections.CriteriaTable

@@ -678,6 +678,8 @@
   <data name="Print a criteria table under the results (e.g. the manufacturer's interpretation table)" xml:space="preserve"><value>Imprimir una tabla de criterios bajo los resultados (por ejemplo, la tabla de interpretación del fabricante)</value></data>
   <data name="Table title (optional)" xml:space="preserve"><value>Título de la tabla (opcional)</value></data>
   <data name="Column {0}" xml:space="preserve"><value>Columna {0}</value></data>
+  <data name="Interpretation and criteria table at the foot of the page" xml:space="preserve"><value>Interpretación y tabla de criterios al pie de la página</value></data>
+  <data name="The space under the results stays empty: the interpretation, the criteria table and the signature print just above the method bar." xml:space="preserve"><value>El espacio bajo los resultados queda libre: la interpretación, la tabla de criterios y la firma se imprimen justo sobre la barra del método.</value></data>
   <data name="Headers in the first row" xml:space="preserve"><value>Encabezados en la primera fila</value></data>
   <data name="Headers in the first column" xml:space="preserve"><value>Encabezados en la primera columna</value></data>
   <data name="Tick both for a two-way table, e.g. ranges by age across the top and by weight down the side." xml:space="preserve"><value>Marca ambas para una tabla de doble entrada, por ejemplo rangos según la edad (arriba) y según el peso (a la izquierda).</value></data>

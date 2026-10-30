@@ -112,6 +112,7 @@ public sealed class ExamReportSectionsDto
     public bool PreviousResult { get; set; }
     public bool LotNumber { get; set; }
     public bool CriteriaTable { get; set; }
+    public bool InterpretationAtFoot { get; set; }
 }
 
 /// <summary>The criteria table printed under the results; each row has one text per column.</summary>

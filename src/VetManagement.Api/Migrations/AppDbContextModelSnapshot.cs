@@ -1721,6 +1721,9 @@ namespace VetManagement.Api.Migrations
                             b1.Property<bool>("Interpretation")
                                 .HasColumnType("bit");
 
+                            b1.Property<bool>("InterpretationAtFoot")
+                                .HasColumnType("bit");
+
                             b1.Property<bool>("LotNumber")
                                 .HasColumnType("bit");
 

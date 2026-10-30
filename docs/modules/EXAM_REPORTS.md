@@ -14,6 +14,9 @@ Staff web → Exams → **Lab Reports** (issue, view, print), **Report Design** 
 
 Printed blocks (per template): patient and owner data, interpretation, method (catalog brand – machine),
 issued by, ↑ / ↓ arrows, previous result column, criteria table. The title and the results table always print.
+Under the results come the legend, then the interpretation, the criteria table and the signature, then the method bar
+at the foot of the box. Per template (`InterpretationAtFoot`, off by default), the interpretation, table and signature
+sit at the foot too, just above the method bar, leaving the space under the results empty.
 Asked in the form (per template): the lot number, so the form only shows the fields an exam needs.
 
 ## Interpretation rules
@@ -116,7 +119,7 @@ close to Futura; all SIL Open Font License, in `wwwroot/fonts`). Lines that don'
 the header, the patient bar with the patient, owner and reception date (unless Report Design turns it off: "Pet and
 owner data on the following pages"), and the footer; every page says "Página X de N".
 Pages are laid out from the heights measured on the rendered sheet (`report-sheet.js`, `ReportPagination`): a section
-title never stays alone at the foot of a page, a page break of the template starts a new page, and the closing blocks (legend, criteria table, interpretation, method) go
+title never stays alone at the foot of a page, a page break of the template starts a new page, and the closing blocks (legend, interpretation, criteria table, signature, method) go
 on the last page, taking the last two lines with them when they don't fit. The
 **lot number** (test kit or reagent; asked only when the template says so) prints in the method bar ("Vcheck - BIONOTE · LOTE: A123"), alone if the
 method is hidden.

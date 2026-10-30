@@ -420,6 +420,19 @@ public class ExamReportsApiTests : IClassFixture<CustomWebAppFactory>
     }
 
     [Fact]
+    public async Task InterpretationAtFoot_IsCopiedIntoTheReport()
+    {
+        var (petId, examId) = await AddPetAndExamAsync(Species.Dog);
+        var template = CortisolTemplate(examId);
+        template.Sections.InterpretationAtFoot = true;
+        await AddTemplateAsync(template);
+
+        var report = await CreateAsync(_employee, new { PetId = petId, ExamId = examId, ReceivedOn = new DateOnly(2026, 10, 3), Values = new Dictionary<string, string> { ["basal"] = "5" } });
+
+        report.Sections.InterpretationAtFoot.Should().BeTrue();
+    }
+
+    [Fact]
     public async Task CriteriaTable_Headers_AreKeptInTheTemplate_AndCopiedIntoTheReport()
     {
         var (petId, examId) = await AddPetAndExamAsync(Species.Dog);
