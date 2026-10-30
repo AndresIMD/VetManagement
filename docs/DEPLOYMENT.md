@@ -30,6 +30,12 @@ Environment variable names use `__` for sections, e.g. `Payments__WebPayPlus__Ap
 
 Health check: `GET /healthz` (includes the database).
 
+### Keeping .NET patched
+
+A package update doesn't patch a running clinic. The API runs on the ASP.NET Core runtime installed on the server, so a
+.NET security release needs its Hosting Bundle (or runtime) installed there as well. The staff web and the booking portal
+carry the browser runtime of the SDK that built them, so update the SDK on the machine that builds the packages too.
+
 ## Business configuration (no deploy needed)
 
 Everything business-related is edited by the clinic admin in the staff web, no deploy needed:
