@@ -1,6 +1,7 @@
 using System.Text.Json;
 using VetManagement.Application.Configuration;
 using VetManagement.Application.Contracts.Persistence;
+using VetManagement.Application.Contracts.Services;
 using VetManagement.Application.Inventory;
 using VetManagement.Application.Services;
 using VetManagement.Domain.Clients;
@@ -46,7 +47,8 @@ public sealed record ExamReportResultStatus(ExamReportStatus Status, int? Id = n
 /// Issued exam reports: the values are entered, everything else (names, units, references, flags and the
 /// interpretation) comes from the exam's report template in <see cref="ExamReportSettings"/>.
 /// </summary>
-public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService settingsService, AuditService audit, TimeProvider clock)
+public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService settingsService, AuditService audit, TimeProvider clock,
+    IRealtimeNotificationService? notifications = null)
 {
     /// <param name="withStock">Also look up the exam's inventory product the report can deduct (the Inventory module is on).</param>
     public async Task<ExamReportView?> GetAsync(int id, bool withStock = false)
@@ -150,6 +152,7 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
     public async Task<ExamReportResultStatus> DeleteAsync(int id, string userName)
     {
         string? snapshot = null;
+        int? returnedItem = null;
         var result = await unitOfWork.ExecuteExclusiveAsync(Stock.LockKey, async () =>
         {
             var report = await unitOfWork.ExamReports.GetByIdAsync(id);
@@ -157,6 +160,7 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
                 return new ExamReportResultStatus(ExamReportStatus.NotFound);
 
             snapshot = JsonSerializer.Serialize(report);
+            returnedItem = report.StockItemId;
             if (report.StockDeducted)
                 await PutStockBackAsync(report, "Exam report #{0} – {1} (deleted)", userName);
             unitOfWork.ExamReports.Remove(report);
@@ -165,7 +169,10 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
         });
 
         if (result.Status == ExamReportStatus.Done)
+        {
             await audit.LogAsync(nameof(ExamReport), id, AuditActionType.Delete, snapshot!, userName);
+            await NotifyStockChangedAsync(returnedItem);
+        }
         return result;
     }
 
@@ -178,6 +185,7 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
     {
         var now = clock.GetUtcNow().UtcDateTime;
         string? taken = null;
+        int? takenItem = null;
         var result = await unitOfWork.ExecuteExclusiveAsync(Stock.LockKey, async () =>
         {
             var report = await unitOfWork.ExamReports.GetByIdAsync(id);
@@ -201,11 +209,15 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
                 = (item.Id, item.Name, product.Quantity, now, userName);
             await unitOfWork.SaveChangesAsync();
             taken = $"item {item.Id} '{item.Name}' x{product.Quantity}";
+            takenItem = item.Id;
             return new ExamReportResultStatus(ExamReportStatus.Done, id);
         });
 
         if (result.Status == ExamReportStatus.Done)
+        {
             await audit.LogAsync(nameof(ExamReport), id, AuditActionType.Edit, $"Deducted from inventory: {taken}", userName);
+            await NotifyStockChangedAsync(takenItem);
+        }
         return result;
     }
 
@@ -213,6 +225,7 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
     public async Task<ExamReportResultStatus> ReturnStockAsync(int id, string userName)
     {
         string? returned = null;
+        int? returnedItem = null;
         var result = await unitOfWork.ExecuteExclusiveAsync(Stock.LockKey, async () =>
         {
             var report = await unitOfWork.ExamReports.GetByIdAsync(id);
@@ -222,15 +235,22 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
                 return new ExamReportResultStatus(ExamReportStatus.Invalid, Error: Texts.T("This report took nothing from inventory."));
 
             returned = $"item {report.StockItemId} '{report.StockItemName}' x{report.StockQuantity}";
+            returnedItem = report.StockItemId;
             await PutStockBackAsync(report, "Exam report #{0} – {1} (returned)", userName);
             await unitOfWork.SaveChangesAsync();
             return new ExamReportResultStatus(ExamReportStatus.Done, id);
         });
 
         if (result.Status == ExamReportStatus.Done)
+        {
             await audit.LogAsync(nameof(ExamReport), id, AuditActionType.Edit, $"Returned to inventory: {returned}", userName);
+            await NotifyStockChangedAsync(returnedItem);
+        }
         return result;
     }
+
+    private Task NotifyStockChangedAsync(int? itemId)
+        => itemId is int id ? Stock.NotifyChangedAsync(notifications, [id]) : Task.CompletedTask;
 
     /// <summary>The kit's units in the daily-use warehouse and, by name only, the other warehouses that hold some.</summary>
     private async Task<ExamReportStock> KitStockAsync(Item item, int quantity)

@@ -54,6 +54,10 @@ transfer from a shared warehouse shows the units leaving it. Hand-outs from the 
 are visible, since they are the daily-use warehouse's own stock. Management screens (metrics, reports, audit) still show
 totals to supervisors.
 
+Open item lists refresh on their own when stock moves in the inventory screens or an exam takes or returns its kit. Sales,
+visit supplies and doses don't send that notice yet (`Stock.NotifyChangedAsync`, one call after saving): the list catches
+up on its next load.
+
 ## Archiving and deleting
 
 Only an empty warehouse is archived (hidden from the stock screens, restorable). Only a warehouse that never had a

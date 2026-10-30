@@ -322,8 +322,6 @@
   <data name="Delete" xml:space="preserve"><value>Eliminar</value></data>
   <data name="Cancel" xml:space="preserve"><value>Cancelar</value></data>
   <data name="Error loading items: {0}" xml:space="preserve"><value>Error al cargar productos: {0}</value></data>
-  <data name="Items were changed by another user" xml:space="preserve"><value>Otro usuario modificó productos</value></data>
-  <data name="Stock updated for {0}" xml:space="preserve"><value>Stock actualizado: {0}</value></data>
   <data name="New product" xml:space="preserve"><value>Nuevo producto</value></data>
   <data name="Product created." xml:space="preserve"><value>Producto creado.</value></data>
   <data name="Creation canceled." xml:space="preserve"><value>Creación cancelada.</value></data>

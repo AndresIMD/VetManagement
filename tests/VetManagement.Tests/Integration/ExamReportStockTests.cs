@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Threading.Channels;
 using FluentAssertions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,7 @@ using VetManagement.Domain.Enums;
 using VetManagement.Domain.Exams;
 using VetManagement.Domain.Inventory;
 using VetManagement.Infrastructure.Data;
+using VetManagement.Staff.UI.Services.Realtime;
 
 namespace VetManagement.Tests.Integration;
 
@@ -129,6 +131,34 @@ public class ExamReportStockTests(CustomWebAppFactory factory) : IClassFixture<C
         after.StockToDeduct.Should().BeNull();
         after.StockDeducted.Should().BeEquivalentTo(new { Quantity = 2, By = "test-user" });
         after.StockDeducted!.ItemName.Should().StartWith("Kit T4");
+    }
+
+    [Fact]
+    public async Task TheProductsStockChanges_ReachOpenScreens_WithoutTheCount()
+    {
+        var itemId = await AddItemAsync(stock: 10);
+        var (petId, examId) = await AddPetAndExamAsync(itemId);
+        var reportId = await CreateReportAsync(petId, examId);
+        var notices = Channel.CreateUnbounded<PropertyChangedEventArgs>();
+        await using var realtime = factory.CreateRealtimeClient();
+        realtime.OnPropertyChanged += args => notices.Writer.TryWrite(args);
+        await realtime.InitializeAsync();
+
+        async Task ExpectNoticeAsync(HttpResponseMessage response)
+        {
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            var notice = await notices.Reader.ReadAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10));
+            notice.EntityType.Should().Be(nameof(Item));
+            notice.EntityId.Should().Be(itemId);
+            notice.PropertyName.Should().Be(nameof(Item.Stock));
+            notice.NewValue.Should().BeNull();
+        }
+
+        await ExpectNoticeAsync(await _laboratory.PostAsync($"/api/exam-reports/{reportId}/stock", null));
+        await ExpectNoticeAsync(await _laboratory.DeleteAsync($"/api/exam-reports/{reportId}/stock"));
+        await ExpectNoticeAsync(await _laboratory.PostAsync($"/api/exam-reports/{reportId}/stock", null));
+        await ExpectNoticeAsync(await _admin.DeleteAsync($"/api/exam-reports/{reportId}"));
+        (await StockOfAsync(itemId)).Should().Be(10);
     }
 
     [Fact]
