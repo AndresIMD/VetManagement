@@ -16,7 +16,9 @@ Printed blocks (per template): patient and owner data, interpretation, method (c
 issued by, ↑ / ↓ arrows, previous result column, criteria table. The title and the results table always print.
 Under the results come the legend, then the interpretation, the criteria table and the signature, then the method bar
 at the foot of the box. Per template (`InterpretationAtFoot`, off by default), the interpretation, table and signature
-sit at the foot too, just above the method bar, leaving the space under the results empty.
+sit at the foot too, just above the method bar, leaving the space under the results empty. The criteria table keeps at
+least 5 mm above it (what the page breaks count) and, on a page with room to spare, up to 10 mm above and 6 mm below.
+The template editor's preview shows a placeholder interpretation until a sample value gives one.
 Asked in the form (per template): the lot number, so the form only shows the fields an exam needs.
 
 ## Interpretation rules

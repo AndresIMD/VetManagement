@@ -71,9 +71,20 @@
         .xr-gauge-edge.high { right: 0.3mm; border-left: .36em solid #C62828; }
         /* Legend, interpretation, criteria, signature and method: they fill the rest of the box, the method at its foot. */
         .xr-closing { flex: 1; display: flex; flex-direction: column; }
-        /* At the foot of the page: the space opens under the results instead, and the method follows the block. */
-        .xr-at-foot > .xr-conclusion { margin-top: auto; }
+        /* The interpretation, criteria table and signature: a column that takes the room left in the box. What its blocks
+           don't use goes under the signature, so the method bar sits at the foot; at the foot of the page it goes above the
+           interpretation instead, and the space opens under the results. That space shares the room with the space around
+           the criteria table, so on a tight page neither gets all of it. */
+        .xr-conclusion { flex: 1 1 auto; display: flex; flex-direction: column; }
+        .xr-conclusion::after { content: ''; flex: 1 1 0; }
+        .xr-at-foot > .xr-conclusion::after { content: none; }
+        .xr-at-foot > .xr-conclusion::before { content: ''; flex: 1 1 0; }
         .xr-at-foot > .xr-method { margin-top: 4mm; }
+        /* Around the criteria table: at least 5 mm above it, which is what the page breaks count, and up to 10 mm above and
+           6 mm below when the page has room to spare. */
+        .xr-space-above, .xr-space-below { flex: 1 1 0; }
+        .xr-space-above { min-height: 5mm; max-height: 10mm; }
+        .xr-space-below { max-height: 6mm; }
         .xr-interpretation { margin-top: 5mm; white-space: pre-line; }
         .xr-interpretation b { margin-right: 2.5mm; }
         .xr-method { align-self: center; margin-top: auto; padding: 1.4mm 6mm; border-radius: 3mm; color: #fff; font-weight: 700; }
@@ -84,7 +95,7 @@
         .xr-disclaimer { margin-top: 1.5mm; }
         .xr-pageno { margin-top: 1.5mm; text-align: right; font-size: 8.5pt; color: #555; }
         .xr-note { font-size: .76em; color: #666; margin-top: 1mm; }
-        .xr-criteria { margin-top: 5mm; font-size: .81em; }
+        .xr-criteria { font-size: .81em; }
         .xr-criteria-title { font-weight: 700; margin-bottom: 1.5mm; }
         .xr-criteria table { width: 100%; table-layout: fixed; border-collapse: collapse; }
         .xr-criteria th { color: #fff; font-weight: 600; padding: 1.2mm 1.5mm; }
@@ -269,6 +280,7 @@
                                     }
                                     @if (Report.Criteria is { Columns.Count: > 0 } criteria)
                                     {
+                                        <div class="xr-space-above"></div>
                                         <div class="xr-criteria">
                                             @if (!string.IsNullOrWhiteSpace(criteria.Title))
                                             {
@@ -292,6 +304,7 @@
                                                 }
                                             </table>
                                         </div>
+                                        <div class="xr-space-below"></div>
                                     }
                                     @if (Report.Sections.ReportedBy)
                                     {
@@ -334,7 +347,10 @@
     [Parameter] public string? LogoUrl { get; set; }
     [Parameter] public string? BackgroundUrl { get; set; }
 
-    /// <summary>A report made of field names, for previews: pass results to show a real template's lines.</summary>
+    /// <summary>
+    /// A report made of field names, for previews: pass results to show a real template's lines. Without an interpretation
+    /// (e.g. no sample value meets a rule yet) it shows a placeholder one, so the preview has every block it will print.
+    /// </summary>
     public static ExamReportDto PlaceholderReport(string? title = null, string? method = null, List<ExamReportResultDto>? results = null,
         string? interpretation = null, ExamReportSectionsDto? sections = null) => new()
     {
@@ -344,7 +360,7 @@
         OwnerName = Strings.T("Owner name"),
         ReferringVet = Strings.T("Referring vet"),
         CreatedBy = Strings.T("Responsible"),
-        Interpretation = interpretation ?? (results is null ? Strings.T("Interpretation of the result.") : null),
+        Interpretation = interpretation ?? Strings.T("Interpretation of the result."),
         Sections = sections ?? new ExamReportSectionsDto { PatientData = true, Method = true, Interpretation = true },
         Results = results ??
         [
