@@ -17,6 +17,8 @@ public static class Permissions
         public const string DELETE = "inventory.delete";
         /// <summary>Stock metrics: consumption, value and trends (management data).</summary>
         public const string METRICS = "inventory.metrics";
+        /// <summary>Create warehouses and choose which roles see each one; sees them all. Admin only: no area grants it.</summary>
+        public const string WAREHOUSES = "inventory.warehouses";
     }
 
     /// <summary>Consumption sheets: supplies used on each patient during a stay, charged at discharge (inventory module).</summary>
@@ -205,6 +207,7 @@ public static class Permissions
         yield return INVENTORY.UPDATE;
         yield return INVENTORY.DELETE;
         yield return INVENTORY.METRICS;
+        yield return INVENTORY.WAREHOUSES;
         yield return CONSUMPTION.READ;
         yield return CONSUMPTION.RECORD;
         yield return CONSUMPTION.MANAGE;

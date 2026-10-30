@@ -1,24 +1,6 @@
-using System.ComponentModel.DataAnnotations;
 using VetManagement.Domain.Enums;
 
 namespace VetManagement.Contracts.Inventory;
-
-/// <summary>
-/// Request to record a new stock movement.
-/// </summary>
-public sealed class MovementCreateRequest
-{
-    [Range(1, int.MaxValue)]
-    public int ItemId { get; init; }
-
-    [Required]
-    public InventoryMovementType Type { get; init; }
-
-    public int Quantity { get; init; }
-
-    [MaxLength(200)]
-    public string? Reason { get; init; }
-}
 
 /// <summary>
 /// Movement DTO for list/history display.
@@ -40,4 +22,9 @@ public sealed class MovementDto
     public string Responsible { get; set; } = "System";
 
     public string? Reason { get; set; }
+
+    /// <summary>The warehouse whose stock moved (the daily-use one's id for the movements that have none).</summary>
+    public int WarehouseId { get; set; }
+
+    public string WarehouseName { get; set; } = string.Empty;
 }

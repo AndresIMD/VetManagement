@@ -41,6 +41,12 @@ public class UnitOfWork(AppDbContext context) : IUnitOfWork
 
     public IInventoryMovementRepository InventoryMovements => _inventoryMovements ??= new InventoryMovementRepository(context);
 
+    private IRepository<VetManagement.Domain.Inventory.Warehouse>? _warehouses;
+    public IRepository<VetManagement.Domain.Inventory.Warehouse> Warehouses => _warehouses ??= new Repository<VetManagement.Domain.Inventory.Warehouse>(context);
+
+    private IWarehouseStockRepository? _warehouseStocks;
+    public IWarehouseStockRepository WarehouseStocks => _warehouseStocks ??= new WarehouseStockRepository(context);
+
     public IAuditLogRepository AuditLogs => _auditLogs ??= new AuditLogRepository(context);
 
     public IExternalLabRepository ExternalLabs => _externalLabs ??= new ExternalLabRepository(context);

@@ -11,11 +11,6 @@ public class InventoryHub(ILogger<InventoryHub> logger) : Hub
         await Clients.Others.SendAsync("ItemChanged", itemId, action);
     }
 
-    public async Task NotifyStockChangedAsync(int itemId, int newStock)
-    {
-        await Clients.Others.SendAsync("StockChanged", itemId, newStock);
-    }
-
     public async Task NotifyMovementAddedAsync(int itemId)
     {
         await Clients.Others.SendAsync("MovementAdded", itemId);

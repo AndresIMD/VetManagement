@@ -18,6 +18,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
 {
     public DbSet<Item> Items { get; set; }
     public DbSet<InventoryMovement> InventoryMovements { get; set; }
+    public DbSet<Warehouse> Warehouses { get; set; }
+    public DbSet<WarehouseStock> WarehouseStocks { get; set; }
     public DbSet<Exam> Exams { get; set; }
     public DbSet<ExamPerformed> ExamsPerformed { get; set; }
     public DbSet<Client> Clients { get; set; }
@@ -83,6 +85,23 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         builder.Entity<InventoryMovement>().Property(m => m.Responsible).HasMaxLength(100);
         // The metrics read movements by date range.
         builder.Entity<InventoryMovement>().HasIndex(m => m.Date);
+
+        // Warehouses: the daily-use one has no stock rows and its movements no warehouse (see Warehouse).
+        builder.Entity<Warehouse>(e =>
+        {
+            e.Property(w => w.Name).HasMaxLength(100);
+            e.HasIndex(w => w.Name).IsUnique();
+            e.HasIndex(w => w.IsDailyUse).IsUnique().HasFilter("[IsDailyUse] = 1");
+        });
+        builder.Entity<WarehouseStock>(e =>
+        {
+            e.HasKey(s => new { s.WarehouseId, s.ItemId });
+            e.HasIndex(s => s.ItemId);
+            e.HasOne<Warehouse>().WithMany().HasForeignKey(s => s.WarehouseId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<Item>().WithMany().HasForeignKey(s => s.ItemId).OnDelete(DeleteBehavior.Cascade);
+        });
+        // A warehouse with movements is never deleted (it's archived), so the key needs no cascade.
+        builder.Entity<InventoryMovement>().HasOne<Warehouse>().WithMany().HasForeignKey(m => m.WarehouseId).OnDelete(DeleteBehavior.Restrict);
 
         // The audit pages list one kind of entity newest first, or the history of one entity.
         builder.Entity<AuditLog>(e =>

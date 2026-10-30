@@ -59,7 +59,8 @@ public class ItemRepository(AppDbContext context) : Repository<Item>(context), I
         int pageSize,
         StockAlertFilter? alertFilter = null,
         ItemSortField? sortBy = null,
-        SortDirection sortDirection = SortDirection.Ascending)
+        SortDirection sortDirection = SortDirection.Ascending,
+        IReadOnlyCollection<int>? hiddenWarehouseIds = null)
     {
         var query = _context.Items.AsNoTracking();
 
@@ -80,39 +81,52 @@ public class ItemRepository(AppDbContext context) : Repository<Item>(context), I
             query = query.Where(i => i.Type == type.Value);
         }
 
+        // The stock filters and sort use what the user sees: the total less what the hidden warehouses hold.
+        var hidden = hiddenWarehouseIds ?? [];
+        var stocks = _context.WarehouseStocks;
+        var seen = hidden.Count == 0
+            ? query.Select(i => new { Item = i, Stock = i.Stock })
+            : query.Select(i => new
+            {
+                Item = i,
+                Stock = i.Stock - stocks.Where(s => s.ItemId == i.Id && hidden.Contains(s.WarehouseId)).Sum(s => s.Quantity)
+            });
+
         if (alertFilter.HasValue && alertFilter.Value != StockAlertFilter.None)
         {
-            query = alertFilter.Value switch
+            seen = alertFilter.Value switch
             {
-                StockAlertFilter.LowStock => query.Where(i =>
-                    i.LowStockThreshold > 0 && i.Stock > 0 && i.Stock <= i.LowStockThreshold),
-                StockAlertFilter.OutOfStock => query.Where(i =>
-                    i.Stock == 0),
-                _ => query
+                StockAlertFilter.LowStock => seen.Where(x =>
+                    x.Item.LowStockThreshold > 0 && x.Stock > 0 && x.Stock <= x.Item.LowStockThreshold),
+                StockAlertFilter.OutOfStock => seen.Where(x =>
+                    x.Stock <= 0),
+                _ => seen
             };
         }
 
-        var totalCount = await query.CountAsync();
+        var totalCount = await seen.CountAsync();
 
+        // Ties go by id, so paging through equal values never repeats or skips an item.
         var isDescending = sortDirection == SortDirection.Descending;
-        query = sortBy switch
+        seen = sortBy switch
         {
-            ItemSortField.Id => isDescending ? query.OrderByDescending(i => i.Id) : query.OrderBy(i => i.Id),
-            ItemSortField.Name => isDescending ? query.OrderByDescending(i => i.Name) : query.OrderBy(i => i.Name),
-            ItemSortField.Type => isDescending ? query.OrderByDescending(i => i.Type) : query.OrderBy(i => i.Type),
-            ItemSortField.Brand => isDescending ? query.OrderByDescending(i => i.Brand) : query.OrderBy(i => i.Brand),
-            ItemSortField.Stock => isDescending ? query.OrderByDescending(i => i.Stock) : query.OrderBy(i => i.Stock),
-            ItemSortField.SellPrice => isDescending ? query.OrderByDescending(i => i.SellPrice) : query.OrderBy(i => i.SellPrice),
-            ItemSortField.BuyPrice => isDescending ? query.OrderByDescending(i => i.BuyPrice) : query.OrderBy(i => i.BuyPrice),
-            ItemSortField.LowStockThreshold => isDescending ? query.OrderByDescending(i => i.LowStockThreshold) : query.OrderBy(i => i.LowStockThreshold),
-            ItemSortField.Barcode => isDescending ? query.OrderByDescending(i => i.Barcode) : query.OrderBy(i => i.Barcode),
-            ItemSortField.BrandBarcode => isDescending ? query.OrderByDescending(i => i.BrandBarcode) : query.OrderBy(i => i.BrandBarcode),
-            _ => query.OrderBy(i => i.Id)
+            ItemSortField.Id => isDescending ? seen.OrderByDescending(x => x.Item.Id) : seen.OrderBy(x => x.Item.Id),
+            ItemSortField.Name => isDescending ? seen.OrderByDescending(x => x.Item.Name).ThenBy(x => x.Item.Id) : seen.OrderBy(x => x.Item.Name).ThenBy(x => x.Item.Id),
+            ItemSortField.Type => isDescending ? seen.OrderByDescending(x => x.Item.Type).ThenBy(x => x.Item.Id) : seen.OrderBy(x => x.Item.Type).ThenBy(x => x.Item.Id),
+            ItemSortField.Brand => isDescending ? seen.OrderByDescending(x => x.Item.Brand).ThenBy(x => x.Item.Id) : seen.OrderBy(x => x.Item.Brand).ThenBy(x => x.Item.Id),
+            ItemSortField.Stock => isDescending ? seen.OrderByDescending(x => x.Stock).ThenBy(x => x.Item.Id) : seen.OrderBy(x => x.Stock).ThenBy(x => x.Item.Id),
+            ItemSortField.SellPrice => isDescending ? seen.OrderByDescending(x => x.Item.SellPrice).ThenBy(x => x.Item.Id) : seen.OrderBy(x => x.Item.SellPrice).ThenBy(x => x.Item.Id),
+            ItemSortField.BuyPrice => isDescending ? seen.OrderByDescending(x => x.Item.BuyPrice).ThenBy(x => x.Item.Id) : seen.OrderBy(x => x.Item.BuyPrice).ThenBy(x => x.Item.Id),
+            ItemSortField.LowStockThreshold => isDescending ? seen.OrderByDescending(x => x.Item.LowStockThreshold).ThenBy(x => x.Item.Id) : seen.OrderBy(x => x.Item.LowStockThreshold).ThenBy(x => x.Item.Id),
+            ItemSortField.Barcode => isDescending ? seen.OrderByDescending(x => x.Item.Barcode).ThenBy(x => x.Item.Id) : seen.OrderBy(x => x.Item.Barcode).ThenBy(x => x.Item.Id),
+            ItemSortField.BrandBarcode => isDescending ? seen.OrderByDescending(x => x.Item.BrandBarcode).ThenBy(x => x.Item.Id) : seen.OrderBy(x => x.Item.BrandBarcode).ThenBy(x => x.Item.Id),
+            _ => seen.OrderBy(x => x.Item.Id)
         };
 
-        var items = await query
+        var items = await seen
             .Skip(page * pageSize)
             .Take(pageSize)
+            .Select(x => x.Item)
             .ToListAsync();
 
         return (items, totalCount);

@@ -209,7 +209,7 @@ public class ExamReportsController(ExamReportService service, ExamReportSettings
             : NullIfEmpty($"{view.Report.Patient?.OwnerName} {view.Report.Patient?.OwnerLastName}".Trim()),
         OwnerLastName = view.Owner?.LastName ?? view.Report.Patient?.OwnerLastName,
         StockToDeduct = view.StockToDeduct is { } stock
-            ? new ExamReportStockDto { ItemName = stock.ItemName, Quantity = stock.Quantity, InStock = stock.InStock }
+            ? new ExamReportStockDto { ItemName = stock.ItemName, Quantity = stock.Quantity, InStock = stock.InStock, AskAt = [.. stock.AskAt ?? []] }
             : null,
         StockDeducted = view.Report.StockDeducted
             ? new ExamReportStockDto

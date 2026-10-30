@@ -1183,11 +1183,16 @@ namespace VetManagement.Api.Migrations
                     b.Property<int>("Type")
                         .HasColumnType("int");
 
+                    b.Property<int?>("WarehouseId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Date");
 
                     b.HasIndex("ItemId");
+
+                    b.HasIndex("WarehouseId");
 
                     b.ToTable("InventoryMovements");
                 });
@@ -1245,6 +1250,59 @@ namespace VetManagement.Api.Migrations
                     b.HasDiscriminator<int>("Type").HasValue(1);
 
                     b.UseTphMappingStrategy();
+                });
+
+            modelBuilder.Entity("VetManagement.Domain.Inventory.Warehouse", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDailyUse")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.PrimitiveCollection<string>("Roles")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsDailyUse")
+                        .IsUnique()
+                        .HasFilter("[IsDailyUse] = 1");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Warehouses");
+                });
+
+            modelBuilder.Entity("VetManagement.Domain.Inventory.WarehouseStock", b =>
+                {
+                    b.Property<int>("WarehouseId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ItemId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.HasKey("WarehouseId", "ItemId");
+
+                    b.HasIndex("ItemId");
+
+                    b.ToTable("WarehouseStocks");
                 });
 
             modelBuilder.Entity("VetManagement.Domain.Medical.MedicalVisit", b =>
@@ -1822,7 +1880,27 @@ namespace VetManagement.Api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("VetManagement.Domain.Inventory.Warehouse", null)
+                        .WithMany()
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Item");
+                });
+
+            modelBuilder.Entity("VetManagement.Domain.Inventory.WarehouseStock", b =>
+                {
+                    b.HasOne("VetManagement.Domain.Inventory.Item", null)
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VetManagement.Domain.Inventory.Warehouse", null)
+                        .WithMany()
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("VetManagement.Domain.Medical.VisitProcedure", b =>

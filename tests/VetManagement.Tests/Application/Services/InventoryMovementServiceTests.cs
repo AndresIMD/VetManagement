@@ -2,6 +2,7 @@ using FluentAssertions;
 using Moq;
 using VetManagement.Application.Contracts.Persistence;
 using VetManagement.Application.Contracts.Services;
+using VetManagement.Application.Inventory;
 using VetManagement.Application.Services;
 using VetManagement.Domain.Inventory;
 using VetManagement.Domain.Enums;
@@ -20,6 +21,8 @@ public class InventoryMovementServiceTests
     private readonly Mock<IInventoryMovementRepository> _mockMovementRepo;
     private readonly Mock<IItemRepository> _mockItemRepo;
     private readonly Mock<IAuditLogRepository> _mockAuditRepo;
+    private readonly Mock<IRepository<Warehouse>> _mockWarehouseRepo;
+    private readonly Mock<IWarehouseStockRepository> _mockWarehouseStockRepo;
     private readonly InventoryMovementService _service;
 
     public InventoryMovementServiceTests()
@@ -29,44 +32,23 @@ public class InventoryMovementServiceTests
         _mockMovementRepo = new Mock<IInventoryMovementRepository>();
         _mockItemRepo = new Mock<IItemRepository>();
         _mockAuditRepo = new Mock<IAuditLogRepository>();
+        _mockWarehouseRepo = new Mock<IRepository<Warehouse>>();
+        _mockWarehouseStockRepo = new Mock<IWarehouseStockRepository>();
 
         _mockUnitOfWork.Setup(u => u.InventoryMovements).Returns(_mockMovementRepo.Object);
         _mockUnitOfWork.Setup(u => u.Items).Returns(_mockItemRepo.Object);
         _mockUnitOfWork.Setup(u => u.AuditLogs).Returns(_mockAuditRepo.Object);
+        _mockUnitOfWork.Setup(u => u.Warehouses).Returns(_mockWarehouseRepo.Object);
+        _mockUnitOfWork.Setup(u => u.WarehouseStocks).Returns(_mockWarehouseStockRepo.Object);
+        // Only the daily-use warehouse, which holds every unit.
+        _mockWarehouseRepo.Setup(r => r.FindAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Warehouse, bool>>>()))
+            .ReturnsAsync([new Warehouse { Id = 1, Name = "Daily", IsDailyUse = true }]);
+        _mockWarehouseStockRepo.Setup(r => r.ForItemsAsync(It.IsAny<IReadOnlyCollection<int>>())).ReturnsAsync([]);
         // Stock changes run under the shared stock lock; here the work simply runs.
-        _mockUnitOfWork.Setup(u => u.ExecuteExclusiveAsync(It.IsAny<string>(), It.IsAny<Func<Task<int?>>>()))
-            .Returns((string _, Func<Task<int?>> work) => work());
-        _mockUnitOfWork.Setup(u => u.ExecuteExclusiveAsync(It.IsAny<string>(), It.IsAny<Func<Task<int>>>()))
-            .Returns((string _, Func<Task<int>> work) => work());
+        _mockUnitOfWork.Setup(u => u.ExecuteExclusiveAsync(It.IsAny<string>(), It.IsAny<Func<Task<StockMoveResult>>>()))
+            .Returns((string _, Func<Task<StockMoveResult>> work) => work());
 
         _service = new InventoryMovementService(_mockUnitOfWork.Object, _mockNotificationService.Object);
-    }
-
-    [Fact]
-    public async Task AddMovementAsync_ShouldAddMovement_LogAudit_AndNotify()
-    {
-        // Arrange
-        var movement = new DomainInventoryMovement
-        {
-            ItemId = 1,
-            Quantity = 10,
-            Type = DomainInventoryMovementType.Ingress
-        };
-        string userName = "TestUser";
-
-        // Act
-        await _service.AddMovementAsync(movement, userName);
-
-        // Assert
-        _mockMovementRepo.Verify(r => r.AddAsync(movement), Times.Once);
-        _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Exactly(2)); // Once for movement, once for audit
-        _mockAuditRepo.Verify(r => r.AddAsync(It.Is<Domain.Audit.AuditLog>(l =>
-            l.EntityName == nameof(VetManagement.Domain.Inventory.InventoryMovement) &&
-            l.Action == AuditActionType.Ingress &&
-            l.User == userName)), Times.Once);
-
-        _mockNotificationService.Verify(n => n.NotifyEntityChangedAsync<DomainInventoryMovement>(movement.Id, "Add", It.IsAny<object>()), Times.Once);
-        _mockNotificationService.Verify(n => n.NotifyCollectionChangedAsync<DomainInventoryMovement>("Add"), Times.Once);
     }
 
     [Fact]
@@ -82,10 +64,10 @@ public class InventoryMovementServiceTests
         _mockItemRepo.Setup(r => r.GetByIdAsync(itemId)).ReturnsAsync(item);
 
         // Act
-        var result = await _service.AdjustStockAsync(itemId, amount, reason, userName);
+        var result = await _service.AdjustStockAsync(itemId, amount, reason, userName, StockScope.All);
 
         // Assert
-        result.Should().BeTrue();
+        result.Status.Should().Be(StockMoveStatus.Done);
         item.Stock.Should().Be(15);
 
         _mockItemRepo.Verify(r => r.Update(item), Times.Once);
@@ -93,10 +75,12 @@ public class InventoryMovementServiceTests
             m.ItemId == itemId &&
             m.Quantity == 5 &&
             m.Type == DomainInventoryMovementType.Ingress &&
+            m.WarehouseId == null &&
             m.Reason == reason)), Times.Once);
 
         _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Exactly(2));
-        _mockNotificationService.Verify(n => n.NotifyPropertyChangedAsync<DomainItem>(itemId, nameof(DomainItem.Stock), 15), Times.Once);
+        // Every connected user gets the notice: it names the item, never the new count.
+        _mockNotificationService.Verify(n => n.NotifyPropertyChangedAsync<DomainItem>(itemId, nameof(DomainItem.Stock), null), Times.Once);
     }
 
     [Fact]
@@ -110,7 +94,7 @@ public class InventoryMovementServiceTests
         _mockItemRepo.Setup(r => r.GetByIdAsync(itemId)).ReturnsAsync(item);
 
         // Act
-        await _service.AdjustStockAsync(itemId, amount, "Reason", "User");
+        await _service.AdjustStockAsync(itemId, amount, "Reason", "User", StockScope.All);
 
         // Assert
         item.Stock.Should().Be(7);
@@ -126,11 +110,24 @@ public class InventoryMovementServiceTests
         _mockItemRepo.Setup(r => r.GetByIdAsync(It.IsAny<int>())).ReturnsAsync((DomainItem?)null);
 
         // Act
-        var result = await _service.AdjustStockAsync(1, 5, "Reason", "User");
+        var result = await _service.AdjustStockAsync(1, 5, "Reason", "User", StockScope.All);
 
         // Assert
-        result.Should().BeFalse();
+        result.Status.Should().Be(StockMoveStatus.NotFound);
         _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task AdjustStockAsync_BelowZero_IsRefused()
+    {
+        var item = new DomainItem("Test Item", DomainItemType.Material, "123", null, 10, 100, "Brand") { Id = 1, Stock = 2 };
+        _mockItemRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(item);
+
+        var result = await _service.AdjustStockAsync(1, -3, "Count", "User", StockScope.All);
+
+        result.Status.Should().Be(StockMoveStatus.Invalid);
+        item.Stock.Should().Be(2);
+        _mockMovementRepo.Verify(r => r.AddAsync(It.IsAny<DomainInventoryMovement>()), Times.Never);
     }
 
     [Fact]
@@ -150,16 +147,16 @@ public class InventoryMovementServiceTests
         _mockItemRepo.Setup(r => r.GetByIdAsync(2)).ReturnsAsync(item2);
 
         // Act
-        var count = await _service.MassStockUpdateAsync(updates, isIngress: true, "User");
+        var result = await _service.MassStockUpdateAsync(updates, isIngress: true, "User", StockScope.All);
 
         // Assert
-        count.Should().Be(2);
+        result.Count.Should().Be(2);
         item1.Stock.Should().Be(15);
         item2.Stock.Should().Be(13);
 
         _mockMovementRepo.Verify(r => r.AddAsync(It.IsAny<DomainInventoryMovement>()), Times.Exactly(2));
         _mockUnitOfWork.Verify(u => u.SaveChangesAsync(), Times.Exactly(3)); // Once per item (audit) + once at the end
 
-        _mockNotificationService.Verify(n => n.NotifyCollectionChangedAsync<DomainInventoryMovement>("MassUpdate"), Times.Once);
+        _mockNotificationService.Verify(n => n.NotifyCollectionChangedAsync<DomainInventoryMovement>("Add"), Times.Once);
     }
 }

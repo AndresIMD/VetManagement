@@ -18,7 +18,17 @@ public sealed class InventoryItemDto
 
     public ItemType Type { get; set; }
 
+    /// <summary>Units in the warehouses the user sees: the clinic's total for whoever sees them all.</summary>
     public int Stock { get; set; }
+
+    /// <summary>Units in the daily-use warehouse, the ones sales, visits, doses and exam kits can take.</summary>
+    public int DailyUseStock { get; set; }
+
+    /// <summary>Units per warehouse the user sees, the daily-use one first.</summary>
+    public List<WarehouseUnitsDto> Warehouses { get; set; } = [];
+
+    /// <summary>The other warehouses holding some, by name only: where to ask for more.</summary>
+    public List<string> AskAt { get; set; } = [];
 
     public int SellPrice { get; set; }
 
@@ -143,7 +153,17 @@ public sealed class ItemDto
 
     public string? Description { get; set; }
 
+    /// <summary>Units in the warehouses the user sees: the clinic's total for whoever sees them all.</summary>
     public int Stock { get; set; }
+
+    /// <summary>Units in the daily-use warehouse, the ones sales, visits, doses and exam kits can take.</summary>
+    public int DailyUseStock { get; set; }
+
+    /// <summary>Units per warehouse the user sees, the daily-use one first.</summary>
+    public List<WarehouseUnitsDto> Warehouses { get; set; } = [];
+
+    /// <summary>The other warehouses holding some, by name only: where to ask for more.</summary>
+    public List<string> AskAt { get; set; } = [];
 
     public int SellPrice { get; set; }
 

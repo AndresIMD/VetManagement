@@ -1,5 +1,8 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using VetManagement.Api.Authorization;
+using VetManagement.Application.Inventory;
 
 namespace VetManagement.Api.Controllers;
 
@@ -7,6 +10,14 @@ namespace VetManagement.Api.Controllers;
 public abstract class ApiControllerBase : ControllerBase
 {
     protected string GetUserName() => User?.Identity?.Name ?? "System";
+
+    /// <summary>
+    /// The warehouses the user sees: by their roles, or all of them with the permission to manage warehouses. The one place
+    /// that reads role names (a warehouse lists the roles that see it, as clinic data), never to grant a permission.
+    /// </summary>
+    protected StockScope GetStockScope() => new(
+        User.HasClaim(Permissions.CLAIM_TYPE, Permissions.INVENTORY.WAREHOUSES),
+        User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToHashSet(StringComparer.OrdinalIgnoreCase));
 
     /// <summary>Largest page a list endpoint returns, so no request can ask for a whole table at once.</summary>
     public const int MAX_PAGE_SIZE = 200;

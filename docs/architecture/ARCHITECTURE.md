@@ -59,8 +59,9 @@ Rules:
 4. The older modules keep UI view models (form messages, `Drug : Item` polymorphism) with the same JSON
    shape as the DTOs; newer modules bind pages to the Contracts DTOs directly. `WireContractTests` guards
    the view models.
-5. Stock changes only with a movement: `Application/Inventory/Stock.MoveAsync` (sales, visit supplies,
-   doses, exam reports' test kits) or the inventory screens. Never set `Item.Stock` without one.
+5. Stock changes only through `Application/Inventory/Stock`, always with a movement: sales, visit supplies, doses
+   and exam reports' test kits use the daily-use warehouse; the inventory screens a chosen warehouse, or move units
+   between two. Never set `Item.Stock` or a warehouse's units without one ([warehouses](../modules/INVENTORY.md)).
 6. Business policies are per-clinic settings, never constants (see below).
 
 ## Shared mechanisms
@@ -72,7 +73,8 @@ roles `Inventory`, `Laboratory`, `Reception`, `Clinical`, `Cashier` (daily work 
 adds deleting, settings and management data (e.g. inventory metrics) in the user's own areas plus audit and the
 reports dashboard. Email (`system.send-email`, inventory email alerts) is Admin only. A user's permissions are the union
 of their roles (`Permissions.ForRoles`), filtered by the enabled modules. Pages and endpoints always check permissions,
-never role names. The token only identifies the user: each request takes the current roles from the database
+never role names; the one exception is data: a warehouse lists the roles that see it
+([warehouses](../modules/INVENTORY.md)). The token only identifies the user: each request takes the current roles from the database
 (`UserAccess`, cached for a minute), so role changes apply at once and a blocked user's sessions stop; the staff app
 refreshes its token every minute (`api/account/refresh`) so menus follow. Blocking (no-end lockout) is how staff who
 leave lose access: it also takes every role away (the audit entry lists them; unblocking doesn't restore them), and a
@@ -112,9 +114,10 @@ Client secrets (booking tokens, portal links) are random; portal links are store
 | Scheduling: `AvailabilityCalculatorTests`, `SchedulingSettings*Tests`, `AppointmentsApiTests`, `AppointmentNotificationsTests`, `OnlineBookingTests`, `PaymentsSetupTests`, `WebPayPlusGatewayTests`, `RutTests` | agenda, booking, payment or RUT rules regress |
 | Billing: `SaleTests`, `BillingApiTests`, `CashCloseTests`, `VisitChargeTests` | sale, payment, VAT, cash close or visit-charge rules regress |
 | Clinical: `ClinicalApiTests`, `ClinicalStockTests`, `ClientPortalTests` | clinical record, stock from clinical use or portal access rules regress |
+| `WarehousesApiTests` | transfers, the daily-use warehouse as the automatic source, or who sees which warehouse's stock regress |
 | `ExamReportsApiTests` | exam report interpretation, snapshots or clinic images regress |
 | `ReportsApiTests`, `TestDataTests` | report figures or sample-data generators break |
-| SQL Server (opt-in, always in CI): `ConcurrentBookingTests`, `ConcurrentPaymentTests`, `TestDataSqlServerTests` | locks fail under parallel requests, or data doesn't fit the real schema |
+| SQL Server (opt-in, always in CI): `ConcurrentBookingTests`, `ConcurrentPaymentTests`, `TestDataSqlServerTests`, `WarehousesSqlServerTests` | locks fail under parallel requests, data doesn't fit the real schema, or the warehouse queries don't translate |
 
 ## Operations
 

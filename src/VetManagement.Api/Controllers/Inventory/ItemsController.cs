@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VetManagement.Application.Inventory;
 using VetManagement.Application.Services;
 using VetManagement.Contracts.Common;
 using VetManagement.Contracts.Inventory;
@@ -16,13 +17,15 @@ namespace VetManagement.Api.Controllers.Inventory;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Policy = "Inventory.Read")]
-public class ItemsController(ItemService itemService, InventoryQueryService queryService) : ApiControllerBase
+public class ItemsController(ItemService itemService, InventoryQueryService queryService, WarehouseService warehouses) : ApiControllerBase
 {
+    // Stock goes out as the user sees it: never the clinic's total to someone who doesn't see every warehouse.
     [HttpGet]
     public async Task<ActionResult<List<ItemDto>>> GetAllItemsAsync()
     {
         var items = await itemService.GetAllAsync();
-        return Ok(items.Select(MapToDto).ToList());
+        var views = await warehouses.ViewAsync(items, GetStockScope());
+        return Ok(items.Select(i => MapToDto(i, views[i.Id])).ToList());
     }
 
     [HttpGet("{id}")]
@@ -31,7 +34,7 @@ public class ItemsController(ItemService itemService, InventoryQueryService quer
         var item = await itemService.GetByIdAsync(id);
         if (item == null)
             return NotFound();
-        return Ok(MapToDto(item));
+        return Ok(await MapToDtoAsync(item));
     }
 
     [HttpGet("barcode/{barcode}")]
@@ -40,7 +43,7 @@ public class ItemsController(ItemService itemService, InventoryQueryService quer
         var item = await itemService.GetByBarcodeAsync(barcode);
         if (item == null)
             return NotFound();
-        return Ok(MapToDto(item));
+        return Ok(await MapToDtoAsync(item));
     }
 
     [HttpPost]
@@ -53,7 +56,7 @@ public class ItemsController(ItemService itemService, InventoryQueryService quer
         if (!result)
             return BadRequest(Texts.T("Invalid item data."));
 
-        return Ok(MapToDto(item));
+        return Ok(await MapToDtoAsync(item));
     }
 
     [HttpPut("{id}")]
@@ -95,18 +98,24 @@ public class ItemsController(ItemService itemService, InventoryQueryService quer
         [FromQuery] DomainSortDirection sortDirection = DomainSortDirection.Ascending)
     {
         (page, pageSize) = Paging(page, pageSize);
-        var result = await queryService.GetItemsPagedAsync(search, type, page, pageSize, alertFilter, sortBy, sortDirection);
+        var result = await queryService.GetItemsPagedAsync(GetStockScope(), search, type, page, pageSize, alertFilter, sortBy, sortDirection);
         return Ok(result);
     }
 
-    private static ItemDto MapToDto(DomainItem item) => new()
+    private async Task<ItemDto> MapToDtoAsync(DomainItem item)
+        => MapToDto(item, (await warehouses.ViewAsync([item], GetStockScope()))[item.Id]);
+
+    private static ItemDto MapToDto(DomainItem item, StockView stock) => new()
     {
         Id = item.Id,
         Name = item.Name,
         Type = item.Type,
         Brand = item.Brand,
         Description = item.Description,
-        Stock = item.Stock,
+        Stock = stock.Seen,
+        DailyUseStock = stock.InDailyUse,
+        Warehouses = InventoryQueryService.ToDtos(stock),
+        AskAt = [.. stock.AskAt],
         SellPrice = item.SellPrice,
         BuyPrice = item.BuyPrice,
         Barcode = item.Barcode,

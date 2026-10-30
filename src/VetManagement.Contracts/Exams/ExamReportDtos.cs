@@ -97,7 +97,10 @@ public sealed class ExamReportStockDto
 {
     public string ItemName { get; set; } = string.Empty;
     public int Quantity { get; set; }
+    /// <summary>Units in the daily-use warehouse, where the report takes them from.</summary>
     public int? InStock { get; set; }
+    /// <summary>Other warehouses holding some, by name only: where to ask for more.</summary>
+    public List<string> AskAt { get; set; } = [];
     public DateTime? AtUtc { get; set; }
     public string? By { get; set; }
 }

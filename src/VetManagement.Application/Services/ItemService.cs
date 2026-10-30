@@ -48,7 +48,7 @@ public class ItemService(IUnitOfWork unitOfWork, IRealtimeNotificationService? n
 
         if (notificationService is not null)
         {
-            await notificationService.NotifyEntityChangedAsync<Item>(item.Id, "Add", new { item.Name, item.Stock });
+            await notificationService.NotifyEntityChangedAsync<Item>(item.Id, "Add", new { item.Name });
             await notificationService.NotifyCollectionChangedAsync<Item>("Add");
         }
 
@@ -73,7 +73,7 @@ public class ItemService(IUnitOfWork unitOfWork, IRealtimeNotificationService? n
 
         if (notificationService is not null)
         {
-            await notificationService.NotifyEntityChangedAsync<Item>(item.Id, "Update", new { item.Name, item.Stock });
+            await notificationService.NotifyEntityChangedAsync<Item>(item.Id, "Update", new { item.Name });
 
         }
 

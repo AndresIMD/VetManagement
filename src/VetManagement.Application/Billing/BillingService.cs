@@ -332,8 +332,8 @@ public class BillingService(
                     if (line.Description.Length == 0) line.Description = item.Name;
                     line.UnitPrice = request.UnitPrice ?? item.SellPrice;
                     var alreadyInSale = sale.Lines.Where(l => l.ItemId == item.Id && !l.SkipStock).Sum(l => l.Quantity);
-                    if (settings.DeductStockOnSale && alreadyInSale + line.Quantity > item.Stock)
-                        return new BillingResult(BillingStatus.Invalid, Error: Texts.T("Only {0} of '{1}' left in stock.", item.Stock - alreadyInSale, item.Name));
+                    if (settings.DeductStockOnSale && await Stock.ShortageAsync(unitOfWork, item, line.Quantity, alreadyInSale) is { } shortage)
+                        return new BillingResult(BillingStatus.Invalid, Error: shortage);
                     break;
 
                 default:
