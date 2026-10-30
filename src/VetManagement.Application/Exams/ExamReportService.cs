@@ -355,7 +355,8 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
             DirectionArrows = template.Sections.DirectionArrows,
             PreviousResult = template.Sections.PreviousResult,
             LotNumber = template.Sections.LotNumber,
-            CriteriaTable = template.Sections.CriteriaTable
+            CriteriaTable = template.Sections.CriteriaTable,
+            InterpretationAtFoot = template.Sections.InterpretationAtFoot
         };
         report.Criteria = template.Sections.CriteriaTable
             ? new CriteriaTable

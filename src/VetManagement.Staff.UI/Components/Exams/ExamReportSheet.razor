@@ -69,8 +69,11 @@
         .xr-gauge-edge { position: absolute; top: 50%; width: 0; height: 0; transform: translateY(-50%); border-top: .25em solid transparent; border-bottom: .25em solid transparent; }
         .xr-gauge-edge.low { left: 0.3mm; border-right: .36em solid #C62828; }
         .xr-gauge-edge.high { right: 0.3mm; border-left: .36em solid #C62828; }
-        /* Legend, criteria, interpretation, signature and method: they fill the rest of the box, the method at its foot. */
+        /* Legend, interpretation, criteria, signature and method: they fill the rest of the box, the method at its foot. */
         .xr-closing { flex: 1; display: flex; flex-direction: column; }
+        /* At the foot of the page: the space opens under the results instead, and the method follows the block. */
+        .xr-at-foot > .xr-conclusion { margin-top: auto; }
+        .xr-at-foot > .xr-method { margin-top: 4mm; }
         .xr-interpretation { margin-top: 5mm; white-space: pre-line; }
         .xr-interpretation b { margin-right: 2.5mm; }
         .xr-method { align-self: center; margin-top: auto; padding: 1.4mm 6mm; border-radius: 3mm; color: #fff; font-weight: 700; }
@@ -251,44 +254,50 @@
                         }
                         @if (last)
                         {
-                            <div class="xr-closing">
+                            <div class="xr-closing @(Report.Sections.InterpretationAtFoot ? "xr-at-foot" : null)">
                             @if (Legend is { } legend)
                             {
                                 <div class="xr-note">@legend</div>
                             }
-                            @if (Report.Criteria is { Columns.Count: > 0 } criteria)
+                            @if (HasConclusion)
                             {
-                                <div class="xr-criteria">
-                                    @if (!string.IsNullOrWhiteSpace(criteria.Title))
+                                @* The interpretation reads first, then the table behind it and the signature: one block, so it can sit at the foot. *@
+                                <div class="xr-conclusion">
+                                    @if (ShowsInterpretation)
                                     {
-                                        <div class="xr-criteria-title">@criteria.Title</div>
+                                        <div class="xr-interpretation"><b>@L["INTERPRETATION:"]</b> @Report.Interpretation</div>
                                     }
-                                    <table class="@(criteria.Columns.Count > 6 ? "xr-wide" : null)">
-                                        <tr>
-                                            @for (var c = 0; c < criteria.Columns.Count; c++)
+                                    @if (Report.Criteria is { Columns.Count: > 0 } criteria)
+                                    {
+                                        <div class="xr-criteria">
+                                            @if (!string.IsNullOrWhiteSpace(criteria.Title))
                                             {
-                                                @CriteriaCell(criteria, criteria.Columns[c], firstRow: true, c)
+                                                <div class="xr-criteria-title">@criteria.Title</div>
                                             }
-                                        </tr>
-                                        @foreach (var row in criteria.Rows)
-                                        {
-                                            <tr>
-                                                @for (var c = 0; c < row.Count; c++)
+                                            <table class="@(criteria.Columns.Count > 6 ? "xr-wide" : null)">
+                                                <tr>
+                                                    @for (var c = 0; c < criteria.Columns.Count; c++)
+                                                    {
+                                                        @CriteriaCell(criteria, criteria.Columns[c], firstRow: true, c)
+                                                    }
+                                                </tr>
+                                                @foreach (var row in criteria.Rows)
                                                 {
-                                                    @CriteriaCell(criteria, row[c], firstRow: false, c)
+                                                    <tr>
+                                                        @for (var c = 0; c < row.Count; c++)
+                                                        {
+                                                            @CriteriaCell(criteria, row[c], firstRow: false, c)
+                                                        }
+                                                    </tr>
                                                 }
-                                            </tr>
-                                        }
-                                    </table>
+                                            </table>
+                                        </div>
+                                    }
+                                    @if (Report.Sections.ReportedBy)
+                                    {
+                                        <div class="xr-signed">@L["Reported by: {0}", Report.CreatedBy ?? ""]</div>
+                                    }
                                 </div>
-                            }
-                            @if (Report.Sections.Interpretation && !string.IsNullOrWhiteSpace(Report.Interpretation))
-                            {
-                                <div class="xr-interpretation"><b>@L["INTERPRETATION:"]</b> @Report.Interpretation</div>
-                            }
-                            @if (Report.Sections.ReportedBy)
-                            {
-                                <div class="xr-signed">@L["Reported by: {0}", Report.CreatedBy ?? ""]</div>
                             }
                             @if (MethodLine is { } methodLine)
                             {
@@ -686,10 +695,9 @@
         var nextMm = frameMm - (Settings.PatientDataOnLaterPages ? 18 * Settings.PatientFontPt / ExamReportSettings.DefaultFontPt + GAP_MM : 0);
 
         var closingMm = 6.0
-            + (Report.Sections.Interpretation && !string.IsNullOrWhiteSpace(Report.Interpretation)
-                ? 5 + (Report.Interpretation.Split('\n').Sum(l => ResultLines(l, ContentWidth)) + 0.5) * ResultLineMm : 0)
+            + (ShowsInterpretation ? 5 + (Report.Interpretation!.Split('\n').Sum(l => ResultLines(l, ContentWidth)) + 0.5) * ResultLineMm : 0)
             + (Report.Sections.ReportedBy ? 9 : 0)
-            + (MethodLine is null ? 0 : 12)
+            + (MethodLine is null ? 0 : 12 + (Report.Sections.InterpretationAtFoot ? 4 : 0))
             + CriteriaMm();
 
         return (firstMm, nextMm, closingMm);
@@ -713,6 +721,11 @@
         var lines = new[] { ResultLines(line.Name, widths[0]), ResultLines($"{line.Value} *", widths[1]), ResultLines(line.Unit, widths[2]), reference, previous }.Max();
         return lines * ResultLineMm + 3.6;
     }
+
+    private bool ShowsInterpretation => Report.Sections.Interpretation && !string.IsNullOrWhiteSpace(Report.Interpretation);
+
+    /// <summary>The interpretation, the criteria table or the signature: the block that can sit at the foot of the page.</summary>
+    private bool HasConclusion => ShowsInterpretation || Report.Criteria is { Columns.Count: > 0 } || Report.Sections.ReportedBy;
 
     /// <summary>The criteria table: title, header and each row as tall as its fullest cell (smaller print, ~0.85 of a line).</summary>
     private double CriteriaMm()

@@ -182,7 +182,8 @@ public class ExamReportsController(ExamReportService service, ExamReportSettings
             DirectionArrows = view.Report.Sections.DirectionArrows,
             PreviousResult = view.Report.Sections.PreviousResult,
             LotNumber = view.Report.Sections.LotNumber,
-            CriteriaTable = view.Report.Sections.CriteriaTable
+            CriteriaTable = view.Report.Sections.CriteriaTable,
+            InterpretationAtFoot = view.Report.Sections.InterpretationAtFoot
         },
         Results = view.Report.Results.Select(r => new ExamReportResultDto
         {
