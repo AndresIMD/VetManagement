@@ -244,17 +244,11 @@ public class InventoryMovementService(IUnitOfWork unitOfWork, IRealtimeNotificat
     private async Task<Item?> TrackedByBarcodeAsync(string? barcode)
         => await unitOfWork.Items.GetByBarcodeAsync(barcode ?? string.Empty) is { } found ? await unitOfWork.Items.GetByIdAsync(found.Id) : null;
 
-    /// <summary>
-    /// Tells open screens which items' stock changed. Never the new count: it goes to every connected user, and a user
-    /// must not learn what a warehouse they don't see holds. The screens read the stock again.
-    /// </summary>
     private async Task NotifyStockChangedAsync(IReadOnlyCollection<int> itemIds)
     {
-        if (notificationService is null)
-            return;
-        foreach (var itemId in itemIds)
-            await notificationService.NotifyPropertyChangedAsync<Item>(itemId, nameof(Item.Stock), null);
-        await notificationService.NotifyCollectionChangedAsync<InventoryMovement>("Add");
+        await Stock.NotifyChangedAsync(notificationService, itemIds);
+        if (notificationService is not null)
+            await notificationService.NotifyCollectionChangedAsync<InventoryMovement>("Add");
     }
 
     private async Task LogAuditAsync(string entityName, int entityId, AuditActionType action, string changes, string userName)

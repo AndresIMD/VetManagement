@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http.Connections.Client;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace VetManagement.Staff.UI.Services.Realtime;
@@ -8,6 +9,7 @@ public class RealtimeService : IAsyncDisposable
   private HubConnection? _dataHub;
   private readonly string _baseUrl;
   private readonly Func<Task<string?>> _getAccessToken;
+  private readonly Action<HttpConnectionOptions>? _configure;
 
   // Generic events
   public event Action<EntityChangedEventArgs>? OnEntityChanged;
@@ -18,10 +20,12 @@ public class RealtimeService : IAsyncDisposable
       _inventoryHub?.State == HubConnectionState.Connected ||
       _dataHub?.State == HubConnectionState.Connected;
 
-  public RealtimeService(string baseUrl, Func<Task<string?>> getAccessToken)
+  /// <param name="configure">Extra connection options: tests connect through their in-memory server.</param>
+  public RealtimeService(string baseUrl, Func<Task<string?>> getAccessToken, Action<HttpConnectionOptions>? configure = null)
   {
     _baseUrl = baseUrl.TrimEnd('/');
     _getAccessToken = getAccessToken;
+    _configure = configure;
   }
 
   public async Task InitializeAsync()
@@ -33,20 +37,14 @@ public class RealtimeService : IAsyncDisposable
         return;
 
       _inventoryHub = new HubConnectionBuilder()
-          .WithUrl($"{_baseUrl}/hubs/inventory", options =>
-          {
-            options.AccessTokenProvider = async () => await _getAccessToken();
-          })
+          .WithUrl($"{_baseUrl}/hubs/inventory", Configure)
           .WithAutomaticReconnect()
           .Build();
 
       RegisterHubEvents(_inventoryHub);
 
       _dataHub = new HubConnectionBuilder()
-          .WithUrl($"{_baseUrl}/hubs/data", options =>
-          {
-            options.AccessTokenProvider = async () => await _getAccessToken();
-          })
+          .WithUrl($"{_baseUrl}/hubs/data", Configure)
           .WithAutomaticReconnect()
           .Build();
 
@@ -61,31 +59,18 @@ public class RealtimeService : IAsyncDisposable
     }
   }
 
+  private void Configure(HttpConnectionOptions options)
+  {
+    options.AccessTokenProvider = async () => await _getAccessToken();
+    _configure?.Invoke(options);
+  }
+
+  // Typed, so SignalR reads each notice with the same settings the hubs write it with (camelCase names).
   private void RegisterHubEvents(HubConnection hub)
   {
-    hub.On<object>("EntityChanged", payload =>
-    {
-      var json = System.Text.Json.JsonSerializer.Serialize(payload);
-      var eventArgs = System.Text.Json.JsonSerializer.Deserialize<EntityChangedEventArgs>(json);
-      if (eventArgs != null)
-        OnEntityChanged?.Invoke(eventArgs);
-    });
-
-    hub.On<object>("PropertyChanged", payload =>
-    {
-      var json = System.Text.Json.JsonSerializer.Serialize(payload);
-      var eventArgs = System.Text.Json.JsonSerializer.Deserialize<PropertyChangedEventArgs>(json);
-      if (eventArgs != null)
-        OnPropertyChanged?.Invoke(eventArgs);
-    });
-
-    hub.On<object>("CollectionChanged", payload =>
-    {
-      var json = System.Text.Json.JsonSerializer.Serialize(payload);
-      var eventArgs = System.Text.Json.JsonSerializer.Deserialize<CollectionChangedEventArgs>(json);
-      if (eventArgs != null)
-        OnCollectionChanged?.Invoke(eventArgs);
-    });
+    hub.On<EntityChangedEventArgs>("EntityChanged", args => OnEntityChanged?.Invoke(args));
+    hub.On<PropertyChangedEventArgs>("PropertyChanged", args => OnPropertyChanged?.Invoke(args));
+    hub.On<CollectionChangedEventArgs>("CollectionChanged", args => OnCollectionChanged?.Invoke(args));
   }
 
   public async Task DisconnectAsync()

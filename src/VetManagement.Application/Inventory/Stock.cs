@@ -1,4 +1,5 @@
 using VetManagement.Application.Contracts.Persistence;
+using VetManagement.Application.Contracts.Services;
 using VetManagement.Domain.Enums;
 using VetManagement.Domain.Inventory;
 using VetManagement.Domain.Localization;
@@ -121,6 +122,18 @@ public static class Stock
             await AddUnitsAsync(unitOfWork, to.Id, item.Id, quantity);
         await unitOfWork.InventoryMovements.AddAsync(Movement(item, from, quantity, InventoryMovementType.TransferOut, reason, userName, nowUtc));
         await unitOfWork.InventoryMovements.AddAsync(Movement(item, to, quantity, InventoryMovementType.TransferIn, reason, userName, nowUtc));
+    }
+
+    /// <summary>
+    /// Tells open screens which items' stock changed, once it's saved. Never the new count: it goes to every connected user,
+    /// and a user must not learn what a warehouse they don't see holds. The screens read the stock again.
+    /// </summary>
+    public static async Task NotifyChangedAsync(IRealtimeNotificationService? notifications, IEnumerable<int> itemIds)
+    {
+        if (notifications is null)
+            return;
+        foreach (var itemId in itemIds)
+            await notifications.NotifyPropertyChangedAsync<Item>(itemId, nameof(Item.Stock), null);
     }
 
     private static InventoryMovement Movement(Item item, Warehouse warehouse, int quantity, InventoryMovementType type,

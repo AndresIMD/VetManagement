@@ -250,16 +250,11 @@
         return new TableData<InventoryItemDTO> { TotalItems = 0, Items = [] };
     }
 
+    // Notices reach every connected user, whoever made the change included, so the list just stays current.
     private void HandleEntityChanged(EntityChangedEventArgs args)
     {
         if (args.EntityType == nameof(Item))
-        {
-            _ = InvokeAsync(() =>
-            {
-                Snackbar.Add(L["Items were changed by another user"], Severity.Info);
-                _table?.ReloadServerData();
-            });
-        }
+            ReloadSoon();
     }
 
     // The notice names the item, never the new count (it reaches every user): the page reads the stock it may see again.
@@ -271,7 +266,7 @@
 
     private CancellationTokenSource? _reloadSoon;
 
-    /// <summary>One reload after a burst of notices: a bulk move sends one per item.</summary>
+    /// <summary>One reload after a burst of notices: a bulk move sends one per item, a new item two.</summary>
     private void ReloadSoon()
     {
         _reloadSoon?.Cancel();
@@ -294,15 +289,7 @@
     private void HandleCollectionChanged(CollectionChangedEventArgs args)
     {
         if (args.EntityType == nameof(Item))
-        {
-            _ = InvokeAsync(async () =>
-            {
-                if (_table is not null)
-                {
-                    await _table.ReloadServerData();
-                }
-            });
-        }
+            ReloadSoon();
     }
 
     private void ClearFilters()

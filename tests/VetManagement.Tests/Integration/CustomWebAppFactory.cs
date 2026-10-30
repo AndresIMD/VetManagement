@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Http.Connections;
 using System.Text;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -12,6 +13,7 @@ using Microsoft.IdentityModel.Tokens;
 using VetManagement.Api.Authorization;
 using VetManagement.Application.Contracts.Services;
 using VetManagement.Infrastructure.Data;
+using VetManagement.Staff.UI.Services.Realtime;
 
 namespace VetManagement.Tests.Integration;
 
@@ -33,11 +35,25 @@ public class CustomWebAppFactory : WebApplicationFactory<Program>
     /// <summary>Client whose token, signed with the API's key, carries exactly these claims.</summary>
     public HttpClient CreateClientWithClaims(IEnumerable<Claim> claims)
     {
-        var token = new JwtSecurityToken(JwtIssuer, JwtIssuer, claims, expires: DateTime.UtcNow.AddMinutes(10),
-            signingCredentials: new SigningCredentials(new SymmetricSecurityKey(Encoding.ASCII.GetBytes(JwtKey)), SecurityAlgorithms.HmacSha256));
         var client = CreateClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", new JwtSecurityTokenHandler().WriteToken(token));
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CreateToken(claims));
         return client;
+    }
+
+    /// <summary>A token signed with the API's key that carries exactly these claims.</summary>
+    public string CreateToken(IEnumerable<Claim> claims)
+        => new JwtSecurityTokenHandler().WriteToken(new JwtSecurityToken(JwtIssuer, JwtIssuer, claims, expires: DateTime.UtcNow.AddMinutes(10),
+            signingCredentials: new SigningCredentials(new SymmetricSecurityKey(Encoding.ASCII.GetBytes(JwtKey)), SecurityAlgorithms.HmacSha256)));
+
+    /// <summary>The staff app's realtime client, connected to this API's hubs through the in-memory server (call InitializeAsync).</summary>
+    public RealtimeService CreateRealtimeClient()
+    {
+        var token = CreateToken([new Claim(ClaimTypes.Name, "open-screen")]);
+        return new RealtimeService(Server.BaseAddress.ToString(), () => Task.FromResult<string?>(token), options =>
+        {
+            options.HttpMessageHandlerFactory = _ => Server.CreateHandler();
+            options.Transports = HttpTransportType.LongPolling;
+        });
     }
 
     /// <summary>Database used by the API under test: in-memory by default (fast, no server needed).</summary>
