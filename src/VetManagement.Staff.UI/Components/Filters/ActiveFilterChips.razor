@@ -5,7 +5,7 @@
         {
             <MudChip T="string"
                      Color="@chip.Color"
-                     OnClose="@((MudChip<string> _) => chip.OnClear?.Invoke())">
+                     OnClose="@((MudChip<string> _) => ClearAsync(chip))">
                 @chip.Label
             </MudChip>
         }
@@ -14,4 +14,16 @@
 
 @code {
     [Parameter] public IEnumerable<FilterChipModel> Chips { get; set; } = Enumerable.Empty<FilterChipModel>();
+
+    /// <summary>
+    /// Runs after a chip clears its filter. The chips, the filter fields and the list are the page's, so the page passes its
+    /// StateHasChanged here: a handler in this component only redraws this component.
+    /// </summary>
+    [Parameter, EditorRequired] public EventCallback Changed { get; set; }
+
+    private Task ClearAsync(FilterChipModel chip)
+    {
+        chip.OnClear?.Invoke();
+        return Changed.InvokeAsync();
+    }
 }

@@ -31,7 +31,13 @@ public enum InventoryMovementType
     [DisplayString("Massive Stock Ingress")]
     MassiveStockIngress,
     [DisplayString("Massive Stock Egress")]
-    MassiveStockEgress
+    MassiveStockEgress,
+    /// <summary>Units leaving a warehouse for another; the clinic's total doesn't change.</summary>
+    [DisplayString("Transfer out")]
+    TransferOut,
+    /// <summary>Units arriving from another warehouse.</summary>
+    [DisplayString("Transfer in")]
+    TransferIn
 }
 
 /// <summary>

@@ -14,8 +14,9 @@ as a timeline and the preventive care below.
 
 Each visit lists the drugs and materials used (`VisitSupply`: inventory item, quantity). With
 `DeductStockOnUse` (default on) they leave stock with a movement "Visit #id"; removing a supply, or
-deleting the visit, puts the quantity back ("... removed" / "... deleted" movements). A quantity above
-the current stock is rejected. The item name is copied, so the record stays readable if the item changes.
+deleting the visit, puts the quantity back ("... removed" / "... deleted" movements). Supplies and doses use the
+daily-use warehouse ([warehouses](INVENTORY.md)): a quantity above its units is rejected, naming the warehouses to ask.
+The item name is copied, so the record stays readable if the item changes.
 
 A dose can also name the inventory product applied: one unit leaves stock, and deleting the dose returns it.
 

@@ -1,0 +1,50 @@
+@using VetManagement.Contracts.Inventory
+@using VetManagement.Staff.UI.Helpers
+@* An item's stock as the user sees it. With more than one warehouse, a button shows the units of each (on hover, or a
+   tap or click, which focus it). At zero it says where to ask, by name only, or that no warehouse has any. *@
+<span class="d-inline-flex align-center flex-wrap" style="gap:4px">
+    <MudText Typo="Typo.body2" Class="@InventoryUiHelpers.GetStockCss(Stock, LowStockThreshold)">@Stock</MudText>
+    @if (Warehouses.Count > 1)
+    {
+        @* Hover or focus (a tap focuses the button): a click that toggled it would close what the hover just opened. *@
+        <MudTooltip Arrow="true" Placement="Placement.Top" ShowOnHover="true" ShowOnFocus="true" Inline="true">
+            <ChildContent>
+                <MudIconButton Icon="@Icons.Material.Outlined.Warehouse" Size="Size.Small" Class="pa-0" Style="opacity:.75"
+                               aria-label="@L["Stock per warehouse"]" />
+            </ChildContent>
+            <TooltipContent>
+                <table style="border-collapse:collapse;text-align:left">
+                    @foreach (var warehouse in Warehouses)
+                    {
+                        <tr>
+                            <td style="padding:1px 12px 1px 0">@warehouse.Name</td>
+                            <td style="padding:1px 0;text-align:right">@warehouse.Quantity</td>
+                        </tr>
+                    }
+                    <tr style="border-top:1px solid currentColor">
+                        <td style="padding:2px 12px 1px 0"><b>@L["Total"]</b></td>
+                        <td style="padding:2px 0 1px;text-align:right"><b>@Stock</b></td>
+                    </tr>
+                </table>
+            </TooltipContent>
+        </MudTooltip>
+    }
+    @if (Stock <= 0)
+    {
+        @if (AskAt.Count > 0)
+        {
+            <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined" Class="ma-0">@L["Ask {0}", string.Join(", ", AskAt)]</MudChip>
+        }
+        else
+        {
+            <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Outlined" Class="ma-0">@L["Sold out"]</MudChip>
+        }
+    }
+</span>
+
+@code {
+    [Parameter] public int Stock { get; set; }
+    [Parameter] public int LowStockThreshold { get; set; }
+    [Parameter] public List<WarehouseUnitsDto> Warehouses { get; set; } = [];
+    [Parameter] public List<string> AskAt { get; set; } = [];
+}

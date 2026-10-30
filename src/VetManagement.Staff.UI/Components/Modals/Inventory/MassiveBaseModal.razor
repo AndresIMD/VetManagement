@@ -1,5 +1,6 @@
 ﻿@using VetManagement.Staff.UI.Components.Modals.Base
 @using VetManagement.Staff.UI.Services.Api
+@using VetManagement.Contracts.Inventory
 @using VetManagement.Staff.UI.Helpers
 @using VetManagement.Domain.Enums
 @typeparam TItem
@@ -16,9 +17,37 @@
             OnPrimaryClick="Confirm"
             OnCancelClick="OnCancelRequested">
     <MudStack Spacing="2">
+        @if (ChoosesWarehouse)
+        {
+            @* Chosen first, and fixed once items are listed: their units are the chosen warehouse's. *@
+            <MudGrid>
+                <MudItem xs="12" md="@(IsTransfer ? 6 : 12)">
+                    <MudSelect T="int?" @bind-Value="warehouseId" Label="@(IsTransfer ? L["From warehouse"] : L["Warehouse"])"
+                               Variant="Variant.Outlined" Disabled="@(items.Count > 0)" Required="true"
+                               HelperText="@(items.Count > 0 ? L["Remove the items to change it."].Value : null)">
+                        @foreach (var warehouse in Warehouses)
+                        {
+                            <MudSelectItem T="int?" Value="@warehouse.Id">@warehouse.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                @if (IsTransfer)
+                {
+                    <MudItem xs="12" md="6">
+                        <MudSelect T="int?" @bind-Value="toWarehouseId" Label="@L["To warehouse"]" Variant="Variant.Outlined" Required="true">
+                            @foreach (var warehouse in Warehouses.Where(w => w.Id != warehouseId))
+                            {
+                                <MudSelectItem T="int?" Value="@warehouse.Id">@warehouse.Name</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                }
+            </MudGrid>
+        }
         <MudGrid>
             <MudItem xs="12" md="6">
                 <MudTextField @ref="barcodeInput"
+                              Disabled="@WaitsForWarehouse"
                               Label="@BarcodeLabel"
                               @bind-Value="currentBarcode"
                               Immediate="true"
@@ -31,6 +60,7 @@
             <MudItem xs="12" md="6">
                 <MudTextDropdownField T="Item"
                                       @ref="itemAutocomplete"
+                                      Disabled="@WaitsForWarehouse"
                                       @bind-SelectedItem="selectedItem"
                                       Label="@L["Search item by name or compound"]"
                                       SearchFunc="SearchItemsNormalizedAsync"
@@ -152,9 +182,43 @@
     [Parameter] public string BarcodeLabel { get; set; } = Strings.T("Scan the barcode here");
     [Parameter] public string ConfirmButtonText { get; set; } = Strings.T("Confirm");
 
+    /// <summary>The warehouses the user may move stock in (not archived). With more than one, the user picks one, never a default.</summary>
+    [Parameter] public List<WarehouseDto> Warehouses { get; set; } = [];
+
+    /// <summary>Units go from one warehouse to another: a destination is chosen too.</summary>
+    protected virtual bool IsTransfer => false;
+
+    protected bool ChoosesWarehouse => Warehouses.Count > 1;
+    protected bool WaitsForWarehouse => ChoosesWarehouse && warehouseId is null;
+
+    /// <summary>The warehouse the units come from, or go into; the only one when the user sees a single warehouse.</summary>
+    protected int? warehouseId;
+    protected int? toWarehouseId;
+
+    /// <summary>Items added, by id, for their units per warehouse.</summary>
+    protected readonly Dictionary<int, Item> knownItems = [];
+
+    /// <summary>Units of an item in the chosen warehouse; null while it's unknown.</summary>
+    protected int? UnitsInChosen(int itemId)
+    {
+        if (!knownItems.TryGetValue(itemId, out var item))
+            return null;
+        if (!ChoosesWarehouse)
+            return item.Stock;
+        return warehouseId is int id ? item.Warehouses.FirstOrDefault(w => w.WarehouseId == id)?.Quantity ?? 0 : null;
+    }
+
+    protected void Remember(Item? item)
+    {
+        if (item is not null)
+            knownItems[item.Id] = item;
+    }
+
     protected override void OnInitialized()
     {
         base.OnInitialized();
+        if (!ChoosesWarehouse)
+            warehouseId = Warehouses.FirstOrDefault()?.Id;
         _initialSnapshot = JsonSerializer.Serialize(items);
     }
 
@@ -275,8 +339,13 @@
             );
             return;
         }
+        if (ChoosesWarehouse && (warehouseId is null || (IsTransfer && (toWarehouseId is null || toWarehouseId == warehouseId))))
+        {
+            errorMessage = IsTransfer ? L["Choose the two warehouses."] : L["Choose the warehouse."];
+            return;
+        }
         items = filtered;
-        MudDialog.Close(DialogResult.Ok(items));
+        MudDialog.Close(DialogResult.Ok(new MassiveSelection<TItem>(items, warehouseId, toWarehouseId)));
     }
 
     protected async Task OnCancelRequested()

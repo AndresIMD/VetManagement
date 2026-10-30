@@ -16,11 +16,12 @@ One document per business module: rules, per-clinic settings, permissions and kn
 | Agenda and online booking | [`modules/SCHEDULING.md`](modules/SCHEDULING.md) |
 | Billing (caja), VAT, "Charge visit", cash close | [`modules/BILLING.md`](modules/BILLING.md) |
 | Clinical record, vaccines, supplies used in visits | [`modules/CLINICAL.md`](modules/CLINICAL.md) |
+| Inventory warehouses: daily-use stock, transfers, who sees each warehouse | [`modules/INVENTORY.md`](modules/INVENTORY.md) |
 | Reports dashboard | [`modules/REPORTS.md`](modules/REPORTS.md) |
 | Exam reports (printable lab results, templates, branding) | [`modules/EXAM_REPORTS.md`](modules/EXAM_REPORTS.md) |
 | Client portal "Mis mascotas" | [`modules/CLIENT_PORTAL.md`](modules/CLIENT_PORTAL.md) |
 
-Inventory, clients/pets, exams and users follow the general module pattern in `ARCHITECTURE.md`; they have no
+Inventory items, clients/pets, exams and users follow the general module pattern in `ARCHITECTURE.md`; they have no
 separate document.
 
 ## Guides (for clinic staff and testers)

@@ -135,9 +135,10 @@ public class ClinicalService(
         {
             if (item is not null && settings.DeductStockOnUse)
             {
-                var stock = (await unitOfWork.Items.GetByIdAsync(item.Id))?.Stock ?? 0;
-                if (stock < 1)
-                    return new ClinicalResult(ClinicalStatus.Invalid, Error: $"'{item.Name}' is out of stock.");
+                if (await unitOfWork.Items.GetByIdAsync(item.Id) is not { } current)
+                    return new ClinicalResult(ClinicalStatus.Invalid, Error: Texts.T("The inventory item doesn't exist."));
+                if (await Stock.ShortageAsync(unitOfWork, current, 1) is { } shortage)
+                    return new ClinicalResult(ClinicalStatus.Invalid, Error: shortage);
                 await Stock.MoveAsync(unitOfWork, item.Id, 1, InventoryMovementType.Egress, Texts.T("Dose for pet #{0}", petId), userName, dose.CreatedAtUtc);
                 dose.StockDeducted = true;
             }
@@ -190,8 +191,8 @@ public class ClinicalService(
             var item = await unitOfWork.Items.GetByIdAsNoTrackingAsync(itemId);
             if (item is null)
                 return new ClinicalResult(ClinicalStatus.Invalid, Error: Texts.T("The inventory item doesn't exist."));
-            if (settings.DeductStockOnUse && quantity > item.Stock)
-                return new ClinicalResult(ClinicalStatus.Invalid, Error: Texts.T("Only {0} of '{1}' left in stock.", item.Stock, item.Name));
+            if (settings.DeductStockOnUse && await Stock.ShortageAsync(unitOfWork, item, quantity) is { } shortage)
+                return new ClinicalResult(ClinicalStatus.Invalid, Error: shortage);
 
             var supply = new VisitSupply
             {

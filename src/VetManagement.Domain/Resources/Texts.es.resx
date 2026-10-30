@@ -265,4 +265,19 @@
   <data name="Exam report #{0} – {1} (returned)" xml:space="preserve"><value>Informe #{0} – {1} (devuelto)</value></data>
   <data name="Exam report #{0} – {1} (deleted)" xml:space="preserve"><value>Informe #{0} – {1} (eliminado)</value></data>
   <data name="This report can't be updated automatically; correct it instead." xml:space="preserve"><value>Este informe no se puede actualizar automáticamente; corrígelo a mano.</value></data>
+  <data name="Daily-use warehouse" xml:space="preserve"><value>Bodega de uso diario</value></data>
+  <data name="'{0}' is out of stock." xml:space="preserve"><value>'{0}' está agotado.</value></data>
+  <data name="'{0}' is out of stock in {1}; ask {2}." xml:space="preserve"><value>'{0}' está agotado en {1}; pídelo a {2}.</value></data>
+  <data name="Only {0} of '{1}' left in {2}; ask {3} for more." xml:space="preserve"><value>Solo quedan {0} de '{1}' en {2}; pide más a {3}.</value></data>
+  <data name="Only {0} of '{1}' in {2}." xml:space="preserve"><value>Solo hay {0} de '{1}' en {2}.</value></data>
+  <data name="Unknown warehouse." xml:space="preserve"><value>Bodega desconocida.</value></data>
+  <data name="Pick two different warehouses." xml:space="preserve"><value>Elige dos bodegas distintas.</value></data>
+  <data name="The daily-use warehouse can't be archived." xml:space="preserve"><value>La bodega de uso diario no se puede archivar.</value></data>
+  <data name="The daily-use warehouse can't be deleted." xml:space="preserve"><value>La bodega de uso diario no se puede eliminar.</value></data>
+  <data name="'{0}' still holds stock; transfer it out first." xml:space="preserve"><value>'{0}' todavía tiene stock; traspásalo primero a otra bodega.</value></data>
+  <data name="'{0}' has movements; archive it instead." xml:space="preserve"><value>'{0}' tiene movimientos; archívala en vez de eliminarla.</value></data>
+  <data name="Enter the warehouse name." xml:space="preserve"><value>Escribe el nombre de la bodega.</value></data>
+  <data name="The name can have up to {0} characters." xml:space="preserve"><value>El nombre puede tener hasta {0} caracteres.</value></data>
+  <data name="There is already a warehouse named '{0}'." xml:space="preserve"><value>Ya existe una bodega llamada '{0}'.</value></data>
+  <data name="Unknown role '{0}'." xml:space="preserve"><value>Rol desconocido: '{0}'.</value></data>
 </root>

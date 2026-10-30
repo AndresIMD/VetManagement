@@ -83,8 +83,9 @@ public class ItemsApiService(HttpClient httpClient)
             $"page={page}",
             $"pageSize={pageSize}"
         };
-        if (!string.IsNullOrWhiteSpace(alert))
-            query.Add($"alert={Uri.EscapeDataString(alert)}");
+        // The pages' alert codes ("low", "zero") are the API's stock filters.
+        if (alert switch { "low" => DomainStockAlertFilter.LowStock, "zero" => DomainStockAlertFilter.OutOfStock, _ => (DomainStockAlertFilter?)null } is { } alertFilter)
+            query.Add($"alertFilter={alertFilter}");
         if (sortBy.HasValue)
             query.Add($"sortBy={sortBy.Value}");
         if (sortDirection != SortDirection.Ascending)
@@ -167,6 +168,15 @@ public class ItemsApiService(HttpClient httpClient)
 
     private static Item MapToShared(ItemDto item)
     {
+        var shared = MapToSharedItem(item);
+        shared.DailyUseStock = item.DailyUseStock;
+        shared.Warehouses = item.Warehouses;
+        shared.AskAt = item.AskAt;
+        return shared;
+    }
+
+    private static Item MapToSharedItem(ItemDto item)
+    {
         if (item.Type == DomainItemType.Drug)
         {
             return new Drug(
@@ -212,6 +222,9 @@ public class ItemsApiService(HttpClient httpClient)
         Compound = item.Compound,
         Type = (ItemType)item.Type,
         Stock = item.Stock,
+        DailyUseStock = item.DailyUseStock,
+        Warehouses = item.Warehouses,
+        AskAt = item.AskAt,
         SellPrice = item.SellPrice,
         Barcode = item.Barcode,
         BrandBarcode = item.BrandBarcode,

@@ -31,29 +31,34 @@ public class InventoryMovementApiService(HttpClient http)
         return movements?.Select(MapToShared).ToList() ?? [];
     }
 
-    public async Task AdjustStockAsync(int itemId, int amount, string reason)
-    {
-        var payload = new
+    /// <summary>Adds or takes units in a warehouse (the daily-use one when none is given).</summary>
+    public async Task<ApiResult> AdjustStockAsync(int itemId, int amount, string? reason, int? warehouseId = null)
+        => await ApiResult.FromResponseAsync(await http.PostAsJsonAsync(ApiRouteConstants.INVENTORY_ADJUST_STOCK,
+            new AdjustStockRequest { ItemId = itemId, Amount = amount, Reason = reason, WarehouseId = warehouseId }));
+
+    public async Task<ApiResult> MassiveEntryAsync(List<InventoryMassUpdateDTO> items, int? warehouseId = null)
+        => await ApiResult.FromResponseAsync(await http.PostAsJsonAsync(InWarehouse(ApiRouteConstants.INVENTORY_MASS_INGRESS, warehouseId),
+            items.Select(MapToContract).ToList()));
+
+    public async Task<ApiResult> MassiveExitAsync(List<InventoryMassUpdateDTO> items, int? warehouseId = null)
+        => await ApiResult.FromResponseAsync(await http.PostAsJsonAsync(InWarehouse(ApiRouteConstants.INVENTORY_MASS_EGRESS, warehouseId),
+            items.Select(MapToContract).ToList()));
+
+    /// <summary>Moves units of an item between two warehouses; refused when the first doesn't hold them.</summary>
+    public async Task<ApiResult> TransferAsync(int itemId, int fromWarehouseId, int toWarehouseId, int quantity, string? reason)
+        => await ApiResult.FromResponseAsync(await http.PostAsJsonAsync(ApiRouteConstants.INVENTORY_TRANSFER, new TransferStockRequest
         {
-            ItemId = itemId,
-            Amount = amount,
-            Reason = reason,
-        };
-        var response = await http.PostAsJsonAsync(ApiRouteConstants.INVENTORY_ADJUST_STOCK, payload);
-        response.EnsureSuccessStatusCode();
-    }
+            ItemId = itemId, FromWarehouseId = fromWarehouseId, ToWarehouseId = toWarehouseId, Quantity = quantity, Reason = reason
+        }));
 
-    public async Task MassiveEntryAsync(List<InventoryMassUpdateDTO> items)
-    {
-        var response = await http.PostAsJsonAsync(ApiRouteConstants.INVENTORY_MASS_INGRESS, items.Select(MapToContract).ToList());
-        response.EnsureSuccessStatusCode();
-    }
+    /// <summary>Moves several items between two warehouses; each moves at most what the first one holds.</summary>
+    public async Task<ApiResult> MassTransferAsync(List<InventoryMassUpdateDTO> items, int fromWarehouseId, int toWarehouseId)
+        => await ApiResult.FromResponseAsync(await http.PostAsJsonAsync(ApiRouteConstants.INVENTORY_MASS_TRANSFER, new MassTransferRequest
+        {
+            FromWarehouseId = fromWarehouseId, ToWarehouseId = toWarehouseId, Items = [.. items.Select(MapToContract)]
+        }));
 
-    public async Task MassiveExitAsync(List<InventoryMassUpdateDTO> items)
-    {
-        var response = await http.PostAsJsonAsync(ApiRouteConstants.INVENTORY_MASS_EGRESS, items.Select(MapToContract).ToList());
-        response.EnsureSuccessStatusCode();
-    }
+    private static string InWarehouse(string route, int? warehouseId) => warehouseId is int id ? $"{route}?warehouseId={id}" : route;
 
     private static InventoryMovement MapToShared(MovementDto movement) => new()
     {
@@ -68,7 +73,9 @@ public class InventoryMovementApiService(HttpClient http)
         Quantity = movement.Quantity,
         Date = movement.Date,
         Responsible = movement.Responsible,
-        Reason = movement.Reason
+        Reason = movement.Reason,
+        WarehouseId = movement.WarehouseId,
+        WarehouseName = movement.WarehouseName
     };
 
     private static MassStockUpdateRequest MapToContract(InventoryMassUpdateDTO item) => new()

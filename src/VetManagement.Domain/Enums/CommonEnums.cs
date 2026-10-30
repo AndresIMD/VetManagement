@@ -56,6 +56,9 @@ public enum AuditActionType
     MassiveStockIngress = 103,
     [DisplayString("Massive Stock Egress")]
     MassiveStockEgress = 104,
+    // "Transfer" alone is the bank transfer payment method in the staff texts.
+    [DisplayString("Stock transfer")]
+    Transfer = 105,
 
     [DisplayString("User Login")]
     UserLogin = 200,

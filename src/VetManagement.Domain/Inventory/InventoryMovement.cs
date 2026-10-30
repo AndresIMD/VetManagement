@@ -14,6 +14,9 @@ public class InventoryMovement
 
     public Item Item { get; set; } = null!;
 
+    /// <summary>The warehouse whose stock moved; null for the daily-use warehouse (every movement before warehouses existed).</summary>
+    public int? WarehouseId { get; set; }
+
     public string Responsible { get; set; } = "System";
 
     public DateTime Date { get; set; } = DateTime.UtcNow;

@@ -27,8 +27,8 @@ Staff web → Billing → Settings. Never change a method's `Code` once used (pa
 
 `Open` → `Paid` (balance reaches 0) or `Voided` (with a reason, `billing.manage` only).
 
-- Lines: `Service` (agenda catalog name/price), `Product` (inventory item; cannot exceed stock when
-  `DeductStockOnSale`), `Other` (free text + price). Empty price = catalog price. Discount in pesos per line.
+- Lines: `Service` (agenda catalog name/price), `Product` (inventory item; cannot exceed the daily-use warehouse's
+  units when `DeductStockOnSale`, [warehouses](INVENTORY.md)), `Other` (free text + price). Empty price = catalog price. Discount in pesos per line.
 - Payments: any enabled method, never above the balance; split payments allowed.
 - From an appointment (Agenda → Charge): one live sale per appointment; it starts with the service at the
   booked price and the online deposit as a payment (`OnlineDeposit`), so only the balance is charged.

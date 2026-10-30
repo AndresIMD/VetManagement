@@ -12,6 +12,11 @@ public static class InventoryMovementTypeExtensions
         InventoryMovementType.Adjustment => AuditActionType.Adjustment,
         InventoryMovementType.MassiveStockIngress => AuditActionType.MassiveStockIngress,
         InventoryMovementType.MassiveStockEgress => AuditActionType.MassiveStockEgress,
+        InventoryMovementType.TransferOut or InventoryMovementType.TransferIn => AuditActionType.Transfer,
         _ => AuditActionType.None
     };
+
+    /// <summary>A move between warehouses: the clinic's stock neither grows nor shrinks.</summary>
+    public static bool IsTransfer(this InventoryMovementType movementType)
+        => movementType is InventoryMovementType.TransferOut or InventoryMovementType.TransferIn;
 }

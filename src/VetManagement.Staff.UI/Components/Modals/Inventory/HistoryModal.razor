@@ -22,6 +22,10 @@
                 <HeaderContent>
                     <MudTh>@L["Date"]</MudTh>
                     <MudTh>@L["Type"]</MudTh>
+                    @if (ShowsWarehouse)
+                    {
+                        <MudTh>@L["Warehouse"]</MudTh>
+                    }
                     <MudTh>@L["Quantity"]</MudTh>
                     <MudTh>@L["Reason"]</MudTh>
                     <MudTh>@L["Responsible"]</MudTh>
@@ -29,6 +33,10 @@
                 <RowTemplate>
                     <MudTd DataLabel="@L["Date"]">@context.Date.ToString("dd/MM/yyyy")</MudTd>
                     <MudTd DataLabel="@L["Type"]">@context.Type.ToText()</MudTd>
+                    @if (ShowsWarehouse)
+                    {
+                        <MudTd DataLabel="@L["Warehouse"]">@context.WarehouseName</MudTd>
+                    }
                     <MudTd DataLabel="@L["Quantity"]">@context.Quantity</MudTd>
                     <MudTd DataLabel="@L["Reason"]">@context.Reason</MudTd>
                     <MudTd DataLabel="@L["Responsible"]">@context.Responsible</MudTd>
@@ -46,6 +54,9 @@
 
     private List<InventoryMovement> Movements { get; set; } = new();
     private bool IsLoading { get; set; } = true;
+
+    // Only the movements of warehouses the user sees come; one warehouse needs no column.
+    private bool ShowsWarehouse => Movements.Select(m => m.WarehouseId).Distinct().Count() > 1;
 
     private RenderFragment Footer => __builder =>
     {

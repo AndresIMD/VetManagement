@@ -19,7 +19,8 @@ public static class AuditActionHelper
         AuditActionType.Egress,
         AuditActionType.Adjustment,
         AuditActionType.MassiveStockIngress,
-        AuditActionType.MassiveStockEgress
+        AuditActionType.MassiveStockEgress,
+        AuditActionType.Transfer
     ];
 
     /// <summary>

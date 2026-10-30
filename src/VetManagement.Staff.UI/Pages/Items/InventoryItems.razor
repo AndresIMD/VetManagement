@@ -3,7 +3,9 @@
 @using VetManagement.Staff.UI.Models.Core
 @using VetManagement.Staff.UI.Services.Api
 @using VetManagement.Staff.UI.Services.Realtime
+@using VetManagement.Contracts.Inventory
 @inject IDialogService DialogService
+@inject WarehousesApiService WarehousesApi
 @inject ItemsApiService ItemsService
 @inject InventoryMovementApiService InventoryMovementService
 @inject ISnackbar Snackbar
@@ -36,7 +38,7 @@
                     OnClick="ClearFilters">@L["Clear filter"]</MudButton>
             </MudItem>
             <MudItem xs="12" Class="d-flex align-center">
-                <ActiveFilterChips Chips="@BuildActiveChips()" />
+                <ActiveFilterChips Chips="@BuildActiveChips()" Changed="StateHasChanged" />
             </MudItem>
         </MudGrid>
     </MudPaper>
@@ -52,14 +54,29 @@
                         <MudIconButton Icon="@Icons.Material.Filled.AddBox" Color="Color.Success"
                             Variant="Variant.Filled" Size="Size.Medium" OnClick="ShowCreateModal" />
                     </MudTooltip>
-                    <MudTooltip Text="@L["Mass ingress"]">
-                        <MudIconButton Icon="@Icons.Material.Filled.Upload" Color="Color.Success"
-                            Variant="Variant.Filled" Size="Size.Medium" OnClick="ShowMassIngressModal" />
-                    </MudTooltip>
-                    <MudTooltip Text="@L["Mass egress"]">
-                        <MudIconButton Icon="@Icons.Material.Filled.Download" Color="Color.Error"
-                            Variant="Variant.Filled" Size="Size.Medium" OnClick="ShowMassEgressModal" />
-                    </MudTooltip>
+                    <AuthorizeView Policy="Inventory.Update">
+                        <MudTooltip Text="@L["Mass ingress"]">
+                            <MudIconButton Icon="@Icons.Material.Filled.Upload" Color="Color.Success"
+                                Variant="Variant.Filled" Size="Size.Medium" OnClick="ShowMassIngressModal" />
+                        </MudTooltip>
+                        <MudTooltip Text="@L["Mass egress"]">
+                            <MudIconButton Icon="@Icons.Material.Filled.Download" Color="Color.Error"
+                                Variant="Variant.Filled" Size="Size.Medium" OnClick="ShowMassEgressModal" />
+                        </MudTooltip>
+                        @if (_warehouses.Count > 1)
+                        {
+                            <MudTooltip Text="@L["Transfer between warehouses"]">
+                                <MudIconButton Icon="@Icons.Material.Filled.SwapHoriz" Color="Color.Primary"
+                                    Variant="Variant.Filled" Size="Size.Medium" OnClick="ShowMassTransferModal" />
+                            </MudTooltip>
+                        }
+                    </AuthorizeView>
+                    <AuthorizeView Policy="Inventory.Warehouses">
+                        <MudTooltip Text="@L["Warehouses"]">
+                            <MudIconButton Icon="@Icons.Material.Filled.Warehouse" Color="Color.Default"
+                                Variant="Variant.Outlined" Size="Size.Medium" Href="inventory/warehouses" />
+                        </MudTooltip>
+                    </AuthorizeView>
                 </MudStack>
             </MudItem>
         </ActionButtons>
@@ -85,9 +102,7 @@
             <MudTd DataLabel="@L["Brand"]">@(!string.IsNullOrWhiteSpace(item.Brand) ? item.Brand : "-")</MudTd>
             <MudTd DataLabel="@L["Category"]">@item.Type.ToText()</MudTd>
             <MudTd DataLabel="@L["Stock"]">
-                <MudText Class="@InventoryUiHelpers.GetStockCss(item.Stock, item.LowStockThreshold)">
-                    @item.Stock
-                </MudText>
+                <StockByWarehouse Stock="item.Stock" LowStockThreshold="item.LowStockThreshold" Warehouses="item.Warehouses" AskAt="item.AskAt" />
             </MudTd>
             <MudTd DataLabel="@L["Actions"]" Class="text-end">
                 <MudStack Row="true" Spacing="1" Justify="Justify.FlexEnd">
@@ -95,10 +110,19 @@
                         <MudIconButton Icon="@Icons.Material.Filled.History" Variant="Variant.Filled" Color="Color.Info"
                             Size="Size.Small" OnClick="@(() => ShowHistoryModal(item))" />
                     </MudTooltip>
-                    <MudTooltip Text="@L["Adjust stock"]">
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Variant="Variant.Filled"
-                            Color="Color.Secondary" Size="Size.Small" OnClick="@(() => ShowAdjustStockModal(item))" />
-                    </MudTooltip>
+                    <AuthorizeView Policy="Inventory.Update" Context="auth">
+                        <MudTooltip Text="@L["Adjust stock"]">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Variant="Variant.Filled"
+                                Color="Color.Secondary" Size="Size.Small" OnClick="@(() => ShowAdjustStockModal(item))" />
+                        </MudTooltip>
+                        @if (_warehouses.Count > 1)
+                        {
+                            <MudTooltip Text="@L["Move to another warehouse"]">
+                                <MudIconButton Icon="@Icons.Material.Filled.SwapHoriz" Variant="Variant.Filled"
+                                    Color="Color.Primary" Size="Size.Small" OnClick="@(() => ShowTransferModal(item))" />
+                            </MudTooltip>
+                        }
+                    </AuthorizeView>
                     <AuthorizeView Policy="Inventory.Delete">
                         <Authorized>
                             <MudTooltip Text="@L["Edit"]">
@@ -123,6 +147,9 @@
 
     private MudServerTable<InventoryItemDTO>? _table;
     private List<InventoryItemDTO> _pagedItems = [];
+
+    /// <summary>The warehouses the user sees and may move stock in (not archived).</summary>
+    private List<WarehouseDto> _warehouses = [];
 
     private string _filterNameOrCompound = string.Empty;
     private string? _alert;
@@ -174,7 +201,14 @@
         RealtimeService.OnPropertyChanged += HandlePropertyChanged;
         RealtimeService.OnCollectionChanged += HandleCollectionChanged;
 
-        await Task.CompletedTask;
+        try
+        {
+            _warehouses = [.. (await WarehousesApi.GetAsync()).Where(w => !w.IsArchived)];
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(L["Error loading warehouses: {0}", ex.Message], Severity.Error);
+        }
     }
 
     private async Task<TableData<InventoryItemDTO>> ServerReload(TableState state, CancellationToken ct)
@@ -228,25 +262,33 @@
         }
     }
 
+    // The notice names the item, never the new count (it reaches every user): the page reads the stock it may see again.
     private void HandlePropertyChanged(PropertyChangedEventArgs args)
     {
-        if (args.EntityType == nameof(Item) && args.PropertyName == nameof(Item.Stock))
-        {
-            var item = _pagedItems.FirstOrDefault(x => x.Id == args.EntityId);
-            if (item != null && args.NewValue is int or System.Text.Json.JsonElement)
-            {
-                var newStock = args.NewValue is System.Text.Json.JsonElement jsonElement
-                ? jsonElement.GetInt32()
-                : Convert.ToInt32(args.NewValue);
+        if (args.EntityType == nameof(Item) && args.PropertyName == nameof(Item.Stock) && _pagedItems.Any(x => x.Id == args.EntityId))
+            ReloadSoon();
+    }
 
-                if (item.Stock != newStock)
-                {
-                    item.Stock = newStock;
-                    _ = InvokeAsync(StateHasChanged);
-                    Snackbar.Add(L["Stock updated for {0}", item.Name], Severity.Info);
-                }
+    private CancellationTokenSource? _reloadSoon;
+
+    /// <summary>One reload after a burst of notices: a bulk move sends one per item.</summary>
+    private void ReloadSoon()
+    {
+        _reloadSoon?.Cancel();
+        var wait = _reloadSoon = new CancellationTokenSource();
+        _ = InvokeAsync(async () =>
+        {
+            try
+            {
+                await Task.Delay(400, wait.Token);
             }
-        }
+            catch (TaskCanceledException)
+            {
+                return;
+            }
+            if (_table is not null)
+                await _table.ReloadServerData();
+        });
     }
 
     private void HandleCollectionChanged(CollectionChangedEventArgs args)
@@ -353,19 +395,19 @@
             FullWidth = true,
             CloseOnEscapeKey = false
         };
-        var dialog = await DialogService.ShowAsync<MassiveIngressModal>((string?)null, options);
+        var dialog = await DialogService.ShowAsync<MassiveIngressModal>((string?)null, WithWarehouses(), options);
         var result = await dialog.Result;
-        if (result is { Canceled: false, Data: List<InventoryMassUpdateDTO> itemsList })
+        if (result is { Canceled: false, Data: MassiveSelection<InventoryMassUpdateDTO> selection })
         {
-            try
+            var saved = await InventoryMovementService.MassiveEntryAsync(selection.Items, selection.WarehouseId);
+            if (saved.Ok)
             {
-                await InventoryMovementService.MassiveEntryAsync(itemsList);
-                Snackbar.Add(L["Mass ingress applied ({0} items).", itemsList.Count], Severity.Success);
+                Snackbar.Add(L["Mass ingress applied ({0} items).", selection.Items.Count], Severity.Success);
                 _table?.ReloadServerData();
             }
-            catch (Exception ex)
+            else
             {
-                Snackbar.Add(L["Mass ingress error: {0}", ex.Message], Severity.Error);
+                Snackbar.Add(L["Mass ingress error: {0}", saved.Error ?? ""], Severity.Error);
             }
         }
         else
@@ -382,19 +424,19 @@
             FullWidth = true,
             CloseOnEscapeKey = false
         };
-        var dialog = await DialogService.ShowAsync<MassiveEgressModal>((string?)null, options);
+        var dialog = await DialogService.ShowAsync<MassiveEgressModal>((string?)null, WithWarehouses(), options);
         var result = await dialog.Result;
-        if (result is { Canceled: false, Data: List<InventoryMassUpdateDTO> itemsList })
+        if (result is { Canceled: false, Data: MassiveSelection<InventoryMassUpdateDTO> selection })
         {
-            try
+            var saved = await InventoryMovementService.MassiveExitAsync(selection.Items, selection.WarehouseId);
+            if (saved.Ok)
             {
-                await InventoryMovementService.MassiveExitAsync(itemsList);
-                Snackbar.Add(L["Mass egress applied ({0} items).", itemsList.Count], Severity.Success);
+                Snackbar.Add(L["Mass egress applied ({0} items).", selection.Items.Count], Severity.Success);
                 _table?.ReloadServerData();
             }
-            catch (Exception ex)
+            else
             {
-                Snackbar.Add(L["Mass egress error: {0}", ex.Message], Severity.Error);
+                Snackbar.Add(L["Mass egress error: {0}", saved.Error ?? ""], Severity.Error);
             }
         }
         else
@@ -403,11 +445,60 @@
         }
     }
 
+    private async Task ShowMassTransferModal()
+    {
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            CloseOnEscapeKey = false
+        };
+        var dialog = await DialogService.ShowAsync<MassiveTransferModal>((string?)null, WithWarehouses(), options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false, Data: MassiveSelection<InventoryMassUpdateDTO> { WarehouseId: int from, ToWarehouseId: int to } selection })
+        {
+            var saved = await InventoryMovementService.MassTransferAsync(selection.Items, from, to);
+            if (saved.Ok)
+            {
+                Snackbar.Add(L["Transfer applied ({0} items).", selection.Items.Count], Severity.Success);
+                _table?.ReloadServerData();
+            }
+            else
+            {
+                Snackbar.Add(L["Transfer error: {0}", saved.Error ?? ""], Severity.Error);
+            }
+        }
+    }
+
+    private async Task ShowTransferModal(InventoryItemDTO dto)
+    {
+        var parameters = new DialogParameters<TransferStockModal>
+        {
+        { x => x.Item, dto },
+        { x => x.Warehouses, _warehouses },
+        { x => x.Title, L["Transfer between warehouses"].Value },
+        { x => x.TitleIcon, Icons.Material.Filled.SwapHoriz },
+        { x => x.TitleColor, Color.Primary }
+        };
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseOnEscapeKey = false
+        };
+        var dialog = await DialogService.ShowAsync<TransferStockModal>(null, parameters, options);
+        if (await dialog.Result is { Canceled: false })
+            _table?.ReloadServerData();
+    }
+
+    private DialogParameters WithWarehouses() => new() { [nameof(MassiveIngressModal.Warehouses)] = _warehouses };
+
     private async Task ShowAdjustStockModal(InventoryItemDTO dto)
     {
         var parameters = new DialogParameters<AdjustStockModal>
         {
         { x => x.Item, dto },
+        { x => x.Warehouses, _warehouses },
         { x => x.Title, L["Adjust stock"].Value },
         { x => x.TitleIcon, Icons.Material.Filled.Edit },
         { x => x.TitleColor, Color.Secondary }
@@ -500,6 +591,7 @@
     {
         RealtimeService.OnEntityChanged -= HandleEntityChanged;
         RealtimeService.OnPropertyChanged -= HandlePropertyChanged;
+        _reloadSoon?.Cancel();
         RealtimeService.OnCollectionChanged -= HandleCollectionChanged;
     }
 }

@@ -7,6 +7,7 @@ using VetManagement.Domain.Clients;
 using VetManagement.Domain.Configuration;
 using VetManagement.Domain.Enums;
 using VetManagement.Domain.Exams;
+using VetManagement.Domain.Inventory;
 using VetManagement.Domain.Localization;
 
 namespace VetManagement.Application.Exams;
@@ -23,8 +24,11 @@ public class ExamReportSettingsService(IUnitOfWork unitOfWork, AuditService audi
 public sealed record ExamReportInput(int? PetId, ReportPatient? Patient, int ExamId, DateOnly ReceivedOn, string? ReferringVet,
     IReadOnlyDictionary<string, string> Values, string? Interpretation, string? LotNumber = null);
 
-/// <summary>An inventory product a report can deduct: its exam's linked one, units per exam and the stock now.</summary>
-public sealed record ExamReportStock(string ItemName, int Quantity, int InStock);
+/// <summary>
+/// An inventory product a report can deduct: its exam's linked one, units per exam, the units in the daily-use warehouse
+/// (where it's taken from) and the other warehouses holding some, by name.
+/// </summary>
+public sealed record ExamReportStock(string ItemName, int Quantity, int InStock, IReadOnlyList<string>? AskAt = null);
 
 /// <summary>A report with its registered pet and owner; both null when the patient was typed into the report.</summary>
 public sealed record ExamReportView(ExamReport Report, Pet? Pet, Client? Owner, string? ExamName = null, ExamReportStock? StockToDeduct = null);
@@ -58,7 +62,7 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
         // The product for the patient's species (e.g. the feline kit), or the exam's.
         var stock = withStock && !report.StockDeducted && exam?.ItemFor(report.Patient?.Species ?? pet?.Species ?? Species.Unknown) is { } product
             && await unitOfWork.Items.GetByIdAsNoTrackingAsync(product.ItemId) is { } item
-            ? new ExamReportStock(item.Name, product.Quantity, item.Stock)
+            ? await KitStockAsync(item, product.Quantity)
             : null;
         return pet is null
             ? new ExamReportView(report, null, null, exam?.Name, stock)
@@ -188,8 +192,8 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
             var item = await unitOfWork.Items.GetByIdAsNoTrackingAsync(product.ItemId);
             if (item is null)
                 return new ExamReportResultStatus(ExamReportStatus.Invalid, Error: Texts.T("The inventory item doesn't exist."));
-            if (product.Quantity > item.Stock)
-                return new ExamReportResultStatus(ExamReportStatus.Invalid, Error: Texts.T("Only {0} of '{1}' left in stock.", item.Stock, item.Name));
+            if (await Stock.ShortageAsync(unitOfWork, item, product.Quantity) is { } shortage)
+                return new ExamReportResultStatus(ExamReportStatus.Invalid, Error: shortage);
 
             await Stock.MoveAsync(unitOfWork, item.Id, product.Quantity, InventoryMovementType.Egress,
                 await StockReasonAsync(report, "Exam report #{0} – {1}"), userName, now);
@@ -226,6 +230,16 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
         if (result.Status == ExamReportStatus.Done)
             await audit.LogAsync(nameof(ExamReport), id, AuditActionType.Edit, $"Returned to inventory: {returned}", userName);
         return result;
+    }
+
+    /// <summary>The kit's units in the daily-use warehouse and, by name only, the other warehouses that hold some.</summary>
+    private async Task<ExamReportStock> KitStockAsync(Item item, int quantity)
+    {
+        var held = (await unitOfWork.WarehouseStocks.ForItemsAsync([item.Id])).Where(s => s.Quantity != 0).ToList();
+        var holding = held.Where(s => s.Quantity > 0).Select(s => s.WarehouseId).ToHashSet();
+        var askAt = holding.Count == 0 ? [] : (await unitOfWork.Warehouses.GetAllAsync())
+            .Where(w => holding.Contains(w.Id)).Select(w => w.Name).Order(StringComparer.CurrentCultureIgnoreCase).ToList();
+        return new ExamReportStock(item.Name, quantity, item.Stock - held.Sum(s => s.Quantity), askAt);
     }
 
     /// <summary>The report's species: the typed patient's, or the registered pet's.</summary>

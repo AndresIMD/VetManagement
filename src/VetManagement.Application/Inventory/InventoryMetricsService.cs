@@ -41,8 +41,9 @@ public class InventoryMetricsService(IUnitOfWork unitOfWork, SchedulingSettingsS
         var chosen = itemIds is { Count: > 0 } ? itemIds.ToHashSet() : null;
         var allItems = (await unitOfWork.Items.GetAllAsync()).ToDictionary(i => i.Id);
         var items = chosen is null ? allItems : allItems.Values.Where(i => chosen.Contains(i.Id)).ToDictionary(i => i.Id);
+        // Transfers between warehouses leave the clinic's stock as it was: they are neither use nor purchases.
         var allMovements = (await unitOfWork.InventoryMovements.GetQuantitiesAsync(fromUtc, toUtc))
-            .Where(m => allItems.ContainsKey(m.ItemId))
+            .Where(m => allItems.ContainsKey(m.ItemId) && !m.Type.IsTransfer())
             .Select(m => m with { Date = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(m.Date, DateTimeKind.Utc), zone) })
             .ToList();
         var movements = allMovements.Where(m => items.ContainsKey(m.ItemId)).ToList();

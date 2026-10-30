@@ -143,7 +143,8 @@ Printed labels are Spanish (client-facing); staff screens are English, like the 
 
 A catalog exam can name the inventory product one exam uses up (`Exam.ItemId`, e.g. its test kit) and how many units
 (`ItemQuantity`, default 1); the catalog form shows the field only with the Inventory module, through a narrow search
-(`api/exams/stock-items`: name and stock) so a lab supervisor needs no inventory permissions to link it.
+(`api/exams/stock-items`: name and the daily-use warehouse's units) so a lab supervisor needs no inventory permissions
+to link it.
 
 Some species can have a product of their own (`Exam.SpeciesItems`: species, product, units; e.g. the canine and feline
 pancreatic lipase kits are different products): a report of that species (the typed patient's or the registered pet's)
@@ -152,7 +153,7 @@ kept as JSON with the exam, by id like `ItemId`.
 
 - **Deduct** (report page, "Deduct from inventory"; `POST api/exam-reports/{id}/stock`, whoever makes reports):
   under the clinic-wide `stock` lock, the report must not have deducted yet (two clicks or two desks take it once) and
-  the stock must cover the quantity; the product leaves stock with the movement "Exam report #N – PET SURNAME" (pet
+  the daily-use warehouse must cover the quantity ([warehouses](INVENTORY.md); the page names the warehouses to ask); the product leaves stock with the movement "Exam report #N – PET SURNAME" (pet
   and owner's surname as in the PDF name, typed patients as typed) and the report keeps what it took: product, name,
   quantity, when and who (`StockItemId`…).
 - **Return** ("Return to inventory"; `DELETE api/exam-reports/{id}/stock`, a correction: Laboratory) puts back what was

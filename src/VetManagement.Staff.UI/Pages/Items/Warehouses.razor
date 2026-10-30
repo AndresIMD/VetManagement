@@ -1,0 +1,196 @@
+@page "/inventory/warehouses"
+@using VetManagement.Contracts.Inventory
+@inject WarehousesApiService WarehousesApi
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@attribute [Authorize(Policy = "Inventory.Warehouses")]
+
+<PageTitle>@L["Warehouses"]</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
+    <PageHeader Title="@L["Warehouses"]" Subtitle="@L["Where the stock is kept, and who sees each place."]" Icon="@Icons.Material.Filled.Warehouse" />
+
+    <MudPaper Class="pa-6 mb-4 elevation-3 rounded-lg app-surface">
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+            @L["Sales, visit supplies, vaccines and exam kits take stock from the daily-use warehouse, which everyone sees. Each other warehouse is seen only by the roles you mark, and Admin sees them all; whoever doesn't see one is told to ask there, never how many it holds. Inventory staff move stock between the warehouses they see with transfers."]
+        </MudText>
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-4" Wrap="Wrap.Wrap">
+            <MudTextField @bind-Value="_newName" Label="@L["New warehouse"]" Variant="Variant.Outlined" MaxLength="100" Immediate="true"
+                          OnKeyUp="@(e => e.Key == "Enter" ? CreateAsync() : Task.CompletedTask)" Style="max-width:360px" />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                       Disabled="@(string.IsNullOrWhiteSpace(_newName) || _busy)" OnClick="CreateAsync">@L["Add"]</MudButton>
+        </MudStack>
+
+        <MudTable T="WarehouseDto" Items="@_warehouses" Loading="@_loading" Hover="true" Dense="true" Breakpoint="Breakpoint.Sm"
+                  RowStyleFunc="@((w, _) => w.IsArchived ? "opacity:0.6;" : string.Empty)">
+            <HeaderContent>
+                <MudTh>@L["Name"]</MudTh>
+                <MudTh>@L["Who sees it"]</MudTh>
+                <MudTh Style="text-align:right">@L["Actions"]</MudTh>
+            </HeaderContent>
+            <RowTemplate Context="warehouse">
+                <MudTd DataLabel="@L["Name"]">
+                    @if (_editingId == warehouse.Id)
+                    {
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudTextField @bind-Value="_editName" Variant="Variant.Outlined" Margin="Margin.Dense" MaxLength="100" Immediate="true"
+                                          OnKeyUp="@(e => e.Key == "Enter" ? RenameAsync(warehouse) : Task.CompletedTask)" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Check" Color="Color.Success" Size="Size.Small" aria-label="@L["Save"]"
+                                           Disabled="@(string.IsNullOrWhiteSpace(_editName) || _busy)" OnClick="() => RenameAsync(warehouse)" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" aria-label="@L["Cancel"]" OnClick="() => _editingId = null" />
+                        </MudStack>
+                    }
+                    else
+                    {
+                        <span>@warehouse.Name</span>
+                        @if (warehouse.IsDailyUse)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined" Class="ml-2">@L["Daily use"]</MudChip>
+                        }
+                        @if (warehouse.IsArchived)
+                        {
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Class="ml-2">@L["Archived"]</MudChip>
+                        }
+                    }
+                </MudTd>
+                <MudTd DataLabel="@L["Who sees it"]">
+                    @if (warehouse.IsDailyUse)
+                    {
+                        <MudText Typo="Typo.body2">@L["Everyone"]</MudText>
+                    }
+                    else
+                    {
+                        @foreach (var role in _roles)
+                        {
+                            var listed = warehouse.Roles.Contains(role, StringComparer.OrdinalIgnoreCase);
+                            <MudChip T="string" Size="Size.Small" Color="@(listed ? Color.Primary : Color.Default)"
+                                     Variant="@(listed ? Variant.Filled : Variant.Outlined)"
+                                     Disabled="@(warehouse.IsArchived || _busy)" OnClick="@(() => ToggleRoleAsync(warehouse, role))">
+                                @L[role]
+                            </MudChip>
+                        }
+                        @if (warehouse.Roles.Count == 0)
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">@L["Only Admin"]</MudText>
+                        }
+                    }
+                </MudTd>
+                <MudTd DataLabel="@L["Actions"]" Style="text-align:right">
+                    <MudTooltip Text="@L["Rename"]">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Disabled="@_busy"
+                                       OnClick="@(() => { _editingId = warehouse.Id; _editName = warehouse.Name; })" />
+                    </MudTooltip>
+                    @if (!warehouse.IsDailyUse)
+                    {
+                        <MudTooltip Text="@(warehouse.IsArchived ? L["Restore"] : L["Archive (it must be empty)"])">
+                            <MudIconButton Icon="@(warehouse.IsArchived ? Icons.Material.Filled.Unarchive : Icons.Material.Filled.Archive)" Size="Size.Small"
+                                           Disabled="@_busy" OnClick="@(() => SaveAsync(warehouse, warehouse.Name, warehouse.Roles, !warehouse.IsArchived))" />
+                        </MudTooltip>
+                        <MudTooltip Text="@L["Delete (only if it was never used)"]">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" Disabled="@_busy"
+                                           OnClick="@(() => DeleteAsync(warehouse))" />
+                        </MudTooltip>
+                    }
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private List<WarehouseDto> _warehouses = [];
+    private List<string> _roles = [];
+    private bool _loading = true;
+    private bool _busy;
+    private string _newName = string.Empty;
+    private int? _editingId;
+    private string _editName = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _roles = await WarehousesApi.GetRolesAsync();
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(L["Error loading warehouses: {0}", ex.Message], Severity.Error);
+        }
+        _loading = false;
+    }
+
+    private async Task LoadAsync() => _warehouses = await WarehousesApi.GetAsync();
+
+    private async Task CreateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_newName) || _busy)
+            return;
+        _busy = true;
+        // A new warehouse starts seen by no role but Admin: roles are added on purpose, never by default.
+        var result = await WarehousesApi.CreateAsync(new WarehouseRequest { Name = _newName.Trim() });
+        _busy = false;
+        if (!result.Ok)
+        {
+            Snackbar.Add(result.Error ?? L["Could not save the warehouse."], Severity.Error);
+            return;
+        }
+        Snackbar.Add(L["Warehouse '{0}' created.", _newName.Trim()], Severity.Success);
+        _newName = string.Empty;
+        await LoadAsync();
+    }
+
+    private Task RenameAsync(WarehouseDto warehouse) => SaveAsync(warehouse, _editName.Trim(), warehouse.Roles, warehouse.IsArchived);
+
+    private Task ToggleRoleAsync(WarehouseDto warehouse, string role)
+    {
+        var roles = warehouse.Roles.Contains(role, StringComparer.OrdinalIgnoreCase)
+            ? warehouse.Roles.Where(r => !string.Equals(r, role, StringComparison.OrdinalIgnoreCase)).ToList()
+            : [.. warehouse.Roles, role];
+        return SaveAsync(warehouse, warehouse.Name, roles, warehouse.IsArchived);
+    }
+
+    private async Task SaveAsync(WarehouseDto warehouse, string name, List<string> roles, bool archived)
+    {
+        if (string.IsNullOrWhiteSpace(name) || _busy)
+            return;
+        _busy = true;
+        var result = await WarehousesApi.UpdateAsync(warehouse.Id, new WarehouseRequest { Name = name, Roles = roles, IsArchived = archived });
+        _busy = false;
+        if (!result.Ok)
+        {
+            Snackbar.Add(result.Error ?? L["Could not save the warehouse."], Severity.Error);
+            return;
+        }
+        _editingId = null;
+        await LoadAsync();
+    }
+
+    private async Task DeleteAsync(WarehouseDto warehouse)
+    {
+        var parameters = new DialogParameters<ConfirmModal>
+        {
+            { x => x.Title, L["Delete warehouse"].Value },
+            { x => x.Message, L["Delete '{0}'? Only a warehouse that was never used can be deleted; archive the others.", warehouse.Name].Value },
+            { x => x.ButtonConfirmText, L["Delete"].Value },
+            { x => x.ButtonCancelText, L["Cancel"].Value },
+            { x => x.TitleIcon, Icons.Material.Filled.Delete },
+            { x => x.TitleColor, Color.Error }
+        };
+        var dialog = await DialogService.ShowAsync<ConfirmModal>(null, parameters, new DialogOptions { MaxWidth = MaxWidth.Small });
+        if (await dialog.Result is not { Canceled: false })
+            return;
+
+        _busy = true;
+        var result = await WarehousesApi.DeleteAsync(warehouse.Id);
+        _busy = false;
+        if (!result.Ok)
+        {
+            Snackbar.Add(result.Error ?? L["Could not delete the warehouse."], Severity.Error);
+            return;
+        }
+        Snackbar.Add(L["Warehouse '{0}' deleted.", warehouse.Name], Severity.Success);
+        await LoadAsync();
+    }
+}

@@ -128,6 +128,7 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy("Inventory.Update", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.INVENTORY.UPDATE))
     .AddPolicy("Inventory.Delete", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.INVENTORY.DELETE))
     .AddPolicy("Inventory.Metrics", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.INVENTORY.METRICS))
+    .AddPolicy("Inventory.Warehouses", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.INVENTORY.WAREHOUSES))
     .AddPolicy("Consumption.Read", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.CONSUMPTION.READ))
     .AddPolicy("Consumption.Record", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.CONSUMPTION.RECORD))
     .AddPolicy("Consumption.Manage", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.CONSUMPTION.MANAGE))
@@ -173,6 +174,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddScoped<VetManagement.Application.Services.ItemService>();
 builder.Services.AddScoped<InventoryQueryService>();
+builder.Services.AddScoped<VetManagement.Application.Inventory.WarehouseService>();
 builder.Services.AddScoped<VetManagement.Application.Services.InventoryMovementService>();
 builder.Services.AddScoped<VetManagement.Application.Services.AuditService>();
 builder.Services.AddScoped<VetManagement.Application.Services.ExamService>();

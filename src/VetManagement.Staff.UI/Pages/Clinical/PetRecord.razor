@@ -115,7 +115,7 @@
                                    HelperText="@(string.IsNullOrEmpty(_dose.ProtocolCode) ? null : L["Empty: protocol interval"].Value)" />
                     <MudTextField T="string" @bind-Value="_dose.BatchNumber" Label="@L["Batch"]" Style="max-width: 120px;" />
                     <MudAutocomplete T="InventoryItemDTO" @bind-Value="_dose.Item" Label="@L["From inventory (optional)"]" SearchFunc="SearchItemsAsync"
-                                     ToStringFunc="@(i => i is null ? "" : $"{i.Name} ({i.Stock})")" Clearable="true"
+                                     ToStringFunc="@(i => i is null ? "" : i.DailyUseStock <= 0 && i.AskAt.Count > 0 ? L["{0} (ask {1})", i.Name, string.Join(", ", i.AskAt)].Value : $"{i.Name} ({i.DailyUseStock})")" Clearable="true"
                                      DebounceInterval="300" MinCharacters="2" Style="min-width: 220px;" />
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Vaccines" OnClick="RecordDoseAsync" Disabled="_busy">@L["Record"]</MudButton>
                 </MudStack>

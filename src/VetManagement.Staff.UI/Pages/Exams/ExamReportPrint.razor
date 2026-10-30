@@ -75,6 +75,10 @@
                 <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3" Icon="@Icons.Material.Filled.Inventory2">
                     <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
                         <span>@L["This exam uses {0} × {1} ({2} in stock).", stock.Quantity, stock.ItemName, stock.InStock ?? 0]</span>
+                        @if ((stock.InStock ?? 0) < stock.Quantity && stock.AskAt.Count > 0)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">@L["Ask {0}", string.Join(", ", stock.AskAt)]</MudChip>
+                        }
                         <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" Disabled="_stockBusy" OnClick="DeductStockAsync">@L["Deduct from inventory"]</MudButton>
                     </MudStack>
                 </MudAlert>

@@ -1317,4 +1317,47 @@
   <data name="Update" xml:space="preserve"><value>Actualizar</value></data>
   <data name="The report could not be updated." xml:space="preserve"><value>No se pudo actualizar el informe.</value></data>
   <data name="Report updated to the current format." xml:space="preserve"><value>Informe actualizado al formato actual.</value></data>
+  <data name="Warehouses" xml:space="preserve"><value>Bodegas</value></data>
+  <data name="Warehouse" xml:space="preserve"><value>Bodega</value></data>
+  <data name="Where the stock is kept, and who sees each place." xml:space="preserve"><value>Dónde se guarda el stock y quién ve cada lugar.</value></data>
+  <data name="Sales, visit supplies, vaccines and exam kits take stock from the daily-use warehouse, which everyone sees. Each other warehouse is seen only by the roles you mark, and Admin sees them all; whoever doesn't see one is told to ask there, never how many it holds. Inventory staff move stock between the warehouses they see with transfers." xml:space="preserve"><value>Las ventas, los insumos de las visitas, las vacunas y los kits de examen salen de la bodega de uso diario, que todos ven. Cada otra bodega la ven solo los roles que marques, y el Admin las ve todas; a quien no la ve se le indica que pida ahí, nunca cuántas unidades tiene. El personal de inventario mueve el stock entre las bodegas que ve con traspasos.</value></data>
+  <data name="New warehouse" xml:space="preserve"><value>Nueva bodega</value></data>
+  <data name="Who sees it" xml:space="preserve"><value>Quién la ve</value></data>
+  <data name="Daily use" xml:space="preserve"><value>Uso diario</value></data>
+  <data name="Archived" xml:space="preserve"><value>Archivada</value></data>
+  <data name="Everyone" xml:space="preserve"><value>Todos</value></data>
+  <data name="Only Admin" xml:space="preserve"><value>Solo Admin</value></data>
+  <data name="Rename" xml:space="preserve"><value>Renombrar</value></data>
+  <data name="Restore" xml:space="preserve"><value>Restaurar</value></data>
+  <data name="Archive (it must be empty)" xml:space="preserve"><value>Archivar (debe estar vacía)</value></data>
+  <data name="Delete (only if it was never used)" xml:space="preserve"><value>Eliminar (solo si nunca se usó)</value></data>
+  <data name="Could not save the warehouse." xml:space="preserve"><value>No se pudo guardar la bodega.</value></data>
+  <data name="Could not delete the warehouse." xml:space="preserve"><value>No se pudo eliminar la bodega.</value></data>
+  <data name="Warehouse '{0}' created." xml:space="preserve"><value>Bodega '{0}' creada.</value></data>
+  <data name="Warehouse '{0}' deleted." xml:space="preserve"><value>Bodega '{0}' eliminada.</value></data>
+  <data name="Delete warehouse" xml:space="preserve"><value>Eliminar bodega</value></data>
+  <data name="Delete '{0}'? Only a warehouse that was never used can be deleted; archive the others." xml:space="preserve"><value>¿Eliminar '{0}'? Solo se puede eliminar una bodega que nunca se usó; las demás se archivan.</value></data>
+  <data name="Error loading warehouses: {0}" xml:space="preserve"><value>Error al cargar las bodegas: {0}</value></data>
+  <data name="Stock per warehouse" xml:space="preserve"><value>Stock por bodega</value></data>
+  <data name="Sold out" xml:space="preserve"><value>Agotado</value></data>
+  <data name="Ask {0}" xml:space="preserve"><value>Pedir a {0}</value></data>
+  <data name="{0} (ask {1})" xml:space="preserve"><value>{0} (pedir a {1})</value></data>
+  <data name="{0} (ask {1} · {2})" xml:space="preserve"><value>{0} (pedir a {1} · {2})</value></data>
+  <data name="{0} · ask {1}" xml:space="preserve"><value>{0} · pedir a {1}</value></data>
+  <data name="Transfer between warehouses" xml:space="preserve"><value>Traspaso entre bodegas</value></data>
+  <data name="Move to another warehouse" xml:space="preserve"><value>Traspasar a otra bodega</value></data>
+  <data name="Transfer units" xml:space="preserve"><value>Traspasar</value></data>
+  <data name="Transfer units of" xml:space="preserve"><value>Traspasar unidades de</value></data>
+  <data name="From warehouse" xml:space="preserve"><value>Desde la bodega</value></data>
+  <data name="To warehouse" xml:space="preserve"><value>A la bodega</value></data>
+  <data name="Available: {0}" xml:space="preserve"><value>Disponible: {0}</value></data>
+  <data name="Units transferred." xml:space="preserve"><value>Unidades traspasadas.</value></data>
+  <data name="Transfer applied ({0} items)." xml:space="preserve"><value>Traspaso aplicado ({0} productos).</value></data>
+  <data name="Transfer error: {0}" xml:space="preserve"><value>Error en el traspaso: {0}</value></data>
+  <data name="Choose the warehouse." xml:space="preserve"><value>Elige la bodega.</value></data>
+  <data name="Choose the two warehouses." xml:space="preserve"><value>Elige las dos bodegas.</value></data>
+  <data name="Remove the items to change it." xml:space="preserve"><value>Quita los productos para cambiarla.</value></data>
+  <data name="Transfer out" xml:space="preserve"><value>Traspaso (salida)</value></data>
+  <data name="Transfer in" xml:space="preserve"><value>Traspaso (entrada)</value></data>
+  <data name="Stock transfer" xml:space="preserve"><value>Traspaso de stock</value></data>
 </root>

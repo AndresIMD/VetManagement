@@ -42,4 +42,9 @@ public class InventoryMovement
     /// </summary>
     [MaxLength(200)]
     public string? Reason { get; set; }
+
+    /// <summary>The warehouse whose stock moved.</summary>
+    public int WarehouseId { get; set; }
+
+    public string WarehouseName { get; set; } = string.Empty;
 }

@@ -13,7 +13,14 @@ public static class ApiRouteConstants
     public const string INVENTORY_ADJUST_STOCK = "api/inventory/movements/adjust-stock";
     public const string INVENTORY_MASS_INGRESS = "api/inventory/movements/mass-ingress";
     public const string INVENTORY_MASS_EGRESS = "api/inventory/movements/mass-egress";
+    public const string INVENTORY_TRANSFER = "api/inventory/movements/transfer";
+    public const string INVENTORY_MASS_TRANSFER = "api/inventory/movements/mass-transfer";
     public const string INVENTORY_METRICS = "api/inventory/metrics";
+
+    // Warehouses
+    public const string WAREHOUSES = "api/inventory/warehouses";
+    public const string WAREHOUSE_BY_ID = "api/inventory/warehouses/{0}";
+    public const string WAREHOUSE_ROLES = "api/inventory/warehouses/roles";
 
     // Consumption sheets (supplies used on each patient)
     public const string CONSUMPTION_SHEETS = "api/consumption-sheets";

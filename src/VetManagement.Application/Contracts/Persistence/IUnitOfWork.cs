@@ -14,6 +14,10 @@ public interface IUnitOfWork : IDisposable
 
     IInventoryMovementRepository InventoryMovements { get; }
 
+    IRepository<VetManagement.Domain.Inventory.Warehouse> Warehouses { get; }
+
+    IWarehouseStockRepository WarehouseStocks { get; }
+
     IAuditLogRepository AuditLogs { get; }
 
     IExternalLabRepository ExternalLabs { get; }

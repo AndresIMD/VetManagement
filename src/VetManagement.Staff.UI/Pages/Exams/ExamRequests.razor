@@ -28,7 +28,7 @@
                 <MudDateRangePicker @bind-DateRange="FilterRange" Label="@L["Date Range"]" Variant="Variant.Outlined" />
             </MudItem>
             <MudItem xs="12" md="3" Class="d-flex align-center">
-                <ActiveFilterChips Chips="@BuildActiveChips()" />
+                <ActiveFilterChips Chips="@BuildActiveChips()" Changed="StateHasChanged" />
             </MudItem>
         </MudGrid>
         <MudStack Row="true" Justify="Justify.FlexEnd" AlignItems="AlignItems.Center" Class="mt-3">

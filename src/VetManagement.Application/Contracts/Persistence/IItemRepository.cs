@@ -20,5 +20,6 @@ public interface IItemRepository : IRepository<Item>
         int pageSize,
         StockAlertFilter? alertFilter = null,
         ItemSortField? sortBy = null,
-        SortDirection sortDirection = SortDirection.Ascending);
+        SortDirection sortDirection = SortDirection.Ascending,
+        IReadOnlyCollection<int>? hiddenWarehouseIds = null);
 }

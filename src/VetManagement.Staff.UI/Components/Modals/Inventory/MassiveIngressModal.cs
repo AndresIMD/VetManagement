@@ -9,8 +9,6 @@ namespace VetManagement.Staff.UI.Components.Modals.Inventory;
 
 public partial class MassiveIngressModal : MassiveBaseModal<InventoryMassUpdateDTO>
 {
-    private readonly Dictionary<int, int> _stockByItemId = [];
-
     protected override void OnInitialized()
     {
         Title = Strings.T("Mass ingress");
@@ -22,29 +20,20 @@ public partial class MassiveIngressModal : MassiveBaseModal<InventoryMassUpdateD
     protected override async Task<object?> GetItemByBarcode(string barcode)
     {
         var item = await ItemsService.GetItemByBarcodeAsync(barcode);
-        if (item is Item i)
-            _stockByItemId[i.Id] = i.Stock;
+        Remember(item);
         return item;
     }
     protected override InventoryMassUpdateDTO CreateNewItem(object item)
     {
         var i = item as Item;
-        if (i != null)
-        {
-            _stockByItemId[i.Id] = i.Stock;
-        }
+        Remember(i);
         return new InventoryMassUpdateDTO { ItemId = i?.Id ?? 0, Barcode = i?.Barcode ?? string.Empty, Name = i?.Name ?? string.Empty, Quantity = 1 };
     }
     protected override string GetName(InventoryMassUpdateDTO item) => item.Name;
     protected override string GetBarcode(InventoryMassUpdateDTO item) => item.Barcode;
     protected override int GetQuantity(InventoryMassUpdateDTO item) => item.Quantity;
     protected override void SetQuantity(InventoryMassUpdateDTO item, int value) => item.Quantity = value;
-    protected override int? GetStock(InventoryMassUpdateDTO item)
-    {
-        if (_stockByItemId.TryGetValue(item.ItemId, out var stock))
-            return stock;
-        return null;
-    }
+    protected override int? GetStock(InventoryMassUpdateDTO item) => UnitsInChosen(item.ItemId);
     protected override int GetItemId(InventoryMassUpdateDTO item) => item.ItemId;
 
     protected override async Task OnBarcodeKeyDown(KeyboardEventArgs e)
@@ -55,7 +44,7 @@ public partial class MassiveIngressModal : MassiveBaseModal<InventoryMassUpdateD
 
             if (item != null)
             {
-                _stockByItemId[item.Id] = item.Stock;
+                Remember(item);
 
                 var existing = items.FirstOrDefault(x => x.ItemId == item.Id);
                 if (existing != null)
@@ -88,7 +77,7 @@ public partial class MassiveIngressModal : MassiveBaseModal<InventoryMassUpdateD
                     if (createResult is not null && !createResult.Canceled && createResult.Data is Item created)
                     {
                         created.Barcode = currentBarcode;
-                        _stockByItemId[created.Id] = created.Stock;
+                        Remember(created);
                         items.Add(new InventoryMassUpdateDTO { ItemId = created.Id, Barcode = created.Barcode ?? string.Empty, Name = created.Name, Quantity = 1 });
                     }
                 }

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VetManagement.Api.Authorization;
+using VetManagement.Application.Inventory;
 using VetManagement.Application.Services;
 using VetManagement.Contracts.Exams;
 using VetManagement.Domain.Enums;
@@ -11,7 +12,7 @@ namespace VetManagement.Api.Controllers.Exams;
 
 [Route("api/[controller]")]
 [Authorize(Policy = "Exams.Read")]
-public class ExamsController(ExamService service, EnabledModules modules) : ApiControllerBase
+public class ExamsController(ExamService service, EnabledModules modules, WarehouseService warehouses) : ApiControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<List<ExamDto>>> GetAllAsync()
@@ -30,12 +31,19 @@ public class ExamsController(ExamService service, EnabledModules modules) : ApiC
         return Ok(exam.ToDto(await ItemNamesAsync([exam])));
     }
 
-    /// <summary>Inventory products to link to an exam (name, brand or barcode contains the text), with their stock.</summary>
+    /// <summary>
+    /// Inventory products to link to an exam (name, brand or barcode contains the text), with their units in the daily-use
+    /// warehouse, where the reports take them from.
+    /// </summary>
     [HttpGet("stock-items")]
     [Authorize(Policy = "Exams.Update")]
     [RequiresModule(AppModule.Inventory)]
     public async Task<ActionResult<List<ExamStockItemDto>>> StockItemsAsync([FromQuery] string? search)
-        => Ok((await service.SearchStockItemsAsync(search)).Select(i => new ExamStockItemDto { Id = i.Id, Name = i.Name, Stock = i.Stock }).ToList());
+    {
+        var items = await service.SearchStockItemsAsync(search);
+        var views = await warehouses.ViewAsync(items, GetStockScope());
+        return Ok(items.Select(i => new ExamStockItemDto { Id = i.Id, Name = i.Name, Stock = views[i.Id].InDailyUse }).ToList());
+    }
 
     [HttpPost]
     [Authorize(Policy = "Exams.Create")]
