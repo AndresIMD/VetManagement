@@ -40,3 +40,7 @@
 }
 
 .home-area.mud-button-outlined-default { border-color: var(--mud-palette-lines-inputs); }
+
+/* The accent stays on the border and the icon: the stock blue is too light for text this size (4.29:1). */
+.home-area-main.mud-button-outlined-default { border-color: var(--mud-palette-primary); }
+.home-area-main .mud-button-icon-start { color: var(--mud-palette-primary); }
