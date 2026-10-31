@@ -71,7 +71,7 @@ Visual Studio), Visual Studio 2022+ or VS Code.
    In Development the API applies migrations and seeds roles, the admin user and some sample data on startup.
    Without WebPay credentials, deposits use a simulated payment page.
 
-3. **Sample data** — staff web → *Administration → Test Data* creates realistic records per kind, in dependency
+3. **Sample data** — staff web → *Settings → Test Data* creates realistic records per kind, in dependency
    order. Guide: [`docs/guides/TEST_DATA.md`](docs/guides/TEST_DATA.md).
 
 4. **Tests**

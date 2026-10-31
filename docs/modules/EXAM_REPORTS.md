@@ -1,6 +1,6 @@
 # Exam reports (printable lab results) — design
 
-Staff web → Exams → **Lab Reports** (issue, view, print), **Report Design** (branding) and, in the exam catalog,
+Staff web → Exams → **Lab Reports** (issue, view, print), Settings → **Report Design** (branding) and, in the exam catalog,
 **Report template** per exam. API: `api/exam-reports`.
 
 ## How it fits together

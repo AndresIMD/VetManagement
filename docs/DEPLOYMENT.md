@@ -38,10 +38,10 @@ carry the browser runtime of the SDK that built them, so update the SDK on the m
 
 ## Business configuration (no deploy needed)
 
-Everything business-related is edited by the clinic admin in the staff web, no deploy needed:
+Everything business-related is edited by the clinic admin in the staff web (Settings menu), no deploy needed:
 Agenda settings (hours, services, deposit %, refund mode, notifications, branding; starts disabled),
 Billing settings (payment methods, discount limit, stock on sale, VAT), Clinical settings (vaccine and
-deworming protocols, reminders, client portal) and Exams → Report Design (branding and templates of lab reports).
+deworming protocols, reminders, client portal) and Report Design (branding and templates of lab reports).
 See [SCHEDULING.md](modules/SCHEDULING.md), [BILLING.md](modules/BILLING.md), [CLINICAL.md](modules/CLINICAL.md)
 and [EXAM_REPORTS.md](modules/EXAM_REPORTS.md).
 
@@ -56,6 +56,7 @@ in again to see the new screens.
 |---|---|
 | `ApiBaseUrl` | Public URL of the API (or `LocalApiBaseUrl` + `CloudApiBaseUrl`: the local one is used when it answers). |
 | `Culture` | The clinic's language and date/number formats, e.g. `es-CL`. Absent or unknown = English. Texts are translated in `Staff.UI/Resources/Strings.{language}.resx` (English key → translation); a country file such as `Strings.es-CL.resx` holds only the terms that differ (RUT for the tax ID). A text without translation shows in English. Printed exam reports use the same texts. |
+| `LogoUrl` | The clinic's logo for the app's header: a path inside the staff web (`images/logo.png`) or, in the desktop app, a full URL. The file is the clinic's: copy it at deployment, never into this repository. Absent = the product name as text. |
 
 ## Booking portal (`src/VetManagement.Booking.Web`)
 
@@ -141,4 +142,4 @@ script depends on the app the clinic comes from, so it lives with that clinic's 
 On Azure SQL, which can't restore a `.bak`, make the copy on another server and import it as a `.bacpac` (step 5 of
 [Hosting on Azure](#hosting-on-azure)). Users with the roles `Manager`, `Employee` or `Laboratorio` get area roles with
 the same access on the API's first start (`DataSeeder.LegacyRoles`); the admin then narrows each person in
-Administration → Users.
+Settings → Users.

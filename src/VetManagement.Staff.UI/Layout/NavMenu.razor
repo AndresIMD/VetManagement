@@ -4,19 +4,22 @@
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthStateProvider
 @inject ThemeService ThemeService
+@inject VetManagement.Staff.UI.Models.Configuration.AppBranding Branding
 
 <AuthorizeView>
     <Authorized>
         <MudAppBar Elevation="4" Class="mud-appbar-fixed appbar-elevated">
             <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Style="width:100%;">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="ml-2">
-                    <MudHidden Breakpoint="Breakpoint.MdAndUp">
+                    <MudHidden Breakpoint="Breakpoint.LgAndUp">
                         <MudMenu AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft" Color="Color.Inherit" Dense="true">
                             <ActivatorContent Context="menuContext">
                                 @* MudBlazor 9: a custom activator opens its menu itself. *@
-                                <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" OnClick="@(e => menuContext.ToggleAsync(e))" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" aria-label="@L["Menu"]" OnClick="@(e => menuContext.ToggleAsync(e))" />
                             </ActivatorContent>
                             <ChildContent>
+                                <MudMenuItem Href="/">@L["Home"]</MudMenuItem>
+                                <MudDivider />
                                 @foreach (var item in MenuItems)
                                 {
                                     if (item.Visible(UserPerm))
@@ -42,24 +45,34 @@
                             </ChildContent>
                         </MudMenu>
                     </MudHidden>
-                    <MudNavLink Href="/" Style="display:inline-block;">
-                        <img src="_content/VetManagement.Staff.UI/images/logo_negativo_vet_clinic.png" style="height:32px; margin-right:10px;" />
-                    </MudNavLink>
+                    @* On a phone the bar has no room for it: the menu above holds the link home. *@
+                    <MudHidden Breakpoint="Breakpoint.Xs">
+                        <MudNavLink Href="/" Style="display:inline-block;">
+                            @if (Branding.HasLogo)
+                            {
+                                <img src="@Branding.LogoUrl" alt="@L["Home"]" height="32" style="height:32px; width:auto; margin-right:10px;" />
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.subtitle1" Class="fw-bold" Style="margin-right:10px; white-space:nowrap;">VetManagement</MudText>
+                            }
+                        </MudNavLink>
+                    </MudHidden>
                 </MudStack>
 
-                <MudHidden Breakpoint="Breakpoint.SmAndDown">
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="2">
+                <MudHidden Breakpoint="Breakpoint.MdAndDown">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="1">
                         @foreach (var item in MenuItems)
                         {
                             if (item.Visible(UserPerm))
                             {
                                 if (item.Children != null && item.Children.Any(c => c.Visible(UserPerm)))
                                 {
-                                    <NavDropdown Title="@L[item.Title]" Icon="@item.Icon" Items="@item.Children!.Where(c => c.Visible(UserPerm)).Select(c => ((string)L[c.Title], c.Href))" />
+                                    <NavDropdown Title="@L[item.Title]" Items="@item.Children!.Where(c => c.Visible(UserPerm)).Select(c => ((string)L[c.Title], c.Href))" />
                                 }
                                 else if (!string.IsNullOrEmpty(item.Href))
                                 {
-                                    <MudNavLink Href="@item.Href" Icon="@item.Icon" Class="mx-2 mud-nav-link nav-item">@L[item.Title]</MudNavLink>
+                                    <MudButton Href="@item.Href" Color="Color.Inherit" Variant="Variant.Text" Class="nav-dropdown-btn">@L[item.Title]</MudButton>
                                 }
                             }
                         }
@@ -69,7 +82,7 @@
                 <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexEnd" Spacing="2" Class="ml-2">
                     <RealtimeConnectionIndicator />
                     <MudTooltip Text="@L["Toggle light/dark theme"]">
-                        <MudIconButton Icon="@(_isDark? Icons.Material.Filled.DarkMode : Icons.Material.Filled.WbSunny)" Color="Color.Inherit" OnClick="@(() => OnToggleDarkMode.InvokeAsync())" />
+                        <MudIconButton Icon="@(_isDark? Icons.Material.Filled.DarkMode : Icons.Material.Filled.WbSunny)" Color="Color.Inherit" aria-label="@L["Toggle light/dark theme"]" OnClick="@(() => OnToggleDarkMode.InvokeAsync())" />
                     </MudTooltip>
                     <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.BottomRight" Color="Color.Inherit" Dense="true">
                         <ChildContent>
@@ -84,9 +97,9 @@
                             <MudMenuItem OnClick="@LogoutAsync" Icon="@Icons.Material.Filled.Logout">@L["Logout"]</MudMenuItem>
                         </ChildContent>
                         <ActivatorContent Context="userMenuContext">
-                            <div @onclick="@(e => userMenuContext.ToggleAsync(e))" style="cursor:pointer;">
-                                <MudAvatar Color="Color.Tertiary">@UserInitial</MudAvatar>
-                            </div>
+                            <MudIconButton aria-label="@L["My profile"]" Style="padding:0;" OnClick="@(e => userMenuContext.ToggleAsync(e))">
+                                <MudAvatar Color="Color.Dark">@UserInitial</MudAvatar>
+                            </MudIconButton>
                         </ActivatorContent>
                     </MudMenu>
                 </MudStack>
@@ -104,102 +117,10 @@
     private string UserInitial => user?.Identity?.Name?.FirstOrDefault().ToString().ToUpper() ?? "?";
     private bool _isDark;
 
-    public class MenuItem
-    {
-        public string Title { get; set; } = string.Empty;
-        public string? Href { get; set; }
-        public string? Icon { get; set; }
-        public string[] RequiredPerms { get; set; } = Array.Empty<string>();
-        public List<MenuItem>? Children { get; set; }
-        public bool Visible(Func<string, bool> has) => RequiredPerms.Length == 0 || RequiredPerms.Any(has);
-    }
-
     private static bool HasPerm(ClaimsPrincipal? u, string perm) => u?.HasClaim("perm", perm) == true;
     private Func<string, bool> UserPerm => (p) => HasPerm(user, p);
 
-    private List<MenuItem> MenuItems = new()
-    {
-        new MenuItem
-        {
-            Title = "Inventory",
-            Icon = Icons.Material.Filled.Inventory,
-            RequiredPerms = new[] { "inventory.read", "consumption.read" },
-            Children = new List<MenuItem>
-            {
-                new MenuItem { Title = "Dashboard", Href = "inventory", RequiredPerms = new[] { "inventory.read" } },
-                new MenuItem { Title = "Items", Href = "inventory-items", RequiredPerms = new[] { "inventory.read" } },
-                new MenuItem { Title = "Warehouses", Href = "inventory/warehouses", RequiredPerms = new[] { "inventory.warehouses" } },
-                new MenuItem { Title = "Patient consumption", Href = "consumption", RequiredPerms = new[] { "consumption.read" } },
-                new MenuItem { Title = "Audit", Href = "inventory-audit", RequiredPerms = new[] { "audit.read" } },
-                new MenuItem { Title = "Metrics", Href = "inventory-metrics", RequiredPerms = new[] { "inventory.metrics" } },
-                new MenuItem { Title = "Email Alerts", Href = "inventory-alerts", RequiredPerms = new[] { "system.send-email" } }
-            }
-        },
-        new MenuItem
-        {
-            Title = "Exams",
-            Icon = Icons.Material.Filled.Assignment,
-            RequiredPerms = new[] { "exams.read", "examsperformed.read", "externallabs.read" },
-            Children = new List<MenuItem>
-            {
-                new MenuItem { Title = "Exam Catalog", Href = "exams", RequiredPerms = new[] { "exams.update" } },
-                new MenuItem { Title = "Lab Machines", Href = "lab-machines", RequiredPerms = new[] { "exams.update" } },
-                // Lab staff work on Lab Reports; requests are made by clinicians and followed up by the lab supervisor.
-                new MenuItem { Title = "Requests", Href = "exam-requests", RequiredPerms = new[] { "medical.read", "exams.update" } },
-                new MenuItem { Title = "Lab Reports", Href = "exam-reports", RequiredPerms = new[] { "examsperformed.read" } },
-                new MenuItem { Title = "Report Design", Href = "exam-reports/settings", RequiredPerms = new[] { "exams.update" } },
-                new MenuItem { Title = "External Labs", Href = "external-labs", RequiredPerms = new[] { "externallabs.update" } },
-                new MenuItem { Title = "Medical Visits", Href = "medical-visits", RequiredPerms = new[] { "medical.read" } }
-            }
-        },
-        new MenuItem
-        {
-            Title = "Clients",
-            Icon = Icons.Material.Filled.Assignment,
-            RequiredPerms = new[] { "clientspets.list", "medical.read" },
-            Children = new List<MenuItem>
-            {
-                new MenuItem { Title = "Search", Href = "client-search", Icon = Icons.Material.Filled.Search, RequiredPerms = new[] { "clientspets.list" } },
-                new MenuItem { Title = "Vaccines Due", Href = "clinical/due", RequiredPerms = new[] { "medical.read" } },
-                new MenuItem { Title = "Clinical Settings", Href = "clinical/settings", RequiredPerms = new[] { "clinical.manage" } }
-            }
-        },
-        new MenuItem
-        {
-            Title = "Agenda",
-            Icon = Icons.Material.Filled.CalendarMonth,
-            RequiredPerms = new[] { "scheduling.read", "scheduling.manage" },
-            Children = new List<MenuItem>
-            {
-                new MenuItem { Title = "Calendar", Href = "agenda", RequiredPerms = new[] { "scheduling.read" } },
-                new MenuItem { Title = "Settings", Href = "agenda/settings", RequiredPerms = new[] { "scheduling.manage" } }
-            }
-        },
-        new MenuItem
-        {
-            Title = "Billing",
-            Icon = Icons.Material.Filled.PointOfSale,
-            RequiredPerms = new[] { "billing.read" },
-            Children = new List<MenuItem>
-            {
-                new MenuItem { Title = "Sales", Href = "billing", RequiredPerms = new[] { "billing.read" } },
-                new MenuItem { Title = "Cash Close", Href = "billing/cash", RequiredPerms = new[] { "billing.read" } },
-                new MenuItem { Title = "Settings", Href = "billing/settings", RequiredPerms = new[] { "billing.manage" } }
-            }
-        },
-        new MenuItem { Title = "Reports", Href = "reports", Icon = Icons.Material.Filled.Insights, RequiredPerms = new[] { "reports.read" } },
-        new MenuItem
-        {
-            Title = "Administration",
-            Icon = Icons.Material.Filled.AdminPanelSettings,
-            RequiredPerms = new[] { "users.read", "audit.read", "system.test-data" },
-            Children = new List<MenuItem>
-            {
-                new MenuItem { Title = "Users", Href = "admin/users", Icon = Icons.Material.Filled.People, RequiredPerms = new[] { "users.read" } },
-                new MenuItem { Title = "Test Data", Href = "admin/test-data", RequiredPerms = new[] { "system.test-data" } }
-            }
-        }
-    };
+    private static IEnumerable<MenuItem> MenuItems => AppNavigation.All;
 
     private AuthenticationStateChangedHandler? _authStateChangedHandler;
 

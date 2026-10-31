@@ -2,5 +2,6 @@
  "ApiBaseUrl": "<API_BASE_URL>",
  "LocalApiBaseUrl": "<LOCAL_API_BASE_URL>",
  "CloudApiBaseUrl": "<CLOUD_API_BASE_URL>",
- "Culture": "<CULTURE e.g. es-CL; empty = English>"
+ "Culture": "<CULTURE e.g. es-CL; empty = English>",
+ "LogoUrl": "<LOGO_URL; empty = the product name as text>"
 }

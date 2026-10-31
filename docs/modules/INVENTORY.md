@@ -4,7 +4,7 @@
 
 A clinic keeps its stock in **warehouses** (`Warehouse`): for example a daily-use storeroom, a locked cabinet for
 controlled drugs that only the head of the clinic opens, and a back storeroom with the supplies that restock the first.
-The names are the clinic's data, typed in the staff web (Inventory → Warehouses).
+The names are the clinic's data, typed in the staff web (Settings → Warehouses).
 
 - `Item.Stock` stays the clinic's **total**, so alerts, metrics, the reports dashboard and the alerts email read it as
   before.

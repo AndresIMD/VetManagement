@@ -1,5 +1,6 @@
 .nav-dropdown { position: relative; display: inline-block; }
-.nav-dropdown-btn { padding: 6px 10px; }
+/* Text only, in sentence case: with every module on, eight entries have to fit a 1280 px window. */
+.nav-dropdown-btn.mud-button-root { padding: 6px 10px; text-transform: none; white-space: nowrap; }
 .nav-dropdown-menu {
   position: absolute;
   top: 100%;
@@ -12,5 +13,34 @@
   box-shadow: var(--mud-elevation-6);
   border-radius: var(--mud-default-borderradius);
 }
-.nav-dropdown:hover .nav-dropdown-menu { display: block; }
-.nav-dropdown-item { white-space: nowrap; }
+.nav-dropdown:hover .nav-dropdown-menu,
+.nav-dropdown:focus-within .nav-dropdown-menu { display: block; }
+.nav-dropdown.chosen .nav-dropdown-menu { display: none; }
+.nav-dropdown-item {
+  display: block;
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  color: var(--mud-palette-text-primary);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.nav-dropdown-item:hover { background: var(--mud-palette-action-default-hover); }
+
+.mud-appbar :focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.nav-dropdown-item:focus-visible,
+.home-area:focus-visible { outline: 2px solid var(--mud-palette-primary); outline-offset: -2px; }
+
+/* The home page's links to each area: wide targets, in sentence case like the menu they repeat. */
+.home-area.mud-button-root {
+  height: 96px;
+  font-size: 1.125rem;
+  justify-content: flex-start;
+  padding-inline: 24px;
+  text-transform: none;
+}
+
+.home-area.mud-button-outlined-default { border-color: var(--mud-palette-lines-inputs); }
+
+/* The accent stays on the border and the icon: the stock blue is too light for text this size (4.29:1). */
+.home-area-main.mud-button-outlined-default { border-color: var(--mud-palette-primary); }
+.home-area-main .mud-button-icon-start { color: var(--mud-palette-primary); }
