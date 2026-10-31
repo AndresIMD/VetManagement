@@ -70,6 +70,8 @@ internal sealed class FakeTab : IJSRuntime
     private readonly FakeBrowser _browser;
     private readonly HttpClient _http;
     private DotNetObjectReference<SessionRefresher>? _watcher;
+    /// <summary>One per tab: each tab is its own running app.</summary>
+    private readonly SessionToken _session = new();
 
     public FakeTab(FakeBrowser browser, FakeAccountApi api, string path)
     {
@@ -84,7 +86,7 @@ internal sealed class FakeTab : IJSRuntime
     public JwtAuthenticationStateProvider Auth { get; }
 
     /// <summary>A fresh account service per use, as the app's DI hands them out (a typed HttpClient is transient).</summary>
-    public AccountApiService Account() => new(_http, this);
+    public AccountApiService Account() => new(_http, this, _session);
 
     public SessionRefresher CreateRefresher() => new(Account(), Auth, Navigation, this);
 
