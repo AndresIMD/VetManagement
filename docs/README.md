@@ -3,6 +3,7 @@
 | Document | What it covers |
 |---|---|
 | [`../PROJECT_STATE.md`](../PROJECT_STATE.md) | What is built, what is blocked on the clinic, open product decisions, roadmap |
+| [`../DESIGN.md`](../DESIGN.md) | How the product should feel: positioning, design rules, visual direction |
 | [`architecture/ARCHITECTURE.md`](architecture/ARCHITECTURE.md) | Projects and dependency rules, module pattern, guard tests, operations, recorded decisions |
 | [`CODING_STANDARDS.md`](CODING_STANDARDS.md) | Code style and patterns for anyone (person or AI) changing the code |
 | [`DEPLOYMENT.md`](DEPLOYMENT.md) | Deploying for a clinic: every configuration key, which ones are secret |
