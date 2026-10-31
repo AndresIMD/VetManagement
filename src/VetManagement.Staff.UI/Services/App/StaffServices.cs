@@ -26,6 +26,7 @@ public static class StaffServices
             noApi ? "Configuration error" : string.Empty,
             noApi ? "config.json is missing valid API base URLs. Set 'LocalApiBaseUrl' (e.g., https://localhost:44395) or 'ApiBaseUrl'." : string.Empty));
 
+        services.AddSingleton<SessionToken>();
         services.AddScoped<AuthenticationStateProvider, JwtAuthenticationStateProvider>();
         services.AddStaffAuthorization();
         services.AddScoped<SessionRefresher>();

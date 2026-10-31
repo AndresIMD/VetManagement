@@ -3,7 +3,9 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using VetManagement.Staff.UI.Services.Api;
 using VetManagement.Staff.UI.Services.App;
+using VetManagement.Staff.UI.Services.Auth;
 
 namespace VetManagement.Tests;
 
@@ -32,5 +34,45 @@ public class StaffServicesTests
             .Distinct();
 
         missing.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task WhereJavaScriptCantRun_ApiCallsStillGetTheSessionsToken()
+    {
+        var session = new SessionToken();
+        var inTheWebView = new AccountApiService(new HttpClient(), new JsWithAToken("the token"), session);
+        var inAnHttpHandler = new AccountApiService(new HttpClient(), new JsOutsideTheWebView(), session);
+
+        (await inTheWebView.GetTokenAsync()).Should().Be("the token");
+
+        (await inAnHttpHandler.GetTokenAsync()).Should().Be("the token");
+    }
+
+    [Fact]
+    public async Task AfterLoggingOut_NoCallGetsTheOldToken()
+    {
+        var session = new SessionToken { Value = "the token" };
+
+        await new AccountApiService(new HttpClient(), new JsWithAToken(null), session).LogoutAsync();
+
+        (await new AccountApiService(new HttpClient(), new JsOutsideTheWebView(), session).GetTokenAsync()).Should().BeNull();
+    }
+
+    private sealed class JsWithAToken(string? token) : IJSRuntime
+    {
+        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args)
+            => ValueTask.FromResult((TValue)(object?)token!);
+
+        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args)
+            => InvokeAsync<TValue>(identifier, args);
+    }
+
+    private sealed class JsOutsideTheWebView : IJSRuntime
+    {
+        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args)
+            => throw new InvalidOperationException("Cannot invoke JavaScript outside of a WebView context.");
+
+        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args)
+            => InvokeAsync<TValue>(identifier, args);
     }
 }
