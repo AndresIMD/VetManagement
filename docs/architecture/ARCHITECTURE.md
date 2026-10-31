@@ -109,6 +109,7 @@ Client secrets (booking tokens, portal links) are random; portal links are store
 | `AuthorizationPoliciesTests` / `UiPolicyParityTests` | a policy used by a controller or page isn't registered, or UI and API policies drift |
 | `PermissionsTests`, `ModulesAndRolesTests` | a role grants the wrong permissions, or a disabled module still grants any |
 | `UiRoutesTests` | the staff UI calls an API route that doesn't exist |
+| `NavigationTests` | a menu link leads nowhere, or the most used areas stop coming first |
 | `StaffServicesTests` | a staff component injects a service that isn't registered: it would compile, then fail when it renders |
 | `RealtimeTests`, `InventoryClientsTests` | the staff app's clients stop understanding what the real hubs and API send, or a realtime notice carries a count |
 | `ErrorHandlingTests`, `HealthCheckTests`, `LoginLockoutTests`, `LoginRateLimitTests`, `LoginPermissionSyncTests` | error handling, health, brute-force protection or permission sync regress |

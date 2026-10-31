@@ -138,7 +138,6 @@
   <data name="Sales" xml:space="preserve"><value>Ventas</value></data>
   <data name="Cash Close" xml:space="preserve"><value>Cierre de caja</value></data>
   <data name="Reports" xml:space="preserve"><value>Reportes</value></data>
-  <data name="Administration" xml:space="preserve"><value>Administración</value></data>
   <data name="Users" xml:space="preserve"><value>Usuarios</value></data>
   <data name="Test Data" xml:space="preserve"><value>Datos de prueba</value></data>
   <data name="Toggle light/dark theme" xml:space="preserve"><value>Cambiar tema claro/oscuro</value></data>
@@ -176,13 +175,11 @@
   <data name="Could not change password" xml:space="preserve"><value>No se pudo cambiar la contraseña</value></data>
   <data name="Home" xml:space="preserve"><value>Inicio</value></data>
   <data name="Main panel" xml:space="preserve"><value>Panel principal</value></data>
-  <data name="Quick access and system overview." xml:space="preserve"><value>Accesos rápidos y resumen del sistema.</value></data>
-  <data name="Inventory summary and quick alerts." xml:space="preserve"><value>Resumen del inventario y alertas rápidas.</value></data>
   <data name="Out of stock items! ({0})" xml:space="preserve"><value>¡Productos sin stock! ({0})</value></data>
   <data name="Low stock items ({0})" xml:space="preserve"><value>Productos con stock bajo ({0})</value></data>
   <data name="View details" xml:space="preserve"><value>Ver detalle</value></data>
+  <data name="Could not load the inventory alerts." xml:space="preserve"><value>No se pudieron cargar las alertas de inventario.</value></data>
   <data name="No inventory alerts" xml:space="preserve"><value>Sin alertas de inventario</value></data>
-  <data name="Panel" xml:space="preserve"><value>Panel</value></data>
   <data name="Add" xml:space="preserve"><value>Agregar</value></data>
   <data name="Adjustment" xml:space="preserve"><value>Ajuste</value></data>
   <data name="Agenda and online booking" xml:space="preserve"><value>Agenda y reservas en línea</value></data>
@@ -782,6 +779,7 @@
   <data name="Needs" xml:space="preserve"><value>Requiere</value></data>
   <data name="In database" xml:space="preserve"><value>En la base</value></data>
   <data name="Created {0} × {1}." xml:space="preserve"><value>Creados {0} × {1}.</value></data>
+  <data name="Menu" xml:space="preserve"><value>Menú</value></data>
   <data name="My profile" xml:space="preserve"><value>Mi perfil</value></data>
   <data name="Save changes" xml:space="preserve"><value>Guardar cambios</value></data>
   <data name="Changing..." xml:space="preserve"><value>Cambiando...</value></data>
@@ -1018,7 +1016,6 @@
   <data name="Drug or material" xml:space="preserve"><value>Fármaco o material</value></data>
   <data name="{0} ({1} in stock)" xml:space="preserve"><value>{0} ({1} en stock)</value></data>
   <data name="Add supply" xml:space="preserve"><value>Agregar insumo</value></data>
-  <data name="Home medical visits" xml:space="preserve"><value>Visitas médicas a domicilio</value></data>
   <data name="Search patient, record, location..." xml:space="preserve"><value>Buscar paciente, ficha, lugar...</value></data>
   <data name="Patient" xml:space="preserve"><value>Paciente</value></data>
   <data name="Location" xml:space="preserve"><value>Lugar</value></data>
