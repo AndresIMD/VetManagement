@@ -33,6 +33,7 @@
 /* The home page's links to each area: wide targets, in sentence case like the menu they repeat. */
 .home-area.mud-button-root {
   height: 96px;
+  font-size: 1.125rem;
   justify-content: flex-start;
   padding-inline: 24px;
   text-transform: none;
