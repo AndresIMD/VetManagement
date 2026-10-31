@@ -20,8 +20,8 @@
         {
             <MudItem xs="6" md="3">
                 @* The most used area this user can reach is the page's one accent. *@
-                <MudButton Href="@area.MainHref(_can)" Variant="Variant.Outlined" Color="@(area == _areas[0] ? Color.Primary : Color.Default)"
-                           StartIcon="@area.Icon" Size="Size.Large" FullWidth="true" Class="home-area">@L[area.Title]</MudButton>
+                <MudButton Href="@area.MainHref(_can)" Variant="Variant.Outlined" Color="Color.Default"
+                           StartIcon="@area.Icon" Size="Size.Large" FullWidth="true" Class="@(area == _areas[0] ? "home-area home-area-main" : "home-area")">@L[area.Title]</MudButton>
             </MudItem>
         }
     </MudGrid>
