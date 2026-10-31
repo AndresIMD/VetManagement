@@ -1,6 +1,6 @@
 # Guide: filling the database with test data
 
-The **Administration → Test Data** screen creates fake but realistic records (clients with a valid RUT, pets, exams,
+The **Settings → Test Data** screen creates fake but realistic records (clients with a valid RUT, pets, exams,
 exam requests, visits, vaccines, appointments, sales...) so the system can be tried without typing them by hand.
 
 > **Development only.** On a real clinic's server (Production) the screen says it is unavailable and the API answers
@@ -19,7 +19,7 @@ exam requests, visits, vaccines, appointments, sales...) so the system can be tr
 
 ## 2. Create the data
 
-Go to **Administration → Test Data**. Each kind of record has a row with:
+Go to **Settings → Test Data**. Each kind of record has a row with:
 
 - **Needs**: what must exist first (green ✔ = exists, red ✖ = missing).
 - **In database**: how many there are today.
@@ -45,7 +45,7 @@ Notes:
 
 - You can press *Create* several times: each time **adds** more records.
 - At most 1000 at a time.
-- **Appointments** uses the services and vets in *Agenda → Settings*; appointments go from 2 weeks ago to 2 weeks
+- **Appointments** uses the services and vets in *Settings → Agenda Settings*; appointments go from 2 weeks ago to 2 weeks
   ahead (some cancelled or no-shows, so the reports have a bit of everything).
 - **Sales** creates sales over the last 30 days (paid, partly paid or open).
 - No emails are sent, no stock is deducted and no audit is written: the records are inserted directly for testing.

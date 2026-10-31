@@ -15,11 +15,13 @@ namespace VetManagement.Staff.UI.Services.App;
 public static class StaffServices
 {
     /// <param name="apiBaseUrl">Empty when config.json has no valid URL: the layout then shows the error.</param>
-    public static IServiceCollection AddStaffServices(this IServiceCollection services, string? apiBaseUrl)
+    /// <param name="logoUrl">The clinic's logo; empty shows the product name.</param>
+    public static IServiceCollection AddStaffServices(this IServiceCollection services, string? apiBaseUrl, string? logoUrl = null)
     {
         services.AddMudServices();
         services.AddStaffLocalization();
         services.AddScoped<AppStatusService>();
+        services.AddSingleton(new AppBranding(logoUrl));
 
         var noApi = string.IsNullOrWhiteSpace(apiBaseUrl);
         services.AddSingleton(new AppBootstrapError(
