@@ -17,7 +17,7 @@ namespace VetManagement.Api.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.13")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -870,6 +870,9 @@ namespace VetManagement.Api.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<bool>("MovesStock")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -900,6 +903,31 @@ namespace VetManagement.Api.Migrations
                     b.HasIndex("PetId");
 
                     b.ToTable("ConsumptionSheets");
+                });
+
+            modelBuilder.Entity("VetManagement.Domain.Consumption.ConsumptionStock", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ItemId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SheetId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Units")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SheetId", "ItemId")
+                        .IsUnique();
+
+                    b.ToTable("ConsumptionStock");
                 });
 
             modelBuilder.Entity("VetManagement.Domain.Exams.Exam", b =>
@@ -1674,6 +1702,15 @@ namespace VetManagement.Api.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
                 });
 
+            modelBuilder.Entity("VetManagement.Domain.Consumption.ConsumptionStock", b =>
+                {
+                    b.HasOne("VetManagement.Domain.Consumption.ConsumptionSheet", null)
+                        .WithMany("Stock")
+                        .HasForeignKey("SheetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("VetManagement.Domain.Exams.ExamReport", b =>
                 {
                     b.OwnsOne("VetManagement.Domain.Exams.CriteriaTable", "Criteria", b1 =>
@@ -1973,6 +2010,8 @@ namespace VetManagement.Api.Migrations
             modelBuilder.Entity("VetManagement.Domain.Consumption.ConsumptionSheet", b =>
                 {
                     b.Navigation("Entries");
+
+                    b.Navigation("Stock");
                 });
 
             modelBuilder.Entity("VetManagement.Domain.Exams.ExamPerformed", b =>

@@ -280,4 +280,7 @@
   <data name="The name can have up to {0} characters." xml:space="preserve"><value>El nombre puede tener hasta {0} caracteres.</value></data>
   <data name="There is already a warehouse named '{0}'." xml:space="preserve"><value>Ya existe una bodega llamada '{0}'.</value></data>
   <data name="Unknown role '{0}'." xml:space="preserve"><value>Rol desconocido: '{0}'.</value></data>
+  <data name="Consumption sheet #{0} – {1}" xml:space="preserve"><value>Hoja de consumo #{0} – {1}</value></data>
+  <data name="Consumption sheet #{0} – {1} (returned)" xml:space="preserve"><value>Hoja de consumo #{0} – {1} (devuelto)</value></data>
+  <data name="Consumption sheet #{0} – {1} (deleted)" xml:space="preserve"><value>Hoja de consumo #{0} – {1} (eliminada)</value></data>
 </root>

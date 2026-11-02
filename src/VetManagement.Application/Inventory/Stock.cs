@@ -8,7 +8,8 @@ namespace VetManagement.Application.Inventory;
 
 /// <summary>
 /// Every stock change, always with a traceable movement. The automatic ones (sales, supplies used in visits, vaccines
-/// applied, exam kits) use the daily-use warehouse; the inventory screens move stock in a chosen warehouse or between two.
+/// applied, exam kits, consumption sheets) use the daily-use warehouse; the inventory screens move stock in a chosen
+/// warehouse or between two.
 /// <see cref="Item.Stock"/> stays the clinic's total, and the daily-use warehouse holds whatever no other warehouse does.
 /// </summary>
 public static class Stock

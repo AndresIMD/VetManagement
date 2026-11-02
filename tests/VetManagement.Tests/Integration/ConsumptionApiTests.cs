@@ -2,18 +2,51 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using VetManagement.Api.Authorization;
 using VetManagement.Contracts.Consumption;
 using VetManagement.Contracts.Inventory;
+using VetManagement.Domain.Consumption;
 using VetManagement.Domain.Enums;
+using VetManagement.Domain.Inventory;
+using VetManagement.Infrastructure.Data;
 
 namespace VetManagement.Tests.Integration;
 
-/// <summary>Consumption sheets: supplies recorded on a patient during a stay and charged at discharge.</summary>
+/// <summary>
+/// Consumption sheets: supplies recorded on a patient during a stay, charged at discharge and taken from the daily-use
+/// warehouse as they are used.
+/// </summary>
 public class ConsumptionApiTests(CustomWebAppFactory factory) : IClassFixture<CustomWebAppFactory>
 {
     private readonly HttpClient _supervisor = factory.CreateClientWithPermissions([.. Permissions.ForRoles([Permissions.ROLES.INVENTORY, Permissions.ROLES.SUPERVISOR])]);
     private readonly HttpClient _staff = factory.CreateClientWithPermissions([.. Permissions.ForRole(Permissions.ROLES.CLINICAL)]);
+
+    /// <summary>Staff who run the lab and the pharmacy: both roles, as one clinic has them.</summary>
+    private readonly HttpClient _lab = factory.CreateClientWithPermissions([.. Permissions.ForRoles([Permissions.ROLES.LABORATORY, Permissions.ROLES.INVENTORY])]);
+
+    private Task<T> WithDbAsync<T>(Func<AppDbContext, Task<T>> work) => ExamReportStockTests.WithDbAsync(factory, work);
+
+    /// <summary>An item with <paramref name="stock"/> units, all in the daily-use warehouse.</summary>
+    private Task<int> StockedItemAsync(string name, int stock, int sellPrice = 1000) => WithDbAsync(async db =>
+    {
+        var item = new Item($"{name} {Guid.NewGuid():N}", ItemType.Material, Guid.NewGuid().ToString("N")[..12], null, stock, sellPrice);
+        db.Items.Add(item);
+        await db.SaveChangesAsync();
+        return item.Id;
+    });
+
+    private Task<int> StockOfAsync(int itemId) => WithDbAsync(async db => (await db.Items.AsNoTracking().FirstAsync(i => i.Id == itemId)).Stock);
+
+    private Task<List<InventoryMovement>> MovementsOfAsync(int itemId)
+        => WithDbAsync(db => db.InventoryMovements.AsNoTracking().Where(m => m.ItemId == itemId).OrderBy(m => m.Id).ToListAsync());
+
+    private async Task PricingAsync(int itemId, ConsumptionCharge charge, decimal? containerMl = null, int? pricePerMl = null)
+        => (await _supervisor.PutAsJsonAsync("/api/consumption-sheets/pricing", new ConsumptionPricingRequest
+            { ItemId = itemId, Charge = charge, ContainerMl = containerMl, PricePerMl = pricePerMl })).EnsureSuccessStatusCode();
+
+    private async Task<int> OpenAsync(string patient)
+        => await IdAsync(await _lab.PostAsJsonAsync("/api/consumption-sheets", new OpenConsumptionSheetRequest { PatientName = patient }));
 
     private async Task<int> ItemAsync(string name, ItemType type, int sellPrice)
     {
@@ -33,8 +66,104 @@ public class ConsumptionApiTests(CustomWebAppFactory factory) : IClassFixture<Cu
 
     private async Task<ConsumptionSheetDto> SheetAsync(int id) => (await _staff.GetFromJsonAsync<ConsumptionSheetDto>($"/api/consumption-sheets/{id}"))!;
 
-    private async Task<HttpResponseMessage> UseAsync(int sheetId, int itemId, decimal quantity)
-        => await _staff.PostAsJsonAsync($"/api/consumption-sheets/{sheetId}/entries", new AddConsumptionEntryRequest { ItemId = itemId, Quantity = quantity });
+    private async Task<HttpResponseMessage> UseAsync(int sheetId, int itemId, decimal quantity, HttpClient? client = null)
+        => await (client ?? _staff).PostAsJsonAsync($"/api/consumption-sheets/{sheetId}/entries", new AddConsumptionEntryRequest { ItemId = itemId, Quantity = quantity });
+
+    [Fact]
+    public async Task Sheet_TakesWholeUnitsAndEachContainerAsItStarts_AndGivesBackWhatARemovedUseNeeded()
+    {
+        var fentanyl = await StockedItemAsync("Fentanilo 10 mL", 5, 15000);
+        var syringe = await StockedItemAsync("Jeringa 3 mL", 20, 300);
+        var diazepam = await StockedItemAsync("Diazepam frasco", 3, 4000);
+        await PricingAsync(fentanyl, ConsumptionCharge.Container, containerMl: 10);
+        await PricingAsync(diazepam, ConsumptionCharge.PerMl, pricePerMl: 800);
+        var sheet = await OpenAsync("Toby");
+
+        (await UseAsync(sheet, fentanyl, 3, _lab)).EnsureSuccessStatusCode();
+        (await UseAsync(sheet, fentanyl, 4, _lab)).EnsureSuccessStatusCode();
+        (await UseAsync(sheet, syringe, 2, _lab)).EnsureSuccessStatusCode();
+        (await UseAsync(sheet, diazepam, 1.5m, _lab)).EnsureSuccessStatusCode();
+        (await StockOfAsync(fentanyl)).Should().Be(4, "3 + 4 mL come from the one ampoule opened");
+        (await StockOfAsync(syringe)).Should().Be(18);
+        (await StockOfAsync(diazepam)).Should().Be(3, "a bottle charged per mL is shared, and taken out by hand when opened");
+
+        (await _lab.PostAsync($"/api/consumption-sheets/{sheet}/items/{fentanyl}/discard-rest", null)).EnsureSuccessStatusCode();
+        (await StockOfAsync(fentanyl)).Should().Be(4, "throwing away the rest of an ampoule already taken moves nothing");
+        var secondAmpoule = await IdAsync(await UseAsync(sheet, fentanyl, 1, _lab));
+        (await StockOfAsync(fentanyl)).Should().Be(3);
+
+        (await _lab.DeleteAsync($"/api/consumption-sheets/{sheet}/entries/{secondAmpoule}")).EnsureSuccessStatusCode();
+        (await StockOfAsync(fentanyl)).Should().Be(4, "the use that opened the second ampoule was removed");
+        var movements = await MovementsOfAsync(fentanyl);
+        movements.Select(m => (m.Type, m.Quantity)).Should().Equal(
+            (InventoryMovementType.Egress, 1), (InventoryMovementType.Egress, 1), (InventoryMovementType.Ingress, 1));
+        movements.Should().OnlyContain(m => m.Reason!.Contains($"#{sheet} – TOBY") && m.WarehouseId == null);
+        (await SheetAsync(sheet)).Lines.Should().OnlyContain(l => l.StockPending == 0);
+    }
+
+    [Fact]
+    public async Task AUse_IsRecordedWhenTheDailyUseWarehouseIsShort_AndTakenOnceItHasThem()
+    {
+        // 5 units in all, 4 of them in a locked warehouse: 1 in the daily-use one.
+        var morphine = await StockedItemAsync("Morfina 1 mL", 5);
+        var locked = await WithDbAsync(async db =>
+        {
+            var warehouse = new Warehouse { Name = $"Locked {Guid.NewGuid():N}", Roles = [Permissions.ROLES.SUPERVISOR] };
+            db.Warehouses.Add(warehouse);
+            await db.SaveChangesAsync();
+            db.WarehouseStocks.Add(new WarehouseStock { WarehouseId = warehouse.Id, ItemId = morphine, Quantity = 4 });
+            await db.SaveChangesAsync();
+            return warehouse.Id;
+        });
+        var sheet = await OpenAsync("Max");
+
+        (await UseAsync(sheet, morphine, 3, _lab)).EnsureSuccessStatusCode();
+        (await StockOfAsync(morphine)).Should().Be(4, "only the daily-use unit is taken, never the locked ones");
+        (await SheetAsync(sheet)).Lines.Single().StockPending.Should().Be(2);
+        (await _lab.GetFromJsonAsync<List<ConsumptionSheetSummaryDto>>("/api/consumption-sheets"))!.Single(s => s.Id == sheet).StockPending.Should().Be(2);
+
+        // The head of the clinic hands out 2 from the locked warehouse; discharge takes them.
+        await WithDbAsync(async db =>
+        {
+            (await db.WarehouseStocks.SingleAsync(s => s.WarehouseId == locked && s.ItemId == morphine)).Quantity = 2;
+            return await db.SaveChangesAsync();
+        });
+        (await _lab.PostAsync($"/api/consumption-sheets/{sheet}/close", null)).EnsureSuccessStatusCode();
+        (await StockOfAsync(morphine)).Should().Be(2);
+        (await SheetAsync(sheet)).Lines.Single().StockPending.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task DeletingASheet_ReturnsWhatItTook()
+    {
+        var catheter = await StockedItemAsync("Catéter 22G", 10);
+        var sheet = await OpenAsync("Luna");
+        (await UseAsync(sheet, catheter, 3, _lab)).EnsureSuccessStatusCode();
+        (await StockOfAsync(catheter)).Should().Be(7);
+
+        (await _supervisor.DeleteAsync($"/api/consumption-sheets/{sheet}")).EnsureSuccessStatusCode();
+        (await StockOfAsync(catheter)).Should().Be(10);
+        (await MovementsOfAsync(catheter)).Last().Should().Match<InventoryMovement>(m => m.Type == InventoryMovementType.Ingress && m.Quantity == 3);
+    }
+
+    [Fact]
+    public async Task ASheetOpenedBeforeSheetsTookStock_MovesNothing()
+    {
+        var gauze = await StockedItemAsync("Gasa", 10);
+        var sheet = await WithDbAsync(async db =>
+        {
+            var old = new ConsumptionSheet { PatientName = "Kira", OpenedAtUtc = DateTime.UtcNow.AddDays(-1), MovesStock = false };
+            db.ConsumptionSheets.Add(old);
+            await db.SaveChangesAsync();
+            return old.Id;
+        });
+
+        (await UseAsync(sheet, gauze, 2, _lab)).EnsureSuccessStatusCode();
+        (await StockOfAsync(gauze)).Should().Be(10);
+        var dto = await SheetAsync(sheet);
+        dto.MovesStock.Should().BeFalse();
+        dto.Lines.Single().StockPending.Should().Be(0, "nothing is pending on a sheet that doesn't take stock");
+    }
 
     [Fact]
     public async Task Sheet_AddsUpUnitsMlAndAmpoules_AndClosesAtDischarge()

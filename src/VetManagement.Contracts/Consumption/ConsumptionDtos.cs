@@ -4,19 +4,22 @@ using VetManagement.Domain.Enums;
 namespace VetManagement.Contracts.Consumption;
 
 /// <summary>A sheet in the list: who, since when and what it adds up to so far.</summary>
+/// <param name="StockPending">Units its uses need that the daily-use warehouse didn't have when they were recorded.</param>
 public sealed record ConsumptionSheetSummaryDto(int Id, int? PetId, string PatientName, string? OwnerName, DateTime OpenedAtUtc,
-    DateTime? ClosedAtUtc, int EntryCount, int Total);
+    DateTime? ClosedAtUtc, int EntryCount, int Total, int StockPending);
 
 public sealed record ConsumptionEntryDto(int Id, int ItemId, string ItemName, ConsumptionCharge Charge, decimal Quantity, bool Discarded,
     string? Notes, DateTime UsedAtUtc, string? CreatedBy);
 
 /// <summary>What one item adds up to on the sheet (see ConsumptionSummary).</summary>
+/// <param name="StockPending">Units of it not taken from inventory yet: the daily-use warehouse had too few.</param>
 public sealed record ConsumptionLineDto(int ItemId, string ItemName, ConsumptionCharge Charge, decimal Given, decimal Discarded,
-    int Containers, decimal LeftMl, decimal? ContainerMl, int UnitPrice, int Total);
+    int Containers, decimal LeftMl, decimal? ContainerMl, int UnitPrice, int Total, int StockPending);
 
+/// <param name="MovesStock">The sheet takes its uses from inventory; false on sheets opened before sheets did.</param>
 public sealed record ConsumptionSheetDto(int Id, int? PetId, string PatientName, string? OwnerName, string? Notes,
     DateTime OpenedAtUtc, string? OpenedBy, DateTime? ClosedAtUtc, string? ClosedBy,
-    List<ConsumptionEntryDto> Entries, List<ConsumptionLineDto> Lines, int Total);
+    List<ConsumptionEntryDto> Entries, List<ConsumptionLineDto> Lines, int Total, bool MovesStock);
 
 /// <summary>A registered pet (<see cref="PetId"/>) or a patient typed in.</summary>
 public sealed class OpenConsumptionSheetRequest
