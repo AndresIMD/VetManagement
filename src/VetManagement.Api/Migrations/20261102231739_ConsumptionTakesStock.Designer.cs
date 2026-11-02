@@ -12,7 +12,7 @@ using VetManagement.Infrastructure.Data;
 namespace VetManagement.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261102230416_ConsumptionTakesStock")]
+    [Migration("20261102231739_ConsumptionTakesStock")]
     partial class ConsumptionTakesStock
     {
         /// <inheritdoc />
@@ -897,6 +897,9 @@ namespace VetManagement.Api.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<int?>("PetId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StockPending")
                         .HasColumnType("int");
 
                     b.HasKey("Id");

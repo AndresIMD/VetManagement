@@ -28,9 +28,14 @@ little on the same patient is taken once, when it's opened; throwing away its re
 take nothing: the bottle is shared by several patients, so it's taken out by hand when one is opened. The sheet keeps
 what it took per item (`ConsumptionStock`) and, after every change, brings it in line with what its uses need: removing a
 use returns what no remaining use needs, deleting the sheet returns everything. A use is never refused for want of
-stock, since losing the charge would be worse: what the daily-use warehouse can't cover stays pending on the sheet (shown
-on it and in the sheets list) and is taken on the sheet's next change, discharge included. Sheets opened before this
-existed (`MovesStock` false) move nothing, so their uses are still taken out by hand.
+stock, since losing the charge would be worse: what the daily-use warehouse can't cover stays pending on the sheet and is
+taken on the sheet's next change, discharge and reopening included. The sheet keeps the units it still owes
+(`StockPending`), so the sheets list shows it until they are taken, discharged or not; a discharged one is settled by a
+supervisor reopening it and discharging it again once the warehouse has them. Sheets opened before this existed
+(`MovesStock` false) move nothing, so their uses are still taken out by hand.
+
+How an item is charged can't change (charge type, or container size) while a sheet not discharged yet uses it: the sheet
+would add up the earlier uses again, changing both the charge and what it took from stock. Prices can.
 
 A use that the daily-use warehouse can't cover is refused with the warehouses to ask, by name only ("Only 2 of 'X'
 left in Daily use; ask Back storeroom for more"). The inventory screens move stock in a chosen warehouse (adjustment,

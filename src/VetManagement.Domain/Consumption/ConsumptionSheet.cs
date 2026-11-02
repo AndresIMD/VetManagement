@@ -21,6 +21,12 @@ public class ConsumptionSheet : Entity<int>
     /// <summary>Units of each item the sheet has taken from the daily-use warehouse so far.</summary>
     public List<ConsumptionStock> Stock { get; set; } = [];
 
+    /// <summary>
+    /// Units its uses need that the daily-use warehouse hasn't covered yet, kept by every change of the sheet so the list can
+    /// show a discharged sheet that still owes some.
+    /// </summary>
+    public int StockPending { get; set; }
+
     /// <summary>Units of the item the sheet has taken from inventory.</summary>
     public int TakenOf(int itemId) => Stock.FirstOrDefault(s => s.ItemId == itemId)?.Units ?? 0;
 

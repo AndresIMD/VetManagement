@@ -17,6 +17,13 @@ namespace VetManagement.Api.Migrations
                 nullable: false,
                 defaultValue: false);
 
+            migrationBuilder.AddColumn<int>(
+                name: "StockPending",
+                table: "ConsumptionSheets",
+                type: "int",
+                nullable: false,
+                defaultValue: 0);
+
             migrationBuilder.CreateTable(
                 name: "ConsumptionStock",
                 columns: table => new
@@ -53,6 +60,10 @@ namespace VetManagement.Api.Migrations
 
             migrationBuilder.DropColumn(
                 name: "MovesStock",
+                table: "ConsumptionSheets");
+
+            migrationBuilder.DropColumn(
+                name: "StockPending",
                 table: "ConsumptionSheets");
         }
     }

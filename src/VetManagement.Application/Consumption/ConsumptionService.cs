@@ -253,10 +253,13 @@ public class ConsumptionService(IUnitOfWork unitOfWork, AuditService audit, Time
             return Invalid(Texts.T("Write the price of one mL."));
 
         var pricing = (await unitOfWork.ConsumptionPricings.FindAsync(p => p.ItemId == itemId)).FirstOrDefault();
+        var size = charge == ConsumptionCharge.Container ? Math.Round(containerMl!.Value, 2) : (decimal?)null;
+        if (ChangesHowUsesAddUp(pricing, charge, size) && await unitOfWork.ConsumptionSheets.IsOnOpenSheetAsync(itemId))
+            return Invalid(Texts.T("'{0}' is on sheets not discharged yet: change how it's charged once they are.", item.Name));
         var isNew = pricing is null;
         pricing ??= new ConsumptionPricing { ItemId = itemId };
         pricing.Charge = charge;
-        pricing.ContainerMl = charge == ConsumptionCharge.Container ? Math.Round(containerMl!.Value, 2) : null;
+        pricing.ContainerMl = size;
         pricing.PricePerMl = charge == ConsumptionCharge.PerMl ? pricePerMl : null;
         pricing.Controlled = controlled;
         pricing.UpdatedAtUtc = clock.GetUtcNow().UtcDateTime;
@@ -277,6 +280,9 @@ public class ConsumptionService(IUnitOfWork unitOfWork, AuditService audit, Time
         var pricing = (await unitOfWork.ConsumptionPricings.FindAsync(p => p.ItemId == itemId)).FirstOrDefault();
         if (pricing is null)
             return new ConsumptionResult(ConsumptionStatus.NotFound);
+        if (ChangesHowUsesAddUp(pricing, ConsumptionCharge.Unit, null) && await unitOfWork.ConsumptionSheets.IsOnOpenSheetAsync(itemId))
+            return Invalid(Texts.T("'{0}' is on sheets not discharged yet: change how it's charged once they are.",
+                (await unitOfWork.Items.GetByIdAsNoTrackingAsync(itemId))?.Name ?? string.Empty));
         unitOfWork.ConsumptionPricings.Remove(pricing);
         await unitOfWork.SaveChangesAsync();
         await audit.LogAsync(nameof(ConsumptionPricing), pricing.Id, AuditActionType.Delete, $"Item {itemId}", userName);
@@ -360,8 +366,17 @@ public class ConsumptionService(IUnitOfWork unitOfWork, AuditService audit, Time
             else if (units > 0)
                 sheet.Stock.Add(new ConsumptionStock { SheetId = sheet.Id, ItemId = itemId, Units = units });
         }
+        sheet.StockPending = needed.Sum(n => Math.Max(n.Value - sheet.TakenOf(n.Key), 0));
         return moved;
     }
+
+    /// <summary>
+    /// A new charge or container size makes an open sheet add up the item's earlier uses again (its line follows the latest
+    /// use), which would change both what it charges and what it took from stock, so it waits until those sheets are discharged.
+    /// </summary>
+    private static bool ChangesHowUsesAddUp(ConsumptionPricing? current, ConsumptionCharge charge, decimal? containerMl)
+        => (current?.Charge ?? ConsumptionCharge.Unit) != charge
+           || (charge == ConsumptionCharge.Container && current?.ContainerMl != containerMl);
 
     /// <summary>The movement's reason: the sheet and its patient in capitals ("Consumption sheet #12 – TOBY"), cut to fit.</summary>
     private static string StockReason(ConsumptionSheet sheet, string format)

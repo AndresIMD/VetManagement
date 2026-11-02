@@ -19,7 +19,7 @@ public class ConsumptionSheetsController(ConsumptionService service) : ApiContro
         {
             var summary = ConsumptionSummary.For(s);
             return new ConsumptionSheetSummaryDto(s.Id, s.PetId, s.PatientName, s.OwnerName, s.OpenedAtUtc, s.ClosedAtUtc, s.Entries.Count,
-                summary.Total, summary.Lines.Sum(s.PendingOf));
+                summary.Total, s.StockPending);
         }).ToList());
 
     [HttpGet("{id:int}")]

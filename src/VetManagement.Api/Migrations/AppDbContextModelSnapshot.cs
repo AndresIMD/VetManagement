@@ -896,6 +896,9 @@ namespace VetManagement.Api.Migrations
                     b.Property<int?>("PetId")
                         .HasColumnType("int");
 
+                    b.Property<int>("StockPending")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ClosedAtUtc");

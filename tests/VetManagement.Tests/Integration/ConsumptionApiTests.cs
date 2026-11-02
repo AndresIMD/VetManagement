@@ -166,6 +166,46 @@ public class ConsumptionApiTests(CustomWebAppFactory factory) : IClassFixture<Cu
     }
 
     [Fact]
+    public async Task ADischargedSheetThatStillOwesStock_StaysInTheList_UntilASupervisorSettlesIt()
+    {
+        var ketamine = await StockedItemAsync("Ketamina 10 mL", 1);
+        var sheet = await OpenAsync("Rocky");
+        (await UseAsync(sheet, ketamine, 2, _lab)).EnsureSuccessStatusCode();
+        (await _lab.PostAsync($"/api/consumption-sheets/{sheet}/close", null)).EnsureSuccessStatusCode();
+
+        var listed = (await _lab.GetFromJsonAsync<List<ConsumptionSheetSummaryDto>>("/api/consumption-sheets"))!.Single(s => s.Id == sheet);
+        listed.Should().Match<ConsumptionSheetSummaryDto>(s => s.ClosedAtUtc != null && s.StockPending == 1, "it owes one unit");
+
+        await WithDbAsync(async db =>
+        {
+            (await db.Items.SingleAsync(i => i.Id == ketamine)).Stock = 3;
+            return await db.SaveChangesAsync();
+        });
+        (await _supervisor.PostAsync($"/api/consumption-sheets/{sheet}/reopen", null)).EnsureSuccessStatusCode();
+        (await _supervisor.PostAsync($"/api/consumption-sheets/{sheet}/close", null)).EnsureSuccessStatusCode();
+        (await StockOfAsync(ketamine)).Should().Be(2);
+        (await _lab.GetFromJsonAsync<List<ConsumptionSheetSummaryDto>>("/api/consumption-sheets"))!.Should().NotContain(s => s.Id == sheet,
+            "a discharged sheet that owes nothing leaves the default list");
+    }
+
+    [Fact]
+    public async Task HowAnItemIsCharged_WaitsForTheSheetsUsingItToBeDischarged()
+    {
+        var propofol = await StockedItemAsync("Propofol 20 mL", 10);
+        var sheet = await OpenAsync("Nala");
+        (await UseAsync(sheet, propofol, 1, _lab)).EnsureSuccessStatusCode();
+
+        var byContainer = new ConsumptionPricingRequest { ItemId = propofol, Charge = ConsumptionCharge.Container, ContainerMl = 20 };
+        var refused = await _supervisor.PutAsJsonAsync("/api/consumption-sheets/pricing", byContainer);
+        refused.StatusCode.Should().Be(HttpStatusCode.BadRequest, "the open sheet would add up its unit as mL");
+        (await refused.Content.ReadAsStringAsync()).Should().Contain("not discharged yet");
+
+        (await _lab.PostAsync($"/api/consumption-sheets/{sheet}/close", null)).EnsureSuccessStatusCode();
+        (await _supervisor.PutAsJsonAsync("/api/consumption-sheets/pricing", byContainer)).EnsureSuccessStatusCode();
+        (await StockOfAsync(propofol)).Should().Be(9, "the discharged sheet keeps what it took");
+    }
+
+    [Fact]
     public async Task Sheet_AddsUpUnitsMlAndAmpoules_AndClosesAtDischarge()
     {
         var fentanyl = await ItemAsync("Fentanilo 10 mL", ItemType.Drug, 15000);

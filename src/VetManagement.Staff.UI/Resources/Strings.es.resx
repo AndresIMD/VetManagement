@@ -1367,4 +1367,5 @@
   <data name="Delete this sheet and everything recorded on it? What it took from inventory goes back. This can't be undone." xml:space="preserve"><value>¿Eliminar esta hoja y todo lo registrado en ella? Lo que descontó vuelve al inventario. No se puede deshacer.</value></data>
   <data name="{0} to take from inventory" xml:space="preserve"><value>Faltan {0} por descontar</value></data>
   <data name="The item says {0} mL per container. Use that size, or each container started takes the wrong number of units from inventory." xml:space="preserve"><value>El producto dice {0} mL por envase. Usa ese tamaño, o cada envase que se empiece descontará una cantidad equivocada del inventario.</value></data>
+  <data name="{0} were left untaken from inventory: the daily-use warehouse had none. Once it has them, a supervisor can reopen the sheet and discharge it again to take them." xml:space="preserve"><value>Quedaron {0} sin descontar del inventario: la bodega de uso diario no tenía. Cuando haya, un supervisor puede reabrir la hoja y darla de alta otra vez para descontarlos.</value></data>
 </root>

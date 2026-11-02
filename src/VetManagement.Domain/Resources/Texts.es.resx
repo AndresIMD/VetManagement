@@ -283,4 +283,5 @@
   <data name="Consumption sheet #{0} – {1}" xml:space="preserve"><value>Hoja de consumo #{0} – {1}</value></data>
   <data name="Consumption sheet #{0} – {1} (returned)" xml:space="preserve"><value>Hoja de consumo #{0} – {1} (devuelto)</value></data>
   <data name="Consumption sheet #{0} – {1} (deleted)" xml:space="preserve"><value>Hoja de consumo #{0} – {1} (eliminada)</value></data>
+  <data name="'{0}' is on sheets not discharged yet: change how it's charged once they are." xml:space="preserve"><value>'{0}' está en hojas que aún no se dan de alta: cambia cómo se cobra cuando se den de alta.</value></data>
 </root>
