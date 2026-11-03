@@ -131,6 +131,19 @@ public class AnalyserValueTests
     }
 
     [Fact]
+    public void AParameterLeftEmpty_PrintsAsNotMeasured_AndCountsForNothing()
+    {
+        var template = Suppression(Rule("Sin supresión", new RuleCondition { Code = "8h", Operator = RuleOperator.GreaterOrEqual, Value = 1.4m }));
+        template.Parameters[0].Bands = [new InterpretationBand { Min = 1, Label = "Alto" }];
+
+        var results = template.ResultsFor(new Dictionary<string, string> { ["basal"] = "2.0", ["4h"] = "  " }, Species.Dog);
+
+        results.Select(r => (r.Code, r.Value)).Should().Equal(("basal", "2.0"), ("4h", ExamReportResult.NotMeasured), ("8h", ExamReportResult.NotMeasured));
+        results.Skip(1).Should().OnlyContain(r => !r.Abnormal && r.Direction == ResultDirection.None && r.Band == null);
+        template.Interpret(results).Should().Be("Alto", "one value measured reads as a one-value exam: its label alone");
+    }
+
+    [Fact]
     public void Rules_IgnoreAValueNotMeasured()
     {
         var template = Suppression(Rule("Sin supresión", new RuleCondition { Code = "8h", Operator = RuleOperator.GreaterOrEqual, Value = 1.4m }));

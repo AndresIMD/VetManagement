@@ -545,20 +545,24 @@
         _ => null
     };
 
-    /// <summary>Explains only the marks this report prints.</summary>
+    /// <summary>Explains only the marks this report prints, and "-" when a parameter couldn't be measured.</summary>
     private string? Legend
     {
         get
         {
+            var notMeasured = Report.Results.Any(r => r.Kind.TakesValue() && r.Value == ExamReportResult.NotMeasured)
+                ? L["- Not measured"].Value
+                : null;
             if (Qualitative)
-                return null; // the red result speaks for itself
+                return notMeasured; // the red result speaks for itself
             var marks = Report.Results.Select(Mark).ToHashSet();
             var parts = new[]
             {
                 marks.Contains("↑") ? L["↑ Above the range"].Value : null,
                 marks.Contains("↓") ? L["↓ Below the range"].Value : null,
                 marks.Contains("*") ? L["* Outside the reference"].Value : null,
-                Report.Results.Any(r => r.Abnormal) ? L["In red: abnormal result"].Value : null
+                Report.Results.Any(r => r.Abnormal) ? L["In red: abnormal result"].Value : null,
+                notMeasured
             }.OfType<string>().ToList();
             return parts.Count == 0 ? null : string.Join(" · ", parts);
         }

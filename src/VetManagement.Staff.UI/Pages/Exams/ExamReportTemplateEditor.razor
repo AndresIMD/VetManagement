@@ -11,6 +11,7 @@
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mx-auto px-2 mt-8">
     <PageHeader Title="@L["Report template"]" Subtitle="@_examName" Icon="@Icons.Material.Filled.Tune" />
+    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" Href="exams" Class="mb-3">@L["Exam Catalog"]</MudButton>
 
     @if (_template is null)
     {
@@ -636,9 +637,11 @@
     {
         get
         {
+            // A parameter without a sample shows as the report prints one left empty: "-".
             var values = _template!.Parameters.Where(p => p.TakesValue && !string.IsNullOrWhiteSpace(p.Code))
                 .GroupBy(p => p.Code, StringComparer.OrdinalIgnoreCase)
-                .ToDictionary(g => g.Key, g => _samples.GetValueOrDefault(g.First()) is { Length: > 0 } value ? value : "—", StringComparer.OrdinalIgnoreCase);
+                .Where(g => _samples.GetValueOrDefault(g.First()) is { Length: > 0 })
+                .ToDictionary(g => g.Key, g => _samples[g.First()]!, StringComparer.OrdinalIgnoreCase);
             var results = _template.ResultsFor(values, _sampleSpecies);
             var report = ExamReportSheet.PlaceholderReport(_template.Title, _method,
                 results.Select(r => new ExamReportResultDto

@@ -194,10 +194,11 @@ public class ExamReportTemplate
         => Parameters.FirstOrDefault(p => string.Equals(p.Code, code, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
-    /// The printed lines for the values given, in the template's order. A section title prints above the first value of
-    /// its own (the parameters after it, up to the next title), and not at all when none of them has a value. A page
-    /// break is kept only between values (never first or last; several in a row count once), before a title that waits
-    /// for its first value.
+    /// The printed lines, in the template's order: every parameter prints, the ones without a value as
+    /// <see cref="ExamReportResult.NotMeasured"/> ("-"), since a template lists only what its report must show. A section
+    /// title prints above the first parameter of its own (the ones after it, up to the next title), so a title with none
+    /// doesn't print. A page break is kept only between parameters (never first or last; several in a row count once),
+    /// before a title that waits for its first parameter.
     /// </summary>
     public List<ExamReportResult> ResultsFor(IReadOnlyDictionary<string, string> values, Species species)
     {
@@ -209,8 +210,9 @@ public class ExamReportTemplate
                 section = parameter;
             else if (parameter.IsPageBreak)
                 pageBreak ??= parameter;
-            else if (values.TryGetValue(parameter.Code, out var value))
+            else
             {
+                var value = values.TryGetValue(parameter.Code, out var typed) && !string.IsNullOrWhiteSpace(typed) ? typed : ExamReportResult.NotMeasured;
                 if (pageBreak is not null && results.Count > 0)
                     results.Add(new ExamReportResult { Code = pageBreak.Code, Kind = ReportParameterKind.PageBreak });
                 if (section is not null)

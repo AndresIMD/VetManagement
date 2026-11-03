@@ -65,13 +65,13 @@ public class ExamReport : Entity<int>
 
     public bool StockDeducted => StockItemId is not null;
 
-    /// <summary>The band labels: just the label for a one-parameter exam, "Name: label" lines otherwise.</summary>
+    /// <summary>The band labels: just the label when one value was measured, "Name: label" lines otherwise.</summary>
     public static string? InterpretationFrom(IReadOnlyList<ExamReportResult> results)
     {
         var labelled = results.Where(r => !string.IsNullOrWhiteSpace(r.Band)).ToList();
         if (labelled.Count == 0)
             return null;
-        return results.Count(r => r.Kind.TakesValue()) == 1
+        return results.Count(r => r.Kind.TakesValue() && r.Value != ExamReportResult.NotMeasured) == 1
             ? labelled[0].Band
             : string.Join("\n", labelled.Select(r => $"{r.Name}: {r.Band}"));
     }
@@ -94,6 +94,12 @@ public class ReportPatient
 /// <summary>One printed line: the parameter as it was configured when the report was saved, and its value.</summary>
 public class ExamReportResult
 {
+    /// <summary>
+    /// The value of a parameter left empty: every parameter of the template prints, and "-" says it couldn't be measured
+    /// (as analysers show it). Never flagged, drawn on a bar or used by the rules.
+    /// </summary>
+    public const string NotMeasured = "-";
+
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     /// <summary>

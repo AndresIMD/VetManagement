@@ -11,6 +11,9 @@
 <PageTitle>@L["Lab report"]</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-6">
+    @* Back to the list, to go on with the next report (also after saving a new one, when the browser's back is its form). *@
+    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" Href="exam-reports" Class="mb-2">@L["Lab Reports"]</MudButton>
+
     @if (_notFound)
     {
         <MudAlert Severity="Severity.Warning">@L["Report #{0} was not found.", Id]</MudAlert>

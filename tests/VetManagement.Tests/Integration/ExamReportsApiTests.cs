@@ -107,7 +107,7 @@ public class ExamReportsApiTests : IClassFixture<CustomWebAppFactory>
     }
 
     [Fact]
-    public async Task SectionTitles_PrintAboveTheirOwnResults_AndOnlyWhenOneOfThemHasAValue()
+    public async Task EveryParameterPrints_UnderItsSectionTitle_TheEmptyOnesAsNotMeasured()
     {
         var (petId, examId) = await AddPetAndExamAsync(Species.Dog);
         static ReportParameter Section(string code, string name) => new() { Code = code, Name = name, Kind = ReportParameterKind.Section };
@@ -125,9 +125,12 @@ public class ExamReportsApiTests : IClassFixture<CustomWebAppFactory>
             Values = new Dictionary<string, string> { ["ph"] = "7.33", ["pco2"] = "38.8", ["lac"] = "1.22" }
         });
 
-        report.Results.Select(r => (r.Kind, r.Name)).Should().Equal(
-            (ReportParameterKind.Section, "VALOR DE LA SANGRE Y EL GAS"), (ReportParameterKind.Number, "ph"), (ReportParameterKind.Number, "pco2"),
-            (ReportParameterKind.Section, "VALOR DE LOS METABOLITOS"), (ReportParameterKind.Number, "lac"));
+        // The template lists what its report must show: oximetry wasn't measured, so it prints with "-".
+        report.Results.Select(r => (r.Kind, r.Name, r.Value)).Should().Equal(
+            (ReportParameterKind.Section, "VALOR DE LA SANGRE Y EL GAS", ""), (ReportParameterKind.Number, "ph", "7.33"), (ReportParameterKind.Number, "pco2", "38.8"),
+            (ReportParameterKind.Section, "VALORES DE OXIMETRÍA", ""), (ReportParameterKind.Number, "hct", ExamReportResult.NotMeasured),
+            (ReportParameterKind.Section, "VALOR DE LOS METABOLITOS", ""), (ReportParameterKind.Number, "lac", "1.22"));
+        report.Results.Single(r => r.Name == "hct").Should().BeEquivalentTo(new { Abnormal = false, Direction = ResultDirection.None });
 
         var valueForATitle = await _employee.PostAsJsonAsync("/api/exam-reports", new
         {
