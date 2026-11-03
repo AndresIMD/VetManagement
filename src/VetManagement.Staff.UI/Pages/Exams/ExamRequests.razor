@@ -22,7 +22,7 @@
                 <MudTextFilterField @bind-Value="FilterText" Label="@L["Search by responsible..."]" />
             </MudItem>
             <MudItem xs="12" sm="6" md="3">
-                <MudNumericField T="int?" Label="@L["Pet ID"]" @bind-Value="FilterPetId" Variant="Variant.Outlined" />
+                <MudNumericField T="int?" Label="@L["Patient ID"]" @bind-Value="FilterPetId" Variant="Variant.Outlined" />
             </MudItem>
             <MudItem xs="12" sm="6" md="3">
                 <MudDateRangePicker @bind-DateRange="FilterRange" Label="@L["Date Range"]" Variant="Variant.Outlined" />
@@ -48,7 +48,7 @@
         <ToolBarContent></ToolBarContent>
         <HeaderContent>
             <MudTh style="width:12%">ID</MudTh>
-            <MudTh style="width:18%">@L["Pet"]</MudTh>
+            <MudTh style="width:18%">@L["Patient"]</MudTh>
             <MudTh style="width:18%">@L["Responsible"]</MudTh>
             <MudTh style="width:20%">@L["Date"]</MudTh>
             <MudTh style="width:22%">@L["Summary"]</MudTh>
@@ -56,7 +56,7 @@
         </HeaderContent>
         <RowTemplate Context="req">
             <MudTd DataLabel="ID">@req.Id</MudTd>
-            <MudTd DataLabel="@L["Pet"]">@req.PatientId</MudTd>
+            <MudTd DataLabel="@L["Patient"]">@req.PatientId</MudTd>
             <MudTd DataLabel="@L["Responsible"]">@req.Responsible</MudTd>
             <MudTd DataLabel="@L["Date"]">@req.Date.ToLocalTime().ToString("g")</MudTd>
             <MudTd DataLabel="@L["Summary"]">
@@ -187,7 +187,7 @@
         if (FilterPetId.HasValue)
             chips.Add(new FilterChipModel
             {
-                Label = L["Pet ID: {0}", FilterPetId].Value,
+                Label = L["Patient ID: {0}", FilterPetId].Value,
                 Color = Color.Secondary,
                 OnClear = () => FilterPetId =
             null
