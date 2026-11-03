@@ -12,8 +12,8 @@
 
     <MudPaper Class="pa-4 mb-3" Elevation="1">
         <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
-            <MudNumericField T="int?" Label="@L["Pet ID"]" Value="PetId" ValueChanged="OnPetChangedAsync" Min="1" HideSpinButtons="true" Clearable="true" Style="max-width:160px" />
-            <MudTextField T="string" Label="@L["Search"]" @bind-Value="_search" Immediate="true" Placeholder="@L["Pet, owner or exam"]" Style="max-width:280px" />
+            <MudNumericField T="int?" Label="@L["Patient ID"]" Value="PetId" ValueChanged="OnPetChangedAsync" Min="1" HideSpinButtons="true" Clearable="true" Style="max-width:160px" />
+            <MudTextField T="string" Label="@L["Search"]" @bind-Value="_search" Immediate="true" Placeholder="@L["Patient, owner or exam"]" Style="max-width:280px" />
             <MudSpacer />
             <AuthorizeView Policy="ExamsPerformed.Create">
                 <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.AddBox"
@@ -26,7 +26,7 @@
         <HeaderContent>
             <MudTh>@L["Received"]</MudTh>
             <MudTh>@L["Exam"]</MudTh>
-            <MudTh>@L["Pet"]</MudTh>
+            <MudTh>@L["Patient"]</MudTh>
             <MudTh>@L["Owner"]</MudTh>
             <MudTh>@L["Result"]</MudTh>
             <MudTh />
