@@ -45,6 +45,26 @@ public class AuditApiTests(CustomWebAppFactory factory) : IClassFixture<CustomWe
     }
 
     [Fact]
+    public async Task TheDateFilter_TakesUtcInstants_SoALocalDayEndsAtItsOwnMidnight()
+    {
+        // The log is in UTC. A clinic at UTC-3 asks for its 2 Nov as 03:00Z to 02:59Z the next day: an entry made at
+        // 22:30 local (01:30Z on 3 Nov) is that day's, one at 01:00 local on 3 Nov (04:00Z) is not.
+        var entity = $"Test{Guid.NewGuid():N}"[..20];
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            foreach (var (id, utc) in new[] { (1, new DateTime(2026, 11, 2, 23, 30, 0, DateTimeKind.Utc)), (2, new DateTime(2026, 11, 3, 1, 30, 0, DateTimeKind.Utc)),
+                                              (3, new DateTime(2026, 11, 3, 4, 0, 0, DateTimeKind.Utc)) })
+                db.AuditLogs.Add(new AuditLog { EntityName = entity, EntityId = id, Action = AuditActionType.Egress, User = "test", Date = utc });
+            await db.SaveChangesAsync();
+        }
+
+        var page = await PageAsync($"entityName={entity}&from=2026-11-02T03:00:00.0000000Z&to=2026-11-03T02:59:59.9999999Z");
+
+        page["items"]!.AsArray().Select(i => i!["entityId"]!.GetValue<int>()).Should().BeEquivalentTo([1, 2]);
+    }
+
+    [Fact]
     public async Task PageSize_IsCapped_SoNoRequestReadsAWholeTable()
     {
         var entity = await SeedAsync(1, AuditActionType.Edit);

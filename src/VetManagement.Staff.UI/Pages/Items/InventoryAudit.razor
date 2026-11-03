@@ -52,7 +52,7 @@
             <MudTh>@L["Changes"]</MudTh>
         </HeaderContent>
         <RowTemplate>
-            <MudTd DataLabel="@L["Date"]">@context.Date.ToString("dd/MM/yyyy HH:mm")</MudTd>
+            <MudTd DataLabel="@L["Date"]">@context.Date.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</MudTd>
             <MudTd DataLabel="@L["Action"]">
                 <MudChip T="string" Size="Size.Small" Color="GetActionColor(context.Action)" Variant="Variant.Text">
                     @context.Action.ToText()
@@ -163,7 +163,7 @@
 
     /// <summary>
     /// One page from the API, which filters and pages the log. The item name is matched here against the item list and
-    /// sent as the ids of the matching items.
+    /// sent as the ids of the matching items. The log is in UTC: the dates picked are whole local days, sent as UTC.
     /// </summary>
     private async Task<TableData<AuditLog>> LoadServerData(TableState state, CancellationToken ct)
     {
@@ -182,8 +182,8 @@
             entityName: "Item",
             actions: FilterActions,
             user: string.IsNullOrWhiteSpace(FilterResponsible) ? null : FilterResponsible,
-            from: FilterDateRange?.Start?.Date,
-            to: FilterDateRange?.End?.Date.AddDays(1).AddTicks(-1),
+            from: FilterDateRange?.Start?.Date.ToUniversalTime(),
+            to: FilterDateRange?.End?.Date.AddDays(1).AddTicks(-1).ToUniversalTime(),
             entityIds: itemIds,
             ct: ct);
 

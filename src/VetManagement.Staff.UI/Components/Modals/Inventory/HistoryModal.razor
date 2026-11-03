@@ -31,7 +31,7 @@
                     <MudTh>@L["Responsible"]</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd DataLabel="@L["Date"]">@context.Date.ToString("dd/MM/yyyy")</MudTd>
+                    <MudTd DataLabel="@L["Date"]">@context.Date.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</MudTd>
                     <MudTd DataLabel="@L["Type"]">@context.Type.ToText()</MudTd>
                     @if (ShowsWarehouse)
                     {
