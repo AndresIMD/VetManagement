@@ -331,7 +331,7 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
         {
             var pet = await unitOfWork.Pets.GetByIdAsNoTrackingAsync(petId);
             if (pet is null)
-                return Invalid(Texts.T("The pet doesn't exist."));
+                return Invalid(Texts.T("The patient doesn't exist."));
             report.PetId = pet.Id;
             report.Patient = null;
             species = pet.Species;
@@ -353,7 +353,7 @@ public class ExamReportService(IUnitOfWork unitOfWork, ExamReportSettingsService
             species = patient.Species;
         }
         else
-            return Invalid(Texts.T("Choose a registered pet or type the patient's name."));
+            return Invalid(Texts.T("Choose a registered patient or type the patient's name."));
 
         var exam = await unitOfWork.Exams.GetByIdAsNoTrackingAsync(input.ExamId);
         if (exam is null)

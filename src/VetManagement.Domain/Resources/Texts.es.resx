@@ -52,7 +52,7 @@
   <data name="Cancelled by the client" xml:space="preserve"><value>Cancelada por el cliente</value></data>
   <data name="Canine multivalent (6- or 8-way)" xml:space="preserve"><value>Óctuple / Séxtuple</value></data>
   <data name="Cash" xml:space="preserve"><value>Efectivo</value></data>
-  <data name="Choose a registered pet or type the patient's name." xml:space="preserve"><value>Elige una mascota registrada o escribe el nombre del paciente.</value></data>
+  <data name="Choose a registered patient or type the patient's name." xml:space="preserve"><value>Elige un paciente registrado o escribe el nombre del paciente.</value></data>
   <data name="ClientPortal.LinkValidMinutes must be between 5 and 1440." xml:space="preserve"><value>ClientPortal.LinkValidMinutes debe estar entre 5 y 1440.</value></data>
   <data name="ClinicName is required (clients see it in emails)." xml:space="preserve"><value>ClinicName es obligatorio (los clientes lo ven en los correos).</value></data>
   <data name="Colours must be written as #RRGGBB." xml:space="preserve"><value>Los colores deben escribirse como #RRGGBB.</value></data>
@@ -172,7 +172,7 @@
   <data name="The link works for {0} minutes. If you didn't ask for it, ignore this email." xml:space="preserve"><value>El enlace funciona durante {0} minutos. Si no lo pediste, ignora este correo.</value></data>
   <data name="The logo must be 10–60 mm high and 10–150 mm wide." xml:space="preserve"><value>El logo debe medir 10–60 mm de alto y 10–150 mm de ancho.</value></data>
   <data name="The next dose must be after the application date." xml:space="preserve"><value>La próxima dosis debe ser posterior a la fecha de aplicación.</value></data>
-  <data name="The pet doesn't exist." xml:space="preserve"><value>La mascota no existe.</value></data>
+  <data name="The patient doesn't exist." xml:space="preserve"><value>El paciente no existe.</value></data>
   <data name="The phone number is not valid." xml:space="preserve"><value>El teléfono no es válido.</value></data>
   <data name="The price can't be negative." xml:space="preserve"><value>El precio no puede ser negativo.</value></data>
   <data name="The reception date is required." xml:space="preserve"><value>La fecha de recepción es obligatoria.</value></data>

@@ -45,7 +45,7 @@ public class ConsumptionService(IUnitOfWork unitOfWork, AuditService audit, Time
         {
             var pet = await unitOfWork.Pets.GetByIdAsNoTrackingAsync(id);
             if (pet is null)
-                return Invalid(Texts.T("The pet doesn't exist."));
+                return Invalid(Texts.T("The patient doesn't exist."));
             var owner = await unitOfWork.Clients.GetByIdAsNoTrackingAsync(pet.OwnerId);
             sheet.PetId = pet.Id;
             sheet.PatientName = pet.Name;
@@ -57,7 +57,7 @@ public class ConsumptionService(IUnitOfWork unitOfWork, AuditService audit, Time
             sheet.OwnerName = Clean(ownerName);
         }
         else
-            return Invalid(Texts.T("Choose a registered pet or type the patient's name."));
+            return Invalid(Texts.T("Choose a registered patient or type the patient's name."));
 
         await unitOfWork.ConsumptionSheets.AddAsync(sheet);
         await unitOfWork.SaveChangesAsync();

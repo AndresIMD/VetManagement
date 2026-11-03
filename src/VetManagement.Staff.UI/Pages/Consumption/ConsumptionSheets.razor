@@ -21,13 +21,13 @@
             <MudText Typo="Typo.h6" Class="mb-2">@L["New sheet"]</MudText>
             <MudRadioGroup T="bool" @bind-Value="_registered">
                 <MudRadio T="bool" Value="false">@L["Patient typed in"]</MudRadio>
-                <MudRadio T="bool" Value="true">@L["Registered pet"]</MudRadio>
+                <MudRadio T="bool" Value="true">@L["Registered patient"]</MudRadio>
             </MudRadioGroup>
             <MudGrid Spacing="2">
                 @if (_registered)
                 {
                     <MudItem xs="12" sm="4">
-                        <MudNumericField T="int?" Label="@L["Pet ID"]" Value="_petId" ValueChanged="OnPetChangedAsync" Min="1" HideSpinButtons="true" />
+                        <MudNumericField T="int?" Label="@L["Patient ID"]" Value="_petId" ValueChanged="OnPetChangedAsync" Min="1" HideSpinButtons="true" />
                     </MudItem>
                     <MudItem xs="12" sm="8" Class="d-flex align-center">
                         @if (_petName is not null)
@@ -36,7 +36,7 @@
                         }
                         else if (_petId is not null)
                         {
-                            <MudText Color="Color.Warning">@L["Pet #{0} was not found.", _petId]</MudText>
+                            <MudText Color="Color.Warning">@L["Patient #{0} was not found.", _petId]</MudText>
                         }
                     </MudItem>
                 }
