@@ -6,11 +6,32 @@ namespace VetManagement.Domain.Consumption;
 /// <summary>
 /// The supplies used on one patient during a stay (e.g. hospitalisation), recorded as they are given and added up at
 /// discharge to charge them. The patient is a registered pet or a name typed in, like the clinic's paper sheet.
-/// It never moves stock: the inventory is adjusted as usual.
+/// A sheet that <see cref="MovesStock"/> takes what it records from the daily-use warehouse (<see cref="ConsumptionLine.StockUnits"/>).
 /// </summary>
 public class ConsumptionSheet : Entity<int>
 {
     public ConsumptionSheet() : base(0) { }
+
+    /// <summary>
+    /// Takes its uses from inventory: every sheet opened since sheets do. Older ones never move stock, so what they record is
+    /// still taken out by hand.
+    /// </summary>
+    public bool MovesStock { get; set; }
+
+    /// <summary>Units of each item the sheet has taken from the daily-use warehouse so far.</summary>
+    public List<ConsumptionStock> Stock { get; set; } = [];
+
+    /// <summary>
+    /// Units its uses need that the daily-use warehouse hasn't covered yet, kept by every change of the sheet so the list can
+    /// show a discharged sheet that still owes some.
+    /// </summary>
+    public int StockPending { get; set; }
+
+    /// <summary>Units of the item the sheet has taken from inventory.</summary>
+    public int TakenOf(int itemId) => Stock.FirstOrDefault(s => s.ItemId == itemId)?.Units ?? 0;
+
+    /// <summary>Units of the line not taken yet: the daily-use warehouse had too few when they were used.</summary>
+    public int PendingOf(ConsumptionLine line) => MovesStock ? Math.Max(line.StockUnits - TakenOf(line.ItemId), 0) : 0;
 
     /// <summary>A registered pet; null when the patient was typed in.</summary>
     public int? PetId { get; set; }
@@ -64,6 +85,21 @@ public class ConsumptionEntry : Entity<int>
 
     public DateTime UsedAtUtc { get; set; }
     public string? CreatedBy { get; set; }
+}
+
+/// <summary>
+/// Units of one item a sheet has taken from the daily-use warehouse. They go back when a removed use no longer needs them or
+/// the sheet is deleted.
+/// </summary>
+public class ConsumptionStock : Entity<int>
+{
+    public ConsumptionStock() : base(0) { }
+
+    public int SheetId { get; set; }
+
+    public int ItemId { get; set; }
+
+    public int Units { get; set; }
 }
 
 /// <summary>How one inventory item is charged on consumption sheets; items without one are charged per unit at their sale price.</summary>

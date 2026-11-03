@@ -100,6 +100,10 @@
                         {
                             <MudChip T="string" Size="Size.Small" Color="Color.Success">@L["Open"]</MudChip>
                         }
+                        @if (context.StockPending > 0)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined">@L["{0} to take from inventory", context.StockPending]</MudChip>
+                        }
                     </MudTd>
                 </RowTemplate>
                 <NoRecordsContent>

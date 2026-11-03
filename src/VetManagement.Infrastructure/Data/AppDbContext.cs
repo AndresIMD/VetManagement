@@ -48,6 +48,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<VetManagement.Domain.Billing.CashClose> CashCloses { get; set; }
     public DbSet<VetManagement.Domain.Consumption.ConsumptionSheet> ConsumptionSheets { get; set; }
     public DbSet<VetManagement.Domain.Consumption.ConsumptionEntry> ConsumptionEntries { get; set; }
+    public DbSet<VetManagement.Domain.Consumption.ConsumptionStock> ConsumptionStock { get; set; }
     public DbSet<VetManagement.Domain.Consumption.ConsumptionPricing> ConsumptionPricings { get; set; }
 
     private static readonly JsonSerializerOptions _jsonOptions = new();
@@ -258,8 +259,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             e.Ignore(s => s.IsClosed);
             e.HasOne<Pet>().WithMany().HasForeignKey(s => s.PetId).OnDelete(DeleteBehavior.SetNull);
             e.HasMany(s => s.Entries).WithOne().HasForeignKey(x => x.SheetId).OnDelete(DeleteBehavior.Cascade);
+            e.HasMany(s => s.Stock).WithOne().HasForeignKey(x => x.SheetId).OnDelete(DeleteBehavior.Cascade);
             e.HasIndex(s => s.ClosedAtUtc);
         });
+        // What a sheet took from inventory, by item; no key to the item, like the entries (the sheet outlives a deleted item).
+        builder.Entity<VetManagement.Domain.Consumption.ConsumptionStock>(e => e.HasIndex(x => new { x.SheetId, x.ItemId }).IsUnique());
         builder.Entity<VetManagement.Domain.Consumption.ConsumptionEntry>(e =>
         {
             e.Property(x => x.ItemName).HasMaxLength(200);

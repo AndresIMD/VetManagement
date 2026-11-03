@@ -15,8 +15,12 @@ public class ConsumptionSheetsController(ConsumptionService service) : ApiContro
     /// <summary>Open sheets, plus the ones closed in the last <paramref name="closedDays"/> days.</summary>
     [HttpGet]
     public async Task<ActionResult<List<ConsumptionSheetSummaryDto>>> ListAsync([FromQuery] int closedDays = 0)
-        => Ok((await service.ListAsync(Math.Clamp(closedDays, 0, 366))).Select(s => new ConsumptionSheetSummaryDto(
-            s.Id, s.PetId, s.PatientName, s.OwnerName, s.OpenedAtUtc, s.ClosedAtUtc, s.Entries.Count, ConsumptionSummary.For(s).Total)).ToList());
+        => Ok((await service.ListAsync(Math.Clamp(closedDays, 0, 366))).Select(s =>
+        {
+            var summary = ConsumptionSummary.For(s);
+            return new ConsumptionSheetSummaryDto(s.Id, s.PetId, s.PatientName, s.OwnerName, s.OpenedAtUtc, s.ClosedAtUtc, s.Entries.Count,
+                summary.Total, s.StockPending);
+        }).ToList());
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<ConsumptionSheetDto>> GetAsync(int id)
@@ -81,8 +85,8 @@ public class ConsumptionSheetsController(ConsumptionService service) : ApiContro
             [.. sheet.Entries.OrderByDescending(e => e.UsedAtUtc).ThenByDescending(e => e.Id)
                 .Select(e => new ConsumptionEntryDto(e.Id, e.ItemId, e.ItemName, e.Charge, e.Quantity, e.Discarded, e.Notes, e.UsedAtUtc, e.CreatedBy))],
             [.. summary.Lines.Select(l => new ConsumptionLineDto(l.ItemId, l.ItemName, l.Charge, l.Given, l.Discarded, l.Containers, l.LeftMl,
-                l.ContainerMl, l.UnitPrice, l.Total))],
-            summary.Total);
+                l.ContainerMl, l.UnitPrice, l.Total, sheet.PendingOf(l)))],
+            summary.Total, sheet.MovesStock);
     }
 
     private IActionResult ToActionResult(ConsumptionResult result) => result.Status switch

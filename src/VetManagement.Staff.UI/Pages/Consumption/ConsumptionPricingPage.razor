@@ -21,7 +21,7 @@
     <MudPaper Class="pa-4 mb-3" Elevation="1">
         <MudGrid Spacing="2">
             <MudItem xs="12" md="4">
-                <MudAutocomplete T="InventoryItemDTO" @bind-Value="_item" Label="@L["Drug or material"]" SearchFunc="SearchAsync"
+                <MudAutocomplete T="InventoryItemDTO" Value="_item" ValueChanged="OnItemChangedAsync" Label="@L["Drug or material"]" SearchFunc="SearchAsync"
                                  ToStringFunc="@(i => i?.Name)" DebounceInterval="300" MinCharacters="2" Clearable="true"
                                  HelperText="@(_item is null ? null : L["Sale price: {0}", Money.Clp(_item.SellPrice)])" />
             </MudItem>
@@ -52,6 +52,13 @@
             </MudItem>
             <MudItem xs="12">
                 <MudText Typo="Typo.caption" Color="Color.Secondary">@ChargeHelp</MudText>
+                @if (_charge == ConsumptionCharge.Container && _itemMl is > 0 && _containerMl is > 0 && _containerMl != _itemMl)
+                {
+                    @* One container is one unit of stock: a different size would charge and take the wrong number of them. *@
+                    <MudAlert Severity="Severity.Warning" Dense="true" Class="mt-2">
+                        @L["The item says {0} mL per container. Use that size, or each container started takes the wrong number of units from inventory.", _itemMl.Value.ToString("0.##")]
+                    </MudAlert>
+                }
             </MudItem>
         </MudGrid>
     </MudPaper>
@@ -118,11 +125,14 @@
     private bool _busy;
     private string? _error;
 
+    /// <summary>mL in one container of the chosen item, from its inventory record (drugs); null when it doesn't say.</summary>
+    private decimal? _itemMl;
+
     private string ChargeHelp => _charge switch
     {
-        ConsumptionCharge.PerMl => L["The mL given are charged at the price per mL (e.g. diazepam from a vial shared by several patients)."],
-        ConsumptionCharge.Container => L["Each container started on a patient is charged whole at the sale price; the rest stays for that patient (e.g. a 10 mL fentanyl ampoule)."],
-        _ => L["Whole units at the sale price (syringes, catheters...)."]
+        ConsumptionCharge.PerMl => L["The mL given are charged at the price per mL (e.g. diazepam from a vial shared by several patients). The sheets don't take the bottle from inventory: take it out by hand when one is opened."],
+        ConsumptionCharge.Container => L["Each container started on a patient is charged whole at the sale price and taken from inventory; the rest stays for that patient (e.g. a 10 mL fentanyl ampoule)."],
+        _ => L["Whole units at the sale price, taken from inventory (syringes, catheters...)."]
     };
 
     protected override async Task OnInitializedAsync() => await LoadAsync();
@@ -132,10 +142,23 @@
     private async Task<IEnumerable<InventoryItemDTO>> SearchAsync(string text, CancellationToken ct)
         => (await ItemsApi.GetItemsPagedAsync(text, ItemType.None, 0, 15, ct))?.Items ?? [];
 
-    private void Edit(ConsumptionPricingDto pricing)
+    /// <summary>Reads the item's container size and suggests it as the size of one container.</summary>
+    private async Task OnItemChangedAsync(InventoryItemDTO? item)
+    {
+        _item = item;
+        _itemMl = await ItemMlAsync(item?.Id);
+        if (_itemMl is not null)
+            _containerMl = _itemMl;
+    }
+
+    private async Task<decimal?> ItemMlAsync(int? itemId)
+        => itemId is int id && await ItemsApi.GetItemByIdAsync(id) is Drug { ML: > 0 } drug ? (decimal)drug.ML : null;
+
+    private async Task Edit(ConsumptionPricingDto pricing)
     {
         _item = new InventoryItemDTO { Id = pricing.ItemId, Name = pricing.ItemName, SellPrice = pricing.SellPrice };
         (_charge, _containerMl, _pricePerMl, _controlled) = (pricing.Charge, pricing.ContainerMl, pricing.PricePerMl, pricing.Controlled);
+        _itemMl = await ItemMlAsync(pricing.ItemId);
     }
 
     private async Task SaveAsync()
@@ -153,7 +176,7 @@
         }
         _error = null;
         Snackbar.Add(L["Saved: {0}.", _item.Name], Severity.Success);
-        (_item, _containerMl, _pricePerMl, _controlled) = (null, null, null, false);
+        (_item, _itemMl, _containerMl, _pricePerMl, _controlled) = (null, null, null, null, false);
         await LoadAsync();
     }
 

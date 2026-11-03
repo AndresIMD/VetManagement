@@ -1224,7 +1224,7 @@
   <data name="Discharged {0}" xml:space="preserve"><value>Alta {0}</value></data>
   <data name="E.g. hospitalised, box 3" xml:space="preserve"><value>Ej. hospitalizado, box 3</value></data>
   <data name="E.g. infusion, single dose" xml:space="preserve"><value>Ej. infusión, dosis única</value></data>
-  <data name="Each container started on a patient is charged whole at the sale price; the rest stays for that patient (e.g. a 10 mL fentanyl ampoule)." xml:space="preserve"><value>Cada envase que se empieza en un paciente se cobra completo al precio de venta; lo que sobra queda para ese paciente (ej. ampolla de fentanilo de 10 mL).</value></data>
+  <data name="Each container started on a patient is charged whole at the sale price and taken from inventory; the rest stays for that patient (e.g. a 10 mL fentanyl ampoule)." xml:space="preserve"><value>Cada envase que se empieza en un paciente se cobra completo al precio de venta y se descuenta del inventario; lo que sobra queda para ese paciente (ej. ampolla de fentanilo de 10 mL).</value></data>
   <data name="Every item is charged per unit at its sale price." xml:space="preserve"><value>Todos los insumos se cobran por unidad a su precio de venta.</value></data>
   <data name="How supplies are charged" xml:space="preserve"><value>Cómo se cobran los insumos</value></data>
   <data name="New sheet" xml:space="preserve"><value>Nueva hoja</value></data>
@@ -1254,7 +1254,7 @@
   <data name="Sheets" xml:space="preserve"><value>Hojas</value></data>
   <data name="Show discharged in the last {0} days" xml:space="preserve"><value>Mostrar altas de los últimos {0} días</value></data>
   <data name="Supplies used on each patient during a stay, added up for the charge at discharge." xml:space="preserve"><value>Insumos usados en cada paciente durante su estadía, sumados para el cobro al alta.</value></data>
-  <data name="The mL given are charged at the price per mL (e.g. diazepam from a vial shared by several patients)." xml:space="preserve"><value>Se cobran los mL administrados al precio por mL (ej. diazepam de un frasco que se usa en varios pacientes).</value></data>
+  <data name="The mL given are charged at the price per mL (e.g. diazepam from a vial shared by several patients). The sheets don't take the bottle from inventory: take it out by hand when one is opened." xml:space="preserve"><value>Se cobran los mL administrados al precio por mL (ej. diazepam de un frasco que se usa en varios pacientes). Las hojas no descuentan el frasco del inventario: descuéntalo a mano al abrir uno.</value></data>
   <data name="The sheet was not found." xml:space="preserve"><value>No se encontró la hoja.</value></data>
   <data name="Throw away the {0} mL left of {1}? The next use starts a new container." xml:space="preserve"><value>¿Descartar los {0} mL que quedan de {1}? El próximo uso empieza un envase nuevo.</value></data>
   <data name="Throw away what is left; the next use starts a new container." xml:space="preserve"><value>Descarta lo que queda; el próximo uso empieza un envase nuevo.</value></data>
@@ -1263,7 +1263,7 @@
   <data name="Used" xml:space="preserve"><value>Usado</value></data>
   <data name="Uses" xml:space="preserve"><value>Usos</value></data>
   <data name="Uses recorded" xml:space="preserve"><value>Usos registrados</value></data>
-  <data name="Whole units at the sale price (syringes, catheters...)." xml:space="preserve"><value>Unidades completas al precio de venta (jeringas, catéteres...).</value></data>
+  <data name="Whole units at the sale price, taken from inventory (syringes, catheters...)." xml:space="preserve"><value>Unidades completas al precio de venta, que se descuentan del inventario (jeringas, catéteres...).</value></data>
   <data name="discarded" xml:space="preserve"><value>descartado</value></data>
   <data name="mL per container" xml:space="preserve"><value>mL por envase</value></data>
   <data name="u." xml:space="preserve"><value>u.</value></data>
@@ -1361,4 +1361,14 @@
   <data name="Transfer out" xml:space="preserve"><value>Traspaso (salida)</value></data>
   <data name="Transfer in" xml:space="preserve"><value>Traspaso (entrada)</value></data>
   <data name="Stock transfer" xml:space="preserve"><value>Traspaso de stock</value></data>
+  <data name="This sheet doesn't take its uses from inventory: it was opened before sheets did. Take them out by hand." xml:space="preserve"><value>Esta hoja no descuenta del inventario: se abrió antes de que las hojas lo hicieran. Lo usado se descuenta a mano.</value></data>
+  <data name="Some uses couldn't be taken from inventory: the daily-use warehouse had none left. They are taken on the sheet's next change or at discharge, once it has them." xml:space="preserve"><value>Algunos usos no se pudieron descontar del inventario: la bodega de uso diario no tenía. Se descuentan en el próximo cambio de la hoja o al dar el alta, cuando ya haya.</value></data>
+  <data name="{0} still to take from inventory" xml:space="preserve"><value>Faltan {0} por descontar del inventario</value></data>
+  <data name="The shared bottle isn't taken from inventory here." xml:space="preserve"><value>El frasco compartido no se descuenta aquí.</value></data>
+  <data name="Each one is taken from inventory as it's started." xml:space="preserve"><value>Cada envase se descuenta del inventario al empezarlo.</value></data>
+  <data name="Taken from inventory." xml:space="preserve"><value>Se descuenta del inventario.</value></data>
+  <data name="Delete this sheet and everything recorded on it? What it took from inventory goes back. This can't be undone." xml:space="preserve"><value>¿Eliminar esta hoja y todo lo registrado en ella? Lo que descontó vuelve al inventario. No se puede deshacer.</value></data>
+  <data name="{0} to take from inventory" xml:space="preserve"><value>Faltan {0} por descontar</value></data>
+  <data name="The item says {0} mL per container. Use that size, or each container started takes the wrong number of units from inventory." xml:space="preserve"><value>El producto dice {0} mL por envase. Usa ese tamaño, o cada envase que se empiece descontará una cantidad equivocada del inventario.</value></data>
+  <data name="{0} were left untaken from inventory: the daily-use warehouse had none. Once it has them, a supervisor can reopen the sheet and discharge it again to take them." xml:space="preserve"><value>Quedaron {0} sin descontar del inventario: la bodega de uso diario no tenía. Cuando haya, un supervisor puede reabrir la hoja y darla de alta otra vez para descontarlos.</value></data>
 </root>

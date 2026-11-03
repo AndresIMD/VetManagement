@@ -31,6 +31,18 @@
         {
             <MudAlert Severity="Severity.Error" Class="mb-3" ShowCloseIcon="true" CloseIconClicked="() => _error = null">@_error</MudAlert>
         }
+        @if (!sheet.MovesStock)
+        {
+            <MudAlert Severity="Severity.Info" Class="mb-3">@L["This sheet doesn't take its uses from inventory: it was opened before sheets did. Take them out by hand."]</MudAlert>
+        }
+        else if (sheet.Lines.Sum(l => l.StockPending) is > 0 and var pending)
+        {
+            <MudAlert Severity="Severity.Warning" Class="mb-3">
+                @(sheet.ClosedAtUtc is null
+                    ? L["Some uses couldn't be taken from inventory: the daily-use warehouse had none left. They are taken on the sheet's next change or at discharge, once it has them."]
+                    : L["{0} were left untaken from inventory: the daily-use warehouse had none. Once it has them, a supervisor can reopen the sheet and discharge it again to take them.", pending])
+            </MudAlert>
+        }
 
         <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" Class="mb-3">
             <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" Href="consumption">@L["All sheets"]</MudButton>
@@ -123,6 +135,10 @@
                                     @if (line.Discarded > 0)
                                     {
                                         <div><MudText Typo="Typo.caption" Color="Color.Secondary">@L["{0} mL discarded", Qty(line.Discarded)]</MudText></div>
+                                    }
+                                    @if (line.StockPending > 0)
+                                    {
+                                        <div><MudText Typo="Typo.caption" Color="Color.Warning">@L["{0} still to take from inventory", line.StockPending]</MudText></div>
                                     }
                                 </td>
                                 <td style="text-align:right">@PriceText(line)</td>
@@ -232,13 +248,18 @@
     private ConsumptionPricingDto? SelectedPricing => _item is null ? null : _pricings.GetValueOrDefault(_item.Id);
     private ConsumptionCharge SelectedCharge => SelectedPricing?.Charge ?? ConsumptionCharge.Unit;
 
-    /// <summary>How the chosen item is charged, so the quantity is typed in the right unit.</summary>
+    /// <summary>How the chosen item is charged, so the quantity is typed in the right unit, and what it takes from inventory.</summary>
     private string? ChargeHint => _item is null ? null : SelectedPricing switch
     {
-        { Charge: ConsumptionCharge.PerMl } p => L["Charged per mL: {0} each mL.", Money.Clp(p.PricePerMl ?? 0)],
-        { Charge: ConsumptionCharge.Container } p => L["Type the mL given. Each {0} mL container started is charged whole ({1}).", Qty(p.ContainerMl ?? 0), Money.Clp(_item.SellPrice)],
-        _ => L["Charged per unit: {0} each.", Money.Clp(_item.SellPrice)]
+        { Charge: ConsumptionCharge.PerMl } p => Join(L["Charged per mL: {0} each mL.", Money.Clp(p.PricePerMl ?? 0)],
+            L["The shared bottle isn't taken from inventory here."]),
+        { Charge: ConsumptionCharge.Container } p => Join(L["Type the mL given. Each {0} mL container started is charged whole ({1}).", Qty(p.ContainerMl ?? 0), Money.Clp(_item.SellPrice)],
+            L["Each one is taken from inventory as it's started."]),
+        _ => Join(L["Charged per unit: {0} each.", Money.Clp(_item.SellPrice)], L["Taken from inventory."])
     };
+
+    /// <summary>The charge, plus what it takes from inventory on sheets that do.</summary>
+    private string Join(string charge, string stock) => _sheet?.MovesStock == true ? $"{charge} {stock}" : charge;
 
     protected override async Task OnInitializedAsync()
     {
@@ -334,7 +355,10 @@
 
     private async Task DeleteAsync()
     {
-        if (!await ConfirmAsync(L["Delete sheet"], L["Delete this sheet and everything recorded on it? This can't be undone."], L["Delete"]))
+        var message = _sheet?.MovesStock == true
+            ? L["Delete this sheet and everything recorded on it? What it took from inventory goes back. This can't be undone."]
+            : L["Delete this sheet and everything recorded on it? This can't be undone."];
+        if (!await ConfirmAsync(L["Delete sheet"], message, L["Delete"]))
             return;
         var result = await Api.DeleteAsync(Id);
         if (result.Ok)
