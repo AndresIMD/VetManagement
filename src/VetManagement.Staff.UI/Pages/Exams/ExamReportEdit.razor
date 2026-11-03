@@ -37,13 +37,13 @@
                 <MudItem xs="12" data-tour="patient-kind">
                     <MudRadioGroup T="bool" @bind-Value="_registered">
                         <MudRadio T="bool" Value="false">@L["Patient not registered (typed here, kept only in this report)"]</MudRadio>
-                        <MudRadio T="bool" Value="true">@L["Registered pet"]</MudRadio>
+                        <MudRadio T="bool" Value="true">@L["Registered patient"]</MudRadio>
                     </MudRadioGroup>
                 </MudItem>
                 @if (_registered)
                 {
                     <MudItem xs="12" sm="4" data-tour="pet-id">
-                        <MudNumericField T="int?" Label="@L["Pet ID"]" Value="_petId" ValueChanged="OnPetChangedAsync" Min="1" HideSpinButtons="true" />
+                        <MudNumericField T="int?" Label="@L["Patient ID"]" Value="_petId" ValueChanged="OnPetChangedAsync" Min="1" HideSpinButtons="true" />
                     </MudItem>
                     <MudItem xs="12" sm="8" Class="d-flex align-center">
                         @if (_pet is not null)
@@ -52,7 +52,7 @@
                         }
                         else if (_petId is not null)
                         {
-                            <MudText Color="Color.Warning">@L["Pet #{0} was not found.", _petId]</MudText>
+                            <MudText Color="Color.Warning">@L["Patient #{0} was not found.", _petId]</MudText>
                         }
                     </MudItem>
                 }
@@ -157,13 +157,9 @@
                                 <div class="d-flex align-center">
                                     <MudTextField T="string" Label="@current.Name" Value="@Value(current.Code)" ValueChanged="v => _values[current.Code] = v"
                                                   Immediate="true" Adornment="Adornment.End" AdornmentText="@current.Unit" Class="flex-grow-1" />
-                                    @* What an analyser shows instead of a number: "...", "/" or "-", or a bound like ">1000". *@
-                                    <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Dense="true" AriaLabel="@L["The analyser gave no number"]"
-                                             AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Class="mt-3">
-                                        <MudMenuItem OnClick="() => _values[current.Code] = L[NotMeasurable]">@L["Not measurable (the analyser shows ..., / or -)"]</MudMenuItem>
-                                        <MudMenuItem OnClick="() => SetBound(current.Code, '>')">@L["Above what the analyser measures (>)"]</MudMenuItem>
-                                        <MudMenuItem OnClick="() => SetBound(current.Code, '<')">@L["Below what the analyser measures (<)"]</MudMenuItem>
-                                    </MudMenu>
+                                    @* Out of the Tab order, so Tab goes from one value to the next (what the menu gives can also be typed). *@
+                                    <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Class="mt-3" tabindex="-1" aria-haspopup="menu"
+                                                   aria-label="@L["The analyser gave no number"]" OnClick="@(e => OpenNoNumberMenuAsync(e, current.Code))" />
                                 </div>
                             }
                             else
@@ -194,6 +190,13 @@
                         </MudItem>
                     }
                 </MudGrid>
+                @* What an analyser shows instead of a number: "...", "/" or "-", or a bound like ">1000". One menu for every value's
+                   dots, opened where they were clicked: MudMenu's own activator always takes a Tab stop. *@
+                <MudMenu @ref="_noNumberMenu" PositionAtCursor="true" TransformOrigin="Origin.TopRight" Dense="true">
+                    <MudMenuItem OnClick="@(() => SetNoNumber(L[NotMeasurable]))">@L["Not measurable (the analyser shows ..., / or -)"]</MudMenuItem>
+                    <MudMenuItem OnClick="@(() => SetBound('>'))">@L["Above what the analyser measures (>)"]</MudMenuItem>
+                    <MudMenuItem OnClick="@(() => SetBound('<'))">@L["Below what the analyser measures (<)"]</MudMenuItem>
+                </MudMenu>
             </MudPaper>
 
             <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mb-8" data-tour="save">
@@ -234,6 +237,9 @@
     private string? _lotNumber;
     private string? _interpretation;
     private Dictionary<string, string?> _values = new(StringComparer.OrdinalIgnoreCase);
+    private MudMenu? _noNumberMenu;
+    // The value whose dots opened the menu.
+    private string? _noNumberCode;
     private string? _error;
     private bool _saving;
 
@@ -252,9 +258,9 @@
     /// <summary>The tutorial of this form, for staff who type lab reports; steps for fields not on screen are skipped.</summary>
     private IEnumerable<TourStep> TourSteps() =>
     [
-        new("patient-kind", L["Patient"], L["Choose a registered pet of the clinic, or type the patient only for this report (the usual case for lab samples)."]),
+        new("patient-kind", L["Patient"], L["Choose a patient registered in the clinic, or type the patient only for this report (the usual case for lab samples)."]),
         new("typed-search", L["Patient seen before?"], L["Search by patient or owner name. Picking one fills in its data and links its reports, so the previous result can be printed next to the new one."]),
-        new("pet-id", L["Registered pet"], L["Type the pet's number, shown in the client's record."]),
+        new("pet-id", L["Registered patient"], L["Type the patient's number, shown in the client's record."]),
         new("species", L["Species"], L["The species picks the normal ranges, so choose it before typing the results."]),
         new("age", L["Age"], L["Type the age in years and months when the birth date isn't known; the date is worked out from the reception date."]),
         new("exam", L["Exam"], L["Only exams with a report template are listed. Changing the exam clears the results already typed."]),
@@ -355,9 +361,24 @@
         }
     }
 
-    /// <summary>The analyser's bound: "&gt;" or "&lt;" before the number typed, or alone to type the number after it.</summary>
-    private void SetBound(string code, char sign)
+    /// <summary>Opens the "no number" menu at the dots that were clicked, for that value.</summary>
+    private Task OpenNoNumberMenuAsync(MouseEventArgs args, string code)
     {
+        _noNumberCode = code;
+        return _noNumberMenu?.OpenMenuAsync(args) ?? Task.CompletedTask;
+    }
+
+    private void SetNoNumber(string text)
+    {
+        if (_noNumberCode is { } code)
+            _values[code] = text;
+    }
+
+    /// <summary>The analyser's bound: "&gt;" or "&lt;" before the number typed, or alone to type the number after it.</summary>
+    private void SetBound(char sign)
+    {
+        if (_noNumberCode is not { } code)
+            return;
         var number = (Value(code) ?? string.Empty).Trim().TrimStart('<', '>', '≤', '≥', '=').Trim();
         _values[code] = ReportNumber.Parse(number) is null ? sign.ToString() : $"{sign}{number}";
     }
@@ -375,7 +396,7 @@
     {
         if (!HasPatient || _receivedOn is null)
         {
-            _error = _registered ? L["Choose the pet and the reception date."] : L["Type the patient's name and the reception date."];
+            _error = _registered ? L["Choose the patient and the reception date."] : L["Type the patient's name and the reception date."];
             return;
         }
         _saving = true;

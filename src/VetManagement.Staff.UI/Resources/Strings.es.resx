@@ -502,6 +502,7 @@
   <data name="Exam Requests" xml:space="preserve"><value>Solicitudes de exámenes</value></data>
   <data name="Search by responsible..." xml:space="preserve"><value>Buscar por responsable...</value></data>
   <data name="Pet ID" xml:space="preserve"><value>ID mascota</value></data>
+  <data name="Patient ID" xml:space="preserve"><value>ID paciente</value></data>
   <data name="New request" xml:space="preserve"><value>Nueva solicitud</value></data>
   <data name="Pet" xml:space="preserve"><value>Mascota</value></data>
   <data name="Summary" xml:space="preserve"><value>Resumen</value></data>
@@ -528,7 +529,7 @@
   <data name="Request created." xml:space="preserve"><value>Solicitud creada.</value></data>
   <data name="Request updated." xml:space="preserve"><value>Solicitud actualizada.</value></data>
   <data name="Error saving request: {0}" xml:space="preserve"><value>Error al guardar la solicitud: {0}</value></data>
-  <data name="Pet, owner or exam" xml:space="preserve"><value>Mascota, dueño o examen</value></data>
+  <data name="Patient, owner or exam" xml:space="preserve"><value>Paciente, dueño o examen</value></data>
   <data name="New report" xml:space="preserve"><value>Nuevo informe</value></data>
   <data name="Received" xml:space="preserve"><value>Recepción</value></data>
   <data name="Owner" xml:space="preserve"><value>Dueño</value></data>
@@ -560,8 +561,10 @@
   <data name="No exam has a report template yet. Open the exam catalog and use &quot;Report template&quot; on an exam to define its parameters." xml:space="preserve"><value>Ningún examen tiene plantilla de informe todavía. Abre el catálogo de exámenes y usa "Plantilla de informe" en un examen para definir sus parámetros.</value></data>
   <data name="Patient not registered (typed here, kept only in this report)" xml:space="preserve"><value>Paciente no registrado (se escribe aquí y se guarda solo en este informe)</value></data>
   <data name="Registered pet" xml:space="preserve"><value>Mascota registrada</value></data>
+  <data name="Registered patient" xml:space="preserve"><value>Paciente registrado</value></data>
   <data name="Owner: {0}" xml:space="preserve"><value>Dueño: {0}</value></data>
   <data name="Pet #{0} was not found." xml:space="preserve"><value>No se encontró la mascota #{0}.</value></data>
+  <data name="Patient #{0} was not found." xml:space="preserve"><value>No se encontró el paciente #{0}.</value></data>
   <data name="Typed before? Search by patient or owner" xml:space="preserve"><value>¿Ya se escribió antes? Buscar por paciente o dueño</value></data>
   <data name="Fills the fields with the patient's last report, so its reports share a history." xml:space="preserve"><value>Llena los campos con el último informe del paciente, para que sus informes compartan historial.</value></data>
   <data name="Patient name" xml:space="preserve"><value>Nombre del paciente</value></data>
@@ -588,7 +591,7 @@
   <data name="Save and view" xml:space="preserve"><value>Guardar y ver</value></data>
   <data name="Write the interpretation, or leave it empty." xml:space="preserve"><value>Escribe la interpretación o déjala vacía.</value></data>
   <data name="Leave empty to print the automatic interpretation shown here." xml:space="preserve"><value>Déjala vacía para imprimir la interpretación automática que se muestra aquí.</value></data>
-  <data name="Choose the pet and the reception date." xml:space="preserve"><value>Elige la mascota y la fecha de recepción.</value></data>
+  <data name="Choose the patient and the reception date." xml:space="preserve"><value>Elige el paciente y la fecha de recepción.</value></data>
   <data name="Type the patient's name and the reception date." xml:space="preserve"><value>Escribe el nombre del paciente y la fecha de recepción.</value></data>
   <data name="How every exam report looks. What each report contains is set per exam in the exam catalog." xml:space="preserve"><value>Cómo se ve cada informe de examen. Lo que contiene cada informe se define por examen en el catálogo de exámenes.</value></data>
   <data name="Images" xml:space="preserve"><value>Imágenes</value></data>
@@ -630,7 +633,7 @@
   <data name="Method (brand - machine)" xml:space="preserve"><value>Método (marca - equipo)</value></data>
   <data name="Issued by (staff member)" xml:space="preserve"><value>Emitido por (funcionario)</value></data>
   <data name="↑ / ↓ arrows on values outside the normal range" xml:space="preserve"><value>Flechas ↑ / ↓ en los valores fuera del rango normal</value></data>
-  <data name="Previous result column (the pet's last report of this exam, headed by its date)" xml:space="preserve"><value>Columna de resultado anterior (el último informe de este examen de la mascota, con su fecha como encabezado)</value></data>
+  <data name="Previous result column (the patient's last report of this exam, headed by its date)" xml:space="preserve"><value>Columna de resultado anterior (el último informe de este examen del paciente, con su fecha como encabezado)</value></data>
   <data name="Ask in the report form" xml:space="preserve"><value>Pedir en el formulario del informe</value></data>
   <data name="Lot number of the test kit or reagent (printed in the method bar)" xml:space="preserve"><value>Número de lote del kit o reactivo (se imprime en la barra del método)</value></data>
   <data name="The form only shows what this exam needs: patient, exam, reception date, referring vet, these fields and the parameters." xml:space="preserve"><value>El formulario solo muestra lo que necesita este examen: paciente, examen, fecha de recepción, médico tratante, estos campos y los parámetros.</value></data>
@@ -1186,9 +1189,9 @@
   <data name="The &quot;Tutorial&quot; button on each screen shows it at any time." xml:space="preserve"><value>El botón "Tutorial" de cada pantalla lo muestra cuando quieras.</value></data>
   <data name="Patient seen before?" xml:space="preserve"><value>¿Paciente ya ingresado?</value></data>
   <data name="Results" xml:space="preserve"><value>Resultados</value></data>
-  <data name="Choose a registered pet of the clinic, or type the patient only for this report (the usual case for lab samples)." xml:space="preserve"><value>Elige una mascota registrada en la clínica, o escribe el paciente solo para este informe (lo habitual en muestras de laboratorio).</value></data>
+  <data name="Choose a patient registered in the clinic, or type the patient only for this report (the usual case for lab samples)." xml:space="preserve"><value>Elige un paciente registrado en la clínica, o escribe el paciente solo para este informe (lo habitual en muestras de laboratorio).</value></data>
   <data name="Search by patient or owner name. Picking one fills in its data and links its reports, so the previous result can be printed next to the new one." xml:space="preserve"><value>Busca por nombre del paciente o del dueño. Al elegirlo se completan sus datos y se enlazan sus informes, para poder imprimir el resultado anterior junto al nuevo.</value></data>
-  <data name="Type the pet's number, shown in the client's record." xml:space="preserve"><value>Escribe el número de la mascota, que aparece en la ficha del cliente.</value></data>
+  <data name="Type the patient's number, shown in the client's record." xml:space="preserve"><value>Escribe el número del paciente, que aparece en la ficha del cliente.</value></data>
   <data name="The species picks the normal ranges, so choose it before typing the results." xml:space="preserve"><value>La especie define los rangos normales, así que elígela antes de escribir los resultados.</value></data>
   <data name="Type the age in years and months when the birth date isn't known; the date is worked out from the reception date." xml:space="preserve"><value>Escribe la edad en años y meses si no se sabe la fecha de nacimiento; la fecha se calcula a partir de la fecha de recepción.</value></data>
   <data name="Only exams with a report template are listed. Changing the exam clears the results already typed." xml:space="preserve"><value>Solo aparecen los exámenes que tienen plantilla de informe. Al cambiar de examen se borran los resultados ya escritos.</value></data>

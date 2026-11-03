@@ -1,5 +1,7 @@
+using System.Text.Json;
 using VetManagement.Application.Contracts.Persistence;
 using VetManagement.Application.Contracts.Services;
+using VetManagement.Domain.Audit;
 using VetManagement.Domain.Enums;
 using VetManagement.Domain.Inventory;
 using VetManagement.Domain.Localization;
@@ -23,7 +25,11 @@ public static class Stock
     /// <summary>Name the daily-use warehouse gets when it is created (the migration uses the same text); the clinic renames it.</summary>
     public const string DailyUseName = "Daily-use warehouse";
 
-    /// <summary>Moves <paramref name="quantity"/> units out of (Egress) or back into (Ingress) the daily-use warehouse. Null if the item no longer exists.</summary>
+    /// <summary>
+    /// Moves <paramref name="quantity"/> units out of (Egress) or back into (Ingress) the daily-use warehouse, with its movement
+    /// and the item's audit entry (Inventory → Audit, like the inventory screens' changes), both saved with the caller's
+    /// changes. Null if the item no longer exists.
+    /// </summary>
     public static async Task<Item?> MoveAsync(IUnitOfWork unitOfWork, int itemId, int quantity, InventoryMovementType type,
         string reason, string userName, DateTime nowUtc)
     {
@@ -31,6 +37,7 @@ public static class Stock
         if (item is null)
             return null;
 
+        var before = item.Stock;
         item.Stock += type == InventoryMovementType.Egress ? -quantity : quantity;
         await unitOfWork.InventoryMovements.AddAsync(new InventoryMovement
         {
@@ -40,6 +47,25 @@ public static class Stock
             Date = nowUtc,
             Reason = reason,
             Responsible = userName
+        });
+
+        // As JSON, so the audit table shows each field translated and a reason with commas stays whole.
+        var held = (await unitOfWork.WarehouseStocks.ForItemsAsync([item.Id])).Sum(s => s.Quantity);
+        var daily = (await unitOfWork.Warehouses.FindAsync(w => w.IsDailyUse)).FirstOrDefault()?.Name ?? Texts.T(DailyUseName);
+        await unitOfWork.AuditLogs.AddAsync(new AuditLog
+        {
+            EntityName = nameof(Item),
+            EntityId = item.Id,
+            Action = type.ToAuditActionType(),
+            Changes = JsonSerializer.Serialize(new
+            {
+                Quantity = quantity,
+                Stock = new { old = before, @new = item.Stock },
+                Warehouse = $"{daily} ({before - held} → {item.Stock - held})",
+                Reason = reason
+            }),
+            User = userName,
+            Date = nowUtc
         });
         return item;
     }

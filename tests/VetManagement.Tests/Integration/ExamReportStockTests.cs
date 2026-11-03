@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using VetManagement.Api.Authorization;
 using VetManagement.Application.Configuration;
+using VetManagement.Contracts.Audit;
 using VetManagement.Contracts.Exams;
 using VetManagement.Domain.Clients;
 using VetManagement.Domain.Configuration;
@@ -131,6 +132,31 @@ public class ExamReportStockTests(CustomWebAppFactory factory) : IClassFixture<C
         after.StockToDeduct.Should().BeNull();
         after.StockDeducted.Should().BeEquivalentTo(new { Quantity = 2, By = "test-user" });
         after.StockDeducted!.ItemName.Should().StartWith("Kit T4");
+    }
+
+    [Fact]
+    public async Task DeductAndReturn_ShowInTheInventoryAudit()
+    {
+        var itemId = await AddItemAsync(stock: 10);
+        var (petId, examId) = await AddPetAndExamAsync(itemId, quantity: 2);
+        var reportId = await CreateReportAsync(petId, examId);
+
+        (await _laboratory.PostAsync($"/api/exam-reports/{reportId}/stock", null)).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await _laboratory.DeleteAsync($"/api/exam-reports/{reportId}/stock")).StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // What Inventory → Audit lists: the item's own entries.
+        var page = (await _admin.GetFromJsonAsync<JsonObject>($"/api/audit/logs/paged?entityName=Item&entityId={itemId}"))!;
+        var entries = page["items"]!.Deserialize<List<AuditLogDto>>(JsonSerializerOptions.Web)!;
+        entries.Select(e => e.Action).Should().BeEquivalentTo([AuditActionType.Egress, AuditActionType.Ingress]);
+        entries.Should().OnlyContain(e => e.User == "test-user");
+
+        var taken = JsonNode.Parse(entries.Single(e => e.Action == AuditActionType.Egress).Changes)!;
+        taken["Quantity"]!.GetValue<int>().Should().Be(2);
+        taken["Stock"]!["old"]!.GetValue<int>().Should().Be(10);
+        taken["Stock"]!["new"]!.GetValue<int>().Should().Be(8);
+        taken["Reason"]!.GetValue<string>().Should().Be($"Exam report #{reportId} – ROCKY PARKER");
+        JsonNode.Parse(entries.Single(e => e.Action == AuditActionType.Ingress).Changes)!["Reason"]!.GetValue<string>()
+            .Should().Be($"Exam report #{reportId} – ROCKY PARKER (returned)");
     }
 
     [Fact]
