@@ -93,6 +93,21 @@ public class ClinicalStockTests : IClassFixture<CustomWebAppFactory>
     }
 
     [Fact]
+    public async Task SupplyUsedAndRemoved_IsInTheItemsAudit()
+    {
+        var itemId = await AddItemAsync(stock: 10);
+        var (_, visitId) = await AddPetWithVisitAsync();
+
+        var supplyId = await IdOf(await _employee.PostAsJsonAsync($"/api/clinical/visits/{visitId}/supplies", new { ItemId = itemId, Quantity = 3 }));
+        await IdOf(await _admin.DeleteAsync($"/api/clinical/supplies/{supplyId}"));
+
+        // Inventory → Audit lists the item's entries: every automatic movement leaves one, as the inventory screens' do.
+        var entries = await WithDbAsync(db => db.AuditLogs.AsNoTracking().Where(l => l.EntityName == nameof(Item) && l.EntityId == itemId).ToListAsync());
+        entries.Select(l => l.Action).Should().BeEquivalentTo([AuditActionType.Egress, AuditActionType.Ingress]);
+        JsonNode.Parse(entries.Single(l => l.Action == AuditActionType.Egress).Changes)!["Reason"]!.GetValue<string>().Should().Be($"Visit #{visitId}");
+    }
+
+    [Fact]
     public async Task UsingMoreThanTheStock_IsRejected()
     {
         var itemId = await AddItemAsync(stock: 2);

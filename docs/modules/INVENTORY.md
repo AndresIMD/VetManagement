@@ -30,6 +30,11 @@ unchanged). Metrics leave transfers out: they are neither use nor purchases.
 Every change takes the clinic-wide `stock` lock ([exclusive work](../architecture/ARCHITECTURE.md#shared-mechanisms)),
 warehouse changes included, so a warehouse can't be archived while a transfer fills it.
 
+Every movement also leaves an entry in its item's audit (Inventory → Audit), saved with the movement: the inventory
+screens write theirs, and `Stock.MoveAsync` writes the automatic ones (units, stock before and after, the daily-use
+warehouse's units, and the reason, e.g. the exam report and patient). The record that moved the stock keeps its own
+entry too. Automatic movements from before this existed have no audit entry; the item's movement history lists them.
+
 ## Who sees what
 
 | Who | Sees | Moves stock by hand (with `inventory.update`) |
