@@ -4,74 +4,53 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @implements IDisposable
 
-@if (_isConnected)
+@* Follows the connection as it is lost and comes back: the service keeps retrying and says when its state changes. *@
+@switch (RealtimeService.State)
 {
-    <MudChip T="string" Icon="@Icons.Material.Filled.CloudDone" Color="Color.Success" Size="Size.Small">@L["Live"]</MudChip>
-}
-else if (_isConnecting)
-{
-    <MudChip T="string" Icon="@Icons.Material.Filled.CloudSync" Color="Color.Warning" Size="Size.Small">@L["Connecting..."]</MudChip>
-}
-else
-{
-    <MudChip T="string" Icon="@Icons.Material.Filled.CloudOff" Color="Color.Error" Size="Size.Small">@L["Offline"]</MudChip>
+    case RealtimeState.Connected:
+        <MudChip T="string" Icon="@Icons.Material.Filled.CloudDone" Color="Color.Success" Size="Size.Small">@L["Live"]</MudChip>
+        break;
+    case RealtimeState.Connecting:
+        <MudChip T="string" Icon="@Icons.Material.Filled.CloudSync" Color="Color.Warning" Size="Size.Small">@L["Connecting..."]</MudChip>
+        break;
+    default:
+        <MudChip T="string" Icon="@Icons.Material.Filled.CloudOff" Color="Color.Error" Size="Size.Small">@L["Offline"]</MudChip>
+        break;
 }
 
 @code {
-    private bool _isConnected;
-    private bool _isConnecting;
-
     protected override async Task OnInitializedAsync()
     {
+        RealtimeService.OnStateChanged += OnStateChanged;
         AuthStateProvider.AuthenticationStateChanged += OnAuthStateChanged;
-        await CheckAndConnectAsync();
+        await ConnectOrDisconnectAsync();
     }
 
-    private async void OnAuthStateChanged(Task<AuthenticationState> task)
-    {
-        await CheckAndConnectAsync();
-    }
+    private void OnStateChanged() => _ = InvokeAsync(StateHasChanged);
 
-    private async Task CheckAndConnectAsync()
-    {
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
+    private async void OnAuthStateChanged(Task<AuthenticationState> task) => await ConnectOrDisconnectAsync();
 
-        if (user?.Identity?.IsAuthenticated == true && !RealtimeService.IsConnected)
+    /// <summary>Signed in: connect (once; the service keeps the connection). Signed out: close it.</summary>
+    private async Task ConnectOrDisconnectAsync()
+    {
+        var user = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
+        try
         {
-            _isConnecting = true;
-            await InvokeAsync(StateHasChanged);
-
-            try
-            {
+            if (user.Identity?.IsAuthenticated == true)
                 await RealtimeService.InitializeAsync();
-                _isConnected = RealtimeService.IsConnected;
-            }
-            catch
-            {
-                _isConnected = false;
-            }
-            finally
-            {
-                _isConnecting = false;
-                await InvokeAsync(StateHasChanged);
-            }
+            else
+                await RealtimeService.DisconnectAsync();
         }
-        else if (user?.Identity?.IsAuthenticated != true)
+        catch (Exception)
         {
-            await RealtimeService.DisconnectAsync();
-            _isConnected = false;
-            await InvokeAsync(StateHasChanged);
+            // The chip shows the state either way; the service retries on its own.
         }
-        else
-        {
-            _isConnected = RealtimeService.IsConnected;
-            await InvokeAsync(StateHasChanged);
-        }
+        await InvokeAsync(StateHasChanged);
     }
 
     public void Dispose()
     {
+        RealtimeService.OnStateChanged -= OnStateChanged;
         AuthStateProvider.AuthenticationStateChanged -= OnAuthStateChanged;
     }
 }
