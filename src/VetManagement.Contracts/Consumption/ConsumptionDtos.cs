@@ -5,8 +5,12 @@ namespace VetManagement.Contracts.Consumption;
 
 /// <summary>A sheet in the list: who, since when and what it adds up to so far.</summary>
 /// <param name="StockPending">Units its uses need that the daily-use warehouse didn't have when they were recorded.</param>
+/// <param name="Pending">The same units, item by item.</param>
 public sealed record ConsumptionSheetSummaryDto(int Id, int? PetId, string PatientName, string? OwnerName, DateTime OpenedAtUtc,
-    DateTime? ClosedAtUtc, int EntryCount, int Total, int StockPending);
+    DateTime? ClosedAtUtc, int EntryCount, int Total, int StockPending, List<ConsumptionPendingDto> Pending);
+
+/// <summary>Units of one item a sheet still has to take from inventory.</summary>
+public sealed record ConsumptionPendingDto(string ItemName, int Units);
 
 public sealed record ConsumptionEntryDto(int Id, int ItemId, string ItemName, ConsumptionCharge Charge, decimal Quantity, bool Discarded,
     string? Notes, DateTime UsedAtUtc, string? CreatedBy);

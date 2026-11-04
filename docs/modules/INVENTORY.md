@@ -34,6 +34,12 @@ taken on the sheet's next change, discharge and reopening included. The sheet ke
 supervisor reopening it and discharging it again once the warehouse has them. Sheets opened before this existed
 (`MovesStock` false) move nothing, so their uses are still taken out by hand.
 
+The sheets list is where uses are recorded day to day: a click on a row opens its items in place, each with the mL left
+in its open container (or what was used) and a quantity ready to record, the patient's last dose in mL or one unit, so a
+repeated dose is one click; the message that confirms it can undo it. The pencil opens the whole sheet for everything
+else: a new item, discarding a rest, removing a use, discharge. What a sheet still owes shows as one amber mark, on its
+row and beside "To charge" on the sheet, whose tooltip names the items.
+
 How an item is charged can't change (charge type, or container size) while a sheet not discharged yet uses it: the sheet
 would add up the earlier uses again, changing both the charge and what it took from stock. Prices can.
 

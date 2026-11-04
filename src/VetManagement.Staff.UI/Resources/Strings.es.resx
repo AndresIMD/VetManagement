@@ -1359,13 +1359,26 @@
   <data name="Transfer in" xml:space="preserve"><value>Traspaso (entrada)</value></data>
   <data name="Stock transfer" xml:space="preserve"><value>Traspaso de stock</value></data>
   <data name="This sheet doesn't take its uses from inventory: it was opened before sheets did. Take them out by hand." xml:space="preserve"><value>Esta hoja no descuenta del inventario: se abrió antes de que las hojas lo hicieran. Lo usado se descuenta a mano.</value></data>
-  <data name="Some uses couldn't be taken from inventory: the daily-use warehouse had none left. They are taken on the sheet's next change or at discharge, once it has them." xml:space="preserve"><value>Algunos usos no se pudieron descontar del inventario: la bodega de uso diario no tenía. Se descuentan en el próximo cambio de la hoja o al dar el alta, cuando ya haya.</value></data>
+  <data name="The daily-use warehouse had none. They are taken on the sheet's next change or at discharge, once it has them." xml:space="preserve"><value>La bodega de uso diario no tenía. Se descuentan en el próximo cambio de la hoja o al dar el alta, cuando ya haya.</value></data>
+  <data name="Still to take from inventory" xml:space="preserve"><value>Faltan por descontar del inventario</value></data>
+  <data name="To take from inventory" xml:space="preserve"><value>Por descontar del inventario</value></data>
   <data name="{0} still to take from inventory" xml:space="preserve"><value>Faltan {0} por descontar del inventario</value></data>
   <data name="The shared bottle isn't taken from inventory here." xml:space="preserve"><value>El frasco compartido no se descuenta aquí.</value></data>
   <data name="Each one is taken from inventory as it's started." xml:space="preserve"><value>Cada envase se descuenta del inventario al empezarlo.</value></data>
   <data name="Taken from inventory." xml:space="preserve"><value>Se descuenta del inventario.</value></data>
   <data name="Delete this sheet and everything recorded on it? What it took from inventory goes back. This can't be undone." xml:space="preserve"><value>¿Eliminar esta hoja y todo lo registrado en ella? Lo que descontó vuelve al inventario. No se puede deshacer.</value></data>
-  <data name="{0} to take from inventory" xml:space="preserve"><value>Faltan {0} por descontar</value></data>
+  <data name="Quick use" xml:space="preserve"><value>Uso rápido</value></data>
+  <data name="Edit sheet" xml:space="preserve"><value>Editar hoja</value></data>
+  <data name="Quantity of {0}" xml:space="preserve"><value>Cantidad de {0}</value></data>
+  <data name="{0} mL left" xml:space="preserve"><value>{0} mL restantes</value></data>
+  <data name="No open container" xml:space="preserve"><value>Sin envase abierto</value></data>
+  <data name="{0} u. used" xml:space="preserve"><value>{0} u. usadas</value></data>
+  <data name="{0} mL used" xml:space="preserve"><value>{0} mL usados</value></data>
+  <data name="Recorded {0} {1} of {2} for {3}." xml:space="preserve"><value>Registrado: {0} {1} de {2} para {3}.</value></data>
+  <data name="Undo" xml:space="preserve"><value>Deshacer</value></data>
+  <data name="Use removed." xml:space="preserve"><value>Uso quitado.</value></data>
+  <data name="The use could not be recorded." xml:space="preserve"><value>No se pudo registrar el uso.</value></data>
+  <data name="The use could not be removed." xml:space="preserve"><value>No se pudo quitar el uso.</value></data>
   <data name="The item says {0} mL per container. Use that size, or each container started takes the wrong number of units from inventory." xml:space="preserve"><value>El producto dice {0} mL por envase. Usa ese tamaño, o cada envase que se empiece descontará una cantidad equivocada del inventario.</value></data>
-  <data name="{0} were left untaken from inventory: the daily-use warehouse had none. Once it has them, a supervisor can reopen the sheet and discharge it again to take them." xml:space="preserve"><value>Quedaron {0} sin descontar del inventario: la bodega de uso diario no tenía. Cuando haya, un supervisor puede reabrir la hoja y darla de alta otra vez para descontarlos.</value></data>
+  <data name="The daily-use warehouse had none. Once it has them, a supervisor can reopen the sheet and discharge it again to take them." xml:space="preserve"><value>La bodega de uso diario no tenía. Cuando haya, un supervisor puede reabrir la hoja y darla de alta otra vez para descontarlos.</value></data>
 </root>

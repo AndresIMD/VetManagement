@@ -35,14 +35,6 @@
         {
             <MudAlert Severity="Severity.Info" Class="mb-3">@L["This sheet doesn't take its uses from inventory: it was opened before sheets did. Take them out by hand."]</MudAlert>
         }
-        else if (sheet.Lines.Sum(l => l.StockPending) is > 0 and var pending)
-        {
-            <MudAlert Severity="Severity.Warning" Class="mb-3">
-                @(sheet.ClosedAtUtc is null
-                    ? L["Some uses couldn't be taken from inventory: the daily-use warehouse had none left. They are taken on the sheet's next change or at discharge, once it has them."]
-                    : L["{0} were left untaken from inventory: the daily-use warehouse had none. Once it has them, a supervisor can reopen the sheet and discharge it again to take them.", pending])
-            </MudAlert>
-        }
 
         <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" Class="mb-3">
             <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" Href="consumption">@L["All sheets"]</MudButton>
@@ -95,7 +87,11 @@
         }
 
         <MudPaper Class="pa-4 mb-3" Elevation="1">
-            <MudText Typo="Typo.h6" Class="mb-2">@L["To charge"]</MudText>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+                <MudText Typo="Typo.h6">@L["To charge"]</MudText>
+                <MudSpacer />
+                <StockPendingIndicator Items="Pending(sheet)" ShowLabel="true" Discharged="sheet.ClosedAtUtc is not null" />
+            </MudStack>
             @if (sheet.Lines.Count == 0)
             {
                 <MudText Color="Color.Secondary">@L["Nothing recorded yet."]</MudText>
@@ -135,10 +131,6 @@
                                     @if (line.Discarded > 0)
                                     {
                                         <div><MudText Typo="Typo.caption" Color="Color.Secondary">@L["{0} mL discarded", Qty(line.Discarded)]</MudText></div>
-                                    }
-                                    @if (line.StockPending > 0)
-                                    {
-                                        <div><MudText Typo="Typo.caption" Color="Color.Warning">@L["{0} still to take from inventory", line.StockPending]</MudText></div>
                                     }
                                 </td>
                                 <td style="text-align:right">@PriceText(line)</td>
@@ -286,6 +278,9 @@
             parts.Add(sheet.Notes);
         return string.Join(" · ", parts);
     }
+
+    private static List<ConsumptionPendingDto> Pending(ConsumptionSheetDto sheet)
+        => [.. sheet.Lines.Where(l => l.StockPending > 0).Select(l => new ConsumptionPendingDto(l.ItemName, l.StockPending))];
 
     private static string Qty(decimal value) => value.ToString("0.##");
 

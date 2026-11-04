@@ -3,6 +3,8 @@
 @inject ConsumptionApiService Api
 @inject ClientPetApiService ClientPetApi
 @inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@inject IAuthorizationService Authorization
 @attribute [Authorize(Policy = "Consumption.Read")]
 
 <PageTitle>@L["Patient consumption"]</PageTitle>
@@ -76,36 +78,95 @@
         }
         else
         {
-            <MudTable Items="_sheets" Hover="true" Dense="true" T="ConsumptionSheetSummaryDto" OnRowClick="OpenSheet" RowStyle="cursor:pointer">
+            @* A click on a row opens its supplies right there, to record a use without leaving the list; the pencil opens the
+               whole sheet, for everything else. *@
+            <MudTable Items="_sheets" Hover="true" Dense="true" T="ConsumptionSheetSummaryDto" OnRowClick="OnRowClickAsync" RowStyle="cursor:pointer">
                 <HeaderContent>
+                    <MudTh Style="width:1%"></MudTh>
                     <MudTh>@L["Patient"]</MudTh>
                     <MudTh>@L["Owner"]</MudTh>
                     <MudTh>@L["Opened"]</MudTh>
                     <MudTh Style="text-align:right">@L["Uses"]</MudTh>
                     <MudTh Style="text-align:right">@L["Total"]</MudTh>
                     <MudTh>@L["Status"]</MudTh>
+                    <MudTh Style="width:1%"></MudTh>
                 </HeaderContent>
                 <RowTemplate>
+                    <MudTd>
+                        <span @onclick:stopPropagation="true">
+                            <MudIconButton Icon="@(_expanded.ContainsKey(context.Id) ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
+                                           Size="Size.Small" aria-label="@L["Quick use"]" aria-expanded="@(_expanded.ContainsKey(context.Id) ? "true" : "false")"
+                                           OnClick="() => ToggleAsync(context.Id)" />
+                        </span>
+                    </MudTd>
                     <MudTd><b>@context.PatientName</b></MudTd>
                     <MudTd>@context.OwnerName</MudTd>
                     <MudTd>@context.OpenedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</MudTd>
                     <MudTd Style="text-align:right">@context.EntryCount</MudTd>
                     <MudTd Style="text-align:right">@Money.Clp(context.Total)</MudTd>
                     <MudTd>
-                        @if (context.ClosedAtUtc is { } closed)
-                        {
-                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@L["Discharged {0}", closed.ToLocalTime().ToString("dd/MM HH:mm")]</MudChip>
-                        }
-                        else
-                        {
-                            <MudChip T="string" Size="Size.Small" Color="Color.Success">@L["Open"]</MudChip>
-                        }
-                        @if (context.StockPending > 0)
-                        {
-                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined">@L["{0} to take from inventory", context.StockPending]</MudChip>
-                        }
+                        <span class="d-inline-flex align-center" style="gap:4px">
+                            @if (context.ClosedAtUtc is { } closed)
+                            {
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Class="ma-0">@L["Discharged {0}", closed.ToLocalTime().ToString("dd/MM HH:mm")]</MudChip>
+                            }
+                            else
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Success" Class="ma-0">@L["Open"]</MudChip>
+                            }
+                            <StockPendingIndicator Items="context.Pending" Discharged="context.ClosedAtUtc is not null" />
+                        </span>
+                    </MudTd>
+                    <MudTd>
+                        <span @onclick:stopPropagation="true">
+                            <MudTooltip Text="@L["Edit sheet"]">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Href="@($"consumption/{context.Id}")" aria-label="@L["Edit sheet"]" />
+                            </MudTooltip>
+                        </span>
                     </MudTd>
                 </RowTemplate>
+                <ChildRowContent>
+                    @if (_expanded.TryGetValue(context.Id, out var sheet))
+                    {
+                        <tr>
+                            <td colspan="8" class="quick-use">
+                                @if (sheet is null)
+                                {
+                                    <MudProgressLinear Indeterminate="true" />
+                                }
+                                else if (sheet.Lines.Count == 0)
+                                {
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">@L["Nothing recorded yet."]</MudText>
+                                }
+                                else
+                                {
+                                    <div class="quick-use-lines">
+                                        @foreach (var line in sheet.Lines)
+                                        {
+                                            var key = (sheet.Id, line.ItemId);
+                                            <div class="quick-use-line">
+                                                <span>@line.ItemName</span>
+                                                <span class="mud-text-secondary">@Remaining(sheet, line)</span>
+                                                @if (_canRecord && sheet.ClosedAtUtc is null)
+                                                {
+                                                    <span class="quick-use-action">
+                                                        <MudNumericField T="decimal?" Value="_quantities.GetValueOrDefault(key)" ValueChanged="value => _quantities[key] = value"
+                                                                         Immediate="true" Min="0.01m" HideSpinButtons="true" Culture="CultureInfo.CurrentCulture" Format="0.##"
+                                                                         Variant="Variant.Outlined" Margin="Margin.Dense" Adornment="Adornment.End" Style="width:110px"
+                                                                         AdornmentText="@UnitText(line.Charge)" aria-label="@L["Quantity of {0}", line.ItemName]" />
+                                                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                                                                   Disabled="@(_quantities.GetValueOrDefault(key) is not > 0 || _saving.Contains(key))"
+                                                                   OnClick="() => RecordAsync(sheet, line)">@L["Record"]</MudButton>
+                                                    </span>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </ChildRowContent>
                 <NoRecordsContent>
                     <MudText Color="Color.Secondary">@L["No open sheets."]</MudText>
                 </NoRecordsContent>
@@ -117,6 +178,8 @@
 @code {
     private const int CLOSED_DAYS = 30;
 
+    [CascadingParameter] private Task<AuthenticationState>? AuthState { get; set; }
+
     private List<ConsumptionSheetSummaryDto>? _sheets;
     private bool _showClosed;
     private bool _registered;
@@ -127,10 +190,25 @@
     private string? _notes;
     private bool _busy;
     private string? _error;
+    private bool _canRecord;
+
+    /// <summary>The rows opened for a quick use, with their sheet as last loaded (null while it loads).</summary>
+    private readonly Dictionary<int, ConsumptionSheetDto?> _expanded = [];
+
+    /// <summary>The quantity ready to record for each item of an opened row, until changed: one unit, or the patient's last dose in mL.</summary>
+    private readonly Dictionary<(int Sheet, int Item), decimal?> _quantities = [];
+
+    /// <summary>Uses being recorded, so a second click doesn't record them twice.</summary>
+    private readonly HashSet<(int Sheet, int Item)> _saving = [];
 
     private bool CanOpen => _registered ? _petName is not null : !string.IsNullOrWhiteSpace(_patientName);
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthState is not null)
+            _canRecord = (await Authorization.AuthorizeAsync((await AuthState).User, "Consumption.Record")).Succeeded;
+        await LoadAsync();
+    }
 
     private async Task LoadAsync() => _sheets = await Api.ListAsync(_showClosed ? CLOSED_DAYS : 0);
 
@@ -159,7 +237,111 @@
         }
     }
 
-    private void OpenSheet(TableRowClickEventArgs<ConsumptionSheetSummaryDto> e) => Navigation.NavigateTo($"consumption/{e.Item!.Id}");
+    private async Task OnRowClickAsync(TableRowClickEventArgs<ConsumptionSheetSummaryDto> e)
+    {
+        if (e.Item is { } sheet)
+            await ToggleAsync(sheet.Id);
+    }
+
+    private async Task ToggleAsync(int id)
+    {
+        if (_expanded.Remove(id))
+        {
+            foreach (var key in _quantities.Keys.Where(k => k.Sheet == id).ToList())
+                _quantities.Remove(key);
+            return;
+        }
+        _expanded[id] = null;
+        await LoadSheetAsync(id);
+    }
+
+    /// <summary>Reads an opened row's sheet again, keeping any quantity already typed.</summary>
+    private async Task LoadSheetAsync(int id)
+    {
+        var sheet = await Api.GetAsync(id);
+        if (!_expanded.ContainsKey(id))
+            return;
+        if (sheet is null)
+        {
+            _expanded.Remove(id);
+            Snackbar.Add(L["The sheet was not found."], Severity.Warning);
+            return;
+        }
+        _expanded[id] = sheet;
+        foreach (var line in sheet.Lines)
+            _quantities.TryAdd((id, line.ItemId), LastDose(sheet, line));
+    }
+
+    /// <summary>
+    /// One unit for items charged per unit (a use recorded as a batch is no dose to repeat); for the rest, the mL of the
+    /// patient's last dose, since doses repeat.
+    /// </summary>
+    private static decimal? LastDose(ConsumptionSheetDto sheet, ConsumptionLineDto line)
+        => line.Charge == ConsumptionCharge.Unit ? 1 : sheet.Entries.FirstOrDefault(e => e.ItemId == line.ItemId && !e.Discarded)?.Quantity;
+
+    private async Task RecordAsync(ConsumptionSheetDto sheet, ConsumptionLineDto line)
+    {
+        var key = (sheet.Id, line.ItemId);
+        if (_quantities.GetValueOrDefault(key) is not { } quantity || quantity <= 0 || !_saving.Add(key))
+            return;
+        var result = await Api.AddEntryAsync(sheet.Id, new AddConsumptionEntryRequest { ItemId = line.ItemId, Quantity = quantity });
+        _saving.Remove(key);
+        if (!result.Ok)
+        {
+            Snackbar.Add(result.Error ?? L["The use could not be recorded."], Severity.Error);
+            return;
+        }
+
+        var entryId = result.Id;
+        Snackbar.Add(L["Recorded {0} {1} of {2} for {3}.", Qty(quantity), UnitText(line.Charge), line.ItemName, sheet.PatientName], Severity.Success, config =>
+        {
+            if (entryId is not int id)
+                return;
+            config.Action = L["Undo"];
+            config.ActionColor = Color.Primary;
+            config.RequireInteraction = false;
+            config.VisibleStateDuration = 8000;
+            // Closed at once, so the same use can't be undone twice.
+            config.OnClick = message =>
+            {
+                Snackbar.Remove(message);
+                return UndoAsync(sheet.Id, id);
+            };
+        });
+        await RefreshAsync(sheet.Id);
+    }
+
+    /// <summary>Removes a use just recorded by mistake, from the message that confirmed it.</summary>
+    private async Task UndoAsync(int sheetId, int entryId)
+    {
+        var result = await Api.RemoveEntryAsync(sheetId, entryId);
+        if (result.Ok)
+            Snackbar.Add(L["Use removed."], Severity.Info);
+        else
+            Snackbar.Add(result.Error ?? L["The use could not be removed."], Severity.Error);
+        await RefreshAsync(sheetId);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>The list's totals and the opened row, after a use was recorded or removed.</summary>
+    private async Task RefreshAsync(int sheetId)
+    {
+        await LoadAsync();
+        if (_expanded.ContainsKey(sheetId))
+            await LoadSheetAsync(sheetId);
+    }
+
+    /// <summary>What is left in the open container, or what was used for items that don't come in one.</summary>
+    private string Remaining(ConsumptionSheetDto sheet, ConsumptionLineDto line) => line.Charge switch
+    {
+        ConsumptionCharge.Container when sheet.ClosedAtUtc is null => line.LeftMl > 0 ? L["{0} mL left", Qty(line.LeftMl)] : L["No open container"],
+        ConsumptionCharge.Unit => L["{0} u. used", Qty(line.Given)],
+        _ => L["{0} mL used", Qty(line.Given)]
+    };
+
+    private static string Qty(decimal value) => value.ToString("0.##");
+
+    private string UnitText(ConsumptionCharge charge) => charge == ConsumptionCharge.Unit ? L["u."] : "mL";
 
     private async Task OpenAsync()
     {

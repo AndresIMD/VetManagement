@@ -1,0 +1,40 @@
+/* A row opened for a quick use: its supplies in three columns (name, what is left or used, the quantity and the button),
+   aligned across lines. On a phone the button goes under the name, so nothing is cut off. */
+.quick-use {
+    padding: 8px 16px 12px 52px;
+    background: var(--mud-palette-background-gray);
+}
+
+.quick-use-lines {
+    display: grid;
+    grid-template-columns: max-content max-content max-content;
+    align-items: center;
+    column-gap: 24px;
+    row-gap: 4px;
+}
+
+.quick-use-line {
+    display: contents;
+}
+
+.quick-use-action {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+@media (max-width: 600px) {
+    .quick-use {
+        padding: 8px 12px 12px;
+    }
+
+    .quick-use-lines {
+        grid-template-columns: 1fr auto;
+        column-gap: 12px;
+    }
+
+    .quick-use-action {
+        grid-column: 1 / -1;
+        margin-bottom: 8px;
+    }
+}

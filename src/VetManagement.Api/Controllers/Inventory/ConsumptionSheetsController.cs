@@ -19,7 +19,7 @@ public class ConsumptionSheetsController(ConsumptionService service) : ApiContro
         {
             var summary = ConsumptionSummary.For(s);
             return new ConsumptionSheetSummaryDto(s.Id, s.PetId, s.PatientName, s.OwnerName, s.OpenedAtUtc, s.ClosedAtUtc, s.Entries.Count,
-                summary.Total, s.StockPending);
+                summary.Total, s.StockPending, Pending(s, summary));
         }).ToList());
 
     [HttpGet("{id:int}")]
@@ -88,6 +88,9 @@ public class ConsumptionSheetsController(ConsumptionService service) : ApiContro
                 l.ContainerMl, l.UnitPrice, l.Total, sheet.PendingOf(l)))],
             summary.Total, sheet.MovesStock);
     }
+
+    private static List<ConsumptionPendingDto> Pending(ConsumptionSheet sheet, ConsumptionSummary summary)
+        => [.. summary.Lines.Select(l => new ConsumptionPendingDto(l.ItemName, sheet.PendingOf(l))).Where(p => p.Units > 0)];
 
     private IActionResult ToActionResult(ConsumptionResult result) => result.Status switch
     {
