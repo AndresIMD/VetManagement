@@ -50,6 +50,69 @@ public class RealtimeTests(CustomWebAppFactory factory) : IClassFixture<CustomWe
         notice.NewValue.Should().BeNull("every connected user gets it, and the count of a warehouse they don't see stays private");
     }
 
+    /// <summary>Makes the server unreachable while <see cref="Down"/> is set, like a server PC that is off.</summary>
+    private sealed class Switch
+    {
+        public volatile bool Down = true;
+    }
+
+    private sealed class Unplugged(Switch server, HttpMessageHandler inner) : DelegatingHandler(inner)
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            => server.Down ? throw new HttpRequestException("The server is down.") : base.SendAsync(request, cancellationToken);
+    }
+
+    [Fact]
+    public async Task AServerDownWhenTheAppStarts_IsRetried_AndTheChipTurnsLiveOnItsOwn()
+    {
+        var server = new Switch();
+        var live = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        await using var realtime = factory.CreateRealtimeClient(inner => new Unplugged(server, inner));
+        realtime.OnStateChanged += () =>
+        {
+            if (realtime.State == RealtimeState.Connected)
+                live.TrySetResult();
+        };
+
+        await realtime.InitializeAsync();
+        realtime.State.Should().Be(RealtimeState.Offline, "the first try failed and the app goes on");
+
+        server.Down = false;
+        await live.Task.WaitAsync(TimeSpan.FromSeconds(30));
+        realtime.IsConnected.Should().BeTrue("no reload needed");
+
+        var itemId = await AddItemAsync();
+        var received = new TaskCompletionSource<PropertyChangedEventArgs>(TaskCreationOptions.RunContinuationsAsynchronously);
+        realtime.OnPropertyChanged += args => received.TrySetResult(args);
+        (await _inventory.PostAsJsonAsync("/api/inventory/movements/adjust-stock", new AdjustStockRequest { ItemId = itemId, Amount = 1 }))
+            .StatusCode.Should().Be(HttpStatusCode.OK);
+        (await received.Task.WaitAsync(Wait)).EntityId.Should().Be(itemId);
+    }
+
+    [Fact]
+    public async Task ConnectingAgain_KeepsOneConnection_SoNoticesArriveOnce()
+    {
+        var itemId = await AddItemAsync();
+        var notices = 0;
+        await using var realtime = factory.CreateRealtimeClient();
+        realtime.OnPropertyChanged += args =>
+        {
+            if (args.EntityId == itemId)
+                Interlocked.Increment(ref notices);
+        };
+        await realtime.InitializeAsync();
+        await realtime.InitializeAsync(); // e.g. the sign-in notice arriving after the chip connected
+
+        (await _inventory.PostAsJsonAsync("/api/inventory/movements/adjust-stock", new AdjustStockRequest { ItemId = itemId, Amount = 1 }))
+            .StatusCode.Should().Be(HttpStatusCode.OK);
+        await Task.Delay(TimeSpan.FromSeconds(2));
+
+        notices.Should().Be(1);
+        realtime.State.Should().Be(RealtimeState.Connected);
+        await realtime.DisconnectAsync();
+        realtime.State.Should().Be(RealtimeState.Offline);
+    }
+
     [Fact]
     public async Task ANewItem_ReachesOpenScreens_WithoutItsStock()
     {

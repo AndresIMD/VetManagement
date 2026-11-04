@@ -8,12 +8,15 @@
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 @inject AuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime Js
 @attribute [Authorize(Policy = "Medical.Read")]
 
 <PageTitle>@L["Clinical record"]</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
     <PageHeader Title="@L["Clinical record"]" Icon="@Icons.Material.Filled.MedicalInformation" />
+    @* Reached from the client search, the agenda, due doses, visits and reports: back to wherever it was. *@
+    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="GoBackAsync" Class="mb-3">@L["Back"]</MudButton>
 
     @if (_notFound)
     {
@@ -190,6 +193,8 @@
 </MudContainer>
 
 @code {
+    private async Task GoBackAsync() => await Js.InvokeVoidAsync("appNavigation.back", "client-search");
+
     [Parameter] public int PetId { get; set; }
     /// <summary>When opened from the agenda: the appointment the new visit attends and its service as the reason.</summary>
     [SupplyParameterFromQuery(Name = "appointment")] public int? AppointmentId { get; set; }

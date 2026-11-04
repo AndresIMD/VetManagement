@@ -32,9 +32,12 @@ Asked in the form (per template): the lot number, so the form only shows the fie
   Without a normal range, a value outside every band is flagged too.
 - Values are kept as typed. For evaluation `86,6` = `86.6`. An analyser's bound (`< 1.0`, `>1000`, `≤ 5`) counts only
   where it settles the question: `< 1.0` is low against a range starting at 1.0, falls in the band `≤ 200` and meets
-  `8 h < 1.4`, but not `8 h ≥ 1.0`; its bar mark sits on the bound. A value that isn't a number (e.g. "Not measurable",
-  for an analyser that shows `...`, `/` or `-`) prints as typed, is never flagged and draws no bar. In the form, the
-  menu next to each number value types "Not measurable" (Spanish: "No medible") or puts `>` / `<` before the number.
+  `8 h < 1.4`, but not `8 h ≥ 1.0`; its bar mark sits on the bound. A value that isn't a number (e.g. `...` or `/`, as
+  an analyser shows it) prints as typed, is never flagged and draws no bar.
+- **Every parameter of the template prints**, since a template lists only what its report must show: one left empty in
+  the form prints `-` (`ExamReportResult.NotMeasured`), is never flagged, draws no bar, isn't used by the rules and
+  doesn't count as a measured value, and the legend at the foot then explains it ("- Not measured"). Correcting the
+  report shows it as the empty field it was. Bounds are typed as the analyser shows them (`>1000`).
 - **Text parameters** (Positivo / Negativo, DEA 1, blood type) may list options; options marked `AbnormalOptions`
   (e.g. "Positivo") are flagged. A report whose results are all text prints each one highlighted (name and a result
   pill: solid red when flagged, outlined in the result colour otherwise) instead of the table, without unit, reference
@@ -75,7 +78,7 @@ Asked in the form (per template): the lot number, so the form only shows the fie
 - **Section titles** (`Kind: Section`) group the parameters after them, up to the next title; a report prints a title
   as a band across the results box above its first result, in the section colour of Report Design (dark text on a light
   colour, white otherwise), a notch smaller than the main bars (text 0.9 of the results', at most 10.5 pt, and a
-  slimmer band), and leaves it out when none of its parameters has a value. Parameters and titles are moved
+  slimmer band), and leaves it out when no parameter follows it. Parameters and titles are moved
   up and down in the editor, which is also how a parameter changes section.
 - **Page breaks** (`Kind: PageBreak`) print nothing: the lines after one start a new page, and a section title right
   above it goes along. A report keeps one only between values: never first or last, and several in a row count once.

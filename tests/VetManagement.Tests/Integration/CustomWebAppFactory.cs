@@ -45,13 +45,16 @@ public class CustomWebAppFactory : WebApplicationFactory<Program>
         => new JwtSecurityTokenHandler().WriteToken(new JwtSecurityToken(JwtIssuer, JwtIssuer, claims, expires: DateTime.UtcNow.AddMinutes(10),
             signingCredentials: new SigningCredentials(new SymmetricSecurityKey(Encoding.ASCII.GetBytes(JwtKey)), SecurityAlgorithms.HmacSha256)));
 
-    /// <summary>The staff app's realtime client, connected to this API's hubs through the in-memory server (call InitializeAsync).</summary>
-    public RealtimeService CreateRealtimeClient()
+    /// <summary>
+    /// The staff app's realtime client, connected to this API's hubs through the in-memory server (call InitializeAsync).
+    /// <paramref name="wrap"/> goes between them, e.g. to make the server look unreachable.
+    /// </summary>
+    public RealtimeService CreateRealtimeClient(Func<HttpMessageHandler, HttpMessageHandler>? wrap = null)
     {
         var token = CreateToken([new Claim(ClaimTypes.Name, "open-screen")]);
         return new RealtimeService(Server.BaseAddress.ToString(), () => Task.FromResult<string?>(token), options =>
         {
-            options.HttpMessageHandlerFactory = _ => Server.CreateHandler();
+            options.HttpMessageHandlerFactory = _ => wrap is null ? Server.CreateHandler() : wrap(Server.CreateHandler());
             options.Transports = HttpTransportType.LongPolling;
         });
     }
