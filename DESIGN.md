@@ -36,17 +36,22 @@ The feature-packed ones go wrong in three ways:
 2. **A module works the day it is enabled.** Complex setup must not stand between a clinic and a module. Proposed:
    defaults cover the start (per-clinic settings [already begin from them](docs/architecture/ARCHITECTURE.md#shared-mechanisms))
    and guided forms replace the [JSON editors](PROJECT_STATE.md#open-product-decisions).
-3. **Spacious and calm.** Screens leave room and never feel like a packed forum. Proposed: the room comes from showing
-   fewer things at once, not only from padding.
-4. **Modules a clinic doesn't have are hidden.** Proposed: menus and the home page still look complete with any mix.
-5. **Desktop leads.** Web on a desktop and the Windows MAUI app carry the most weight in every decision. Other devices
+3. **Spacious and calm, minimal first.** Screens leave room and never feel like a packed forum: the room comes from
+   showing fewer things at once, not only from padding. A screen starts with the least it needs, and a detail is added
+   once it proves to help the work, not designed in from the start. Tables carry data: a state shows as a small icon
+   with its text on hover or focus, or as one indicator beside the content, never as the same sentence on every row.
+4. **Quick tasks where the work is.** A quick task, such as recording a dose, is done from the list itself, in a row
+   that opens in place or a small dialog, without leaving the page. Careful or rare work (editing, deleting, charges)
+   lives on the detail page, reached through an explicit Edit button rather than the quick click.
+5. **Modules a clinic doesn't have are hidden.** Proposed: menus and the home page still look complete with any mix.
+6. **Desktop leads.** Web on a desktop and the Windows MAUI app carry the most weight in every decision. Other devices
    adapt to them, never the other way round. Phone and tablet layouts must not break, but they don't hold
    back a desktop delivery until the device-testing stage.
-6. **A feature must not slow daily work** (Proposed). A new screen is judged by what its users have to learn, and
+7. **A feature must not slow daily work** (Proposed). A new screen is judged by what its users have to learn, and
    configuration sits behind the daily work.
-7. **The connection is never a surprise** (Proposed). The app shows whether it reaches the server, says when it is
+8. **The connection is never a surprise** (Proposed). The app shows whether it reaches the server, says when it is
    working locally and will update the cloud later, and each screen has a defined behaviour when it can't connect.
-8. **Clinic branding has fixed slots** (Proposed). A clinic's logo, colour and report design fill defined places and
+9. **Clinic branding has fixed slots** (Proposed). A clinic's logo, colour and report design fill defined places and
    never change how a screen works.
 
 ## Visual direction
