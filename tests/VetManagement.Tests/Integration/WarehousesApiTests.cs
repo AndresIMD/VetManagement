@@ -42,9 +42,9 @@ public class WarehousesApiTests : IClassFixture<CustomWebAppFactory>
         return await work(scope.ServiceProvider.GetRequiredService<AppDbContext>());
     }
 
-    private Task<int> AddItemAsync(int stock) => WithDbAsync(async db =>
+    private Task<int> AddItemAsync(int stock, string name = "Lidocaína") => WithDbAsync(async db =>
     {
-        var item = new Item($"Lidocaína {Guid.NewGuid():N}", ItemType.Material, Guid.NewGuid().ToString("N")[..12], null, stock, 3000);
+        var item = new Item($"{name} {Guid.NewGuid():N}", ItemType.Material, Guid.NewGuid().ToString("N")[..12], null, stock, 3000);
         db.Items.Add(item);
         await db.SaveChangesAsync();
         return item.Id;
@@ -160,6 +160,38 @@ public class WarehousesApiTests : IClassFixture<CustomWebAppFactory>
         full.Warehouses.Should().Contain(w => w.WarehouseId == locked && w.Quantity == 10);
         (await TransferAsync(supervisor, itemId, locked, daily, 2)).StatusCode.Should().Be(HttpStatusCode.OK);
         (await ItemAsync(worker, itemId)).Stock.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task FilteringByAWarehouse_ListsWhatItHolds_ByItsUnits_AndNothingOfOneTheUserDoesntSee()
+    {
+        var tag = Guid.NewGuid().ToString("N")[..10];
+        var (held, onlyDaily, ranOut) = (await AddItemAsync(10, tag), await AddItemAsync(5, tag), await AddItemAsync(3, tag));
+        var daily = await DailyUseIdAsync();
+        var (back, _) = await AddWarehouseAsync(Permissions.ROLES.SUPERVISOR);
+        (await TransferAsync(_admin, held, daily, back, 6)).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await TransferAsync(_admin, ranOut, daily, back, 3)).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await TransferAsync(_admin, ranOut, back, daily, 3)).StatusCode.Should().Be(HttpStatusCode.OK);
+
+        async Task<List<(int Id, int Units)>> InAsync(HttpClient client, int warehouseId, string filter = "")
+        {
+            var page = (await client.GetFromJsonAsync<PagedResponse<InventoryItemDto>>(
+                $"/api/items/paged?search={tag}&warehouseId={warehouseId}&sortBy={ItemSortField.Stock}&sortDirection={SortDirection.Descending}{filter}"))!;
+            return [.. page.Items.Select(i => (i.Id, i.Warehouses.FirstOrDefault(w => w.WarehouseId == warehouseId)?.Quantity ?? 0))];
+        }
+
+        // The back storeroom: what it holds and what ran out there, sorted by its units; never what it never had.
+        (await InAsync(_admin, back)).Should().Equal((held, 6), (ranOut, 0));
+        (await InAsync(_admin, back, $"&alertFilter={StockAlertFilter.OutOfStock}")).Should().Equal((ranOut, 0));
+        // The daily-use one holds every item: what the others don't.
+        (await InAsync(_admin, daily)).Should().Equal((onlyDaily, 5), (held, 4), (ranOut, 3));
+
+        // A worker who doesn't see the back storeroom learns nothing of it, not even which items it holds.
+        var worker = UserWith(Permissions.ROLES.INVENTORY);
+        var hidden = (await worker.GetFromJsonAsync<PagedResponse<InventoryItemDto>>($"/api/items/paged?search={tag}&warehouseId={back}"))!;
+        hidden.TotalCount.Should().Be(0);
+        hidden.Items.Should().BeEmpty();
+        (await InAsync(worker, daily)).Should().Equal((onlyDaily, 5), (held, 4), (ranOut, 3));
     }
 
     [Fact]

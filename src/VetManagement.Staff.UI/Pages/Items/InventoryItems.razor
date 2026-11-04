@@ -21,7 +21,7 @@
     <MudBreadcrumbs Items="Breadcrumbs" Class="mb-2" />
     <MudPaper Class="pa-6 mb-4 elevation-3 rounded-lg app-surface">
         <MudGrid>
-            <MudItem xs="12" sm="6" md="6">
+            <MudItem xs="12" sm="6" md="@(ShowsWarehouses ? 4 : 6)">
                 <MudTextFilterField @bind-Value="FilterNameOrCompound"
                     Label="@L["Search by name, brand, compound or code..."]" />
             </MudItem>
@@ -33,7 +33,21 @@
                     <MudSelectItem Value="ItemType.Drug">@L["Drug"]</MudSelectItem>
                 </MudSelect>
             </MudItem>
-            <MudItem xs="12" sm="12" md="3" Class="d-flex align-center justify-end">
+            @* Only for whoever sees more than one warehouse: what one of them holds, with its units. *@
+            @if (ShowsWarehouses)
+            {
+                <MudItem xs="12" sm="6" md="3">
+                    <MudSelect T="int?" @bind-Value="FilterWarehouseId" Label="@L["Warehouse"]" Variant="Variant.Outlined"
+                        AnchorOrigin="Origin.BottomCenter">
+                        <MudSelectItem T="int?" Value="null">@L["All warehouses"]</MudSelectItem>
+                        @foreach (var warehouse in _warehouses)
+                        {
+                            <MudSelectItem T="int?" Value="warehouse.Id">@warehouse.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            }
+            <MudItem xs="12" sm="@(ShowsWarehouses ? 6 : 12)" md="@(ShowsWarehouses ? 2 : 3)" Class="d-flex align-center justify-end">
                 <MudButton Color="Color.Secondary" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Clear"
                     OnClick="ClearFilters">@L["Clear filter"]</MudButton>
             </MudItem>
@@ -91,7 +105,7 @@
                 <MudTableSortLabel T="InventoryItemDTO" SortLabel="Type">@L["Category"]</MudTableSortLabel>
             </MudTh>
             <MudTh Style="width:15%; min-width:80px;">
-                <MudTableSortLabel T="InventoryItemDTO" SortLabel="Stock">@L["Stock"]</MudTableSortLabel>
+                <MudTableSortLabel T="InventoryItemDTO" SortLabel="Stock">@(FilterWarehouse is { } shown ? L["Stock in {0}", shown.Name] : L["Stock"])</MudTableSortLabel>
             </MudTh>
             <MudTh Style="width:20%; min-width:180px; text-align: right;">
                 @L["Actions"]
@@ -102,7 +116,15 @@
             <MudTd DataLabel="@L["Brand"]">@(!string.IsNullOrWhiteSpace(item.Brand) ? item.Brand : "-")</MudTd>
             <MudTd DataLabel="@L["Category"]">@item.Type.ToText()</MudTd>
             <MudTd DataLabel="@L["Stock"]">
-                <StockByWarehouse Stock="item.Stock" LowStockThreshold="item.LowStockThreshold" Warehouses="item.Warehouses" AskAt="item.AskAt" />
+                @if (FilterWarehouseId is int warehouseId)
+                {
+                    <StockByWarehouse Stock="@(item.Warehouses.FirstOrDefault(w => w.WarehouseId == warehouseId)?.Quantity ?? 0)" Total="item.Stock"
+                                      LowStockThreshold="item.LowStockThreshold" Warehouses="item.Warehouses" AskAt="item.AskAt" />
+                }
+                else
+                {
+                    <StockByWarehouse Stock="item.Stock" LowStockThreshold="item.LowStockThreshold" Warehouses="item.Warehouses" AskAt="item.AskAt" />
+                }
             </MudTd>
             <MudTd DataLabel="@L["Actions"]" Class="text-end">
                 <MudStack Row="true" Spacing="1" Justify="Justify.FlexEnd">
@@ -189,6 +211,24 @@
         }
     }
 
+    private bool ShowsWarehouses => _warehouses.Count > 1;
+
+    private int? _filterWarehouseId;
+
+    /// <summary>One warehouse's items: the stock column, its sort and the stock alerts then use that warehouse's units.</summary>
+    private int? FilterWarehouseId
+    {
+        get => _filterWarehouseId;
+        set
+        {
+            if (_filterWarehouseId == value) return;
+            _filterWarehouseId = value;
+            _table?.ReloadServerData();
+        }
+    }
+
+    private WarehouseDto? FilterWarehouse => _warehouses.FirstOrDefault(w => w.Id == _filterWarehouseId);
+
     protected override async Task OnInitializedAsync()
     {
         if (!string.IsNullOrWhiteSpace(InitialQuery))
@@ -233,7 +273,8 @@
             ct,
             _alert,
             sortBy,
-            sortDirection);
+            sortDirection,
+            _filterWarehouseId);
 
             if (result != null)
             {
@@ -296,6 +337,7 @@
     {
         FilterNameOrCompound = string.Empty;
         FilterItemType = ItemType.None;
+        FilterWarehouseId = null;
         _alert = null;
         _table?.ReloadServerData();
     }
@@ -563,6 +605,13 @@
                 Label = L["Category: {0}", FilterItemType.ToText()].Value,
                 Color = Color.Secondary,
                 OnClear = () => FilterItemType = ItemType.None
+            });
+        if (FilterWarehouse is { } warehouse)
+            list.Add(new FilterChipModel
+            {
+                Label = L["Warehouse: {0}", warehouse.Name].Value,
+                Color = Color.Secondary,
+                OnClear = () => FilterWarehouseId = null
             });
         if (!string.IsNullOrWhiteSpace(_alert))
             list.Add(new FilterChipModel

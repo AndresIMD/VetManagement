@@ -74,7 +74,8 @@ public class ItemsApiService(HttpClient httpClient)
     public async Task DeleteItemAsync(int id)
         => await httpClient.DeleteAsync(string.Format(ApiRouteConstants.ITEMS_BY_ID, id));
 
-    public async Task<PagedResult<InventoryItemDTO>?> GetItemsPagedAsync(string? search, ItemType type, int page, int pageSize, CancellationToken ct = default, string? alert = null, ItemSortField? sortBy = null, SortDirection sortDirection = SortDirection.Ascending)
+    /// <param name="warehouseId">Only what this warehouse holds, with its units as the stock that is filtered and sorted.</param>
+    public async Task<PagedResult<InventoryItemDTO>?> GetItemsPagedAsync(string? search, ItemType type, int page, int pageSize, CancellationToken ct = default, string? alert = null, ItemSortField? sortBy = null, SortDirection sortDirection = SortDirection.Ascending, int? warehouseId = null)
     {
         var query = new List<string>
         {
@@ -90,6 +91,8 @@ public class ItemsApiService(HttpClient httpClient)
             query.Add($"sortBy={sortBy.Value}");
         if (sortDirection != SortDirection.Ascending)
             query.Add($"sortDirection={sortDirection}");
+        if (warehouseId is int warehouse)
+            query.Add($"warehouseId={warehouse}");
 
         var url = $"{ApiRouteConstants.ITEMS_PAGED}?{string.Join("&", query)}";
         using var response = await httpClient.GetAsync(url, ct);

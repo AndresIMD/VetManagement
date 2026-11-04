@@ -103,6 +103,11 @@ movement is deleted; the daily-use one is neither.
 Items (`api/items`, `paged`, by id and barcode) carry `Stock` (what the user sees), `DailyUseStock`, `Warehouses`
 (units per warehouse they see) and `AskAt` (names of the other warehouses holding some).
 
+`api/items/paged?warehouseId=` lists what one warehouse holds, and its units are then what the stock filters and sort
+use: every item for the daily-use one, the items it has units of, or had and ran out, for another. The items list offers
+it as a "Warehouse" filter to whoever sees more than one, and its stock column then shows that warehouse's units. A
+warehouse the user doesn't see, or an unknown one, gives an empty page, like the movement history.
+
 ## Later
 
 Per-warehouse minimums with a "to restock" list (what to move from the back storeroom to the daily-use one): low-stock

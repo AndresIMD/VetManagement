@@ -12,7 +12,10 @@ namespace VetManagement.Application.Services;
 
 public class InventoryQueryService(IUnitOfWork unitOfWork, WarehouseService warehouses)
 {
-    /// <summary>A page of items with the stock the user sees; the stock filters and sort use it too.</summary>
+    /// <summary>
+    /// A page of items with the stock the user sees; the stock filters and sort use it too. With a warehouse, only what that
+    /// one holds, filtered and sorted by its units; nothing for a warehouse the user doesn't see, so its contents stay private.
+    /// </summary>
     public async Task<PagedResponse<InventoryItemDto>> GetItemsPagedAsync(
         StockScope scope,
         string? search,
@@ -21,10 +24,15 @@ public class InventoryQueryService(IUnitOfWork unitOfWork, WarehouseService ware
         int pageSize,
         DomainStockAlertFilter? alertFilter = null,
         DomainItemSortField? sortBy = null,
-        DomainSortDirection sortDirection = DomainSortDirection.Ascending)
+        DomainSortDirection sortDirection = DomainSortDirection.Ascending,
+        int? warehouseId = null)
     {
+        Warehouse? onlyIn = null;
+        if (warehouseId is not null && (onlyIn = await Stock.WarehouseForAsync(unitOfWork, warehouseId, scope)) is null)
+            return new([], 0, page, pageSize);
+
         var (items, totalCount) = await unitOfWork.Items.GetPagedListAsync(search, type, page, pageSize, alertFilter, sortBy, sortDirection,
-            await warehouses.HiddenFromAsync(scope));
+            await warehouses.HiddenFromAsync(scope), onlyIn);
         var views = await warehouses.ViewAsync(items, scope);
 
         var pageItems = items.Select(i => new InventoryItemDto

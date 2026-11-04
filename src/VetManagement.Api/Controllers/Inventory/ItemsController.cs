@@ -95,10 +95,11 @@ public class ItemsController(ItemService itemService, InventoryQueryService quer
         [FromQuery] int pageSize = 25,
         [FromQuery] DomainStockAlertFilter? alertFilter = null,
         [FromQuery] DomainItemSortField? sortBy = null,
-        [FromQuery] DomainSortDirection sortDirection = DomainSortDirection.Ascending)
+        [FromQuery] DomainSortDirection sortDirection = DomainSortDirection.Ascending,
+        [FromQuery] int? warehouseId = null)
     {
         (page, pageSize) = Paging(page, pageSize);
-        var result = await queryService.GetItemsPagedAsync(GetStockScope(), search, type, page, pageSize, alertFilter, sortBy, sortDirection);
+        var result = await queryService.GetItemsPagedAsync(GetStockScope(), search, type, page, pageSize, alertFilter, sortBy, sortDirection, warehouseId);
         return Ok(result);
     }
 

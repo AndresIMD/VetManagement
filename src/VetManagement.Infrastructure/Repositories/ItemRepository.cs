@@ -60,7 +60,8 @@ public class ItemRepository(AppDbContext context) : Repository<Item>(context), I
         StockAlertFilter? alertFilter = null,
         ItemSortField? sortBy = null,
         SortDirection sortDirection = SortDirection.Ascending,
-        IReadOnlyCollection<int>? hiddenWarehouseIds = null)
+        IReadOnlyCollection<int>? hiddenWarehouseIds = null,
+        Warehouse? onlyIn = null)
     {
         var query = _context.Items.AsNoTracking();
 
@@ -81,16 +82,30 @@ public class ItemRepository(AppDbContext context) : Repository<Item>(context), I
             query = query.Where(i => i.Type == type.Value);
         }
 
-        // The stock filters and sort use what the user sees: the total less what the hidden warehouses hold.
+        // The stock filters and sort use what the user sees: the total less what the hidden warehouses hold, or the units of
+        // the one warehouse asked for (the daily-use one has no rows: it holds what the others don't).
         var hidden = hiddenWarehouseIds ?? [];
         var stocks = _context.WarehouseStocks;
-        var seen = hidden.Count == 0
-            ? query.Select(i => new { Item = i, Stock = i.Stock })
-            : query.Select(i => new
+        var warehouseId = onlyIn?.Id;
+        var seen = onlyIn switch
+        {
+            { IsDailyUse: true } => query.Select(i => new
+            {
+                Item = i,
+                Stock = i.Stock - stocks.Where(s => s.ItemId == i.Id).Sum(s => s.Quantity)
+            }),
+            not null => query.Where(i => stocks.Any(s => s.ItemId == i.Id && s.WarehouseId == warehouseId)).Select(i => new
+            {
+                Item = i,
+                Stock = stocks.Where(s => s.ItemId == i.Id && s.WarehouseId == warehouseId).Sum(s => s.Quantity)
+            }),
+            _ when hidden.Count == 0 => query.Select(i => new { Item = i, Stock = i.Stock }),
+            _ => query.Select(i => new
             {
                 Item = i,
                 Stock = i.Stock - stocks.Where(s => s.ItemId == i.Id && hidden.Contains(s.WarehouseId)).Sum(s => s.Quantity)
-            });
+            })
+        };
 
         if (alertFilter.HasValue && alertFilter.Value != StockAlertFilter.None)
         {
