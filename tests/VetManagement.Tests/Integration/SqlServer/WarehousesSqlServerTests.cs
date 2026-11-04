@@ -63,6 +63,15 @@ public class WarehousesSqlServerTests
             var all = (await admin.GetFromJsonAsync<PagedResponse<InventoryItemDto>>($"/api/items/paged?sortBy={ItemSortField.Stock}"))!;
             all.Items.Single(i => i.Id == low).Stock.Should().Be(10);
 
+            // Filtered by one warehouse: its items, filtered and sorted by its units (the daily-use one's, what the others don't hold).
+            (await admin.GetFromJsonAsync<PagedResponse<InventoryItemDto>>($"/api/items/paged?warehouseId={locked}&sortBy={ItemSortField.Stock}"))!
+                .Items.Select(i => i.Id).Should().Equal(low);
+            (await admin.GetFromJsonAsync<PagedResponse<InventoryItemDto>>(
+                $"/api/items/paged?warehouseId={daily}&alertFilter={StockAlertFilter.LowStock}&sortBy={ItemSortField.Stock}&sortDirection={SortDirection.Descending}"))!
+                .Items.Select(i => i.Id).Should().Equal(low, kept);
+            (await worker.GetFromJsonAsync<PagedResponse<InventoryItemDto>>($"/api/items/paged?warehouseId={locked}"))!
+                .TotalCount.Should().Be(0, "the worker doesn't see the locked warehouse");
+
             var history = (await worker.GetFromJsonAsync<PagedResponse<MovementDto>>($"/api/inventory/movements/paged?itemId={low}"))!;
             history.Items.Should().ContainSingle().Which.Type.Should().Be(InventoryMovementType.TransferOut);
             (await worker.GetFromJsonAsync<PagedResponse<MovementDto>>($"/api/inventory/movements/paged?warehouseId={daily}"))!

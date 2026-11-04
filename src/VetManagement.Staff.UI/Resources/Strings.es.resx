@@ -1319,6 +1319,9 @@
   <data name="Report updated to the current format." xml:space="preserve"><value>Informe actualizado al formato actual.</value></data>
   <data name="Warehouses" xml:space="preserve"><value>Bodegas</value></data>
   <data name="Warehouse" xml:space="preserve"><value>Bodega</value></data>
+  <data name="All warehouses" xml:space="preserve"><value>Todas las bodegas</value></data>
+  <data name="Warehouse: {0}" xml:space="preserve"><value>Bodega: {0}</value></data>
+  <data name="Stock in {0}" xml:space="preserve"><value>Stock en {0}</value></data>
   <data name="Where the stock is kept, and who sees each place." xml:space="preserve"><value>Dónde se guarda el stock y quién ve cada lugar.</value></data>
   <data name="Sales, visit supplies, vaccines and exam kits take stock from the daily-use warehouse, which everyone sees. Each other warehouse is seen only by the roles you mark, and Admin sees them all; whoever doesn't see one is told to ask there, never how many it holds. Inventory staff move stock between the warehouses they see with transfers." xml:space="preserve"><value>Las ventas, los insumos de las visitas, las vacunas y los kits de examen salen de la bodega de uso diario, que todos ven. Cada otra bodega la ven solo los roles que marques, y el Admin las ve todas; a quien no la ve se le indica que pida ahí, nunca cuántas unidades tiene. El personal de inventario mueve el stock entre las bodegas que ve con traspasos.</value></data>
   <data name="New warehouse" xml:space="preserve"><value>Nueva bodega</value></data>

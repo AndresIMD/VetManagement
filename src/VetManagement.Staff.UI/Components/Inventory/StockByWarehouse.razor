@@ -1,7 +1,8 @@
 @using VetManagement.Contracts.Inventory
 @using VetManagement.Staff.UI.Helpers
-@* An item's stock as the user sees it. With more than one warehouse, a button shows the units of each (on hover, or a
-   tap or click, which focus it). At zero it says where to ask, by name only, or that no warehouse has any. *@
+@* An item's stock as the user sees it, or one warehouse's when the list is filtered by it. With more than one warehouse,
+   a button shows the units of each (on hover, or a tap or click, which focus it). When the user sees none at all it says
+   where to ask, by name only, or that no warehouse has any. *@
 <span class="d-inline-flex align-center flex-wrap" style="gap:4px">
     <MudText Typo="Typo.body2" Class="@InventoryUiHelpers.GetStockCss(Stock, LowStockThreshold)">@Stock</MudText>
     @if (Warehouses.Count > 1)
@@ -23,13 +24,13 @@
                     }
                     <tr style="border-top:1px solid currentColor">
                         <td style="padding:2px 12px 1px 0"><b>@L["Total"]</b></td>
-                        <td style="padding:2px 0 1px;text-align:right"><b>@Stock</b></td>
+                        <td style="padding:2px 0 1px;text-align:right"><b>@(Total ?? Stock)</b></td>
                     </tr>
                 </table>
             </TooltipContent>
         </MudTooltip>
     }
-    @if (Stock <= 0)
+    @if ((Total ?? Stock) <= 0)
     {
         @if (AskAt.Count > 0)
         {
@@ -43,7 +44,12 @@
 </span>
 
 @code {
+    /// <summary>The units shown: what the user sees, or one warehouse's when the list is filtered by it.</summary>
     [Parameter] public int Stock { get; set; }
+
+    /// <summary>What the user sees in all, when <see cref="Stock"/> is one warehouse's: the breakdown's total, and where to ask.</summary>
+    [Parameter] public int? Total { get; set; }
+
     [Parameter] public int LowStockThreshold { get; set; }
     [Parameter] public List<WarehouseUnitsDto> Warehouses { get; set; } = [];
     [Parameter] public List<string> AskAt { get; set; } = [];
