@@ -119,8 +119,11 @@ public class ConsumptionApiTests(CustomWebAppFactory factory) : IClassFixture<Cu
 
         (await UseAsync(sheet, morphine, 3, _lab)).EnsureSuccessStatusCode();
         (await StockOfAsync(morphine)).Should().Be(4, "only the daily-use unit is taken, never the locked ones");
-        (await SheetAsync(sheet)).Lines.Single().StockPending.Should().Be(2);
-        (await _lab.GetFromJsonAsync<List<ConsumptionSheetSummaryDto>>("/api/consumption-sheets"))!.Single(s => s.Id == sheet).StockPending.Should().Be(2);
+        var line = (await SheetAsync(sheet)).Lines.Single();
+        line.StockPending.Should().Be(2);
+        var listed = (await _lab.GetFromJsonAsync<List<ConsumptionSheetSummaryDto>>("/api/consumption-sheets"))!.Single(s => s.Id == sheet);
+        listed.StockPending.Should().Be(2);
+        listed.Pending.Should().Equal([new ConsumptionPendingDto(line.ItemName, 2)], "the list names what is owed, item by item");
 
         // The head of the clinic hands out 2 from the locked warehouse; discharge takes them.
         await WithDbAsync(async db =>
@@ -184,6 +187,8 @@ public class ConsumptionApiTests(CustomWebAppFactory factory) : IClassFixture<Cu
         (await _supervisor.PostAsync($"/api/consumption-sheets/{sheet}/reopen", null)).EnsureSuccessStatusCode();
         (await _supervisor.PostAsync($"/api/consumption-sheets/{sheet}/close", null)).EnsureSuccessStatusCode();
         (await StockOfAsync(ketamine)).Should().Be(2);
+        (await _lab.GetFromJsonAsync<List<ConsumptionSheetSummaryDto>>("/api/consumption-sheets?closedDays=1"))!.Single(s => s.Id == sheet)
+            .Pending.Should().BeEmpty("it took what it owed");
         (await _lab.GetFromJsonAsync<List<ConsumptionSheetSummaryDto>>("/api/consumption-sheets"))!.Should().NotContain(s => s.Id == sheet,
             "a discharged sheet that owes nothing leaves the default list");
     }

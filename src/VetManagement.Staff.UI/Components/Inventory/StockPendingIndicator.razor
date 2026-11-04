@@ -1,0 +1,49 @@
+@using VetManagement.Contracts.Consumption
+@* What a consumption sheet still has to take from inventory (the daily-use warehouse had too few when it was used): one
+   amber mark instead of a sentence on every line. Its tooltip names the items, on hover or focus (a tap focuses it). *@
+@if (Items is { Count: > 0 } items)
+{
+    <MudTooltip Arrow="true" Placement="Placement.Top" ShowOnHover="true" ShowOnFocus="true" Inline="true">
+        <ChildContent>
+            @if (ShowLabel)
+            {
+                <MudButton Variant="Variant.Text" Color="Color.Warning" Size="Size.Small" StartIcon="@Icons.Material.Filled.WarningAmber">
+                    @L["To take from inventory"]</MudButton>
+            }
+            else
+            {
+                <MudIconButton Icon="@Icons.Material.Filled.WarningAmber" Color="Color.Warning" Size="Size.Small" Class="pa-0"
+                               aria-label="@L["{0} still to take from inventory", items.Sum(i => i.Units)]" />
+            }
+        </ChildContent>
+        <TooltipContent>
+            <div style="max-width:320px;text-align:left">
+                <div class="mb-1"><b>@L["Still to take from inventory"]</b></div>
+                @* A grid, not a table: the sheet page's print styles apply to every table on it. *@
+                <div style="display:inline-grid;grid-template-columns:auto auto;column-gap:12px;row-gap:2px">
+                    @foreach (var item in items)
+                    {
+                        <span>@item.ItemName</span>
+                        <span style="text-align:right">@item.Units</span>
+                    }
+                </div>
+                <div class="mt-1" style="opacity:.85">
+                    @(Discharged
+                        ? L["The daily-use warehouse had none. Once it has them, a supervisor can reopen the sheet and discharge it again to take them."]
+                        : L["The daily-use warehouse had none. They are taken on the sheet's next change or at discharge, once it has them."])
+                </div>
+            </div>
+        </TooltipContent>
+    </MudTooltip>
+}
+
+@code {
+    /// <summary>Units each item still owes; nothing renders when empty (or missing, from an API older than the list's).</summary>
+    [Parameter] public IReadOnlyList<ConsumptionPendingDto>? Items { get; set; }
+
+    /// <summary>The icon with a short label, for the side of a page; the icon alone in a table row.</summary>
+    [Parameter] public bool ShowLabel { get; set; }
+
+    /// <summary>The sheet was discharged: only a supervisor reopening it takes what is missing.</summary>
+    [Parameter] public bool Discharged { get; set; }
+}
