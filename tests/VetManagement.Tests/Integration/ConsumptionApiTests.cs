@@ -68,6 +68,12 @@ public class ConsumptionApiTests(CustomWebAppFactory factory) : IClassFixture<Cu
         return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
     }
 
+    private Task<HttpResponseMessage> BudgetAsync(int sheetId, int itemId, decimal quantity, string? notes = null)
+        => _lab.PostAsJsonAsync($"/api/consumption-sheets/{sheetId}/budgets", new AddConsumptionBudgetRequest { ItemId = itemId, Quantity = quantity, Notes = notes });
+
+    private async Task<ConsumptionSheetSummaryDto> ListedAsync(int sheetId)
+        => (await _lab.GetFromJsonAsync<List<ConsumptionSheetSummaryDto>>("/api/consumption-sheets?closedDays=1"))!.Single(s => s.Id == sheetId);
+
     private async Task<ConsumptionSheetDto> SheetAsync(int id) => (await _staff.GetFromJsonAsync<ConsumptionSheetDto>($"/api/consumption-sheets/{id}"))!;
 
     private async Task<HttpResponseMessage> UseAsync(int sheetId, int itemId, decimal quantity, HttpClient? client = null)
@@ -194,6 +200,61 @@ public class ConsumptionApiTests(CustomWebAppFactory factory) : IClassFixture<Cu
         (await MovementsOfAsync(ketamine)).Select(m => (m.Type, m.Quantity)).Should().Equal(
             (InventoryMovementType.Egress, 1), (InventoryMovementType.Egress, 1));
         (await SheetAsync(sheet)).Lines.Single().Should().Match<ConsumptionLineDto>(l => l.Given == 3 && l.StockPending == 0);
+    }
+
+    [Fact]
+    public async Task ABudget_CountsDownAsUsesAreRecorded_AndMovesNoStock()
+    {
+        // Lidocaine comes from the quick-use box; the guardian approves 5. The catheters are approved before any is used.
+        var lidocaine = await StockedItemAsync("Lidocaína 2%", 20, 900);
+        await PricingAsync(lidocaine, ConsumptionCharge.Unit, beforehand: true);
+        var catheter = await StockedItemAsync("Catéter 22G", 10);
+        var sheet = await OpenAsync("Nala");
+
+        var first = await IdAsync(await BudgetAsync(sheet, lidocaine, 5, "Presupuesto 123"));
+        (await BudgetAsync(sheet, catheter, 2)).EnsureSuccessStatusCode();
+        (await StockOfAsync(catheter)).Should().Be(10, "a budget moves no stock");
+        var dto = await SheetAsync(sheet);
+        dto.Lines.Should().BeEmpty("nothing was used yet");
+        dto.Balances.Select(b => (b.ItemId, b.Left)).Should().BeEquivalentTo(new[] { (lidocaine, 5m), (catheter, 2m) });
+
+        for (var i = 0; i < 5; i++)
+            (await UseAsync(sheet, lidocaine, 1, _lab)).EnsureSuccessStatusCode();
+        (await ListedAsync(sheet)).UsedUp.Should().ContainSingle().Which.Should().Match<ConsumptionBalanceDto>(b => b.ItemId == lidocaine && b.Left == 0);
+        (await StockOfAsync(lidocaine)).Should().Be(20, "it comes from the box");
+
+        // A new approval adds to the first.
+        (await BudgetAsync(sheet, lidocaine, 2)).EnsureSuccessStatusCode();
+        dto = await SheetAsync(sheet);
+        dto.Balances.Single(b => b.ItemId == lidocaine).Should().Match<ConsumptionBalanceDto>(b =>
+            b.Budgeted == 7 && b.Used == 5 && b.Left == 2 && !b.UsedUp && b.ToRefund == 2);
+        dto.Budgets.Select(b => b.Quantity).Should().Equal([2m, 2m, 5m], "newest first");
+        dto.Budgets.Last().Notes.Should().Be("Presupuesto 123");
+        (await ListedAsync(sheet)).UsedUp.Should().BeEmpty();
+
+        // An approval recorded by mistake is removed.
+        (await _lab.DeleteAsync($"/api/consumption-sheets/{sheet}/budgets/{first}")).EnsureSuccessStatusCode();
+        (await SheetAsync(sheet)).Balances.Single(b => b.ItemId == lidocaine).Should().Match<ConsumptionBalanceDto>(b =>
+            b.Budgeted == 2 && b.Left == -3 && b.UsedUp && b.ToRefund == 0);
+
+        // Whole units only, and none once discharged.
+        (await BudgetAsync(sheet, catheter, 1.5m)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await _lab.PostAsync($"/api/consumption-sheets/{sheet}/close", null)).EnsureSuccessStatusCode();
+        (await BudgetAsync(sheet, catheter, 1)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await SheetAsync(sheet)).Balances.Single(b => b.ItemId == catheter).ToRefund.Should().Be(2, "never used: to give back");
+    }
+
+    [Fact]
+    public async Task ABudgetAlone_KeepsHowTheItemIsChargedFromChanging()
+    {
+        var propofol = await StockedItemAsync("Propofol 20 mL", 10);
+        var sheet = await OpenAsync("Coco");
+        (await BudgetAsync(sheet, propofol, 2)).EnsureSuccessStatusCode();
+
+        (await SetPricingAsync(propofol, ConsumptionCharge.Container, containerMl: 20)).StatusCode
+            .Should().Be(HttpStatusCode.BadRequest, "the budget counts units");
+        (await _lab.PostAsync($"/api/consumption-sheets/{sheet}/close", null)).EnsureSuccessStatusCode();
+        await PricingAsync(propofol, ConsumptionCharge.Container, containerMl: 20);
     }
 
     [Fact]

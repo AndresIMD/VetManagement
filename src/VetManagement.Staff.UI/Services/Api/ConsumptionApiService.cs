@@ -25,6 +25,12 @@ public class ConsumptionApiService(HttpClient http)
     public async Task<ApiResult> RemoveEntryAsync(int sheetId, int entryId)
         => await ApiResult.FromResponseAsync(await http.DeleteAsync($"{string.Format(ApiRouteConstants.CONSUMPTION_SHEET_ENTRIES, sheetId)}/{entryId}"));
 
+    public async Task<ApiResult> AddBudgetAsync(int sheetId, AddConsumptionBudgetRequest request)
+        => await ApiResult.FromResponseAsync(await http.PostAsJsonAsync($"{string.Format(ApiRouteConstants.CONSUMPTION_SHEET_BY_ID, sheetId)}/budgets", request));
+
+    public async Task<ApiResult> RemoveBudgetAsync(int sheetId, int budgetId)
+        => await ApiResult.FromResponseAsync(await http.DeleteAsync($"{string.Format(ApiRouteConstants.CONSUMPTION_SHEET_BY_ID, sheetId)}/budgets/{budgetId}"));
+
     public async Task<ApiResult> DiscardRestAsync(int sheetId, int itemId)
         => await ApiResult.FromResponseAsync(await http.PostAsync(string.Format(ApiRouteConstants.CONSUMPTION_SHEET_DISCARD_REST, sheetId, itemId), null));
 

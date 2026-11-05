@@ -18,6 +18,50 @@ public class ConsumptionSummaryTests
             UsedAtUtc = new DateTime(2026, 10, 21, 8, 0, 0).AddMinutes(_minute)
         };
 
+    private static ConsumptionBudget Budget(int itemId, ConsumptionCharge charge, decimal quantity)
+        => new()
+        {
+            Id = ++_minute, ItemId = itemId, ItemName = $"Item {itemId}", Charge = charge, Quantity = quantity,
+            ApprovedAtUtc = new DateTime(2026, 10, 21, 7, 0, 0).AddMinutes(_minute)
+        };
+
+    [Fact]
+    public void Budgets_CountDownInTheirUnit_AndOnlyWhatWasNeverStartedIsToRefund()
+    {
+        var sheet = new ConsumptionSheet
+        {
+            Budgets = [Budget(1, ConsumptionCharge.Unit, 5), Budget(2, ConsumptionCharge.Container, 2), Budget(3, ConsumptionCharge.PerMl, 10),
+                Budget(4, ConsumptionCharge.Unit, 3), Budget(1, ConsumptionCharge.Unit, 2)],
+            Entries = [Use(1, ConsumptionCharge.Unit, 2, 300), Use(2, ConsumptionCharge.Container, 12, 15000, 10), Use(3, ConsumptionCharge.PerMl, 2.5m, 850)]
+        };
+
+        var summary = ConsumptionSummary.For(sheet);
+        var balances = summary.Balances.ToDictionary(b => b.ItemId);
+
+        balances[1].Should().Match<ConsumptionBalance>(b => b.Budgeted == 7 && b.Used == 2 && b.Left == 5 && !b.IsUsedUp && b.ToRefund == 5,
+            "every approval adds");
+        balances[2].Should().Match<ConsumptionBalance>(b => b.Used == 2 && b.Left == 0 && b.LeftMl == 8 && !b.IsUsedUp && b.ToRefund == 0,
+            "two containers started; the open one still has 8 mL for the patient, and isn't given back");
+        balances[3].Should().Match<ConsumptionBalance>(b => b.Used == 2.5m && b.Left == 7.5m);
+        balances[4].Should().Match<ConsumptionBalance>(b => b.Used == 0 && b.Left == 3, "approved, not used yet");
+        summary.Lines.Select(l => l.ItemId).Should().Equal([1, 2, 3], "a budget alone charges nothing");
+    }
+
+    [Fact]
+    public void ABudget_IsUsedUp_WhenNothingIsLeftToGive_OrMoreWasUsed()
+    {
+        var sheet = new ConsumptionSheet
+        {
+            Budgets = [Budget(1, ConsumptionCharge.Unit, 2), Budget(2, ConsumptionCharge.Container, 1)],
+            Entries = [Use(1, ConsumptionCharge.Unit, 3, 300), Use(2, ConsumptionCharge.Container, 10, 15000, 10)]
+        };
+
+        var balances = ConsumptionSummary.For(sheet).Balances.ToDictionary(b => b.ItemId);
+
+        balances[1].Should().Match<ConsumptionBalance>(b => b.Left == -1 && b.IsUsedUp && b.ToRefund == 0);
+        balances[2].Should().Match<ConsumptionBalance>(b => b.Left == 0 && b.LeftMl == 0 && b.IsUsedUp, "the only container is finished");
+    }
+
     [Fact]
     public void UsesOfItemsTakenOutBeforehand_AreChargedButTakeNoStock()
     {

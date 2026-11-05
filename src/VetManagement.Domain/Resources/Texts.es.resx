@@ -250,6 +250,7 @@
   <data name="The item doesn't exist." xml:space="preserve"><value>El insumo no existe.</value></data>
   <data name="The quantity must be more than 0 and at most {0}." xml:space="preserve"><value>La cantidad debe ser mayor que 0 y como máximo {0}.</value></data>
   <data name="'{0}' is charged per unit: use whole numbers." xml:space="preserve"><value>'{0}' se cobra por unidad: usa números enteros.</value></data>
+  <data name="'{0}' is budgeted in whole units or containers." xml:space="preserve"><value>'{0}' se presupuesta en unidades o envases enteros.</value></data>
   <data name="There is no open container of this item." xml:space="preserve"><value>No hay un envase abierto de este insumo.</value></data>
   <data name="Write how many mL one container holds." xml:space="preserve"><value>Escribe cuántos mL trae un envase.</value></data>
   <data name="Write the price of one mL." xml:space="preserve"><value>Escribe el precio de un mL.</value></data>
