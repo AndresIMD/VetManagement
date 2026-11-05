@@ -8,7 +8,8 @@ namespace VetManagement.Domain.Consumption;
 /// left; 3 more mL start a second one, charged at the price of the use that started it. When the sheet is closed, what is
 /// left in the open container counts as discarded.
 /// </summary>
-public sealed record ConsumptionSummary(List<ConsumptionLine> Lines, int Total)
+/// <param name="Balances">What is left of each item's budget, for the items the guardian approved some of.</param>
+public sealed record ConsumptionSummary(List<ConsumptionLine> Lines, int Total, List<ConsumptionBalance> Balances)
 {
     public static ConsumptionSummary For(ConsumptionSheet sheet)
     {
@@ -17,8 +18,24 @@ public sealed record ConsumptionSummary(List<ConsumptionLine> Lines, int Total)
             .Select(g => Line(g.OrderBy(e => e.UsedAtUtc).ThenBy(e => e.Id).ToList(), sheet.IsClosed))
             .OrderBy(l => l.ItemName, StringComparer.CurrentCultureIgnoreCase)
             .ToList();
-        return new ConsumptionSummary(lines, lines.Sum(l => l.Total));
+        return new ConsumptionSummary(lines, lines.Sum(l => l.Total), BalancesOf(sheet.Budgets, lines));
     }
+
+    /// <summary>
+    /// Each budgeted item against its uses, in the budget's unit: units or mL given, or containers started (an opened one
+    /// counts whole, whatever is left in it, and whether or not it came from a quick-use box).
+    /// </summary>
+    private static List<ConsumptionBalance> BalancesOf(List<ConsumptionBudget> budgets, List<ConsumptionLine> lines)
+        => [.. budgets
+            .GroupBy(b => b.ItemId)
+            .Select(g =>
+            {
+                var latest = g.OrderBy(b => b.ApprovedAtUtc).ThenBy(b => b.Id).Last();
+                var line = lines.FirstOrDefault(l => l.ItemId == g.Key);
+                var used = line is null ? 0 : latest.Charge == ConsumptionCharge.Container ? line.Containers : line.Given;
+                return new ConsumptionBalance(g.Key, line?.ItemName ?? latest.ItemName, latest.Charge, g.Sum(b => b.Quantity), used, line?.LeftMl ?? 0);
+            })
+            .OrderBy(b => b.ItemName, StringComparer.CurrentCultureIgnoreCase)];
 
     private static ConsumptionLine Line(List<ConsumptionEntry> entries, bool closed)
     {
@@ -54,6 +71,22 @@ public sealed record ConsumptionSummary(List<ConsumptionLine> Lines, int Total)
             : 0;
         return new ConsumptionLine(last.ItemId, last.ItemName, last.Charge, given, discarded, 0, 0, null, last.UnitPrice, sum, stockUnits);
     }
+}
+
+/// <summary>What is left of what the guardian approved for one item, in the budget's unit: units, containers or mL.</summary>
+/// <param name="Budgeted">Approved so far: every approval adds.</param>
+/// <param name="Used">Used against it: units or mL given, or containers started.</param>
+/// <param name="LeftMl">mL still in the open container, for the charge by container while the sheet is open.</param>
+public sealed record ConsumptionBalance(int ItemId, string ItemName, ConsumptionCharge Charge, decimal Budgeted, decimal Used, decimal LeftMl)
+{
+    /// <summary>Approved and not used yet; negative when more was used than approved.</summary>
+    public decimal Left => Budgeted - Used;
+
+    /// <summary>Nothing left to give, so a new budget is needed: an open container with mL in it still has some.</summary>
+    public bool IsUsedUp => Left < 0 || (Left == 0 && LeftMl <= 0);
+
+    /// <summary>What was never started, to give back at discharge: the rest of an opened container doesn't count.</summary>
+    public decimal ToRefund => Math.Max(Left, 0);
 }
 
 /// <param name="Given">Units, or mL given to the patient.</param>

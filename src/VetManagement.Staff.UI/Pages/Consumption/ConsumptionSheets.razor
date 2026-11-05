@@ -115,6 +115,7 @@
                                 <MudChip T="string" Size="Size.Small" Color="Color.Success" Class="ma-0">@L["Open"]</MudChip>
                             }
                             <StockPendingIndicator Items="context.Pending" Discharged="context.ClosedAtUtc is not null" />
+                            <BudgetUsedUpIndicator Items="context.UsedUp" />
                         </span>
                     </MudTd>
                     <MudTd>
@@ -134,29 +135,36 @@
                                 {
                                     <MudProgressLinear Indeterminate="true" />
                                 }
-                                else if (sheet.Lines.Count == 0)
+                                else if (QuickItems(sheet) is not { Count: > 0 } items)
                                 {
                                     <MudText Typo="Typo.body2" Color="Color.Secondary">@L["Nothing recorded yet."]</MudText>
                                 }
                                 else
                                 {
                                     <div class="quick-use-lines">
-                                        @foreach (var line in sheet.Lines)
+                                        @foreach (var item in items)
                                         {
-                                            var key = (sheet.Id, line.ItemId);
+                                            var key = (sheet.Id, item.ItemId);
                                             <div class="quick-use-line">
-                                                <span>@line.ItemName</span>
-                                                <span class="mud-text-secondary">@Remaining(sheet, line)</span>
+                                                <span>@item.ItemName</span>
+                                                <span class="mud-text-secondary d-inline-flex align-center" style="gap:4px">
+                                                    @State(sheet, item)
+                                                    @if (item.Balance is { UsedUp: true })
+                                                    {
+                                                        <MudIcon Icon="@Icons.Material.Outlined.AssignmentLate" Color="Color.Warning" Size="Size.Small"
+                                                                 Title="@L["No budget left: ask the guardian for a new one."]" />
+                                                    }
+                                                </span>
                                                 @if (_canRecord && sheet.ClosedAtUtc is null)
                                                 {
                                                     <span class="quick-use-action">
                                                         <MudNumericField T="decimal?" Value="_quantities.GetValueOrDefault(key)" ValueChanged="value => _quantities[key] = value"
                                                                          Immediate="true" Min="0.01m" HideSpinButtons="true" Culture="CultureInfo.CurrentCulture" Format="0.##"
                                                                          Variant="Variant.Outlined" Margin="Margin.Dense" Adornment="Adornment.End" Style="width:110px"
-                                                                         AdornmentText="@UnitText(line.Charge)" aria-label="@L["Quantity of {0}", line.ItemName]" />
+                                                                         AdornmentText="@UnitText(item.Charge)" aria-label="@L["Quantity of {0}", item.ItemName]" />
                                                         <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
                                                                    Disabled="@(_quantities.GetValueOrDefault(key) is not > 0 || _saving.Contains(key))"
-                                                                   OnClick="() => RecordAsync(sheet, line)">@L["Record"]</MudButton>
+                                                                   OnClick="() => RecordAsync(sheet, item)">@L["Record"]</MudButton>
                                                     </span>
                                                 }
                                             </div>
@@ -268,18 +276,32 @@
             return;
         }
         _expanded[id] = sheet;
-        foreach (var line in sheet.Lines)
-            _quantities.TryAdd((id, line.ItemId), LastDose(sheet, line));
+        foreach (var item in QuickItems(sheet))
+            _quantities.TryAdd((id, item.ItemId), LastDose(sheet, item));
     }
+
+    /// <summary>One item of an opened row: what it used (a line) and what is left of its budget (a balance), either or both.</summary>
+    private sealed record QuickItem(int ItemId, string ItemName, ConsumptionCharge Charge, ConsumptionLineDto? Line, ConsumptionBalanceDto? Balance);
+
+    /// <summary>The items used and the items budgeted, so an approved drug can be given from the list before its first use.</summary>
+    private static List<QuickItem> QuickItems(ConsumptionSheetDto sheet)
+        => [.. sheet.Lines.Select(l => l.ItemId).Union(sheet.Balances.Select(b => b.ItemId))
+            .Select(id =>
+            {
+                var line = sheet.Lines.FirstOrDefault(l => l.ItemId == id);
+                var balance = sheet.Balances.FirstOrDefault(b => b.ItemId == id);
+                return new QuickItem(id, line?.ItemName ?? balance!.ItemName, line?.Charge ?? balance!.Charge, line, balance);
+            })
+            .OrderBy(i => i.ItemName, StringComparer.CurrentCultureIgnoreCase)];
 
     /// <summary>
     /// One unit for items charged per unit (a use recorded as a batch is no dose to repeat); for the rest, the mL of the
     /// patient's last dose, since doses repeat.
     /// </summary>
-    private static decimal? LastDose(ConsumptionSheetDto sheet, ConsumptionLineDto line)
-        => line.Charge == ConsumptionCharge.Unit ? 1 : sheet.Entries.FirstOrDefault(e => e.ItemId == line.ItemId && !e.Discarded)?.Quantity;
+    private static decimal? LastDose(ConsumptionSheetDto sheet, QuickItem item)
+        => item.Charge == ConsumptionCharge.Unit ? 1 : sheet.Entries.FirstOrDefault(e => e.ItemId == item.ItemId && !e.Discarded)?.Quantity;
 
-    private async Task RecordAsync(ConsumptionSheetDto sheet, ConsumptionLineDto line)
+    private async Task RecordAsync(ConsumptionSheetDto sheet, QuickItem line)
     {
         var key = (sheet.Id, line.ItemId);
         if (_quantities.GetValueOrDefault(key) is not { } quantity || quantity <= 0 || !_saving.Add(key))
@@ -329,6 +351,25 @@
         await LoadAsync();
         if (_expanded.ContainsKey(sheetId))
             await LoadSheetAsync(sheetId);
+    }
+
+    /// <summary>What is left of its budget, or, without one, what is left in the open container or what was used.</summary>
+    private string State(ConsumptionSheetDto sheet, QuickItem item)
+        => item.Balance is { } balance ? BudgetText(balance) : Remaining(sheet, item.Line!);
+
+    /// <summary>"3 of 5 left" in the budget's unit, with the mL still in an open container; or how far over the budget it went.</summary>
+    private string BudgetText(ConsumptionBalanceDto balance)
+    {
+        var unit = balance.Charge switch
+        {
+            ConsumptionCharge.Container => L["containers"].Value,
+            ConsumptionCharge.Unit => L["u."].Value,
+            _ => "mL"
+        };
+        string text = balance.Left >= 0
+            ? L["{0} of {1} {2} left", Qty(balance.Left), Qty(balance.Budgeted), unit]
+            : L["{0} {1} over the budget of {2}", Qty(-balance.Left), unit, Qty(balance.Budgeted)];
+        return balance.LeftMl > 0 ? $"{text} · {L["{0} mL in the open one", Qty(balance.LeftMl)]}" : text;
     }
 
     /// <summary>What is left in the open container, or what was used for items that don't come in one.</summary>

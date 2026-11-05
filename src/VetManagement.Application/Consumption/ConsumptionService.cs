@@ -193,6 +193,60 @@ public class ConsumptionService(IUnitOfWork unitOfWork, AuditService audit, Time
         return result;
     }
 
+    /// <summary>
+    /// Adds what the guardian approved of an item (e.g. 5 ampoules), in its charge unit: the uses count down from it, and each
+    /// approval adds. Only the quantity: the money stays in the clinic's billing system. It moves no stock.
+    /// </summary>
+    public async Task<ConsumptionResult> AddBudgetAsync(int sheetId, int itemId, decimal quantity, string? notes, string userName)
+    {
+        var sheet = await unitOfWork.ConsumptionSheets.GetWithEntriesAsync(sheetId);
+        if (sheet is null)
+            return new ConsumptionResult(ConsumptionStatus.NotFound);
+        if (sheet.IsClosed)
+            return Invalid(Texts.T("The sheet is closed: reopen it to add or remove supplies."));
+        var item = await unitOfWork.Items.GetByIdAsNoTrackingAsync(itemId);
+        if (item is null)
+            return Invalid(Texts.T("The item doesn't exist."));
+        var charge = (await unitOfWork.ConsumptionPricings.FindAsync(p => p.ItemId == itemId)).FirstOrDefault()?.Charge ?? ConsumptionCharge.Unit;
+        if (quantity <= 0 || quantity > MaxQuantity)
+            return Invalid(Texts.T("The quantity must be more than 0 and at most {0}.", MaxQuantity));
+        if (charge != ConsumptionCharge.PerMl && quantity != decimal.Truncate(quantity))
+            return Invalid(Texts.T("'{0}' is budgeted in whole units or containers.", item.Name));
+
+        var budget = new ConsumptionBudget
+        {
+            SheetId = sheet.Id,
+            ItemId = item.Id,
+            ItemName = item.Name,
+            Charge = charge,
+            Quantity = Math.Round(quantity, 2),
+            Notes = Clean(notes),
+            ApprovedAtUtc = clock.GetUtcNow().UtcDateTime,
+            CreatedBy = userName
+        };
+        sheet.Budgets.Add(budget);
+        await unitOfWork.SaveChangesAsync();
+        await audit.LogAsync(nameof(ConsumptionSheet), sheetId, AuditActionType.Edit, $"Budget + {budget.ItemName}: {budget.Quantity}", userName);
+        return new ConsumptionResult(ConsumptionStatus.Done, budget.Id);
+    }
+
+    /// <summary>Removes an approval recorded by mistake.</summary>
+    public async Task<ConsumptionResult> RemoveBudgetAsync(int sheetId, int budgetId, string userName)
+    {
+        var sheet = await unitOfWork.ConsumptionSheets.GetWithEntriesAsync(sheetId);
+        var budget = sheet?.Budgets.FirstOrDefault(b => b.Id == budgetId);
+        if (sheet is null || budget is null)
+            return new ConsumptionResult(ConsumptionStatus.NotFound);
+        if (sheet.IsClosed)
+            return Invalid(Texts.T("The sheet is closed: reopen it to add or remove supplies."));
+
+        sheet.Budgets.Remove(budget);
+        await unitOfWork.SaveChangesAsync();
+        await audit.LogAsync(nameof(ConsumptionSheet), sheetId, AuditActionType.Edit,
+            $"Budget - {budget.ItemName}: {budget.Quantity} ({budget.CreatedBy}, {budget.ApprovedAtUtc:u})", userName);
+        return new ConsumptionResult(ConsumptionStatus.Done, sheet.Id);
+    }
+
     /// <summary>Discharge: the sheet takes no more entries and what is left in open containers counts as discarded.</summary>
     public async Task<ConsumptionResult> CloseAsync(int id, string userName)
         => await SetClosedAsync(id, closed: true, userName);

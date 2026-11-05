@@ -50,6 +50,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<VetManagement.Domain.Consumption.ConsumptionEntry> ConsumptionEntries { get; set; }
     public DbSet<VetManagement.Domain.Consumption.ConsumptionStock> ConsumptionStock { get; set; }
     public DbSet<VetManagement.Domain.Consumption.ConsumptionPricing> ConsumptionPricings { get; set; }
+    public DbSet<VetManagement.Domain.Consumption.ConsumptionBudget> ConsumptionBudgets { get; set; }
 
     private static readonly JsonSerializerOptions _jsonOptions = new();
     private static string SerializeDict(Dictionary<string, string>? v)
@@ -260,7 +261,17 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             e.HasOne<Pet>().WithMany().HasForeignKey(s => s.PetId).OnDelete(DeleteBehavior.SetNull);
             e.HasMany(s => s.Entries).WithOne().HasForeignKey(x => x.SheetId).OnDelete(DeleteBehavior.Cascade);
             e.HasMany(s => s.Stock).WithOne().HasForeignKey(x => x.SheetId).OnDelete(DeleteBehavior.Cascade);
+            e.HasMany(s => s.Budgets).WithOne().HasForeignKey(x => x.SheetId).OnDelete(DeleteBehavior.Cascade);
             e.HasIndex(s => s.ClosedAtUtc);
+        });
+        // What the guardian approved; no key to the item, like the entries (the sheet outlives a deleted item).
+        builder.Entity<VetManagement.Domain.Consumption.ConsumptionBudget>(e =>
+        {
+            e.Property(x => x.ItemName).HasMaxLength(200);
+            e.Property(x => x.Notes).HasMaxLength(200);
+            e.Property(x => x.CreatedBy).HasMaxLength(100);
+            e.Property(x => x.Quantity).HasPrecision(10, 2);
+            e.HasIndex(x => x.ItemId);
         });
         // What a sheet took from inventory, by item; no key to the item, like the entries (the sheet outlives a deleted item).
         builder.Entity<VetManagement.Domain.Consumption.ConsumptionStock>(e => e.HasIndex(x => new { x.SheetId, x.ItemId }).IsUnique());

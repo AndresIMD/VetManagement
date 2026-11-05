@@ -86,6 +86,102 @@
             </AuthorizeView>
         }
 
+        @* What the guardian approved, in quantities: the uses count down from it. Money stays in the billing system. *@
+        <MudPaper Class="pa-4 mb-3" Elevation="1">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+                <MudText Typo="Typo.h6">@L["Approved budget"]</MudText>
+                <MudSpacer />
+                <BudgetUsedUpIndicator Items="@sheet.Balances.Where(b => b.UsedUp).ToList()" />
+            </MudStack>
+            @if (sheet.ClosedAtUtc is null)
+            {
+                <AuthorizeView Policy="Consumption.Record" Context="auth">
+                    <MudGrid Spacing="2" Class="mb-2">
+                        <MudItem xs="12" md="5">
+                            <MudAutocomplete T="InventoryItemDTO" @bind-Value="_budgetItem" Label="@L["Drug or material"]"
+                                             SearchFunc="SearchAsync" ToStringFunc="@(i => i?.Name)" DebounceInterval="300" MinCharacters="2" Clearable="true" />
+                        </MudItem>
+                        <MudItem xs="6" md="2">
+                            <MudNumericField T="decimal?" @bind-Value="_budgetQuantity" Label="@L["Quantity"]" Min="0.01m" HideSpinButtons="true"
+                                             Culture="CultureInfo.CurrentCulture" Immediate="true" Adornment="Adornment.End"
+                                             AdornmentText="@BudgetUnit(_budgetItem is null ? ConsumptionCharge.Unit : _pricings.GetValueOrDefault(_budgetItem.Id)?.Charge ?? ConsumptionCharge.Unit)" />
+                        </MudItem>
+                        <MudItem xs="6" md="3">
+                            <MudTextField @bind-Value="_budgetNotes" Label="@L["Note (optional)"]" MaxLength="200" Placeholder="@L["E.g. budget no. 123"]" />
+                        </MudItem>
+                        <MudItem xs="12" md="2" Class="d-flex align-center">
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true" OnClick="AddBudgetAsync"
+                                       Disabled="@(_budgetItem is null || _budgetQuantity is not > 0 || _busy)">@L["Add"]</MudButton>
+                        </MudItem>
+                    </MudGrid>
+                </AuthorizeView>
+            }
+            @if (sheet.Balances.Count == 0)
+            {
+                <MudText Typo="Typo.body2" Color="Color.Secondary">@L["No budget recorded. Add what the guardian approved to see what is left of each item."]</MudText>
+            }
+            else
+            {
+                <MudSimpleTable Dense="true" Hover="true">
+                    <thead>
+                        <tr>
+                            <th>@L["Drug or material"]</th>
+                            <th style="text-align:right">@L["Approved"]</th>
+                            <th style="text-align:right">@L["Used"]</th>
+                            <th style="text-align:right">@(sheet.ClosedAtUtc is null ? L["Remaining"] : L["To give back"])</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var balance in sheet.Balances)
+                        {
+                            <tr>
+                                <td>@balance.ItemName</td>
+                                <td style="text-align:right">@Qty(balance.Budgeted) @BudgetUnit(balance.Charge)</td>
+                                <td style="text-align:right">@Qty(balance.Used)</td>
+                                <td style="text-align:right">
+                                    @if (sheet.ClosedAtUtc is not null)
+                                    {
+                                        @Qty(balance.ToRefund)
+                                    }
+                                    else
+                                    {
+                                        @(balance.Left >= 0 ? Qty(balance.Left) : L["{0} over", Qty(-balance.Left)].Value)
+                                        @if (balance.LeftMl > 0)
+                                        {
+                                            <span class="mud-text-secondary"> · @L["{0} mL in the open one", Qty(balance.LeftMl)]</span>
+                                        }
+                                        @if (balance.UsedUp)
+                                        {
+                                            <MudIcon Icon="@Icons.Material.Outlined.AssignmentLate" Color="Color.Warning" Size="Size.Small" Class="ml-1"
+                                                     Style="vertical-align:middle" Title="@L["No budget left: ask the guardian for a new one."]" />
+                                        }
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="d-block mt-3 mb-1">@L["Approvals"]</MudText>
+                @foreach (var budget in sheet.Budgets)
+                {
+                    <div class="d-flex align-center" style="gap:4px">
+                        <MudText Typo="Typo.body2">
+                            @budget.ApprovedAtUtc.ToLocalTime().ToString("dd/MM HH:mm") · @budget.ItemName · +@Qty(budget.Quantity) @BudgetUnit(budget.Charge)@(string.IsNullOrWhiteSpace(budget.Notes) ? "" : $" · {budget.Notes}") · @budget.CreatedBy
+                        </MudText>
+                        @if (sheet.ClosedAtUtc is null)
+                        {
+                            <AuthorizeView Policy="Consumption.Record" Context="auth">
+                                <MudTooltip Text="@L["Remove (recorded by mistake)"]">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => RemoveBudgetAsync(budget)"
+                                                   aria-label="@L["Remove approval"]" />
+                                </MudTooltip>
+                            </AuthorizeView>
+                        }
+                    </div>
+                }
+            }
+        </MudPaper>
+
         <MudPaper Class="pa-4 mb-3" Elevation="1">
             <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
                 <MudText Typo="Typo.h6">@L["To charge"]</MudText>
@@ -234,6 +330,9 @@
     private InventoryItemDTO? _item;
     private decimal? _quantity;
     private string? _notes;
+    private InventoryItemDTO? _budgetItem;
+    private decimal? _budgetQuantity;
+    private string? _budgetNotes;
     private bool _busy;
     private string? _error;
 
@@ -290,6 +389,37 @@
 
     private string UnitText(ConsumptionCharge charge) => charge == ConsumptionCharge.Unit ? L["u."] : "mL";
 
+    /// <summary>What a budget counts: units, containers (for the charge by container) or mL.</summary>
+    private string BudgetUnit(ConsumptionCharge charge) => charge switch
+    {
+        ConsumptionCharge.Container => L["containers"],
+        ConsumptionCharge.Unit => L["u."],
+        _ => "mL"
+    };
+
+    private async Task AddBudgetAsync()
+    {
+        _busy = true;
+        var result = await Api.AddBudgetAsync(Id, new AddConsumptionBudgetRequest { ItemId = _budgetItem!.Id, Quantity = _budgetQuantity!.Value, Notes = _budgetNotes });
+        _busy = false;
+        if (!result.Ok)
+        {
+            _error = result.Error;
+            return;
+        }
+        _error = null;
+        (_budgetItem, _budgetQuantity, _budgetNotes) = (null, null, null);
+        await LoadAsync();
+    }
+
+    private async Task RemoveBudgetAsync(ConsumptionBudgetDto budget)
+    {
+        if (!await ConfirmAsync(L["Remove approval"], L["Remove the approval of {0} {1} of {2}, recorded {3}?", Qty(budget.Quantity), BudgetUnit(budget.Charge),
+                budget.ItemName, budget.ApprovedAtUtc.ToLocalTime().ToString("dd/MM HH:mm")], L["Remove"]))
+            return;
+        await RunAsync(() => Api.RemoveBudgetAsync(Id, budget.Id));
+    }
+
     private string Charged(ConsumptionLineDto line) => line.Charge switch
     {
         ConsumptionCharge.Container => line.Containers == 1 ? L["1 container of {0} mL", Qty(line.ContainerMl ?? 0)] : L["{0} containers of {1} mL", line.Containers, Qty(line.ContainerMl ?? 0)],
@@ -345,7 +475,12 @@
 
     private async Task CloseAsync()
     {
-        if (!await ConfirmAsync(L["Discharge"], L["Close the sheet? It takes no more uses, and what is left in open containers counts as discarded."], L["Discharge"]))
+        // What was approved and never started, to give back: the money side is done at the cashier.
+        var leftOver = _sheet!.Balances.Where(b => b.ToRefund > 0).Select(b => $"{b.ItemName} {Qty(b.ToRefund)} {BudgetUnit(b.Charge)}").ToList();
+        var message = L["Close the sheet? It takes no more uses, and what is left in open containers counts as discarded."].Value;
+        if (leftOver.Count > 0)
+            message += " " + L["Left over from the budget, never started: {0}. Its refund is done at the cashier.", string.Join(", ", leftOver)];
+        if (!await ConfirmAsync(L["Discharge"], message, L["Discharge"]))
             return;
         await RunAsync(() => Api.CloseAsync(Id));
     }

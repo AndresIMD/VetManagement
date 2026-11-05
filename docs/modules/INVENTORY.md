@@ -40,10 +40,19 @@ when the box is restocked. Marking the item "From the quick-use box" in How supp
 taken twice. Each use copies the mark when it's recorded (`ConsumptionEntry.TakenOutBeforehand`), like the charge, so
 changing it never takes or returns stock for uses already on a sheet.
 
+**Budgets.** Where the guardian approves a fixed quantity first (e.g. 5 ampoules, paid in the clinic's billing system),
+the sheet records each approval in quantities (`ConsumptionBudget`, in the item's charge unit: units, containers or mL)
+and counts the uses down from it (`ConsumptionSummary.Balances`): units or mL given, or containers started, a container
+counting once it's opened. An item with nothing left gets a mark asking for a new budget; a use is still recorded. At
+discharge the sheet lists what was never started, to give back at the cashier. Budgets move no stock and hold no money:
+a refund needs no stock movement, since what was never used never left inventory. A budget also keeps how its item is
+charged from changing while the sheet is open.
+
 The sheets list is where uses are recorded day to day: a click on a row opens its items in place, each with the mL left
 in its open container (or what was used) and a quantity ready to record, the patient's last dose in mL or one unit, so a
-repeated dose is one click; the message that confirms it can undo it. The pencil opens the whole sheet for everything
-else: a new item, discarding a rest, removing a use, discharge. What a sheet still owes shows as one amber mark, on its
+repeated dose is one click; the message that confirms it can undo it. Budgeted items show what is left of their budget
+instead, and appear before their first use. The pencil opens the whole sheet for everything else: a new item, a budget,
+discarding a rest, removing a use, discharge. What a sheet still owes shows as one amber mark, on its
 row and beside "To charge" on the sheet, whose tooltip names the items.
 
 How an item is charged can't change (charge type, or container size) while a sheet not discharged yet uses it: the sheet

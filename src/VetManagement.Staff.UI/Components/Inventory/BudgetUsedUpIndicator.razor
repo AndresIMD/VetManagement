@@ -1,0 +1,33 @@
+@using VetManagement.Contracts.Consumption
+@* The budgeted items a patient has nothing left of: one mark on the sheet's row, whose tooltip (hover or focus, so a tap
+   works) names them, so someone asks the guardian for a new budget. *@
+@if (Items is { Count: > 0 } items)
+{
+    <MudTooltip Arrow="true" Placement="Placement.Top" ShowOnHover="true" ShowOnFocus="true" Inline="true">
+        <ChildContent>
+            <MudIconButton Icon="@Icons.Material.Outlined.AssignmentLate" Color="Color.Warning" Size="Size.Small" Class="pa-0"
+                           aria-label="@L["No budget left: {0}", string.Join(", ", items.Select(i => i.ItemName))]" />
+        </ChildContent>
+        <TooltipContent>
+            <div style="max-width:320px;text-align:left">
+                <div class="mb-1"><b>@L["No budget left"]</b></div>
+                @* A grid, not a table: some pages carry print styles for every table. *@
+                <div style="display:inline-grid;grid-template-columns:auto auto;column-gap:12px;row-gap:2px">
+                    @foreach (var item in items)
+                    {
+                        <span>@item.ItemName</span>
+                        <span style="text-align:right">@L["{0} of {1} used", Qty(item.Used), Qty(item.Budgeted)]</span>
+                    }
+                </div>
+                <div class="mt-1" style="opacity:.85">@L["Ask the guardian for a new budget."]</div>
+            </div>
+        </TooltipContent>
+    </MudTooltip>
+}
+
+@code {
+    /// <summary>The used-up balances; nothing renders when empty (or missing, from an older API).</summary>
+    [Parameter] public IReadOnlyList<ConsumptionBalanceDto>? Items { get; set; }
+
+    private static string Qty(decimal value) => value.ToString("0.##");
+}

@@ -760,6 +760,52 @@ namespace VetManagement.Api.Migrations
                     b.ToTable("ClinicSettings");
                 });
 
+            modelBuilder.Entity("VetManagement.Domain.Consumption.ConsumptionBudget", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("ApprovedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Charge")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("ItemId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ItemName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<int>("SheetId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemId");
+
+                    b.HasIndex("SheetId");
+
+                    b.ToTable("ConsumptionBudgets");
+                });
+
             modelBuilder.Entity("VetManagement.Domain.Consumption.ConsumptionEntry", b =>
                 {
                     b.Property<int>("Id")
@@ -1685,6 +1731,15 @@ namespace VetManagement.Api.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("VetManagement.Domain.Consumption.ConsumptionBudget", b =>
+                {
+                    b.HasOne("VetManagement.Domain.Consumption.ConsumptionSheet", null)
+                        .WithMany("Budgets")
+                        .HasForeignKey("SheetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("VetManagement.Domain.Consumption.ConsumptionEntry", b =>
                 {
                     b.HasOne("VetManagement.Domain.Consumption.ConsumptionSheet", null)
@@ -2018,6 +2073,8 @@ namespace VetManagement.Api.Migrations
 
             modelBuilder.Entity("VetManagement.Domain.Consumption.ConsumptionSheet", b =>
                 {
+                    b.Navigation("Budgets");
+
                     b.Navigation("Entries");
 
                     b.Navigation("Stock");

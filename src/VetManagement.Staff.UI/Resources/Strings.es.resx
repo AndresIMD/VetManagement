@@ -1388,4 +1388,24 @@
   <data name="The use could not be removed." xml:space="preserve"><value>No se pudo quitar el uso.</value></data>
   <data name="The item says {0} mL per container. Use that size, or each container started takes the wrong number of units from inventory." xml:space="preserve"><value>El producto dice {0} mL por envase. Usa ese tamaño, o cada envase que se empiece descontará una cantidad equivocada del inventario.</value></data>
   <data name="The daily-use warehouse had none. Once it has them, a supervisor can reopen the sheet and discharge it again to take them." xml:space="preserve"><value>La bodega de uso diario no tenía. Cuando haya, un supervisor puede reabrir la hoja y darla de alta otra vez para descontarlos.</value></data>
+  <data name="No budget left: {0}" xml:space="preserve"><value>Sin saldo de presupuesto: {0}</value></data>
+  <data name="No budget left" xml:space="preserve"><value>Sin saldo de presupuesto</value></data>
+  <data name="{0} of {1} used" xml:space="preserve"><value>{0} de {1} usados</value></data>
+  <data name="Ask the guardian for a new budget." xml:space="preserve"><value>Pide un nuevo presupuesto al tutor.</value></data>
+  <data name="No budget left: ask the guardian for a new one." xml:space="preserve"><value>Sin saldo: pide un nuevo presupuesto al tutor.</value></data>
+  <data name="containers" xml:space="preserve"><value>envases</value></data>
+  <data name="{0} of {1} {2} left" xml:space="preserve"><value>{0} de {1} {2} restantes</value></data>
+  <data name="{0} {1} over the budget of {2}" xml:space="preserve"><value>{0} {1} sobre el presupuesto de {2}</value></data>
+  <data name="{0} mL in the open one" xml:space="preserve"><value>{0} mL en el abierto</value></data>
+  <data name="Approved budget" xml:space="preserve"><value>Presupuesto aprobado</value></data>
+  <data name="E.g. budget no. 123" xml:space="preserve"><value>Ej. presupuesto N° 123</value></data>
+  <data name="No budget recorded. Add what the guardian approved to see what is left of each item." xml:space="preserve"><value>Sin presupuesto anotado. Agrega lo que aprobó el tutor para ver cuánto queda de cada insumo.</value></data>
+  <data name="Approved" xml:space="preserve"><value>Aprobado</value></data>
+  <data name="Remaining" xml:space="preserve"><value>Restante</value></data>
+  <data name="To give back" xml:space="preserve"><value>Por devolver</value></data>
+  <data name="{0} over" xml:space="preserve"><value>{0} de más</value></data>
+  <data name="Approvals" xml:space="preserve"><value>Aprobaciones</value></data>
+  <data name="Remove approval" xml:space="preserve"><value>Quitar aprobación</value></data>
+  <data name="Remove the approval of {0} {1} of {2}, recorded {3}?" xml:space="preserve"><value>¿Quitar la aprobación de {0} {1} de {2}, anotada el {3}?</value></data>
+  <data name="Left over from the budget, never started: {0}. Its refund is done at the cashier." xml:space="preserve"><value>Sobra del presupuesto, sin empezar: {0}. La devolución se hace en caja.</value></data>
 </root>

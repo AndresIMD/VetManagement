@@ -53,6 +53,9 @@ public class ConsumptionSheet : Entity<int>
     public bool IsClosed => ClosedAtUtc is not null;
 
     public List<ConsumptionEntry> Entries { get; set; } = [];
+
+    /// <summary>What the guardian approved for the stay, item by item (<see cref="ConsumptionSummary.Balances"/> counts it down).</summary>
+    public List<ConsumptionBudget> Budgets { get; set; } = [];
 }
 
 /// <summary>
@@ -91,6 +94,34 @@ public class ConsumptionEntry : Entity<int>
     public string? Notes { get; set; }
 
     public DateTime UsedAtUtc { get; set; }
+    public string? CreatedBy { get; set; }
+}
+
+/// <summary>
+/// A quantity of one item the guardian approved for the patient's stay, e.g. 5 ampoules of lidocaine: the uses count down
+/// from it, and each new approval adds a row. Only quantities, in the item's charge unit when approved (units, containers or
+/// mL): the money stays in the clinic's billing system. It moves no stock.
+/// </summary>
+public class ConsumptionBudget : Entity<int>
+{
+    public ConsumptionBudget() : base(0) { }
+
+    public int SheetId { get; set; }
+
+    public int ItemId { get; set; }
+    /// <summary>Copied when approved, like the entries.</summary>
+    public string ItemName { get; set; } = string.Empty;
+
+    /// <summary>How the item was charged when approved: it says what <see cref="Quantity"/> counts.</summary>
+    public ConsumptionCharge Charge { get; set; }
+
+    /// <summary>Units, containers (charge by container) or mL (charge per mL).</summary>
+    public decimal Quantity { get; set; }
+
+    /// <summary>E.g. the budget's number in the billing system.</summary>
+    public string? Notes { get; set; }
+
+    public DateTime ApprovedAtUtc { get; set; }
     public string? CreatedBy { get; set; }
 }
 

@@ -19,7 +19,7 @@ public class ConsumptionSheetsController(ConsumptionService service) : ApiContro
         {
             var summary = ConsumptionSummary.For(s);
             return new ConsumptionSheetSummaryDto(s.Id, s.PetId, s.PatientName, s.OwnerName, s.OpenedAtUtc, s.ClosedAtUtc, s.Entries.Count,
-                summary.Total, s.StockPending, Pending(s, summary));
+                summary.Total, s.StockPending, Pending(s, summary), [.. summary.Balances.Where(b => b.IsUsedUp).Select(ToDto)]);
         }).ToList());
 
     [HttpGet("{id:int}")]
@@ -40,6 +40,16 @@ public class ConsumptionSheetsController(ConsumptionService service) : ApiContro
     [Authorize(Policy = "Consumption.Record")]
     public async Task<IActionResult> RemoveEntryAsync(int id, int entryId)
         => ToActionResult(await service.RemoveEntryAsync(id, entryId, GetUserName()));
+
+    [HttpPost("{id:int}/budgets")]
+    [Authorize(Policy = "Consumption.Record")]
+    public async Task<IActionResult> AddBudgetAsync(int id, [FromBody] AddConsumptionBudgetRequest request)
+        => ToActionResult(await service.AddBudgetAsync(id, request.ItemId, request.Quantity, request.Notes, GetUserName()));
+
+    [HttpDelete("{id:int}/budgets/{budgetId:int}")]
+    [Authorize(Policy = "Consumption.Record")]
+    public async Task<IActionResult> RemoveBudgetAsync(int id, int budgetId)
+        => ToActionResult(await service.RemoveBudgetAsync(id, budgetId, GetUserName()));
 
     [HttpPost("{id:int}/items/{itemId:int}/discard-rest")]
     [Authorize(Policy = "Consumption.Record")]
@@ -87,8 +97,14 @@ public class ConsumptionSheetsController(ConsumptionService service) : ApiContro
                 .Select(e => new ConsumptionEntryDto(e.Id, e.ItemId, e.ItemName, e.Charge, e.Quantity, e.Discarded, e.Notes, e.UsedAtUtc, e.CreatedBy))],
             [.. summary.Lines.Select(l => new ConsumptionLineDto(l.ItemId, l.ItemName, l.Charge, l.Given, l.Discarded, l.Containers, l.LeftMl,
                 l.ContainerMl, l.UnitPrice, l.Total, sheet.PendingOf(l)))],
-            summary.Total, sheet.MovesStock);
+            summary.Total, sheet.MovesStock,
+            [.. sheet.Budgets.OrderByDescending(b => b.ApprovedAtUtc).ThenByDescending(b => b.Id)
+                .Select(b => new ConsumptionBudgetDto(b.Id, b.ItemId, b.ItemName, b.Charge, b.Quantity, b.Notes, b.ApprovedAtUtc, b.CreatedBy))],
+            [.. summary.Balances.Select(ToDto)]);
     }
+
+    private static ConsumptionBalanceDto ToDto(ConsumptionBalance b)
+        => new(b.ItemId, b.ItemName, b.Charge, b.Budgeted, b.Used, b.Left, b.LeftMl, b.IsUsedUp, b.ToRefund);
 
     private static List<ConsumptionPendingDto> Pending(ConsumptionSheet sheet, ConsumptionSummary summary)
         => [.. summary.Lines.Select(l => new ConsumptionPendingDto(l.ItemName, sheet.PendingOf(l))).Where(p => p.Units > 0)];
