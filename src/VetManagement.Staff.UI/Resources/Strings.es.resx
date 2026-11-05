@@ -1369,6 +1369,10 @@
   <data name="The shared bottle isn't taken from inventory here." xml:space="preserve"><value>El frasco compartido no se descuenta aquí.</value></data>
   <data name="Each one is taken from inventory as it's started." xml:space="preserve"><value>Cada envase se descuenta del inventario al empezarlo.</value></data>
   <data name="Taken from inventory." xml:space="preserve"><value>Se descuenta del inventario.</value></data>
+  <data name="From the quick-use box" xml:space="preserve"><value>Sale de la caja rápida</value></data>
+  <data name="It leaves inventory when the quick-use box is restocked, with an egress then: sheets record its uses without taking it again." xml:space="preserve"><value>Sale del inventario al reponer la caja rápida, con un egreso en ese momento: las hojas anotan sus usos sin descontarlo otra vez.</value></data>
+  <data name="From the quick-use box: sheets don't take it from inventory." xml:space="preserve"><value>De la caja rápida: las hojas no lo descuentan del inventario.</value></data>
+  <data name="Already out of inventory, from the quick-use box: the sheet doesn't take it again." xml:space="preserve"><value>Ya salió del inventario, en la caja rápida: la hoja no lo descuenta otra vez.</value></data>
   <data name="Delete this sheet and everything recorded on it? What it took from inventory goes back. This can't be undone." xml:space="preserve"><value>¿Eliminar esta hoja y todo lo registrado en ella? Lo que descontó vuelve al inventario. No se puede deshacer.</value></data>
   <data name="Quick use" xml:space="preserve"><value>Uso rápido</value></data>
   <data name="Edit sheet" xml:space="preserve"><value>Editar hoja</value></data>

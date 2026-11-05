@@ -9,12 +9,47 @@ public class ConsumptionSummaryTests
 {
     private static int _minute;
 
-    private static ConsumptionEntry Use(int itemId, ConsumptionCharge charge, decimal quantity, int price, decimal? containerMl = null, bool discarded = false)
+    private static ConsumptionEntry Use(int itemId, ConsumptionCharge charge, decimal quantity, int price, decimal? containerMl = null, bool discarded = false,
+        bool beforehand = false)
         => new()
         {
             Id = ++_minute, ItemId = itemId, ItemName = $"Item {itemId}", Charge = charge, Quantity = quantity, UnitPrice = price,
-            ContainerMl = containerMl, Discarded = discarded, UsedAtUtc = new DateTime(2026, 10, 21, 8, 0, 0).AddMinutes(_minute)
+            ContainerMl = containerMl, Discarded = discarded, TakenOutBeforehand = beforehand,
+            UsedAtUtc = new DateTime(2026, 10, 21, 8, 0, 0).AddMinutes(_minute)
         };
+
+    [Fact]
+    public void UsesOfItemsTakenOutBeforehand_AreChargedButTakeNoStock()
+    {
+        var sheet = new ConsumptionSheet
+        {
+            Entries = [Use(1, ConsumptionCharge.Unit, 2, 300, beforehand: true), Use(2, ConsumptionCharge.Container, 3, 15000, 10, beforehand: true),
+                Use(3, ConsumptionCharge.Unit, 2, 300), Use(4, ConsumptionCharge.PerMl, 1, 850)]
+        };
+
+        var lines = ConsumptionSummary.For(sheet).Lines.ToDictionary(l => l.ItemId);
+
+        lines[1].Should().Match<ConsumptionLine>(l => l.Total == 600 && l.StockUnits == 0, "the quick-use box was already taken out");
+        lines[2].Should().Match<ConsumptionLine>(l => l.Containers == 1 && l.Total == 15000 && l.StockUnits == 0);
+        lines[3].StockUnits.Should().Be(2, "whole units given are taken");
+        lines[4].StockUnits.Should().Be(0, "the shared bottle is taken out by hand");
+    }
+
+    [Fact]
+    public void WhenTheBoxSettingChangesMidStay_EachUseKeepsWhatItWasRecordedWith()
+    {
+        // Two 10 mL containers from stock, then the item comes from the box: the third container takes nothing.
+        var sheet = new ConsumptionSheet
+        {
+            Entries = [Use(5, ConsumptionCharge.Container, 8, 15000, 10), Use(5, ConsumptionCharge.Container, 8, 15000, 10),
+                Use(5, ConsumptionCharge.Container, 8, 15000, 10, beforehand: true)]
+        };
+
+        var line = ConsumptionSummary.For(sheet).Lines.Single();
+
+        line.Containers.Should().Be(3);
+        line.StockUnits.Should().Be(2);
+    }
 
     [Fact]
     public void Units_AndMl_AreChargedForWhatWasGiven()

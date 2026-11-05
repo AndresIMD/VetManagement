@@ -81,6 +81,13 @@ public class ConsumptionEntry : Entity<int>
     /// <summary>The rest of an open container thrown away (not given to the patient); it still counts towards containers used.</summary>
     public bool Discarded { get; set; }
 
+    /// <summary>
+    /// Copied from the pricing when recorded: the item was already out of inventory (see
+    /// <see cref="ConsumptionPricing.TakenOutBeforehand"/>), so this use takes no stock. Copied, so a later change of the
+    /// pricing never takes or returns stock for uses already recorded.
+    /// </summary>
+    public bool TakenOutBeforehand { get; set; }
+
     public string? Notes { get; set; }
 
     public DateTime UsedAtUtc { get; set; }
@@ -119,6 +126,12 @@ public class ConsumptionPricing : Entity<int>
 
     /// <summary>A controlled drug, whose every use must be accounted for.</summary>
     public bool Controlled { get; set; }
+
+    /// <summary>
+    /// Taken out of inventory beforehand, when a quick-use box is restocked: sheets record its uses without taking stock
+    /// again. False, the default, takes each use from the daily-use warehouse. Items charged per mL never take stock anyway.
+    /// </summary>
+    public bool TakenOutBeforehand { get; set; }
 
     public DateTime UpdatedAtUtc { get; set; }
     public string? UpdatedBy { get; set; }

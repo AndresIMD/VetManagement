@@ -44,14 +44,23 @@
                     <MudNumericField T="int?" @bind-Value="_pricePerMl" Label="@L["Price per mL"]" Min="0" HideSpinButtons="true" Immediate="true" />
                 }
             </MudItem>
-            <MudItem xs="6" sm="3" md="2" Class="d-flex align-center">
-                <MudCheckBox T="bool" @bind-Value="_controlled" Label="@L["Controlled"]" Color="Color.Warning" />
+            <MudItem xs="12" sm="6" md="2">
+                <MudCheckBox T="bool" @bind-Value="_controlled" Label="@L["Controlled"]" Color="Color.Warning" Dense="true" />
+                @* The shared bottle charged per mL is never taken by the sheets, so the box makes no difference there. *@
+                @if (_charge != ConsumptionCharge.PerMl)
+                {
+                    <MudCheckBox T="bool" @bind-Value="_beforehand" Label="@L["From the quick-use box"]" Dense="true" />
+                }
             </MudItem>
             <MudItem xs="12" md="1" Class="d-flex align-center">
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Disabled="@(_item is null || _busy)" OnClick="SaveAsync">@L["Save"]</MudButton>
             </MudItem>
             <MudItem xs="12">
                 <MudText Typo="Typo.caption" Color="Color.Secondary">@ChargeHelp</MudText>
+                @if (_beforehand && _charge != ConsumptionCharge.PerMl)
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="d-block">@L["It leaves inventory when the quick-use box is restocked, with an egress then: sheets record its uses without taking it again."]</MudText>
+                }
                 @if (_charge == ConsumptionCharge.Container && _itemMl is > 0 && _containerMl is > 0 && _containerMl != _itemMl)
                 {
                     @* One container is one unit of stock: a different size would charge and take the wrong number of them. *@
@@ -85,6 +94,13 @@
                         @if (context.Charge == ConsumptionCharge.Container)
                         {
                             <span> (@context.ContainerMl?.ToString("0.##") mL)</span>
+                        }
+                        @if (context.TakenOutBeforehand)
+                        {
+                            <MudTooltip Text="@L["From the quick-use box: sheets don't take it from inventory."]" ShowOnFocus="true" Inline="true">
+                                <MudIconButton Icon="@Icons.Material.Outlined.MedicalServices" Size="Size.Small" Class="pa-0 ml-1" Style="opacity:.75"
+                                               aria-label="@L["From the quick-use box: sheets don't take it from inventory."]" />
+                            </MudTooltip>
                         }
                     </MudTd>
                     <MudTd Style="text-align:right">
@@ -122,6 +138,7 @@
     private decimal? _containerMl;
     private int? _pricePerMl;
     private bool _controlled;
+    private bool _beforehand;
     private bool _busy;
     private string? _error;
 
@@ -157,7 +174,8 @@
     private async Task Edit(ConsumptionPricingDto pricing)
     {
         _item = new InventoryItemDTO { Id = pricing.ItemId, Name = pricing.ItemName, SellPrice = pricing.SellPrice };
-        (_charge, _containerMl, _pricePerMl, _controlled) = (pricing.Charge, pricing.ContainerMl, pricing.PricePerMl, pricing.Controlled);
+        (_charge, _containerMl, _pricePerMl, _controlled, _beforehand)
+            = (pricing.Charge, pricing.ContainerMl, pricing.PricePerMl, pricing.Controlled, pricing.TakenOutBeforehand);
         _itemMl = await ItemMlAsync(pricing.ItemId);
     }
 
@@ -166,7 +184,8 @@
         _busy = true;
         var result = await Api.SetPricingAsync(new ConsumptionPricingRequest
         {
-            ItemId = _item!.Id, Charge = _charge, ContainerMl = _containerMl, PricePerMl = _pricePerMl, Controlled = _controlled
+            ItemId = _item!.Id, Charge = _charge, ContainerMl = _containerMl, PricePerMl = _pricePerMl, Controlled = _controlled,
+            TakenOutBeforehand = _beforehand && _charge != ConsumptionCharge.PerMl
         });
         _busy = false;
         if (!result.Ok)
@@ -176,7 +195,7 @@
         }
         _error = null;
         Snackbar.Add(L["Saved: {0}.", _item.Name], Severity.Success);
-        (_item, _itemMl, _containerMl, _pricePerMl, _controlled) = (null, null, null, null, false);
+        (_item, _itemMl, _containerMl, _pricePerMl, _controlled, _beforehand) = (null, null, null, null, false, false);
         await LoadAsync();
     }
 

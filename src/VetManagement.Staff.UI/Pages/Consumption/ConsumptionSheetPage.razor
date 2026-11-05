@@ -246,9 +246,13 @@
         { Charge: ConsumptionCharge.PerMl } p => Join(L["Charged per mL: {0} each mL.", Money.Clp(p.PricePerMl ?? 0)],
             L["The shared bottle isn't taken from inventory here."]),
         { Charge: ConsumptionCharge.Container } p => Join(L["Type the mL given. Each {0} mL container started is charged whole ({1}).", Qty(p.ContainerMl ?? 0), Money.Clp(_item.SellPrice)],
-            L["Each one is taken from inventory as it's started."]),
-        _ => Join(L["Charged per unit: {0} each.", Money.Clp(_item.SellPrice)], L["Taken from inventory."])
+            FromTheBox(p) ?? L["Each one is taken from inventory as it's started."]),
+        var p => Join(L["Charged per unit: {0} each.", Money.Clp(_item.SellPrice)], FromTheBox(p) ?? L["Taken from inventory."])
     };
+
+    /// <summary>Items from the quick-use box left inventory when it was restocked: the sheet records them without taking them again.</summary>
+    private string? FromTheBox(ConsumptionPricingDto? pricing)
+        => pricing is { TakenOutBeforehand: true } ? L["Already out of inventory, from the quick-use box: the sheet doesn't take it again."] : null;
 
     /// <summary>The charge, plus what it takes from inventory on sheets that do.</summary>
     private string Join(string charge, string stock) => _sheet?.MovesStock == true ? $"{charge} {stock}" : charge;
