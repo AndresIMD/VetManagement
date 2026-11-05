@@ -59,7 +59,7 @@
                 <MudText Typo="Typo.caption" Color="Color.Secondary">@ChargeHelp</MudText>
                 @if (_beforehand && _charge != ConsumptionCharge.PerMl)
                 {
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">@L["It leaves inventory when the quick-use box is restocked, with an egress then: sheets record its uses without taking it again."]</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="d-block">@L["It leaves inventory when the quick-use box is restocked, with an egress then: sheets record its uses without taking it again."]</MudText>
                 }
                 @if (_charge == ConsumptionCharge.Container && _itemMl is > 0 && _containerMl is > 0 && _containerMl != _itemMl)
                 {
