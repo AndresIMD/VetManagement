@@ -34,6 +34,12 @@ taken on the sheet's next change, discharge and reopening included. The sheet ke
 supervisor reopening it and discharging it again once the warehouse has them. Sheets opened before this existed
 (`MovesStock` false) move nothing, so their uses are still taken out by hand.
 
+**A quick-use box.** A clinic may keep some drugs in a box for emergencies, taken out of inventory with an egress
+when the box is restocked. Marking the item "From the quick-use box" in How supplies are charged
+(`ConsumptionPricing.TakenOutBeforehand`) makes sheets record and charge its uses without taking stock again, so it isn't
+taken twice. Each use copies the mark when it's recorded (`ConsumptionEntry.TakenOutBeforehand`), like the charge, so
+changing it never takes or returns stock for uses already on a sheet.
+
 The sheets list is where uses are recorded day to day: a click on a row opens its items in place, each with the mL left
 in its open container (or what was used) and a quantity ready to record, the patient's last dose in mL or one unit, so a
 repeated dose is one click; the message that confirms it can undo it. The pencil opens the whole sheet for everything
@@ -41,7 +47,8 @@ else: a new item, discarding a rest, removing a use, discharge. What a sheet sti
 row and beside "To charge" on the sheet, whose tooltip names the items.
 
 How an item is charged can't change (charge type, or container size) while a sheet not discharged yet uses it: the sheet
-would add up the earlier uses again, changing both the charge and what it took from stock. Prices can.
+would add up the earlier uses again, changing both the charge and what it took from stock. Prices can. The quick-use box
+mark waits for those sheets too, so a stay doesn't mix uses that took stock with uses that didn't.
 
 A use that the daily-use warehouse can't cover is refused with the warehouses to ask, by name only ("Only 2 of 'X'
 left in Daily use; ask Back storeroom for more"). The inventory screens move stock in a chosen warehouse (adjustment,

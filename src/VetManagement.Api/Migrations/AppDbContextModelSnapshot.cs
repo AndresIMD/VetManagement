@@ -801,6 +801,9 @@ namespace VetManagement.Api.Migrations
                     b.Property<int>("SheetId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("TakenOutBeforehand")
+                        .HasColumnType("bit");
+
                     b.Property<int>("UnitPrice")
                         .HasColumnType("int");
 
@@ -839,6 +842,9 @@ namespace VetManagement.Api.Migrations
 
                     b.Property<int?>("PricePerMl")
                         .HasColumnType("int");
+
+                    b.Property<bool>("TakenOutBeforehand")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime>("UpdatedAtUtc")
                         .HasColumnType("datetime2");

@@ -29,23 +29,30 @@ public sealed record ConsumptionSummary(List<ConsumptionLine> Lines, int Total)
 
         if (last.Charge == ConsumptionCharge.Container && last.ContainerMl is > 0 and var size)
         {
-            // Walks the uses in order: each one that goes past the containers started so far starts the next ones.
-            var (containers, total, used) = (0, 0, 0m);
+            // Walks the uses in order: each one that goes past the containers started so far starts the next ones, taken
+            // from stock unless the item was already out of inventory when that use was recorded.
+            var (containers, total, used, fromStock) = (0, 0, 0m, 0);
             foreach (var entry in entries)
             {
                 used += entry.Quantity;
                 var needed = (int)Math.Ceiling(used / size);
                 total += (needed - containers) * entry.UnitPrice;
+                if (!entry.TakenOutBeforehand)
+                    fromStock += Math.Max(needed - containers, 0);
                 containers = Math.Max(containers, needed);
             }
             var left = containers * size - used;
             return new ConsumptionLine(last.ItemId, last.ItemName, last.Charge, given, closed ? discarded + left : discarded,
-                containers, closed ? 0 : left, size, last.UnitPrice, total);
+                containers, closed ? 0 : left, size, last.UnitPrice, total, fromStock);
         }
         var sum = entries.Where(e => !e.Discarded).Sum(e => e.Charge == ConsumptionCharge.PerMl
             ? (int)Math.Round(e.Quantity * e.UnitPrice, MidpointRounding.AwayFromZero)
             : (int)Math.Round(e.Quantity, MidpointRounding.AwayFromZero) * e.UnitPrice);
-        return new ConsumptionLine(last.ItemId, last.ItemName, last.Charge, given, discarded, 0, 0, null, last.UnitPrice, sum);
+        // Whole units given, except those already out of inventory; the charge per mL never takes stock (a shared bottle).
+        var stockUnits = last.Charge == ConsumptionCharge.Unit
+            ? (int)Math.Round(entries.Where(e => !e.Discarded && !e.TakenOutBeforehand).Sum(e => e.Quantity), MidpointRounding.AwayFromZero)
+            : 0;
+        return new ConsumptionLine(last.ItemId, last.ItemName, last.Charge, given, discarded, 0, 0, null, last.UnitPrice, sum, stockUnits);
     }
 }
 
@@ -54,17 +61,10 @@ public sealed record ConsumptionSummary(List<ConsumptionLine> Lines, int Total)
 /// <param name="Containers">Containers started (charged), for the charge by container.</param>
 /// <param name="LeftMl">mL still in the open container while the sheet is open.</param>
 /// <param name="UnitPrice">Current price of one unit, mL or container (earlier uses keep the price they were recorded with).</param>
+/// <param name="StockUnits">
+/// Units of stock the line uses up: each container started, or the whole units given, leaving out the uses of items taken
+/// out of inventory beforehand (<see cref="ConsumptionEntry.TakenOutBeforehand"/>). None for the charge per mL: its bottle is
+/// shared by several patients and taken out by hand when it is opened.
+/// </param>
 public sealed record ConsumptionLine(int ItemId, string ItemName, ConsumptionCharge Charge, decimal Given, decimal Discarded,
-    int Containers, decimal LeftMl, decimal? ContainerMl, int UnitPrice, int Total)
-{
-    /// <summary>
-    /// Units of stock the line uses up: each container started, or the whole units given. None for the charge per mL: its
-    /// bottle is shared by several patients and taken out by hand when it is opened.
-    /// </summary>
-    public int StockUnits => Charge switch
-    {
-        ConsumptionCharge.Container => Containers,
-        ConsumptionCharge.Unit => (int)Math.Round(Given, MidpointRounding.AwayFromZero),
-        _ => 0
-    };
-}
+    int Containers, decimal LeftMl, decimal? ContainerMl, int UnitPrice, int Total, int StockUnits);

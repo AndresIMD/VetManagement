@@ -41,9 +41,13 @@ public class ConsumptionApiTests(CustomWebAppFactory factory) : IClassFixture<Cu
     private Task<List<InventoryMovement>> MovementsOfAsync(int itemId)
         => WithDbAsync(db => db.InventoryMovements.AsNoTracking().Where(m => m.ItemId == itemId).OrderBy(m => m.Id).ToListAsync());
 
-    private async Task PricingAsync(int itemId, ConsumptionCharge charge, decimal? containerMl = null, int? pricePerMl = null)
-        => (await _supervisor.PutAsJsonAsync("/api/consumption-sheets/pricing", new ConsumptionPricingRequest
-            { ItemId = itemId, Charge = charge, ContainerMl = containerMl, PricePerMl = pricePerMl })).EnsureSuccessStatusCode();
+    private async Task PricingAsync(int itemId, ConsumptionCharge charge, decimal? containerMl = null, int? pricePerMl = null, bool beforehand = false)
+        => (await SetPricingAsync(itemId, charge, containerMl, pricePerMl, beforehand)).EnsureSuccessStatusCode();
+
+    private Task<HttpResponseMessage> SetPricingAsync(int itemId, ConsumptionCharge charge, decimal? containerMl = null, int? pricePerMl = null,
+        bool beforehand = false)
+        => _supervisor.PutAsJsonAsync("/api/consumption-sheets/pricing", new ConsumptionPricingRequest
+            { ItemId = itemId, Charge = charge, ContainerMl = containerMl, PricePerMl = pricePerMl, TakenOutBeforehand = beforehand });
 
     private async Task<int> OpenAsync(string patient)
         => await IdAsync(await _lab.PostAsJsonAsync("/api/consumption-sheets", new OpenConsumptionSheetRequest { PatientName = patient }));
@@ -134,6 +138,62 @@ public class ConsumptionApiTests(CustomWebAppFactory factory) : IClassFixture<Cu
         (await _lab.PostAsync($"/api/consumption-sheets/{sheet}/close", null)).EnsureSuccessStatusCode();
         (await StockOfAsync(morphine)).Should().Be(2);
         (await SheetAsync(sheet)).Lines.Single().StockPending.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ItemsFromTheQuickUseBox_AreRecordedAndCharged_WithoutTakingStockAgain()
+    {
+        // Filled into the box with an egress by hand: the sheet records the uses and leaves the stock alone.
+        var lidocaine = await StockedItemAsync("Lidocaína 2%", 10, 900);
+        var fentanyl = await StockedItemAsync("Fentanilo 10 mL", 10, 15000);
+        await PricingAsync(lidocaine, ConsumptionCharge.Unit, beforehand: true);
+        await PricingAsync(fentanyl, ConsumptionCharge.Container, containerMl: 10, beforehand: true);
+        (await _supervisor.GetFromJsonAsync<List<ConsumptionPricingDto>>("/api/consumption-sheets/pricing"))!
+            .Where(p => p.ItemId == lidocaine || p.ItemId == fentanyl).Should().OnlyContain(p => p.TakenOutBeforehand);
+        var sheet = await OpenAsync("Kiara");
+
+        (await UseAsync(sheet, lidocaine, 3, _lab)).EnsureSuccessStatusCode();
+        (await UseAsync(sheet, fentanyl, 12, _lab)).EnsureSuccessStatusCode();
+
+        (await StockOfAsync(lidocaine)).Should().Be(10);
+        (await StockOfAsync(fentanyl)).Should().Be(10);
+        (await MovementsOfAsync(lidocaine)).Should().BeEmpty();
+        (await MovementsOfAsync(fentanyl)).Should().BeEmpty();
+        var dto = await SheetAsync(sheet);
+        dto.Lines.Should().OnlyContain(l => l.StockPending == 0, "nothing is owed for what was already out");
+        dto.Total.Should().Be(3 * 900 + 2 * 15000, "they are still charged");
+        (await _lab.GetFromJsonAsync<List<ConsumptionSheetSummaryDto>>("/api/consumption-sheets"))!.Single(s => s.Id == sheet)
+            .Should().Match<ConsumptionSheetSummaryDto>(s => s.StockPending == 0 && s.Pending.Count == 0);
+    }
+
+    [Fact]
+    public async Task TheBoxSetting_WaitsForOpenSheets_AndNeverChangesWhatRecordedUsesTook()
+    {
+        // One unit in stock, two used: one taken, one owed.
+        var ketamine = await StockedItemAsync("Ketamina 10 mL", 1);
+        var sheet = await OpenAsync("Bruno");
+        (await UseAsync(sheet, ketamine, 2, _lab)).EnsureSuccessStatusCode();
+        (await StockOfAsync(ketamine)).Should().Be(0);
+
+        (await SetPricingAsync(ketamine, ConsumptionCharge.Unit, beforehand: true)).StatusCode
+            .Should().Be(HttpStatusCode.BadRequest, "a sheet not discharged yet uses it");
+        (await _lab.PostAsync($"/api/consumption-sheets/{sheet}/close", null)).EnsureSuccessStatusCode();
+        await PricingAsync(ketamine, ConsumptionCharge.Unit, beforehand: true);
+
+        // Stock arrives; reopening takes what the two earlier uses owe, and a use recorded now comes from the box.
+        await WithDbAsync(async db =>
+        {
+            (await db.Items.SingleAsync(i => i.Id == ketamine)).Stock = 5;
+            return await db.SaveChangesAsync();
+        });
+        (await _supervisor.PostAsync($"/api/consumption-sheets/{sheet}/reopen", null)).EnsureSuccessStatusCode();
+        (await UseAsync(sheet, ketamine, 1, _lab)).EnsureSuccessStatusCode();
+        (await _supervisor.PostAsync($"/api/consumption-sheets/{sheet}/close", null)).EnsureSuccessStatusCode();
+
+        (await StockOfAsync(ketamine)).Should().Be(4, "the owed unit was taken; the use from the box took nothing");
+        (await MovementsOfAsync(ketamine)).Select(m => (m.Type, m.Quantity)).Should().Equal(
+            (InventoryMovementType.Egress, 1), (InventoryMovementType.Egress, 1));
+        (await SheetAsync(sheet)).Lines.Single().Should().Match<ConsumptionLineDto>(l => l.Given == 3 && l.StockPending == 0);
     }
 
     [Fact]

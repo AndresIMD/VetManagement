@@ -99,6 +99,7 @@ public class ConsumptionService(IUnitOfWork unitOfWork, AuditService audit, Time
                 Charge = charge,
                 ContainerMl = charge == ConsumptionCharge.Container ? pricing!.ContainerMl : null,
                 UnitPrice = charge == ConsumptionCharge.PerMl ? pricing!.PricePerMl ?? 0 : item.SellPrice,
+                TakenOutBeforehand = pricing?.TakenOutBeforehand ?? false,
                 Quantity = Math.Round(quantity, 2),
                 Notes = Clean(notes),
                 UsedAtUtc = now,
@@ -143,7 +144,8 @@ public class ConsumptionService(IUnitOfWork unitOfWork, AuditService audit, Time
             sheet.Entries.Add(new ConsumptionEntry
             {
                 SheetId = sheet.Id, ItemId = itemId, ItemName = last.ItemName, Charge = last.Charge, ContainerMl = last.ContainerMl,
-                UnitPrice = last.UnitPrice, Quantity = line.LeftMl, Discarded = true, UsedAtUtc = now, CreatedBy = userName
+                UnitPrice = last.UnitPrice, TakenOutBeforehand = last.TakenOutBeforehand, Quantity = line.LeftMl, Discarded = true,
+                UsedAtUtc = now, CreatedBy = userName
             });
             moved = await TakeStockAsync(sheet, userName, now);
             await unitOfWork.SaveChangesAsync();
@@ -239,8 +241,9 @@ public class ConsumptionService(IUnitOfWork unitOfWork, AuditService audit, Time
     }
 
     /// <summary>Sets how an item is charged on the sheets; uses already recorded keep the charge they were recorded with.</summary>
+    /// <param name="takenOutBeforehand">The item leaves inventory when a quick-use box is restocked; ignored when charged per mL.</param>
     public async Task<ConsumptionResult> SetPricingAsync(int itemId, ConsumptionCharge charge, decimal? containerMl, int? pricePerMl, bool controlled,
-        string userName)
+        bool takenOutBeforehand, string userName)
     {
         var item = await unitOfWork.Items.GetByIdAsNoTrackingAsync(itemId);
         if (item is null)
@@ -254,7 +257,8 @@ public class ConsumptionService(IUnitOfWork unitOfWork, AuditService audit, Time
 
         var pricing = (await unitOfWork.ConsumptionPricings.FindAsync(p => p.ItemId == itemId)).FirstOrDefault();
         var size = charge == ConsumptionCharge.Container ? Math.Round(containerMl!.Value, 2) : (decimal?)null;
-        if (ChangesHowUsesAddUp(pricing, charge, size) && await unitOfWork.ConsumptionSheets.IsOnOpenSheetAsync(itemId))
+        var beforehand = takenOutBeforehand && charge != ConsumptionCharge.PerMl;
+        if (ChangesHowUsesAddUp(pricing, charge, size, beforehand) && await unitOfWork.ConsumptionSheets.IsOnOpenSheetAsync(itemId))
             return Invalid(Texts.T("'{0}' is on sheets not discharged yet: change how it's charged once they are.", item.Name));
         var isNew = pricing is null;
         pricing ??= new ConsumptionPricing { ItemId = itemId };
@@ -262,6 +266,7 @@ public class ConsumptionService(IUnitOfWork unitOfWork, AuditService audit, Time
         pricing.ContainerMl = size;
         pricing.PricePerMl = charge == ConsumptionCharge.PerMl ? pricePerMl : null;
         pricing.Controlled = controlled;
+        pricing.TakenOutBeforehand = beforehand;
         pricing.UpdatedAtUtc = clock.GetUtcNow().UtcDateTime;
         pricing.UpdatedBy = userName;
         if (isNew)
@@ -270,7 +275,8 @@ public class ConsumptionService(IUnitOfWork unitOfWork, AuditService audit, Time
             unitOfWork.ConsumptionPricings.Update(pricing);
         await unitOfWork.SaveChangesAsync();
         await audit.LogAsync(nameof(ConsumptionPricing), pricing.Id, isNew ? AuditActionType.Add : AuditActionType.Edit,
-            $"{item.Name}: {charge}, {pricing.ContainerMl} mL, {pricing.PricePerMl}/mL, controlled {controlled}", userName);
+            $"{item.Name}: {charge}, {pricing.ContainerMl} mL, {pricing.PricePerMl}/mL, controlled {controlled}, taken out beforehand {beforehand}",
+            userName);
         return new ConsumptionResult(ConsumptionStatus.Done, pricing.Id);
     }
 
@@ -280,7 +286,7 @@ public class ConsumptionService(IUnitOfWork unitOfWork, AuditService audit, Time
         var pricing = (await unitOfWork.ConsumptionPricings.FindAsync(p => p.ItemId == itemId)).FirstOrDefault();
         if (pricing is null)
             return new ConsumptionResult(ConsumptionStatus.NotFound);
-        if (ChangesHowUsesAddUp(pricing, ConsumptionCharge.Unit, null) && await unitOfWork.ConsumptionSheets.IsOnOpenSheetAsync(itemId))
+        if (ChangesHowUsesAddUp(pricing, ConsumptionCharge.Unit, null, false) && await unitOfWork.ConsumptionSheets.IsOnOpenSheetAsync(itemId))
             return Invalid(Texts.T("'{0}' is on sheets not discharged yet: change how it's charged once they are.",
                 (await unitOfWork.Items.GetByIdAsNoTrackingAsync(itemId))?.Name ?? string.Empty));
         unitOfWork.ConsumptionPricings.Remove(pricing);
@@ -374,9 +380,14 @@ public class ConsumptionService(IUnitOfWork unitOfWork, AuditService audit, Time
     /// A new charge or container size makes an open sheet add up the item's earlier uses again (its line follows the latest
     /// use), which would change both what it charges and what it took from stock, so it waits until those sheets are discharged.
     /// </summary>
-    private static bool ChangesHowUsesAddUp(ConsumptionPricing? current, ConsumptionCharge charge, decimal? containerMl)
+    /// <summary>
+    /// A change the uses already recorded would feel: how they add up, or whether they take stock (a sheet takes or returns
+    /// stock to match its uses after every change), so it waits for the sheets using the item to be discharged.
+    /// </summary>
+    private static bool ChangesHowUsesAddUp(ConsumptionPricing? current, ConsumptionCharge charge, decimal? containerMl, bool takenOutBeforehand)
         => (current?.Charge ?? ConsumptionCharge.Unit) != charge
-           || (charge == ConsumptionCharge.Container && current?.ContainerMl != containerMl);
+           || (charge == ConsumptionCharge.Container && current?.ContainerMl != containerMl)
+           || (current?.TakenOutBeforehand ?? false) != takenOutBeforehand;
 
     /// <summary>The movement's reason: the sheet and its patient in capitals ("Consumption sheet #12 – TOBY"), cut to fit.</summary>
     private static string StockReason(ConsumptionSheet sheet, string format)

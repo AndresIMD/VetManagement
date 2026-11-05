@@ -64,13 +64,14 @@ public class ConsumptionSheetsController(ConsumptionService service) : ApiContro
     [HttpGet("pricing")]
     public async Task<ActionResult<List<ConsumptionPricingDto>>> ListPricingsAsync()
         => Ok((await service.ListPricingsAsync()).Select(v => new ConsumptionPricingDto(
-            v.Item.Id, v.Item.Name, v.Item.SellPrice, v.Pricing.Charge, v.Pricing.ContainerMl, v.Pricing.PricePerMl, v.Pricing.Controlled)).ToList());
+            v.Item.Id, v.Item.Name, v.Item.SellPrice, v.Pricing.Charge, v.Pricing.ContainerMl, v.Pricing.PricePerMl, v.Pricing.Controlled,
+            v.Pricing.TakenOutBeforehand)).ToList());
 
     [HttpPut("pricing")]
     [Authorize(Policy = "Consumption.Manage")]
     public async Task<IActionResult> SetPricingAsync([FromBody] ConsumptionPricingRequest request)
         => ToActionResult(await service.SetPricingAsync(request.ItemId, request.Charge, request.ContainerMl, request.PricePerMl, request.Controlled,
-            GetUserName()));
+            request.TakenOutBeforehand, GetUserName()));
 
     [HttpDelete("pricing/{itemId:int}")]
     [Authorize(Policy = "Consumption.Manage")]
