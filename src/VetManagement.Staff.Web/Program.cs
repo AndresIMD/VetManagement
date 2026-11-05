@@ -1,24 +1,12 @@
 using System.Text.Json;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using MudBlazor.Services;
-using VetManagement.Staff.UI.Services.Api;
 using VetManagement.Staff.UI.Services.App;
-using VetManagement.Staff.UI.Services.Auth;
-using VetManagement.Staff.UI.Services.Realtime;
 using VetManagement.Staff.Web;
-using AppBackgroundService = VetManagement.Staff.UI.Services.App.BackgroundService;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
-
-// UI framework (MudBlazor)
-builder.Services.AddMudServices();
-
-// App infrastructure services
-builder.Services.AddScoped<AppStatusService>();
 
 // Helpers to sanitize config values
 static bool IsPlaceholder(string? value)
@@ -30,6 +18,7 @@ static string? Normalize(string? value)
 // Load API base URL and culture from wwwroot/config.json; prefer Local if health check succeeds
 string? apiBaseUrl = null;
 string? culture = null;
+string? logoUrl = null;
 try
 {
     using var http = new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) };
@@ -39,6 +28,7 @@ try
     var configJson = await http.GetStringAsync($"config.json{cacheBuster}");
     var config = JsonSerializer.Deserialize<ConfigModel>(configJson) ?? new ConfigModel();
     culture = Normalize(config.Culture);
+    logoUrl = Normalize(config.LogoUrl);
 
     // Optional health probe to decide between Local and Cloud
     async Task<bool> IsHealthyAsync(string baseUrl)
@@ -85,88 +75,7 @@ catch
     // Ignore read errors; UI will surface a bootstrap state via AppBootstrapError
 }
 
-// The clinic's language and formats
-builder.Services.AddStaffLocalization();
-
-// Always register AppBootstrapError so DI can resolve it in layouts/components
-builder.Services.AddSingleton(new VetManagement.Staff.UI.Models.Configuration.AppBootstrapError(
- string.IsNullOrWhiteSpace(apiBaseUrl) ? "Configuration error" : string.Empty,
- string.IsNullOrWhiteSpace(apiBaseUrl) ? "config.json is missing valid API base URLs. Set 'LocalApiBaseUrl' (e.g., https://localhost:44395) or 'ApiBaseUrl'." : string.Empty
-));
-
-// Authentication + Authorization (client-side)
-builder.Services.AddScoped<AuthenticationStateProvider, JwtAuthenticationStateProvider>();
-builder.Services.AddStaffAuthorization();
-builder.Services.AddScoped<SessionRefresher>();
-
-// Message handler that attaches the JWT to protected API calls
-builder.Services.AddTransient<JwtAuthorizationMessageHandler>();
-
-
-// SignalR Realtime service
-builder.Services.AddScoped(sp =>
-{
-    var authStateProvider = sp.GetRequiredService<AuthenticationStateProvider>();
-    return new RealtimeService(
-        apiBaseUrl ?? string.Empty,
-        async () =>
-{
-    if (authStateProvider is JwtAuthenticationStateProvider jwtProvider)
-        return await jwtProvider.GetTokenAsync();
-    return null;
-}
-    );
-});
-
-// Helper to register typed HttpClient services with optional base address and JWT handler
-void ConfigureHttpClient<TService>() where TService : class
-{
-    if (!string.IsNullOrWhiteSpace(apiBaseUrl))
-    {
-        builder.Services.AddHttpClient<TService>(client =>
-        {
-            client.BaseAddress = new Uri(apiBaseUrl);
-        }).AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
-    }
-    else
-    {
-        // No base URL: the service may handle it internally or fail gracefully
-        builder.Services.AddHttpClient<TService>();
-    }
-}
-
-// Typed API services (protected with JWT)
-ConfigureHttpClient<ClientPetApiService>();
-ConfigureHttpClient<InventoryMovementApiService>();
-ConfigureHttpClient<WarehousesApiService>();
-ConfigureHttpClient<ExamApiService>();
-ConfigureHttpClient<ExamPerformedApiService>();
-ConfigureHttpClient<ExternalLabsApiService>();
-ConfigureHttpClient<AuditApiService>();
-ConfigureHttpClient<SchedulingApiService>();
-ConfigureHttpClient<BillingApiService>();
-ConfigureHttpClient<ClinicalApiService>();
-ConfigureHttpClient<ReportsApiService>();
-ConfigureHttpClient<ExamReportsApiService>();
-ConfigureHttpClient<ConsumptionApiService>();
-ConfigureHttpClient<TestDataApiService>();
-ConfigureHttpClient<UserManagementApiService>();
-ConfigureHttpClient<MedicalVisitApiService>();
-ConfigureHttpClient<ItemsApiService>();
-ConfigureHttpClient<AlertsApiService>();
-ConfigureHttpClient<InventoryAlertsApiService>();
-
-// Account API service: WITHOUT JWT handler (used for login/refresh)
-builder.Services.AddHttpClient<AccountApiService>(client =>
-{
-    if (!string.IsNullOrWhiteSpace(apiBaseUrl))
-        client.BaseAddress = new Uri(apiBaseUrl);
-});
-
-// Background + Theme services
-builder.Services.AddScoped<AppBackgroundService>();
-builder.Services.AddScoped<ThemeService>();
-builder.Services.AddScoped<TourService>();
+builder.Services.AddStaffServices(apiBaseUrl, logoUrl);
 
 var host = builder.Build();
 StaffLocalization.ApplyCulture(culture);
@@ -181,5 +90,7 @@ namespace VetManagement.Staff.Web
         public string? CloudApiBaseUrl { get; set; }
         /// <summary>The clinic's language and formats, e.g. "es-CL". Absent = English.</summary>
         public string? Culture { get; set; }
+        /// <summary>The clinic's logo for the app's header. Absent = the product name as text.</summary>
+        public string? LogoUrl { get; set; }
     }
 }

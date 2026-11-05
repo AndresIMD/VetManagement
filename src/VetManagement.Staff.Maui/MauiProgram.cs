@@ -1,11 +1,6 @@
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Logging;
-using MudBlazor.Services;
 using System.Text.Json;
-using VetManagement.Staff.UI.Services.Api;
 using VetManagement.Staff.UI.Services.App;
-using VetManagement.Staff.UI.Services.Auth;
-using VetManagement.Staff.UI.Services.Realtime;
 
 namespace VetManagement.Staff.Maui;
 
@@ -22,11 +17,11 @@ public static class MauiProgram
             });
 
         builder.Services.AddMauiBlazorWebView();
-        builder.Services.AddMudServices();
 
         // Get the API base URL from config.json, prefer Local if healthy
         string apiBaseUrl;
         string? culture;
+        string? logoUrl;
         try
         {
             var configPath = Path.Combine(AppContext.BaseDirectory, "config.json");
@@ -35,6 +30,7 @@ public static class MauiProgram
             var configJson = File.ReadAllText(configPath);
             var config = JsonSerializer.Deserialize<ConfigModel>(configJson) ?? new ConfigModel();
             culture = config.Culture;
+            logoUrl = config.LogoUrl;
 
             static bool IsHealthy(string? baseUrl)
             {
@@ -69,84 +65,8 @@ public static class MauiProgram
             throw new InvalidOperationException($"Error reading API configuration: {ex.Message}");
         }
 
-        // The clinic's language and formats
-        builder.Services.AddStaffLocalization();
+        builder.Services.AddStaffServices(apiBaseUrl, logoUrl);
         StaffLocalization.ApplyCulture(culture);
-
-        // Add HTTP client services
-        builder.Services.AddTransient<JwtAuthorizationMessageHandler>();
-
-        builder.Services.AddHttpClient<ClientPetApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
-            .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
-
-        builder.Services.AddHttpClient<InventoryMovementApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
-            .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
-
-        builder.Services.AddHttpClient<WarehousesApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
-            .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
-
-        builder.Services.AddHttpClient<ExamApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
-            .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
-
-        builder.Services.AddHttpClient<ExamPerformedApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
-            .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
-
-        builder.Services.AddHttpClient<AuditApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
-            .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
-        builder.Services.AddHttpClient<SchedulingApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
-            .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
-        builder.Services.AddHttpClient<BillingApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
-            .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
-        builder.Services.AddHttpClient<ClinicalApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
-            .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
-        builder.Services.AddHttpClient<ReportsApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
-            .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
-        builder.Services.AddHttpClient<ExamReportsApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
-            .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
-        builder.Services.AddHttpClient<TestDataApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
-            .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
-
-        // AccountApiService: login/refresh without JWT handler
-        builder.Services.AddHttpClient<AccountApiService>(c => c.BaseAddress = new Uri(apiBaseUrl));
-
-        // Services that use JWT
-        builder.Services.AddHttpClient<UserManagementApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
-            .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
-        builder.Services.AddHttpClient<ItemsApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
-            .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
-
-        builder.Services.AddHttpClient<ExternalLabsApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
-            .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
-
-        builder.Services.AddHttpClient<ConsumptionApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
-            .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
-
-        builder.Services.AddHttpClient<MedicalVisitApiService>(c => c.BaseAddress = new Uri(apiBaseUrl))
-            .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
-
-        builder.Services.AddScoped<AuthenticationStateProvider, JwtAuthenticationStateProvider>();
-        builder.Services.AddStaffAuthorization();
-        builder.Services.AddScoped<SessionRefresher>();
-
-        // Background + Theme services
-        builder.Services.AddScoped<BackgroundService>();
-        builder.Services.AddScoped<ThemeService>();
-        builder.Services.AddScoped<TourService>();
-
-        // SignalR Realtime service
-        builder.Services.AddScoped(sp =>
-        {
-            var authProvider = sp.GetRequiredService<AuthenticationStateProvider>();
-            return new RealtimeService(
-                apiBaseUrl,
-                async () =>
-                {
-                    if (authProvider is JwtAuthenticationStateProvider jwtProvider)
-                        return await jwtProvider.GetTokenAsync();
-                    return null;
-                }
-            );
-        });
 
 #if DEBUG
         builder.Services.AddBlazorWebViewDeveloperTools();
@@ -163,5 +83,7 @@ public static class MauiProgram
         public string? CloudApiBaseUrl { get; set; }
         /// <summary>The clinic's language and formats, e.g. "es-CL". Absent = English.</summary>
         public string? Culture { get; set; }
+        /// <summary>The clinic's logo for the app's header. Absent = the product name as text.</summary>
+        public string? LogoUrl { get; set; }
     }
 }

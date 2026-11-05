@@ -2,35 +2,26 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using VetManagement.Staff.UI.Constants;
 using VetManagement.Contracts.Accounts;
-
-#if !ANDROID && !IOS && !WINDOWS
+using VetManagement.Staff.UI.Services.Auth;
 using Microsoft.JSInterop;
-#endif
 
 namespace VetManagement.Staff.UI.Services.Api;
 
 public class AccountApiService
 {
     private readonly HttpClient _http;
-#if !ANDROID && !IOS && !WINDOWS
-    private readonly IJSRuntime? _js;
-#endif
+    private readonly IJSRuntime _js;
+    private readonly SessionToken _session;
     private const string TOKEN_KEY = "authToken";
     private bool _mustChangePassword;
     public bool MustChangePassword => _mustChangePassword;
 
-#if !ANDROID && !IOS && !WINDOWS
-    public AccountApiService(HttpClient http, IJSRuntime js)
+    public AccountApiService(HttpClient http, IJSRuntime js, SessionToken session)
     {
         _http = http;
         _js = js;
+        _session = session;
     }
-#else
-    public AccountApiService(HttpClient http)
-    {
-        _http = http;
-    }
-#endif
 
     public async Task<string?> LoginAsync(string username, string password, bool rememberMe)
     {
@@ -59,57 +50,37 @@ public class AccountApiService
 
     public async Task SetTokenAsync(string token, bool rememberMe)
     {
-#if ANDROID || IOS || WINDOWS
-        await SecureStorage.Default.SetAsync(TOKEN_KEY, token);
-#else
-        if (_js != null)
-        {
-            // localStorage survives closing the browser; sessionStorage ends with the tab. Clear the other one so a
-            // token from an earlier login can't win over this one.
-            var (keep, clear) = rememberMe ? ("localStorage", "sessionStorage") : ("sessionStorage", "localStorage");
-            await _js.InvokeVoidAsync($"{clear}.removeItem", TOKEN_KEY);
-            await _js.InvokeVoidAsync($"{keep}.setItem", TOKEN_KEY, token);
-        }
-#endif
+        _session.Value = token;
+
+        // localStorage survives closing the browser; sessionStorage ends with the tab. Clear the other one so a
+        // token from an earlier login can't win over this one.
+        var (keep, clear) = rememberMe ? ("localStorage", "sessionStorage") : ("sessionStorage", "localStorage");
+        await _js.InvokeVoidAsync($"{clear}.removeItem", TOKEN_KEY);
+        await _js.InvokeVoidAsync($"{keep}.setItem", TOKEN_KEY, token);
     }
 
 
     public async Task<string?> GetTokenAsync()
     {
-#if ANDROID || IOS || WINDOWS
-        return await SecureStorage.Default.GetAsync(TOKEN_KEY);
-#else
         try
         {
-            if (_js != null)
-            {
-                var sessionToken = await _js.InvokeAsync<string>("sessionStorage.getItem", TOKEN_KEY);
-                if (!string.IsNullOrEmpty(sessionToken))
-                    return sessionToken;
-
-                var localToken = await _js.InvokeAsync<string>("localStorage.getItem", TOKEN_KEY);
-                return localToken;
-            }
-            return null;
+            var sessionToken = await _js.InvokeAsync<string>("sessionStorage.getItem", TOKEN_KEY);
+            _session.Value = !string.IsNullOrEmpty(sessionToken)
+                ? sessionToken
+                : await _js.InvokeAsync<string>("localStorage.getItem", TOKEN_KEY);
         }
         catch
         {
-            return null;
+            // JavaScript can't run here: the last token read stands (see SessionToken).
         }
-#endif
+        return _session.Value;
     }
 
     public async Task LogoutAsync()
     {
-#if ANDROID || IOS || WINDOWS
-        SecureStorage.Default.Remove(TOKEN_KEY);
-#else
-        if (_js != null)
-        {
-            await _js.InvokeVoidAsync("localStorage.removeItem", TOKEN_KEY);
-            await _js.InvokeVoidAsync("sessionStorage.removeItem", TOKEN_KEY);
-        }
-#endif
+        _session.Value = null;
+        await _js.InvokeVoidAsync("localStorage.removeItem", TOKEN_KEY);
+        await _js.InvokeVoidAsync("sessionStorage.removeItem", TOKEN_KEY);
         _mustChangePassword = false;
     }
 
@@ -174,13 +145,7 @@ public class AccountApiService
 
     /// <summary>Whether the session was started with "remember me" (its token is kept after closing the browser).</summary>
     private async Task<bool> IsRememberedAsync()
-    {
-#if ANDROID || IOS || WINDOWS
-        return await Task.FromResult(true);
-#else
-        return _js == null || string.IsNullOrEmpty(await _js.InvokeAsync<string?>("sessionStorage.getItem", TOKEN_KEY));
-#endif
-    }
+        => string.IsNullOrEmpty(await _js.InvokeAsync<string?>("sessionStorage.getItem", TOKEN_KEY));
 
     /// <summary>Account calls with the session's token (this client has no JWT handler: login runs before there is a token).</summary>
     private async Task<HttpResponseMessage> SendAsync(HttpMethod method, string uri, object? body = null)
