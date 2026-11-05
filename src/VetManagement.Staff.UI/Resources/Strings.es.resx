@@ -1407,5 +1407,5 @@
   <data name="Approvals" xml:space="preserve"><value>Aprobaciones</value></data>
   <data name="Remove approval" xml:space="preserve"><value>Quitar aprobación</value></data>
   <data name="Remove the approval of {0} {1} of {2}, recorded {3}?" xml:space="preserve"><value>¿Quitar la aprobación de {0} {1} de {2}, anotada el {3}?</value></data>
-  <data name="Left over from the budget, never started: {0}. Its refund is done at the cashier." xml:space="preserve"><value>Sobra del presupuesto, sin empezar: {0}. La devolución se hace en caja.</value></data>
+  <data name="To give back at the cashier, never started: {0}" xml:space="preserve"><value>Por devolver en caja, sin empezar: {0}</value></data>
 </root>
