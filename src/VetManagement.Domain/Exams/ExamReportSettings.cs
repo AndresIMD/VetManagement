@@ -249,6 +249,8 @@ public class ExamReportTemplate
             {
                 if (band.Min is { } min && band.Max is { } max && min > max)
                     errors.Add(Texts.T("Template '{0}', parameter '{1}': a band's Min is greater than its Max.", name, p.Code));
+                else if (band.Min is { } from && band.Max is { } to && from == to && (band.MinExclusive || band.MaxExclusive))
+                    errors.Add(Texts.T("Template '{0}', parameter '{1}': a band that starts and ends on the same number must include it.", name, p.Code));
                 if (band.Min is null && band.Max is null)
                     errors.Add(Texts.T("Template '{0}', parameter '{1}': a band needs a Min, a Max or both.", name, p.Code));
             }
@@ -406,10 +408,9 @@ public class ReportParameter
             _ => ResultDirection.None
         };
         var bands = BandsFor(species);
-        var band = bands.FirstOrDefault(b => (b.Min is not { } min || number.IsAtLeast(min)) && (b.Max is not { } max || number.IsAtMost(max)));
+        var band = bands.FirstOrDefault(b => b.Contains(number));
         // A bound that could still fall in a band isn't outside them all.
-        var outsideEveryBand = range is null && bands.Count > 0 && band is null
-            && bands.All(b => (b.Min is { } min && number.IsLessThan(min)) || (b.Max is { } max && number.IsGreaterThan(max)));
+        var outsideEveryBand = range is null && bands.Count > 0 && band is null && bands.All(b => b.Excludes(number));
         return new BandResult(band, direction != ResultDirection.None || band?.Abnormal == true || outsideEveryBand, direction);
     }
 
@@ -544,25 +545,44 @@ public readonly record struct ReportNumber(decimal Value, ValueBound Bound = Val
     };
 }
 
-/// <summary>A range of a numeric parameter with its meaning, e.g. 200–400 ng/mL "Zona gris". Bounds are inclusive.</summary>
+/// <summary>
+/// A range of a numeric parameter with its meaning, e.g. 200–400 ng/mL "Zona gris". Its limits are included unless
+/// left out, so two bands that meet on a number (≤ 5 / &gt; 5, or &lt; 5 / ≥ 5) say which one a value right on it reads as.
+/// </summary>
 public class InterpretationBand
 {
     /// <summary>Only for this species; null = any.</summary>
     public Species? Species { get; set; }
     public decimal? Min { get; set; }
+    /// <summary>The band starts above <see cref="Min"/> ("&gt; 5"), not on it ("≥ 5").</summary>
+    public bool MinExclusive { get; set; }
     public decimal? Max { get; set; }
+    /// <summary>The band ends below <see cref="Max"/> ("&lt; 5"), not on it ("≤ 5").</summary>
+    public bool MaxExclusive { get; set; }
     /// <summary>Printed as the interpretation, e.g. "Consistente con pancreatitis". May be empty for a plain normal range.</summary>
     public string Label { get; set; } = string.Empty;
     /// <summary>A value in this band is flagged on the report.</summary>
     public bool Abnormal { get; set; }
 
+    /// <summary>The value is surely in the band; an analyser's bound only when it falls wholly inside.</summary>
+    public bool Contains(ReportNumber number)
+        => (Min is not { } min || (MinExclusive ? number.IsGreaterThan(min) : number.IsAtLeast(min)))
+           && (Max is not { } max || (MaxExclusive ? number.IsLessThan(max) : number.IsAtMost(max)));
+
+    /// <summary>The value is surely outside the band: before its start or past its end.</summary>
+    public bool Excludes(ReportNumber number)
+        => (Min is { } min && (MinExclusive ? number.IsAtMost(min) : number.IsLessThan(min)))
+           || (Max is { } max && (MaxExclusive ? number.IsAtLeast(max) : number.IsGreaterThan(max)));
+
+    /// <summary>"≤ 200 Normal", "&gt; 200 - &lt; 400 Zona gris", "≥ 400 ...": a limit left out always shows its sign.</summary>
     public string RangeText()
     {
+        static string Number(decimal value) => value.ToString(CultureInfo.InvariantCulture);
         var range = (Min, Max) switch
         {
-            ({ } min, { } max) => $"{min.ToString(CultureInfo.InvariantCulture)} - {max.ToString(CultureInfo.InvariantCulture)}",
-            ({ } min, null) => $"≥ {min.ToString(CultureInfo.InvariantCulture)}",
-            (null, { } max) => $"≤ {max.ToString(CultureInfo.InvariantCulture)}",
+            ({ } min, { } max) => $"{(MinExclusive ? "> " : "")}{Number(min)} - {(MaxExclusive ? "< " : "")}{Number(max)}",
+            ({ } min, null) => $"{(MinExclusive ? ">" : "≥")} {Number(min)}",
+            (null, { } max) => $"{(MaxExclusive ? "<" : "≤")} {Number(max)}",
             _ => string.Empty
         };
         return string.IsNullOrWhiteSpace(Label) ? range : $"{range} {Label}";

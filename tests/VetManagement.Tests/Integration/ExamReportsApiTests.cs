@@ -106,6 +106,38 @@ public class ExamReportsApiTests : IClassFixture<CustomWebAppFactory>
         report.Interpretation.Should().Be(expected);
     }
 
+    [Theory]
+    [InlineData("5", "Alto", true)]
+    [InlineData("4.9", "Normal", false)]
+    public async Task ALimitLeftOut_IsSavedWithTheTemplate_AndTheReportPrintsIt(string value, string expected, bool abnormal)
+    {
+        var (petId, examId) = await AddPetAndExamAsync(Species.Dog);
+        await AddTemplateAsync(new ExamReportTemplate
+        {
+            ExamId = examId, Title = "PRUEBA X",
+            Parameters =
+            [
+                new ReportParameter
+                {
+                    Code = "x", Name = "X",
+                    Bands =
+                    [
+                        new InterpretationBand { Max = 5, MaxExclusive = true, Label = "Normal" },
+                        new InterpretationBand { Min = 5, Label = "Alto", Abnormal = true }
+                    ]
+                }
+            ]
+        });
+
+        var report = await CreateAsync(_employee, new { PetId = petId, ExamId = examId, ReceivedOn = new DateOnly(2026, 11, 6), Values = new Dictionary<string, string> { ["x"] = value } });
+
+        var line = report.Results.Single();
+        line.Reference.Should().Be("< 5 Normal / ≥ 5 Alto", "the 5 belongs to one band only");
+        line.Band.Should().Be(expected);
+        line.Abnormal.Should().Be(abnormal);
+        report.Interpretation.Should().Be(expected);
+    }
+
     [Fact]
     public async Task EveryParameterPrints_UnderItsSectionTitle_TheEmptyOnesAsNotMeasured()
     {

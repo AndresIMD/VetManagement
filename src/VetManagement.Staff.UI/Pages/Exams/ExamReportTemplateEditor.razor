@@ -178,7 +178,7 @@
 
                                 <MudItem xs="12">
                                     <HelpLabel Text="@L["Interpretation (optional)"]"
-                                               Help="@L["Name what a value means, e.g. ≤ 200 \"Normal\", 200 – 399.9 \"Zona gris\", ≥ 400 \"Consistente con pancreatitis\". Limits included; the first band that contains the value is used and its meaning becomes the automatic interpretation. Tick Abnormal on bands that are not normal results: a value there prints in red with *, even inside the normal range."]" />
+                                               Help="@L["Name what a value means, e.g. ≤ 200 \"Normal\", > 200 - < 400 \"Zona gris\", ≥ 400 \"Consistente con pancreatitis\". The sign before a limit says whether a value right on it is in the band: ≥ and ≤ include it, > and < leave it out (click the sign to switch); where two bands meet, include the limit in only one. The first band that contains the value is used and its meaning becomes the automatic interpretation. Tick Abnormal on bands that are not normal results: a value there prints in red with *, even inside the normal range."]" />
                                     @foreach (var band in p.Bands)
                                     {
                                         var b = band;
@@ -192,8 +192,14 @@
                                                     }
                                                 </MudSelect>
                                             </MudItem>
-                                            <MudItem xs="3" sm="2"><MudNumericField Culture="CultureInfo.CurrentCulture" T="decimal?" Label="@L["From"]" @bind-Value="b.Min" HideSpinButtons="true" /></MudItem>
-                                            <MudItem xs="3" sm="2"><MudNumericField Culture="CultureInfo.CurrentCulture" T="decimal?" Label="@L["To"]" @bind-Value="b.Max" HideSpinButtons="true" /></MudItem>
+                                            <MudItem xs="3" sm="2" Class="d-flex align-end">
+                                                @LimitSign(b.MinExclusive ? ">" : "≥", L["≥ includes the limit; > leaves it out. Click to switch."], () => b.MinExclusive = !b.MinExclusive)
+                                                <MudNumericField Culture="CultureInfo.CurrentCulture" T="decimal?" Label="@L["From"]" @bind-Value="b.Min" HideSpinButtons="true" />
+                                            </MudItem>
+                                            <MudItem xs="3" sm="2" Class="d-flex align-end">
+                                                @LimitSign(b.MaxExclusive ? "<" : "≤", L["≤ includes the limit; < leaves it out. Click to switch."], () => b.MaxExclusive = !b.MaxExclusive)
+                                                <MudNumericField Culture="CultureInfo.CurrentCulture" T="decimal?" Label="@L["To"]" @bind-Value="b.Max" HideSpinButtons="true" />
+                                            </MudItem>
                                             <MudItem xs="8" sm="3"><MudTextField Label="@L["Meaning"]" @bind-Value="b.Label" Placeholder="@L["Grey zone"]" /></MudItem>
                                             <MudItem xs="3" sm="2" Class="d-flex align-center">
                                                 <MudTooltip Text="@L["A value in this band prints in red with * (not a normal result)"]">
@@ -614,6 +620,18 @@
         _template!.Parameters.Add(pageBreak);
         FillCode(pageBreak);
     }
+
+    /// <summary>
+    /// The sign before a band's limit, as the reference prints it (≥ or &gt;, ≤ or &lt;): a click includes the limit or
+    /// leaves it out, so two bands that meet on a number don't both take it.
+    /// </summary>
+    private RenderFragment LimitSign(string sign, string help, Action toggle) => __builder =>
+    {
+        <MudTooltip Text="@help" ShowOnHover="true" ShowOnFocus="true">
+            <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="toggle" aria-label="@($"{sign}: {help}")" Class="mr-1 mb-1"
+                       Style="min-width:28px;padding:0 6px;font-size:1rem">@sign</MudButton>
+        </MudTooltip>
+    };
 
     /// <summary>Move up / down and remove, for parameters, section titles and page breaks.</summary>
     private RenderFragment ItemActions(ReportParameter p, int index) => __builder =>
