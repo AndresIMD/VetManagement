@@ -22,6 +22,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="VetManagement.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\VetManagement.Contracts\VetManagement.Contracts.csproj" />
     <ProjectReference Include="..\VetManagement.Domain\VetManagement.Domain.csproj" />
   </ItemGroup>
