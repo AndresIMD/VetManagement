@@ -1,40 +1,34 @@
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.JSInterop;
 using VetManagement.Staff.UI.Constants;
 using VetManagement.Contracts.Accounts;
 
-#if !ANDROID && !IOS && !WINDOWS
-using Microsoft.JSInterop;
-#endif
-
 namespace VetManagement.Staff.UI.Services.Api;
 
-public class AccountApiService
+/// <summary>
+/// Sign-in, refresh and sign-out, and where the session's token is kept: ONE session per browser, in localStorage, so
+/// every tab uses it. A new tab is already signed in, and signing in or out in one tab does it in all of them. Without
+/// "Remember me" the session still ends when the browser closes: it is marked, and js/session.js keeps a cookie that the
+/// browser drops when it closes, so the first read after that ends it.
+/// Before, a session without "Remember me" lived in its tab (sessionStorage): a new tab asked to sign in again, and at
+/// its next refresh it wiped the session of a tab signed in with "Remember me", which then loaded no data (production,
+/// 2026-11).
+/// The app hands out a new instance for every use (typed HttpClient), so nothing is kept here between calls.
+/// </summary>
+public class AccountApiService(HttpClient http, IJSRuntime js)
 {
-    private readonly HttpClient _http;
-#if !ANDROID && !IOS && !WINDOWS
-    private readonly IJSRuntime? _js;
-#endif
     private const string TOKEN_KEY = "authToken";
+    /// <summary>Set while the session lasts only until the browser closes ("Remember me" not ticked).</summary>
+    private const string UNTIL_BROWSER_CLOSES_KEY = "authUntilBrowserCloses";
+
     private bool _mustChangePassword;
     public bool MustChangePassword => _mustChangePassword;
 
-#if !ANDROID && !IOS && !WINDOWS
-    public AccountApiService(HttpClient http, IJSRuntime js)
-    {
-        _http = http;
-        _js = js;
-    }
-#else
-    public AccountApiService(HttpClient http)
-    {
-        _http = http;
-    }
-#endif
-
     public async Task<string?> LoginAsync(string username, string password, bool rememberMe)
     {
-        var response = await _http.PostAsJsonAsync(ApiRouteConstants.ACCOUNT_LOGIN, new { Username = username, Password = password, RememberMe = rememberMe });
+        var response = await http.PostAsJsonAsync(ApiRouteConstants.ACCOUNT_LOGIN, new { Username = username, Password = password, RememberMe = rememberMe });
         if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
             throw new HttpRequestException("Too many login attempts.", null, response.StatusCode);
         if (!response.IsSuccessStatusCode)
@@ -57,59 +51,50 @@ public class AccountApiService
         return await LoginAsync(username, password, false);
     }
 
+    /// <summary>Makes this token the browser's session, for every tab.</summary>
     public async Task SetTokenAsync(string token, bool rememberMe)
     {
-#if ANDROID || IOS || WINDOWS
-        await SecureStorage.Default.SetAsync(TOKEN_KEY, token);
-#else
-        if (_js != null)
+        // The mark goes before the token, so no tab finds a token kept until the browser closes without its cookie.
+        if (rememberMe)
+            await js.InvokeVoidAsync("localStorage.removeItem", UNTIL_BROWSER_CLOSES_KEY);
+        else
         {
-            // localStorage survives closing the browser; sessionStorage ends with the tab. Clear the other one so a
-            // token from an earlier login can't win over this one.
-            var (keep, clear) = rememberMe ? ("localStorage", "sessionStorage") : ("sessionStorage", "localStorage");
-            await _js.InvokeVoidAsync($"{clear}.removeItem", TOKEN_KEY);
-            await _js.InvokeVoidAsync($"{keep}.setItem", TOKEN_KEY, token);
+            await TrySessionScriptAsync("staffSession.markBrowserOpen");
+            await js.InvokeVoidAsync("localStorage.setItem", UNTIL_BROWSER_CLOSES_KEY, "1");
         }
-#endif
+        await js.InvokeVoidAsync("localStorage.setItem", TOKEN_KEY, token);
+        await js.InvokeVoidAsync("sessionStorage.removeItem", TOKEN_KEY); // where earlier versions kept it
     }
 
-
+    /// <summary>
+    /// The browser's session token. Null when signed out, and once the browser has closed since a sign-in without
+    /// "Remember me" (the session is then cleared).
+    /// </summary>
     public async Task<string?> GetTokenAsync()
     {
-#if ANDROID || IOS || WINDOWS
-        return await SecureStorage.Default.GetAsync(TOKEN_KEY);
-#else
         try
         {
-            if (_js != null)
+            await AdoptTabSessionAsync();
+            var token = await js.InvokeAsync<string?>("localStorage.getItem", TOKEN_KEY);
+            if (string.IsNullOrEmpty(token))
+                return null;
+            if (await js.InvokeAsync<string?>("localStorage.getItem", UNTIL_BROWSER_CLOSES_KEY) == "1" && await BrowserWasClosedAsync())
             {
-                var sessionToken = await _js.InvokeAsync<string>("sessionStorage.getItem", TOKEN_KEY);
-                if (!string.IsNullOrEmpty(sessionToken))
-                    return sessionToken;
-
-                var localToken = await _js.InvokeAsync<string>("localStorage.getItem", TOKEN_KEY);
-                return localToken;
+                await ClearAsync();
+                return null;
             }
-            return null;
+            return token;
         }
         catch
         {
             return null;
         }
-#endif
     }
 
+    /// <summary>Signs the browser out: every tab.</summary>
     public async Task LogoutAsync()
     {
-#if ANDROID || IOS || WINDOWS
-        SecureStorage.Default.Remove(TOKEN_KEY);
-#else
-        if (_js != null)
-        {
-            await _js.InvokeVoidAsync("localStorage.removeItem", TOKEN_KEY);
-            await _js.InvokeVoidAsync("sessionStorage.removeItem", TOKEN_KEY);
-        }
-#endif
+        await ClearAsync();
         _mustChangePassword = false;
     }
 
@@ -138,59 +123,111 @@ public class AccountApiService
             // The new password ends the sessions opened with the old one, this one included: the API sends its new token.
             if (result.Body is { ValueKind: JsonValueKind.Object } body && body.TryGetProperty("token", out var tokenProp)
                 && tokenProp.GetString() is { Length: > 0 } token)
-                await SetTokenAsync(token, await IsRememberedAsync());
+                await js.InvokeVoidAsync("localStorage.setItem", TOKEN_KEY, token); // same session: "Remember me" stays as it was
         }
         return result;
     }
 
     /// <summary>
-    /// Replaces the stored token with one holding the user's current roles and permissions. False when the session is
-    /// over (expired, or the user was blocked or deleted); a network error keeps the current session.
+    /// Replaces the browser's token with one holding the user's current roles and permissions. False when the API ended
+    /// this session (expired, or the user was blocked or deleted): it is cleared, in every tab. A network error keeps it.
+    /// An answer that comes after another tab signed in or out is dropped, so it can't undo that.
     /// </summary>
     public async Task<bool> RefreshAsync()
     {
-        if (string.IsNullOrEmpty(await GetTokenAsync()))
+        var sent = await GetTokenAsync();
+        if (string.IsNullOrEmpty(sent))
             return false;
         HttpResponseMessage response;
         try
         {
-            response = await SendAsync(HttpMethod.Post, ApiRouteConstants.ACCOUNT_REFRESH);
+            response = await SendAsync(HttpMethod.Post, ApiRouteConstants.ACCOUNT_REFRESH, token: sent);
         }
         catch (HttpRequestException)
         {
             return true;
         }
         if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            if (await GetTokenAsync() != sent)
+                return true; // another tab signed in or out meanwhile: that session isn't the one the API ended
+            await ClearAsync();
             return false;
+        }
         if (!response.IsSuccessStatusCode)
             return true;
 
         var body = await response.Content.ReadFromJsonAsync<JsonElement>();
-        if (body.TryGetProperty("token", out var tokenProp) && tokenProp.GetString() is { Length: > 0 } token)
-            await SetTokenAsync(token, await IsRememberedAsync());
         _mustChangePassword = body.TryGetProperty("mustChangePassword", out var mcp) && mcp.GetBoolean();
+        if (body.TryGetProperty("token", out var tokenProp) && tokenProp.GetString() is { Length: > 0 } token
+            && await GetTokenAsync() == sent)
+            await js.InvokeVoidAsync("localStorage.setItem", TOKEN_KEY, token); // same session: "Remember me" stays as it was
         return true;
     }
 
-    /// <summary>Whether the session was started with "remember me" (its token is kept after closing the browser).</summary>
-    private async Task<bool> IsRememberedAsync()
+    /// <summary>
+    /// After an update, a session that an earlier version kept in this tab becomes the browser's, unless the browser has
+    /// one already. New sign-ins never write there.
+    /// </summary>
+    private async Task AdoptTabSessionAsync()
     {
-#if ANDROID || IOS || WINDOWS
-        return await Task.FromResult(true);
-#else
-        return _js == null || string.IsNullOrEmpty(await _js.InvokeAsync<string?>("sessionStorage.getItem", TOKEN_KEY));
-#endif
+        var tabToken = await js.InvokeAsync<string?>("sessionStorage.getItem", TOKEN_KEY);
+        if (string.IsNullOrEmpty(tabToken))
+            return;
+        if (string.IsNullOrEmpty(await js.InvokeAsync<string?>("localStorage.getItem", TOKEN_KEY)))
+            await SetTokenAsync(tabToken, rememberMe: false);
+        else
+            await js.InvokeVoidAsync("sessionStorage.removeItem", TOKEN_KEY);
     }
 
-    /// <summary>Account calls with the session's token (this client has no JWT handler: login runs before there is a token).</summary>
-    private async Task<HttpResponseMessage> SendAsync(HttpMethod method, string uri, object? body = null)
+    private async Task ClearAsync()
+    {
+        await js.InvokeVoidAsync("localStorage.removeItem", TOKEN_KEY);
+        await js.InvokeVoidAsync("localStorage.removeItem", UNTIL_BROWSER_CLOSES_KEY);
+        await js.InvokeVoidAsync("sessionStorage.removeItem", TOKEN_KEY);
+        await TrySessionScriptAsync("staffSession.clearBrowserMark");
+    }
+
+    /// <summary>
+    /// Only a "yes" counts: a page without js/session.js (an index.html cached from an earlier version) keeps the
+    /// session, which then lasts until its token expires.
+    /// </summary>
+    private async Task<bool> BrowserWasClosedAsync()
+    {
+        try
+        {
+            return await js.InvokeAsync<bool>("staffSession.browserWasClosed");
+        }
+        catch (JSException)
+        {
+            return false;
+        }
+    }
+
+    private async Task TrySessionScriptAsync(string identifier)
+    {
+        try
+        {
+            await js.InvokeVoidAsync(identifier);
+        }
+        catch (JSException)
+        {
+            // No js/session.js on this page: see BrowserWasClosedAsync.
+        }
+    }
+
+    /// <summary>
+    /// Account calls with the session's token, or the one given (this client has no JWT handler: login runs before there
+    /// is a token).
+    /// </summary>
+    private async Task<HttpResponseMessage> SendAsync(HttpMethod method, string uri, object? body = null, string? token = null)
     {
         using var request = new HttpRequestMessage(method, uri);
         if (body != null)
             request.Content = JsonContent.Create(body);
-        var token = await GetTokenAsync();
+        token ??= await GetTokenAsync();
         if (!string.IsNullOrEmpty(token))
-            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-        return await _http.SendAsync(request);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        return await http.SendAsync(request);
     }
 }
