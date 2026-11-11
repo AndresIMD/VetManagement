@@ -77,6 +77,10 @@
                                 <MudStack Spacing="1">
                                     <MudText Typo="Typo.body2">@user?.Identity?.Name</MudText>
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">@L[PrimaryRole]</MudText>
+                                    @if (AppVersion.Text is { Length: > 0 } version)
+                                    {
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">@L["Version {0}", version]</MudText>
+                                    }
                                 </MudStack>
                             </MudMenuItem>
                             <MudDivider />
