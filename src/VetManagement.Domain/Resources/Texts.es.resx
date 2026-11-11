@@ -140,6 +140,7 @@
   <data name="Tax.RatePercent must be between 0 and 100." xml:space="preserve"><value>Tax.RatePercent debe estar entre 0 y 100.</value></data>
   <data name="Template '{0}', parameter '{1}': a band needs a Min, a Max or both." xml:space="preserve"><value>Plantilla '{0}', parámetro '{1}': una franja necesita un mínimo, un máximo o ambos.</value></data>
   <data name="Template '{0}', parameter '{1}': a band's Min is greater than its Max." xml:space="preserve"><value>Plantilla '{0}', parámetro '{1}': el mínimo de una franja es mayor que su máximo.</value></data>
+  <data name="Template '{0}', parameter '{1}': a band that starts and ends on the same number must include it." xml:space="preserve"><value>Plantilla '{0}', parámetro '{1}': una franja que empieza y termina en el mismo número debe incluirlo.</value></data>
   <data name="Template '{0}', parameter '{1}': a normal range's Min is greater than its Max." xml:space="preserve"><value>Plantilla '{0}', parámetro '{1}': el mínimo de un rango normal es mayor que su máximo.</value></data>
   <data name="Template '{0}', parameter '{1}': abnormal results must be among its options." xml:space="preserve"><value>Plantilla '{0}', parámetro '{1}': los resultados alterados deben estar entre sus opciones.</value></data>
   <data name="Template '{0}', parameter '{1}': text parameters have no bands." xml:space="preserve"><value>Plantilla '{0}', parámetro '{1}': los parámetros de texto no tienen franjas.</value></data>

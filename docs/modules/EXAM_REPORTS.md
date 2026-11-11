@@ -27,7 +27,10 @@ Asked in the form (per template): the lot number, so the form only shows the fie
   and/or one per species, the species' own one wins). A value outside it prints in red, with ↓ / ↑ unless the template
   turns the arrows off (`Sections.DirectionArrows`).
 - Optional **interpretation bands** name what a value means (label, optional species, `Abnormal` flag): the first band
-  containing the value wins (order them; e.g. `≤ 200`, `200 – 399.9`, `≥ 400`). A value in an `Abnormal` band prints
+  containing the value wins (order them). Each limit is included (`≥` / `≤`, the default) or left out (`>` / `<`;
+  `MinExclusive` / `MaxExclusive`, the sign the editor shows before the limit), so where two bands meet a value right on
+  the limit falls in one and the reference says which: `≤ 200`, `> 200 - < 400`, `≥ 400`, never `≤ 5` / `≥ 5`, which
+  prints 5 in both. A band on a single number (`5 - 5`) must include it. A value in an `Abnormal` band prints
   in red with `*`, even inside the normal range.
   Without a normal range, a value outside every band is flagged too.
 - Values are kept as typed. For evaluation `86,6` = `86.6`. An analyser's bound (`< 1.0`, `>1000`, `≤ 5`) counts only
