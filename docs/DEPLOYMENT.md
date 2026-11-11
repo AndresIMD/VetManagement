@@ -19,7 +19,7 @@ Environment variable names use `__` for sections, e.g. `Payments__WebPayPlus__Ap
 | `Payments:WebPayPlus:CommerceCode`, `ApiKeySecret` | **ApiKeySecret is secret.** Issued by Transbank to the clinic. |
 | `Smtp:Host`, `Port`, `User`, `Pass`, `From`, `EnableSsl` | **Pass is secret.** Client emails (confirmation, reminders, changes). |
 | `RateLimits:PublicReadPerMinute`, `PublicWritePerMinute` | Public portal limits per IP (defaults 120 / 10). |
-| `RateLimits:UserPerMinute` | Requests per signed-in user per minute (default 100; development 1000 per 5 minutes). |
+| `RateLimits:UserPerMinute` | Requests per minute from one client IP, so every tab of a PC (or every PC behind one public IP) shares it (default 100; development 1000 per 5 minutes). See [Hosting on a clinic PC](#hosting-on-a-clinic-pc-windows-1011). |
 | `RateLimits:LoginPerMinute` | Sign-in attempts per IP per minute (default 10), on top of the account lockout after 5 failures. |
 | `SeedAdmin:*` | First admin user; disable after first start. **Password is secret.** |
 | `Security:*` | HTTPS redirection / HSTS (on by default). |
@@ -27,6 +27,7 @@ Environment variable names use `__` for sections, e.g. `Payments__WebPayPlus__Ap
 | `Modules:Enabled` | Modules this clinic has: `Inventory`, `Clients`, `Exams`, `Clinical`, `Scheduling`, `Billing`, `Reports`. Absent = all. A module that is off grants no permissions (not even to Admin) and its public endpoints answer 404. Exams, Clinical, Scheduling and Billing need `Clients`; startup fails otherwise. |
 | `Localization:Culture` | The clinic's language for what the API writes to people: validation errors, client emails, defaults of new settings (payment methods, vaccine protocols, report footer). E.g. `es-CL`. Absent = English. Set it to the same culture as the staff web's `Culture`. Translations: `Domain/Resources/Texts.{language}.resx`. |
 | `TestData:Enabled` | Sample-data page on a non-production demo/staging server. Ignored in Production (always off there). |
+| `SettingsFile` | A JSON settings file outside the API's folder (which an update replaces), read last: its values win over every other source. For a host without per-app environment variables, such as a Windows service: give it on the command line (`--SettingsFile=C:\ProgramData\VetManagement\api.settings.json`). It holds secrets: only administrators, SYSTEM and the service's account may read it. See [Hosting on a clinic PC](#hosting-on-a-clinic-pc-windows-1011). |
 
 Health check: `GET /healthz` (includes the database).
 
@@ -72,6 +73,34 @@ portal with the site's address as `returnUrl`, so the portal can send clients ba
 ```json
 { "BookingUrl": "https://reservas.example.cl/?returnUrl={returnUrl}" }
 ```
+
+## Hosting on a clinic PC (Windows 10/11)
+
+A clinic without Windows Server can host the API and the staff web on one of its own PCs, for its own network. Run the
+**API as a Windows service** there, not in IIS: IIS on desktop Windows serves at most 10 connections at a time for the
+whole PC ([Microsoft](https://learn.microsoft.com/aspnet/core/signalr/scale#iis-limitations-on-windows-client-os)), and
+every open tab of the staff app keeps two live connections, so a handful of tabs across the clinic stalls everyone. The
+staff web is static files and can stay in IIS.
+
+As a service the API runs on its own web server (Kestrel); it needs the ASP.NET Core runtime, not the IIS module.
+
+- **Settings:** the keys above, as nested sections, in a [`SettingsFile`](#api-srcvetmanagementapi) outside the API's
+  folder, e.g. `C:\ProgramData\VetManagement\api.settings.json`, plus the address:
+  `"Kestrel": { "Endpoints": { "Http": { "Url": "http://*:8081" } } }`. Set the folder's permissions before writing the
+  file (administrators, SYSTEM and the service's account only), so it never exists with wider access.
+- **Service:** command line `"<folder>\VetManagement.Api.exe" --environment=Production --SettingsFile=<file>` (the
+  environment can't come from the file); account `NT SERVICE\<service name>`, a virtual account Windows manages, with no
+  password; start *Automatic (Delayed Start)*, so SQL Server is up first; recovery *Restart*. Create the event source
+  `VetManagement.Api` in the Application log once, as administrator: the service's account can't.
+- **Database:** a SQL Server login for `NT SERVICE\<service name>`, `db_owner` on the clinic's database (migrations run
+  at start-up).
+- **Request limit:** raise `RateLimits:UserPerMinute` (e.g. `600`): it counts per PC, and a PC opening a dozen tabs at once
+  uses up 100 within the minute. Sign-in keeps its own limit and the lockout.
+- **Firewall:** the API's port, Private profile only. Plain http is acceptable only on the clinic's own network.
+- **Updates:** stop the service (and wait for its process to end), replace the folder, start it, then check `/healthz`
+  and the database's last migration.
+
+Warnings and errors go to the Event Viewer: Windows Logs → Application, source `VetManagement.Api`.
 
 ## Hosting on Azure
 
