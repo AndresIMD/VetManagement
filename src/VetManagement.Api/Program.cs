@@ -252,7 +252,9 @@ builder.Services.AddCors(options =>
     options.AddPolicy("LocalOnly", policy => policy.WithOrigins(allowedOrigins)
     .AllowAnyHeader()
     .AllowAnyMethod()
-    .AllowCredentials());
+    .AllowCredentials()
+    // Every staff call carries a token, so the browser asks first (a preflight); it may reuse the answer for 10 minutes.
+    .SetPreflightMaxAge(TimeSpan.FromMinutes(10)));
 });
 
 builder.Services.AddSignalR(options =>
@@ -391,8 +393,11 @@ if (app.Environment.IsDevelopment())
 else
     app.UseExceptionHandler();
 
-app.UseRateLimiter();
+// CORS before the request limits: it answers the browser's preflights itself, so they don't use up a PC's limit (with
+// several tabs open they were half of it), and a refused request carries the CORS headers, so the app reads a 429
+// instead of the browser reporting a CORS error.
 app.UseCors("LocalOnly");
+app.UseRateLimiter();
 app.UseAuthentication();
 // A session opened with a temporary password can only change it (the staff app sends the user there first).
 app.Use(async (context, next) =>
