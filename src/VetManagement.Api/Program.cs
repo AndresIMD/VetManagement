@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting.WindowsServices;
 using Microsoft.IdentityModel.Tokens;
 using VetManagement.Api.Authorization;
 using VetManagement.Api.Hubs;
@@ -17,7 +18,22 @@ using VetManagement.Domain.Clients;
 using VetManagement.Domain.Inventory;
 using VetManagement.Domain.Localization;
 
-var builder = WebApplication.CreateBuilder(args);
+// On a clinic PC the API runs as a Windows service on its own web server (Kestrel), not in IIS: IIS on desktop Windows
+// (10/11) serves 10 connections at a time for the whole PC, and every open tab of the staff app holds two live
+// connections, so a handful of tabs, from any PC, stalled everyone. A service starts in System32: its folder is the
+// content root. Outside a service both lines change nothing. See docs/DEPLOYMENT.md, "Hosting on a clinic PC".
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    Args = args,
+    ContentRootPath = WindowsServiceHelpers.IsWindowsService() ? AppContext.BaseDirectory : null
+});
+builder.Services.AddWindowsService();
+
+// Settings kept outside the app's folder, which an update replaces: a JSON file named by SettingsFile (e.g. the service's
+// --SettingsFile=C:\ProgramData\VetManagement\api.settings.json), for hosts without per-app environment variables. It
+// holds secrets, so only administrators and the service may read it. Its values win over every other source.
+if (builder.Configuration["SettingsFile"] is { Length: > 0 } settingsFile)
+    builder.Configuration.AddJsonFile(settingsFile, optional: false, reloadOnChange: false);
 
 builder.WebHost.ConfigureKestrel(options =>
 {
