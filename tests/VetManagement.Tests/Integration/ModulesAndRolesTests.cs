@@ -1,12 +1,17 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Security.Claims;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting.Internal;
 using VetManagement.Api.Authorization;
 using static VetManagement.Api.Authorization.Permissions;
 
@@ -44,6 +49,77 @@ public class ModulesAndRolesTests(CustomWebAppFactory factory) : IClassFixture<C
         FluentActions.Invoking(() => new EnabledModules(config)).Should().Throw<InvalidOperationException>().WithMessage("*Exams*Clients*");
     }
 
+    [Theory]
+    [InlineData("Development", false, true)]
+    [InlineData("Testing", false, true)]
+    [InlineData("Staging", false, false)]
+    [InlineData("Staging", true, true)]
+    [InlineData("Production", false, false)]
+    [InlineData("Production", true, false)]
+    public void SampleData_IsGrantedOnlyWhereTheServerOffersIt(string environment, bool enabled, bool granted)
+    {
+        var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["TestData:Enabled"] = enabled.ToString() }).Build();
+
+        var permissions = new EnabledModules(config, new HostingEnvironment { EnvironmentName = environment }).Filter(ForRole(ROLES.ADMIN));
+
+        permissions.Contains(SYSTEM.TEST_DATA).Should().Be(granted);
+        permissions.Should().Contain([USERS.READ, INVENTORY.READ], "nothing else is taken from the administrator");
+    }
+
+    [Fact]
+    public async Task WhereSampleDataIsNotOffered_AnAdminWhoAlreadyHadThePermission_LosesItAtTheNextLogin()
+    {
+        var production = factory.WithWebHostBuilder(b => b.ConfigureServices(services =>
+        {
+            services.RemoveAll<EnabledModules>();
+            services.AddSingleton(new EnabledModules(new ConfigurationBuilder().Build(), new HostingEnvironment { EnvironmentName = "Production" }));
+        }));
+
+        // As an administrator created before this rule has it: stored with the account.
+        var (client, userName, permissions) = await LoginAsNewAdminAsync(production, storedPermission: SYSTEM.TEST_DATA);
+
+        permissions.Should().Contain(USERS.READ).And.NotContain(SYSTEM.TEST_DATA, "the menu reads the token: no link to a page that answers 404");
+        (await client.GetAsync("/api/dev/test-data")).StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        using var scope = production.Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        (await users.GetClaimsAsync((await users.FindByNameAsync(userName))!)).Should().NotContain(c => c.Value == SYSTEM.TEST_DATA);
+    }
+
+    [Fact]
+    public async Task OnATestServer_AnAdminKeepsSampleData()
+    {
+        var (client, _, permissions) = await LoginAsNewAdminAsync(factory);
+
+        permissions.Should().Contain(SYSTEM.TEST_DATA);
+        (await client.GetAsync("/api/dev/test-data")).StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    /// <summary>A new administrator, signed in: the client carries the token, whose permissions are returned.</summary>
+    private static async Task<(HttpClient Client, string UserName, List<string> Permissions)> LoginAsNewAdminAsync(
+        WebApplicationFactory<Program> app, string? storedPermission = null)
+    {
+        const string password = "Valid#Pass12345";
+        var userName = $"admin-{Guid.NewGuid():N}";
+        using (var scope = app.Services.CreateScope())
+        {
+            var roles = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            if (!await roles.RoleExistsAsync(ROLES.ADMIN))
+                await roles.CreateAsync(new IdentityRole(ROLES.ADMIN));
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+            var user = new IdentityUser(userName);
+            (await users.CreateAsync(user, password)).Succeeded.Should().BeTrue();
+            await users.AddToRoleAsync(user, ROLES.ADMIN);
+            if (storedPermission is not null)
+                await users.AddClaimAsync(user, new Claim(CLAIM_TYPE, storedPermission));
+        }
+
+        var client = app.CreateClient();
+        var login = await client.PostAsJsonAsync("/api/account/login", new { Username = userName, Password = password });
+        var token = (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("token").GetString();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        return (client, userName, [.. new JwtSecurityTokenHandler().ReadJwtToken(token).Claims.Where(c => c.Type == CLAIM_TYPE).Select(c => c.Value)]);
+    }
+
     [Fact]
     public async Task ModuleOff_GivesNoPermissionsEvenToAdmins_AndItsPublicEndpointsDisappear()
     {
@@ -53,23 +129,8 @@ public class ModulesAndRolesTests(CustomWebAppFactory factory) : IClassFixture<C
             b.UseSetting("Modules:Enabled:1", "Clients");
             b.UseSetting("Modules:Enabled:2", "Exams");
         });
-        const string password = "Valid#Pass12345";
-        var userName = $"admin-{Guid.NewGuid():N}";
-        using (var scope = limited.Services.CreateScope())
-        {
-            var roles = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-            if (!await roles.RoleExistsAsync(ROLES.ADMIN))
-                await roles.CreateAsync(new IdentityRole(ROLES.ADMIN));
-            var users = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
-            var user = new IdentityUser(userName);
-            (await users.CreateAsync(user, password)).Succeeded.Should().BeTrue();
-            await users.AddToRoleAsync(user, ROLES.ADMIN);
-        }
-
+        var (_, _, permissions) = await LoginAsNewAdminAsync(limited);
         var client = limited.CreateClient();
-        var login = await client.PostAsJsonAsync("/api/account/login", new { Username = userName, Password = password });
-        var token = (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("token").GetString();
-        var permissions = new JwtSecurityTokenHandler().ReadJwtToken(token).Claims.Where(c => c.Type == CLAIM_TYPE).Select(c => c.Value).ToList();
 
         permissions.Should().Contain([INVENTORY.READ, CLIENTS_PETS.READ, EXAMS_PERFORMED.CREATE, USERS.READ]);
         permissions.Should().NotContain([BILLING.READ, SCHEDULING.READ, MEDICAL.READ, REPORTS.READ]);

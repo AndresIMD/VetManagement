@@ -1251,7 +1251,6 @@
   <data name="Sale price: {0}" xml:space="preserve"><value>Precio de venta: {0}</value></data>
   <data name="Saved: {0}." xml:space="preserve"><value>Guardado: {0}.</value></data>
   <data name="Sheets" xml:space="preserve"><value>Hojas</value></data>
-  <data name="Show discharged in the last {0} days" xml:space="preserve"><value>Mostrar altas de los últimos {0} días</value></data>
   <data name="Supplies used on each patient during a stay, added up for the charge at discharge." xml:space="preserve"><value>Insumos usados en cada paciente durante su estadía, sumados para el cobro al alta.</value></data>
   <data name="The mL given are charged at the price per mL (e.g. diazepam from a vial shared by several patients). The sheets don't take the bottle from inventory: take it out by hand when one is opened." xml:space="preserve"><value>Se cobran los mL administrados al precio por mL (ej. diazepam de un frasco que se usa en varios pacientes). Las hojas no descuentan el frasco del inventario: descuéntalo a mano al abrir uno.</value></data>
   <data name="The sheet was not found." xml:space="preserve"><value>No se encontró la hoja.</value></data>
@@ -1410,4 +1409,12 @@
   <data name="Remove approval" xml:space="preserve"><value>Quitar aprobación</value></data>
   <data name="Remove the approval of {0} {1} of {2}, recorded {3}?" xml:space="preserve"><value>¿Quitar la aprobación de {0} {1} de {2}, anotada el {3}?</value></data>
   <data name="To give back at the cashier, never started: {0}" xml:space="preserve"><value>Por devolver en caja, sin empezar: {0}</value></data>
+  <data name="Which sheets to show" xml:space="preserve"><value>Qué hojas mostrar</value></data>
+  <data name="Active patients" xml:space="preserve"><value>Activos</value></data>
+  <data name="Discharged" xml:space="preserve"><value>Dados de alta</value></data>
+  <data name="Discharged: only those of the last {0} days." xml:space="preserve"><value>Dados de alta: solo los de los últimos {0} días.</value></data>
+  <data name="No sheets discharged in the last {0} days." xml:space="preserve"><value>No hay altas en los últimos {0} días.</value></data>
+  <data name="No sheets yet." xml:space="preserve"><value>Aún no hay hojas.</value></data>
+  <data name="One less" xml:space="preserve"><value>Una menos</value></data>
+  <data name="One more" xml:space="preserve"><value>Una más</value></data>
 </root>

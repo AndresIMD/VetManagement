@@ -66,12 +66,21 @@
         <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mb-2">
             <MudText Typo="Typo.h6">@L["Sheets"]</MudText>
             <MudSpacer />
-            <MudSwitch T="bool" Value="_showClosed" ValueChanged="ShowClosedAsync" Color="Color.Primary"
-                       Label="@L["Show discharged in the last {0} days", CLOSED_DAYS]" />
+            <MudToggleGroup T="SheetFilter" Value="_filter" ValueChanged="FilterAsync" Size="Size.Small" Color="Color.Primary"
+                            Outlined="true" Delimiters="true" CheckMark="false" aria-label="@L["Which sheets to show"]">
+                <MudToggleItem Value="SheetFilter.Active" Text="@L["Active patients"]" />
+                <MudToggleItem Value="SheetFilter.Discharged" Text="@L["Discharged"]" />
+                <MudToggleItem Value="SheetFilter.All" Text="@L["All"]" />
+            </MudToggleGroup>
             <AuthorizeView Policy="Consumption.Manage" Context="auth">
                 <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.PriceChange" Href="consumption/pricing">@L["How supplies are charged"]</MudButton>
             </AuthorizeView>
         </MudStack>
+        @if (_filter != SheetFilter.Active)
+        {
+            @* Said once, beside the list: older sheets are not in it. *@
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="d-block mb-2">@L["Discharged: only those of the last {0} days.", CLOSED_DAYS]</MudText>
+        }
         @if (_sheets is null)
         {
             <MudProgressLinear Indeterminate="true" />
@@ -80,7 +89,7 @@
         {
             @* A click on a row opens its supplies right there, to record a use without leaving the list; the pencil opens the
                whole sheet, for everything else. *@
-            <MudTable Items="_sheets" Hover="true" Dense="true" T="ConsumptionSheetSummaryDto" OnRowClick="OnRowClickAsync" RowStyle="cursor:pointer">
+            <MudTable Items="Shown" Hover="true" Dense="true" T="ConsumptionSheetSummaryDto" OnRowClick="OnRowClickAsync" RowStyle="cursor:pointer">
                 <HeaderContent>
                     <MudTh Style="width:1%"></MudTh>
                     <MudTh>@L["Patient"]</MudTh>
@@ -158,10 +167,10 @@
                                                 @if (_canRecord && sheet.ClosedAtUtc is null)
                                                 {
                                                     <span class="quick-use-action">
-                                                        <MudNumericField T="decimal?" Value="_quantities.GetValueOrDefault(key)" ValueChanged="value => _quantities[key] = value"
-                                                                         Immediate="true" Min="0.01m" HideSpinButtons="true" Culture="CultureInfo.CurrentCulture" Format="0.##"
-                                                                         Variant="Variant.Outlined" Margin="Margin.Dense" Adornment="Adornment.End" Style="width:110px"
-                                                                         AdornmentText="@UnitText(item.Charge)" aria-label="@L["Quantity of {0}", item.ItemName]" />
+                                                        <QuantityStepper Value="_quantities.GetValueOrDefault(key)" ValueChanged="value => _quantities[key] = value"
+                                                                         Steps="@(item.Charge == ConsumptionCharge.Unit)" Unit="@UnitText(item.Charge)"
+                                                                         Variant="Variant.Outlined" Margin="Margin.Dense" FieldStyle="width:110px"
+                                                                         AriaLabel="@L["Quantity of {0}", item.ItemName]" />
                                                         <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
                                                                    Disabled="@(_quantities.GetValueOrDefault(key) is not > 0 || _saving.Contains(key))"
                                                                    OnClick="() => RecordAsync(sheet, item)">@L["Record"]</MudButton>
@@ -176,7 +185,14 @@
                     }
                 </ChildRowContent>
                 <NoRecordsContent>
-                    <MudText Color="Color.Secondary">@L["No open sheets."]</MudText>
+                    <MudText Color="Color.Secondary">
+                        @(_filter switch
+                        {
+                            SheetFilter.Active => L["No open sheets."],
+                            SheetFilter.Discharged => L["No sheets discharged in the last {0} days.", CLOSED_DAYS],
+                            _ => L["No sheets yet."]
+                        })
+                    </MudText>
                 </NoRecordsContent>
             </MudTable>
         }
@@ -188,8 +204,17 @@
 
     [CascadingParameter] private Task<AuthenticationState>? AuthState { get; set; }
 
+    /// <summary>
+    /// Which sheets the list shows. The active ones include a discharged sheet that still owes stock, until it is settled:
+    /// it has work pending, so it mustn't drop out of the daily view.
+    /// </summary>
+    private enum SheetFilter { Active, Discharged, All }
+
     private List<ConsumptionSheetSummaryDto>? _sheets;
-    private bool _showClosed;
+    private SheetFilter _filter;
+
+    private IEnumerable<ConsumptionSheetSummaryDto> Shown
+        => _filter == SheetFilter.Discharged ? _sheets!.Where(s => s.ClosedAtUtc is not null) : _sheets!;
     private bool _registered;
     private int? _petId;
     private string? _petName;
@@ -218,11 +243,11 @@
         await LoadAsync();
     }
 
-    private async Task LoadAsync() => _sheets = await Api.ListAsync(_showClosed ? CLOSED_DAYS : 0);
+    private async Task LoadAsync() => _sheets = await Api.ListAsync(_filter == SheetFilter.Active ? 0 : CLOSED_DAYS);
 
-    private async Task ShowClosedAsync(bool show)
+    private async Task FilterAsync(SheetFilter filter)
     {
-        _showClosed = show;
+        _filter = filter;
         await LoadAsync();
     }
 

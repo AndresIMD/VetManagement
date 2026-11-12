@@ -1,0 +1,39 @@
+@using System.Globalization
+@* A quantity that is typed, or stepped one at a time with − / + where whole units are counted. Each press is one click or
+   one tap, so it works the same with a mouse and on a touch screen. *@
+
+<span class="d-inline-flex align-center" style="gap:4px">
+    @if (Steps)
+    {
+        <MudIconButton Icon="@Icons.Material.Filled.Remove" Variant="Variant.Outlined" Class="pa-2" Disabled="@(Disabled || Value is not > 1)"
+                       OnClick="() => StepAsync(-1)" aria-label="@L["One less"]" />
+    }
+    <MudNumericField T="decimal?" Value="Value" ValueChanged="ValueChanged" Label="@Label" Immediate="true" Min="0.01m" HideSpinButtons="true"
+                     Culture="CultureInfo.CurrentCulture" Format="0.##" Variant="Variant" Margin="Margin" Disabled="Disabled"
+                     Adornment="Adornment.End" AdornmentText="@Unit" Style="@FieldStyle" aria-label="@AriaLabel" />
+    @if (Steps)
+    {
+        <MudIconButton Icon="@Icons.Material.Filled.Add" Variant="Variant.Outlined" Class="pa-2" Disabled="Disabled"
+                       OnClick="() => StepAsync(1)" aria-label="@L["One more"]" />
+    }
+</span>
+
+@code {
+    [Parameter] public decimal? Value { get; set; }
+    [Parameter] public EventCallback<decimal?> ValueChanged { get; set; }
+
+    /// <summary>Shows − / +: for quantities counted in whole units. mL are typed.</summary>
+    [Parameter] public bool Steps { get; set; }
+
+    [Parameter] public string? Label { get; set; }
+    /// <summary>The unit shown at the end of the field ("u.", "mL").</summary>
+    [Parameter] public string? Unit { get; set; }
+    [Parameter] public string? AriaLabel { get; set; }
+    [Parameter] public Variant Variant { get; set; } = Variant.Text;
+    [Parameter] public Margin Margin { get; set; } = Margin.None;
+    [Parameter] public string? FieldStyle { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+
+    /// <summary>One more or one less, never under one: an empty field counts as none yet.</summary>
+    private Task StepAsync(int change) => ValueChanged.InvokeAsync(Math.Max((Value ?? 0) + change, 1));
+}

@@ -71,8 +71,8 @@
                                              Clearable="true" HelperText="@ChargeHint" />
                         </MudItem>
                         <MudItem xs="6" md="2">
-                            <MudNumericField T="decimal?" @bind-Value="_quantity" Label="@L["Quantity"]" Min="0.01m" HideSpinButtons="true" Culture="CultureInfo.CurrentCulture" Immediate="true"
-                                             Adornment="Adornment.End" AdornmentText="@UnitText(SelectedCharge)" />
+                            <QuantityStepper @bind-Value="_quantity" Label="@L["Quantity"]" Unit="@UnitText(SelectedCharge)"
+                                             Steps="@(_item is not null && SelectedCharge == ConsumptionCharge.Unit)" />
                         </MudItem>
                         <MudItem xs="6" md="3">
                             <MudTextField @bind-Value="_notes" Label="@L["Note (optional)"]" MaxLength="200" Placeholder="@L["E.g. infusion, single dose"]" />
