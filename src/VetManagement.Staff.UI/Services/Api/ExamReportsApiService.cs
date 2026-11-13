@@ -19,6 +19,18 @@ public class ExamReportsApiService(HttpClient http)
     public async Task<List<ExamReportDto>> ListAsync(int? petId)
         => await http.GetFromJsonAsync<List<ExamReportDto>>(petId is int id ? $"{ApiRouteConstants.EXAM_REPORTS}?petId={id}" : ApiRouteConstants.EXAM_REPORTS) ?? [];
 
+    /// <summary>The lab's figures between two dates (inclusive), or the API's message (e.g. range too long).</summary>
+    public async Task<(ExamMetricsDto? Metrics, string? Error)> GetMetricsAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken = default)
+    {
+        var response = await http.GetAsync($"{ApiRouteConstants.EXAM_METRICS}?from={from:yyyy-MM-dd}&to={to:yyyy-MM-dd}", cancellationToken);
+        if (response.IsSuccessStatusCode)
+            return (await response.Content.ReadFromJsonAsync<ExamMetricsDto>(cancellationToken), null);
+        // A server error says nothing useful to the user: the page shows its own message for it.
+        if ((int)response.StatusCode >= 500)
+            throw new HttpRequestException($"Exam metrics failed ({(int)response.StatusCode}).", null, response.StatusCode);
+        return (null, (await ApiResult.FromResponseAsync(response)).Error);
+    }
+
     public async Task<ExamReportDto?> GetAsync(int id)
     {
         var response = await http.GetAsync(string.Format(ApiRouteConstants.EXAM_REPORT_BY_ID, id));

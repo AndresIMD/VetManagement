@@ -152,6 +152,7 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy("Exams.Create", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.EXAMS.CREATE))
     .AddPolicy("Exams.Update", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.EXAMS.UPDATE))
     .AddPolicy("Exams.Delete", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.EXAMS.DELETE))
+    .AddPolicy("Exams.Metrics", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.EXAMS.METRICS))
     .AddPolicy("ExternalLabs.Read", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.EXTERNAL_LABS.READ))
     .AddPolicy("ExternalLabs.Create", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.EXTERNAL_LABS.CREATE))
     .AddPolicy("ExternalLabs.Update", p => p.RequireClaim(Permissions.CLAIM_TYPE, Permissions.EXTERNAL_LABS.UPDATE))
@@ -218,6 +219,7 @@ var enabledModules = new EnabledModules(builder.Configuration);
 builder.Services.AddSingleton(enabledModules);
 builder.Services.AddScoped<VetManagement.Application.Exams.ExamReportSettingsService>();
 builder.Services.AddScoped<VetManagement.Application.Exams.ExamReportService>();
+builder.Services.AddScoped<VetManagement.Application.Exams.ExamMetricsService>();
 builder.Services.AddScoped<VetManagement.Application.ClientPortal.ClientPortalService>();
 builder.Services.AddScoped<VetManagement.Api.TestData.TestDataService>();
 builder.Services.AddPaymentGateway(builder.Configuration, builder.Environment, enabledModules);

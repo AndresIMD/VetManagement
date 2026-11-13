@@ -1130,6 +1130,23 @@
   <data name="Remove from the chart" xml:space="preserve"><value>Quitar del gráfico</value></data>
   <data name="Value of what went out" xml:space="preserve"><value>Valor de las salidas</value></data>
   <data name="Week of {0}" xml:space="preserve"><value>Semana del {0}</value></data>
+  <data name="Exam Metrics" xml:space="preserve"><value>Métricas de exámenes</value></data>
+  <data name="Lab reports by the date the sample was received." xml:space="preserve"><value>Informes de laboratorio según la fecha en que se recibió la muestra.</value></data>
+  <data name="Lab reports in the period" xml:space="preserve"><value>Informes del período</value></data>
+  <data name="{0} in the previous period" xml:space="preserve"><value>{0} en el período anterior</value></data>
+  <data name="With values out of range" xml:space="preserve"><value>Con valores fuera de rango</value></data>
+  <data name="{0} of {1} reports" xml:space="preserve"><value>{0} de {1} informes</value></data>
+  <data name="Kit units taken" xml:space="preserve"><value>Unidades de kit descontadas</value></data>
+  <data name="{0} reports took a kit from inventory" xml:space="preserve"><value>{0} informes descontaron un kit del inventario</value></data>
+  <data name="Reports received" xml:space="preserve"><value>Informes recibidos</value></data>
+  <data name="No reports in this period." xml:space="preserve"><value>No hay informes en este período.</value></data>
+  <data name="By exam" xml:space="preserve"><value>Por examen</value></data>
+  <data name="The {0} with the most reports. Out of range: reports with at least one value outside its range." xml:space="preserve"><value>Los {0} con más informes. Fuera de rango: informes con al menos un valor fuera de su rango.</value></data>
+  <data name="Who wrote them" xml:space="preserve"><value>Quién los escribió</value></data>
+  <data name="The user account each report was saved with." xml:space="preserve"><value>La cuenta con que se guardó cada informe.</value></data>
+  <data name="Kits used" xml:space="preserve"><value>Kits usados</value></data>
+  <data name="Units" xml:space="preserve"><value>Unidades</value></data>
+  <data name="No report took a kit from inventory in this period." xml:space="preserve"><value>Ningún informe descontó un kit del inventario en este período.</value></data>
   <data name="What goes out, what comes in and what will run out soon." xml:space="preserve"><value>Qué sale, qué entra y qué se agotará pronto.</value></data>
   <data name="{0} days" xml:space="preserve"><value>{0} días</value></data>
   <data name="{0} items moved" xml:space="preserve"><value>{0} productos con movimiento</value></data>
