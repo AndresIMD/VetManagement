@@ -28,7 +28,7 @@ its own deployment (database, API) and its own branded public website.
 | `Infrastructure` | `AppDbContext`, EF configuration (column lengths, indexes), repositories, payment gateways. | Domain, Application |
 | `Api` | Controllers (map request → entity → DTO), auth policies, EF migrations, background jobs, test data (dev only). | Application, Infrastructure, Contracts |
 | `Staff.UI` | Staff UI shared by web and MAUI: pages, components, view models, `*ApiService` clients. | Domain, Contracts |
-| `Staff.Web` / `Staff.Maui` | Thin hosts for `Staff.UI`. | Staff.UI |
+| `Staff.Web` / `Staff.Maui` | Thin hosts for `Staff.UI`: both register its services with `AddStaffServices`. | Staff.UI |
 | `Booking.Web` | Public portal: online booking with deposit, booking status/cancel, client portal ("Mis mascotas"). Anonymous. | Contracts |
 | Clinic sites | One branded public website per clinic, in the clinic's own repository. Not part of the product. | (links to Booking.Web) |
 
@@ -109,6 +109,7 @@ Client secrets (booking tokens, portal links) are random; portal links are store
 | `AuthorizationPoliciesTests` / `UiPolicyParityTests` | a policy used by a controller or page isn't registered, or UI and API policies drift |
 | `PermissionsTests`, `ModulesAndRolesTests` | a role grants the wrong permissions, or a disabled module still grants any |
 | `UiRoutesTests` | the staff UI calls an API route that doesn't exist |
+| `StaffServicesTests` | a staff component injects a service that isn't registered: it would compile, then fail when it renders |
 | `RealtimeTests`, `InventoryClientsTests` | the staff app's clients stop understanding what the real hubs and API send, or a realtime notice carries a count |
 | `ErrorHandlingTests`, `HealthCheckTests`, `LoginLockoutTests`, `LoginRateLimitTests`, `LoginPermissionSyncTests` | error handling, health, brute-force protection or permission sync regress |
 | `RequestValidationTests` | orders/visits can be stored without a patient |

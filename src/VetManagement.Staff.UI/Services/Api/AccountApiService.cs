@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.JSInterop;
 using VetManagement.Staff.UI.Constants;
 using VetManagement.Contracts.Accounts;
+using VetManagement.Staff.UI.Services.Auth;
 
 namespace VetManagement.Staff.UI.Services.Api;
 
@@ -15,9 +16,10 @@ namespace VetManagement.Staff.UI.Services.Api;
 /// Before, a session without "Remember me" lived in its tab (sessionStorage): a new tab asked to sign in again, and at
 /// its next refresh it wiped the session of a tab signed in with "Remember me", which then loaded no data (production,
 /// 2026-11).
-/// The app hands out a new instance for every use (typed HttpClient), so nothing is kept here between calls.
+/// The app hands out a new instance for every use (typed HttpClient), so nothing is kept here between calls: the last
+/// token read is kept in <see cref="SessionToken"/>, for the code that can't reach the browser's storage.
 /// </summary>
-public class AccountApiService(HttpClient http, IJSRuntime js)
+public class AccountApiService(HttpClient http, IJSRuntime js, SessionToken session)
 {
     private const string TOKEN_KEY = "authToken";
     /// <summary>Set while the session lasts only until the browser closes ("Remember me" not ticked).</summary>
@@ -62,7 +64,7 @@ public class AccountApiService(HttpClient http, IJSRuntime js)
             await TrySessionScriptAsync("staffSession.markBrowserOpen");
             await js.InvokeVoidAsync("localStorage.setItem", UNTIL_BROWSER_CLOSES_KEY, "1");
         }
-        await js.InvokeVoidAsync("localStorage.setItem", TOKEN_KEY, token);
+        await StoreAsync(token);
         await js.InvokeVoidAsync("sessionStorage.removeItem", TOKEN_KEY); // where earlier versions kept it
     }
 
@@ -77,17 +79,18 @@ public class AccountApiService(HttpClient http, IJSRuntime js)
             await AdoptTabSessionAsync();
             var token = await js.InvokeAsync<string?>("localStorage.getItem", TOKEN_KEY);
             if (string.IsNullOrEmpty(token))
-                return null;
+                return session.Value = null;
             if (await js.InvokeAsync<string?>("localStorage.getItem", UNTIL_BROWSER_CLOSES_KEY) == "1" && await BrowserWasClosedAsync())
             {
                 await ClearAsync();
                 return null;
             }
-            return token;
+            return session.Value = token;
         }
         catch
         {
-            return null;
+            // JavaScript can't run here (the desktop app's HTTP handlers): the last token read stands.
+            return session.Value;
         }
     }
 
@@ -123,7 +126,7 @@ public class AccountApiService(HttpClient http, IJSRuntime js)
             // The new password ends the sessions opened with the old one, this one included: the API sends its new token.
             if (result.Body is { ValueKind: JsonValueKind.Object } body && body.TryGetProperty("token", out var tokenProp)
                 && tokenProp.GetString() is { Length: > 0 } token)
-                await js.InvokeVoidAsync("localStorage.setItem", TOKEN_KEY, token); // same session: "Remember me" stays as it was
+                await StoreAsync(token); // same session: "Remember me" stays as it was
         }
         return result;
     }
@@ -161,7 +164,7 @@ public class AccountApiService(HttpClient http, IJSRuntime js)
         _mustChangePassword = body.TryGetProperty("mustChangePassword", out var mcp) && mcp.GetBoolean();
         if (body.TryGetProperty("token", out var tokenProp) && tokenProp.GetString() is { Length: > 0 } token
             && await GetTokenAsync() == sent)
-            await js.InvokeVoidAsync("localStorage.setItem", TOKEN_KEY, token); // same session: "Remember me" stays as it was
+            await StoreAsync(token); // same session: "Remember me" stays as it was
         return true;
     }
 
@@ -180,8 +183,16 @@ public class AccountApiService(HttpClient http, IJSRuntime js)
             await js.InvokeVoidAsync("sessionStorage.removeItem", TOKEN_KEY);
     }
 
+    /// <summary>The token, in memory and in the browser's storage.</summary>
+    private async Task StoreAsync(string token)
+    {
+        session.Value = token;
+        await js.InvokeVoidAsync("localStorage.setItem", TOKEN_KEY, token);
+    }
+
     private async Task ClearAsync()
     {
+        session.Value = null;
         await js.InvokeVoidAsync("localStorage.removeItem", TOKEN_KEY);
         await js.InvokeVoidAsync("localStorage.removeItem", UNTIL_BROWSER_CLOSES_KEY);
         await js.InvokeVoidAsync("sessionStorage.removeItem", TOKEN_KEY);
