@@ -1,9 +1,13 @@
 ﻿@page "/"
-@using MudBlazor
+@using System.Text.Json
+@using VetManagement.Contracts.Consumption
+@using VetManagement.Contracts.Inventory
 @using VetManagement.Staff.UI.Layout
-@using VetManagement.Staff.UI.Services.Api
-@inject VetManagement.Staff.UI.Services.Api.ItemsApiService ItemsService
+@inject ItemsApiService ItemsService
+@inject InventoryMovementApiService MovementService
+@inject ConsumptionApiService ConsumptionService
 @inject AuthenticationStateProvider AuthStateProvider
+@implements IDisposable
 
 <PageTitle>@L["Home"]</PageTitle>
 
@@ -18,125 +22,232 @@
     <MudGrid Spacing="4">
         @foreach (var area in _areas)
         {
-            <MudItem xs="6" md="3">
-                @* The most used area this user can reach is the page's one accent. *@
-                <MudButton Href="@area.MainHref(_can)" Variant="Variant.Outlined" Color="Color.Default"
-                           StartIcon="@area.Icon" Size="Size.Large" FullWidth="true" Class="@(area == _areas[0] ? "home-area home-area-main" : "home-area")">@L[area.Title]</MudButton>
+            <MudItem xs="12" sm="6" lg="4">
+                <HomeCard Title="@L[area.Title]" Href="@area.Href" Icon="@area.Icon" Main="@(area == _areas[0])"
+                          ChildContent="@FiguresFor(area)" Links="@LinksFor(area)" />
             </MudItem>
         }
     </MudGrid>
-
-    @* Below the links, so they don't move when the alerts arrive. *@
-    @if (_canSeeInventory)
-    {
-        <MudStack Spacing="2" Class="mt-8">
-            @if (_loading)
-            {
-                <MudSkeleton Height="48px" />
-            }
-            else if (_alertsFailed)
-            {
-                <MudAlert Severity="Severity.Warning" Dense="true">@L["Could not load the inventory alerts."]</MudAlert>
-            }
-            else if (_outOfStockCount == 0 && _lowStockCount == 0)
-            {
-                <MudText Typo="Typo.body2">@L["No inventory alerts"]</MudText>
-            }
-            else
-            {
-                @if (_outOfStockCount > 0)
-                {
-                    <MudAlert Severity="Severity.Error" Dense="true">
-                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
-                            <MudText Typo="Typo.body2" Style="color:var(--mud-palette-text-primary);">@L["Out of stock items! ({0})", _outOfStockCount]</MudText>
-                            <MudButton Href="inventory-items?alert=zero" Color="Color.Default" Variant="Variant.Outlined" Size="Size.Small">@L["View details"]</MudButton>
-                        </MudStack>
-                    </MudAlert>
-                }
-                @if (_lowStockCount > 0)
-                {
-                    <MudAlert Severity="Severity.Warning" Dense="true">
-                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
-                            <MudText Typo="Typo.body2" Style="color:var(--mud-palette-text-primary);">@L["Low stock items ({0})", _lowStockCount]</MudText>
-                            <MudButton Href="inventory-items?alert=low" Color="Color.Default" Variant="Variant.Outlined" Size="Size.Small">@L["View details"]</MudButton>
-                        </MudStack>
-                    </MudAlert>
-                }
-            }
-        </MudStack>
-    }
 </MudContainer>
 
 @code {
-    private bool _loading = true;
-    private bool _noAccess;
-    private bool _canSeeInventory;
-    private bool _alertsFailed;
-    private List<MenuItem> _areas = [];
+    /// <summary>The pace "running out" is measured at, as on the metrics page's default period.</summary>
+    private const int RunningOutPaceDays = 30;
+    private const int RunningOutShown = 3;
+
+    private readonly CancellationTokenSource _cts = new();
+    private IReadOnlyList<HomeArea> _areas = [];
     private Func<string, bool> _can = _ => false;
-    private int _lowStockCount;
-    private int _outOfStockCount;
+    private bool _noAccess;
+
+    private sealed record StockCounts(int OutOfStock, int Low);
+    private sealed record SheetCounts(int Open, int StockToTake, int NoBudgetLeft);
+
+    /// <summary>One card's figures: loading until they come, or failed. Each loads on its own, so one failing leaves the rest.</summary>
+    private sealed class Slot<T> where T : class
+    {
+        public T? Value { get; set; }
+        public bool Failed { get; set; }
+        public bool Loading => Value is null && !Failed;
+    }
+
+    private readonly Slot<StockCounts> _stock = new();
+    private readonly Slot<List<ItemFlowDto>> _runningOut = new();
+    private readonly Slot<SheetCounts> _sheets = new();
+
+    private bool SeesRunningOut => _can("inventory.metrics");
 
     protected override async Task OnInitializedAsync()
     {
         var user = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
         _noAccess = !user.HasClaim(c => c.Type == "perm");
         _can = perm => user.HasClaim("perm", perm);
-        _areas = AppNavigation.Areas.Where(area => area.Visible(_can)).ToList();
-        _canSeeInventory = _can("inventory.read");
-        if (!_canSeeInventory)
+        _areas = HomePage.AreasFor(_can);
+
+        var loads = new List<Task>();
+        if (_areas.Any(area => area.Data == HomeData.Stock))
         {
-            _loading = false;
-            return;
+            loads.Add(LoadAsync(_stock, LoadStockAsync));
+            if (SeesRunningOut)
+                loads.Add(LoadAsync(_runningOut, LoadRunningOutAsync));
         }
-
-        var items = await LoadItemsAsync();
-        if (items != null)
-        {
-            var drugLow = items
-                .OfType<Drug>()
-                .Where(d => !string.IsNullOrWhiteSpace(d.Compound))
-                .GroupBy(d => d.Compound!.Trim(), StringComparer.OrdinalIgnoreCase)
-                .Select(g => new
-                {
-                    Total = g.Sum(d => d.Stock),
-                    MinThreshold = g.Select(d => d.LowStockThreshold).Where(t => t > 0).DefaultIfEmpty(0).Min()
-                })
-                .Count(x => x.MinThreshold > 0 && x.Total > 0 && x.Total <= x.MinThreshold);
-
-            var nonDrugLow = items
-                .Where(i => i is not Drug)
-                .Count(i => i.LowStockThreshold > 0 && i.Stock > 0 && i.Stock <= i.LowStockThreshold);
-
-            _lowStockCount = drugLow + nonDrugLow;
-
-            var drugZero = items
-                .OfType<Drug>()
-                .Where(d => !string.IsNullOrWhiteSpace(d.Compound))
-                .GroupBy(d => d.Compound!.Trim(), StringComparer.OrdinalIgnoreCase)
-                .Count(g => g.Sum(d => d.Stock) == 0);
-
-            var nonDrugZero = items.Count(i => i is not Drug && i.Stock == 0);
-
-            _outOfStockCount = drugZero + nonDrugZero;
-        }
-        else
-        {
-            _alertsFailed = true;
-        }
-        _loading = false;
+        if (_areas.Any(area => area.Data == HomeData.PatientConsumption))
+            loads.Add(LoadAsync(_sheets, LoadSheetsAsync));
+        await Task.WhenAll(loads);
     }
 
-    // The home page has to work without the alerts: it's the way to everything else.
-    private async Task<List<Item>?> LoadItemsAsync()
+    private async Task LoadAsync<T>(Slot<T> slot, Func<CancellationToken, Task<T>> load) where T : class
     {
         try
         {
-            return await ItemsService.GetAllItemsAsync();
+            slot.Value = await load(_cts.Token);
         }
-        catch (HttpRequestException)
+        catch (OperationCanceledException) when (_cts.IsCancellationRequested)
         {
-            return null;
+            return; // the user left the page
         }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException or OperationCanceledException)
+        {
+            slot.Failed = true;
+        }
+        StateHasChanged();
+    }
+
+    /// <summary>The same counts the list shows behind each link: the list's own filters, on the warehouses the user sees.</summary>
+    private async Task<StockCounts> LoadStockAsync(CancellationToken ct)
+    {
+        var outOfStock = ItemsService.GetItemsPagedAsync(null, ItemType.None, 0, 1, ct, alert: "zero");
+        var low = ItemsService.GetItemsPagedAsync(null, ItemType.None, 0, 1, ct, alert: "low");
+        return new((await outOfStock)?.TotalCount ?? 0, (await low)?.TotalCount ?? 0);
+    }
+
+    private async Task<List<ItemFlowDto>> LoadRunningOutAsync(CancellationToken ct)
+    {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var (metrics, error) = await MovementService.GetMetricsAsync(today.AddDays(1 - RunningOutPaceDays), today, [], ct);
+        return metrics?.RunningOut.Take(RunningOutShown).ToList() ?? throw new HttpRequestException(error);
+    }
+
+    /// <summary>Open sheets; "stock to take" counts every listed sheet, a discharged one that still owes stock included.</summary>
+    private async Task<SheetCounts> LoadSheetsAsync(CancellationToken ct)
+    {
+        var sheets = await ConsumptionService.ListAsync(closedDays: 0);
+        return new(
+            sheets.Count(s => s.ClosedAtUtc is null),
+            sheets.Count(s => s.StockPending > 0),
+            sheets.Count(s => s.ClosedAtUtc is null && s.UsedUp is { Count: > 0 }));
+    }
+
+    private RenderFragment? FiguresFor(HomeArea area) => area.Data switch
+    {
+        HomeData.Stock => StockFigures,
+        HomeData.PatientConsumption => SheetFigures,
+        _ => null
+    };
+
+    private RenderFragment? LinksFor(HomeArea area)
+    {
+        var links = area.Links.Select(page => ((string)L[page.Title], page.Href!)).ToList();
+        if (area.Data == HomeData.Exams && _can("examsperformed.create"))
+            links.Insert(0, (L["New report"], "exam-reports/new"));
+        if (links.Count == 0)
+            return null;
+        return @<text>
+            @foreach (var (title, href) in links.Take(HomePage.MaxLinks))
+            {
+                <a class="home-card-link" href="@href">@title</a>
+            }
+        </text>;
+    }
+
+    private RenderFragment StockFigures => @<text>
+        @if (_stock.Loading)
+        {
+            <MudSkeleton Height="44px" />
+            <MudSkeleton Height="44px" />
+        }
+        else if (_stock.Failed)
+        {
+            <MudText Typo="Typo.body2" Class="home-note">@L["Could not load the inventory alerts."]</MudText>
+        }
+        else if (_stock.Value is { OutOfStock: 0, Low: 0 })
+        {
+            <MudText Typo="Typo.body2">@L["No inventory alerts"]</MudText>
+        }
+        else
+        {
+            @if (_stock.Value!.OutOfStock > 0)
+            {
+                @Figure(_stock.Value.OutOfStock, L["items out of stock"], "inventory-items?alert=zero", Icons.Material.Filled.ErrorOutline, Color.Error)
+            }
+            @if (_stock.Value.Low > 0)
+            {
+                @Figure(_stock.Value.Low, L["items with low stock"], "inventory-items?alert=low", Icons.Material.Filled.WarningAmber, Color.Warning)
+            }
+        }
+        @if (SeesRunningOut)
+        {
+            <div class="home-card-section">
+                <MudText Typo="Typo.subtitle2">@L["Running out"]</MudText>
+                <MudText Typo="Typo.caption" Class="home-note">@L["At the last 30 days' pace."]</MudText>
+                @if (_runningOut.Loading)
+                {
+                    <MudSkeleton Height="44px" />
+                }
+                else if (_runningOut.Failed)
+                {
+                    <MudText Typo="Typo.body2" Class="home-note">@L["Could not load what runs out."]</MudText>
+                }
+                else if (_runningOut.Value!.Count == 0)
+                {
+                    <MudText Typo="Typo.body2">@L["No item runs out soon at this pace."]</MudText>
+                }
+                else
+                {
+                    <ul class="home-list">
+                        @foreach (var item in _runningOut.Value)
+                        {
+                            <li>
+                                <a href="@($"inventory-items?q={Uri.EscapeDataString(item.Name)}")">@item.Name</a>
+                                <span class="home-list-value">@Lasts(item)</span>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        }
+    </text>;
+
+    private RenderFragment SheetFigures => @<text>
+        @if (_sheets.Loading)
+        {
+            <MudSkeleton Height="44px" />
+        }
+        else if (_sheets.Failed)
+        {
+            <MudText Typo="Typo.body2" Class="home-note">@L["Could not load the sheets."]</MudText>
+        }
+        else if (_sheets.Value is { Open: 0, StockToTake: 0 })
+        {
+            <MudText Typo="Typo.body2">@L["No open sheets"]</MudText>
+        }
+        else
+        {
+            @Figure(_sheets.Value!.Open, _sheets.Value.Open == 1 ? L["sheet in progress"] : L["sheets in progress"], "consumption", null, Color.Default)
+            @if (_sheets.Value.StockToTake > 0)
+            {
+                @Figure(_sheets.Value.StockToTake, L["with stock still to take"], "consumption", Icons.Material.Filled.WarningAmber, Color.Warning)
+            }
+            @if (_sheets.Value.NoBudgetLeft > 0)
+            {
+                @Figure(_sheets.Value.NoBudgetLeft, L["with no budget left"], "consumption", Icons.Material.Outlined.AssignmentLate, Color.Warning)
+            }
+        }
+    </text>;
+
+    /// <summary>A count and what it counts, leading to the list it was counted from; the icon only repeats what the words say.</summary>
+    private static RenderFragment Figure(int count, string label, string href, string? icon, Color color) => @<a class="home-stat" href="@href">
+        @* The icon's place is kept without one, so the counts line up. *@
+        <span class="home-stat-icon" aria-hidden="true">
+            @if (icon is not null)
+            {
+                <MudIcon Icon="@icon" Color="@color" Size="Size.Small" />
+            }
+        </span>
+        <span class="home-stat-value">@count</span>
+        <span>@label</span>
+    </a>;
+
+    private string Lasts(ItemFlowDto item) => item switch
+    {
+        { Stock: <= 0 } => L["Out of stock"],
+        { DaysOfCover: { } days } => L["{0} days", days.ToString(days < 10 ? "0.#" : "0")],
+        _ => string.Empty
+    };
+
+    public void Dispose()
+    {
+        _cts.Cancel();
+        _cts.Dispose();
     }
 }

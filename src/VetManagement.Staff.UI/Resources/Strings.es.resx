@@ -180,6 +180,16 @@
   <data name="View details" xml:space="preserve"><value>Ver detalle</value></data>
   <data name="Could not load the inventory alerts." xml:space="preserve"><value>No se pudieron cargar las alertas de inventario.</value></data>
   <data name="No inventory alerts" xml:space="preserve"><value>Sin alertas de inventario</value></data>
+  <data name="items out of stock" xml:space="preserve"><value>sin stock</value></data>
+  <data name="items with low stock" xml:space="preserve"><value>con stock bajo</value></data>
+  <data name="sheet in progress" xml:space="preserve"><value>ficha abierta</value></data>
+  <data name="sheets in progress" xml:space="preserve"><value>fichas abiertas</value></data>
+  <data name="with stock still to take" xml:space="preserve"><value>con stock por descontar</value></data>
+  <data name="with no budget left" xml:space="preserve"><value>sin saldo de presupuesto</value></data>
+  <data name="No open sheets" xml:space="preserve"><value>Sin fichas abiertas</value></data>
+  <data name="Could not load the sheets." xml:space="preserve"><value>No se pudieron cargar las fichas.</value></data>
+  <data name="Could not load what runs out." xml:space="preserve"><value>No se pudo cargar lo que se agota.</value></data>
+  <data name="At the last 30 days' pace." xml:space="preserve"><value>Al ritmo de los últimos 30 días.</value></data>
   <data name="Add" xml:space="preserve"><value>Agregar</value></data>
   <data name="Adjustment" xml:space="preserve"><value>Ajuste</value></data>
   <data name="Agenda and online booking" xml:space="preserve"><value>Agenda y reservas en línea</value></data>

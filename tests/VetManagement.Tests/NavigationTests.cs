@@ -50,6 +50,32 @@ public class NavigationTests
         Area("Agenda").MainHref(Has()).Should().Be("agenda");
     }
 
+    [Fact]
+    public void TheHomePage_HasACardPerArea_WithPatientConsumptionApart()
+    {
+        var cards = HomePage.AreasFor(Has("inventory.read", "inventory.metrics", "audit.read", "consumption.read"));
+
+        cards.Select(card => (card.Title, card.Href, card.Data)).Should().Equal(
+            ("Inventory", "inventory", HomeData.Stock),
+            ("Patient consumption", "consumption", HomeData.PatientConsumption));
+        cards[0].Links.Select(page => page.Href).Should().Equal("inventory-items", "inventory-audit", "inventory-metrics");
+    }
+
+    [Fact]
+    public void WhoOnlyRecordsConsumption_GetsItsCard_NotAnEmptyInventoryOne()
+        => HomePage.AreasFor(Has("consumption.read")).Select(card => (card.Title, card.Data))
+            .Should().Equal(("Patient consumption", HomeData.PatientConsumption));
+
+    [Fact]
+    public void ACard_LinksToItsOtherPages_AtMostThree()
+        => HomePage.AreasFor(_ => true).Should().OnlyContain(card =>
+            card.Links.Count <= HomePage.MaxLinks && card.Links.All(page => page.Href != card.Href));
+
+    [Fact]
+    public void TheStockFigures_NeedTheInventoryItself()
+        => HomePage.AreasFor(Has("audit.read")).Should().ContainSingle()
+            .Which.Data.Should().Be(HomeData.None, "the audit alone doesn't show stock");
+
     [Theory]
     [InlineData("images/logo.png", true)]
     [InlineData("https://clinic.example/logo.png", true)]
