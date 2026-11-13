@@ -201,13 +201,43 @@ public class ConsumptionApiTests(CustomWebAppFactory factory) : IClassFixture<Cu
         (await StockOfAsync(bigAmpoule)).Should().Be(4);
         (await SheetAsync(sheet)).Lines.Single(l => l.ItemId == ampoules).Should().Match<ConsumptionLineDto>(l => l.Containers == 1 && l.Total == 15000);
 
-        // Changing the record's size waits, like any change of how the item is charged, for the sheet to be discharged.
+        // A new size on the record waits for the sheet to be discharged, without blocking other edits of the pricing.
         await WithDbAsync(async db =>
         {
             ((Drug)await db.Items.SingleAsync(i => i.Id == ampoules)).ML = 2;
             return await db.SaveChangesAsync();
         });
-        (await SetPricingAsync(ampoules, ConsumptionCharge.Container, containerMl: 10)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await _supervisor.PutAsJsonAsync("/api/consumption-sheets/pricing", new ConsumptionPricingRequest
+            { ItemId = ampoules, Charge = ConsumptionCharge.Container, ContainerMl = 10, Controlled = true })).EnsureSuccessStatusCode();
+        (await _supervisor.GetFromJsonAsync<List<ConsumptionPricingDto>>("/api/consumption-sheets/pricing"))!.Single(p => p.ItemId == ampoules)
+            .Should().Match<ConsumptionPricingDto>(p => p.Controlled && p.StockUnitMl == 1);
+        (await SetPricingAsync(ampoules, ConsumptionCharge.Container, containerMl: 5)).StatusCode
+            .Should().Be(HttpStatusCode.BadRequest, "the container's size still waits for the open sheet");
+    }
+
+    [Fact]
+    public async Task ASheetReopenedAfterThePricingLearnedTheUnit_KeepsWhatItsEarlierUsesTook()
+    {
+        // Charged by its 10 mL container, one unit each; the record later says 1 mL ampoules and the pricing is saved again.
+        var drug = await DrugAsync("Ketamina 10 mL", ml: 10, stock: 20);
+        await PricingAsync(drug, ConsumptionCharge.Container, containerMl: 10);
+        var sheet = await OpenAsync("Nala");
+        (await UseAsync(sheet, drug, 3, _lab)).EnsureSuccessStatusCode();
+        (await _lab.PostAsync($"/api/consumption-sheets/{sheet}/close", null)).EnsureSuccessStatusCode();
+        (await StockOfAsync(drug)).Should().Be(19);
+
+        await WithDbAsync(async db =>
+        {
+            ((Drug)await db.Items.SingleAsync(i => i.Id == drug)).ML = 1;
+            return await db.SaveChangesAsync();
+        });
+        await PricingAsync(drug, ConsumptionCharge.Container, containerMl: 10);
+        (await _supervisor.PostAsync($"/api/consumption-sheets/{sheet}/reopen", null)).EnsureSuccessStatusCode();
+        (await StockOfAsync(drug)).Should().Be(19, "reopening moves nothing for the use already recorded");
+
+        (await UseAsync(sheet, drug, 3, _lab)).EnsureSuccessStatusCode();
+
+        (await StockOfAsync(drug)).Should().Be(16, "the new use opens three ampoules; the earlier one keeps its single unit");
     }
 
     [Fact]

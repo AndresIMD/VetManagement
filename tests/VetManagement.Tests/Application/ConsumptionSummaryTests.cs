@@ -145,6 +145,19 @@ public class ConsumptionSummaryTests
     }
 
     [Fact]
+    public void AUseRecordedWithAnotherUnit_NeverChangesWhatEarlierUsesTook()
+    {
+        // A use from before the pricing knew the unit took its container; after the change, a use takes its ampoules.
+        var sheet = new ConsumptionSheet { Entries = [Use(7, ConsumptionCharge.Container, 3, 15000, 10)] };
+        ConsumptionSummary.For(sheet).Lines.Single().StockUnits.Should().Be(1);
+
+        sheet.Entries.Add(Ampoules(3));
+
+        var line = ConsumptionSummary.For(sheet).Lines.Single();
+        (line.Containers, line.StockUnits).Should().Be((1, 4), "the first use keeps its container, the second opens three ampoules");
+    }
+
+    [Fact]
     public void AStockUnitTheSizeOfTheContainer_OrFromTheQuickUseBox_ChangesNothing()
     {
         var same = new ConsumptionSheet { Entries = [Use(9, ConsumptionCharge.Container, 3, 15000, 10, stockUnitMl: 10)] };

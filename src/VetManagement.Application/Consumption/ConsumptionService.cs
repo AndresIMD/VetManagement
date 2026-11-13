@@ -317,6 +317,12 @@ public class ConsumptionService(IUnitOfWork unitOfWork, AuditService audit, Time
         var size = charge == ConsumptionCharge.Container ? Math.Round(containerMl!.Value, 2) : (decimal?)null;
         var beforehand = takenOutBeforehand && charge != ConsumptionCharge.PerMl;
         var stockUnit = StockUnitOf(item, size, beforehand);
+        // Only the record's size changed while sheets use the item: the pricing keeps the size it had, so an unrelated
+        // edit (e.g. "Controlled") still saves; the new size is taken at the first save once they are discharged.
+        if (pricing is not null && stockUnit != pricing.StockUnitMl
+            && !ChangesHowUsesAddUp(pricing, charge, size, beforehand, pricing.StockUnitMl)
+            && await unitOfWork.ConsumptionSheets.IsOnOpenSheetAsync(itemId))
+            stockUnit = pricing.StockUnitMl;
         if (ChangesHowUsesAddUp(pricing, charge, size, beforehand, stockUnit) && await unitOfWork.ConsumptionSheets.IsOnOpenSheetAsync(itemId))
             return Invalid(Texts.T("'{0}' is on sheets not discharged yet: change how it's charged once they are.", item.Name));
         var isNew = pricing is null;

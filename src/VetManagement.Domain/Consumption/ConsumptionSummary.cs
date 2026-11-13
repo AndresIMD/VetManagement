@@ -48,32 +48,35 @@ public sealed record ConsumptionSummary(List<ConsumptionLine> Lines, int Total, 
         {
             // Walks the uses in order: each one that goes past the containers started so far starts the next ones, taken
             // from stock unless the item was already out of inventory when that use was recorded.
-            // When a unit of stock isn't the container charged (1 mL ampoules charged as one 10 mL container), stock follows
-            // the units opened instead: the mL given, divided by the unit, rounded up. What is left in an open unit stays for
-            // the patient, and goes with the rest of the container when that is thrown away.
-            var stockUnit = last.StockUnitMl is > 0 and var unit && unit != size ? unit : (decimal?)null;
+            // When a use's unit of stock isn't the container charged (1 mL ampoules charged as one 10 mL container), it takes
+            // the units it opens instead: the mL given, divided by the unit, rounded up. What is left in an open unit stays for
+            // the patient, and goes with the rest of the container when that is thrown away. Each use counts with the unit it
+            // was recorded with, so a use added later (after the pricing changed and the sheet was reopened) never changes
+            // what the earlier ones took.
             var (containers, total, used, fromStock) = (0, 0, 0m, 0);
-            var (opened, inOpened) = (0, 0m);
+            var opened = new Dictionary<decimal, (int Units, decimal Ml)>();
             foreach (var entry in entries)
             {
                 used += entry.Quantity;
                 var needed = (int)Math.Ceiling(used / size);
                 total += (needed - containers) * entry.UnitPrice;
-                if (stockUnit is not decimal unitMl)
+                var stockUnit = entry.StockUnitMl is > 0 and var unit && unit != size ? unit : (decimal?)null;
+                if (entry.Discarded)
                 {
-                    if (!entry.TakenOutBeforehand)
-                        fromStock += Math.Max(needed - containers, 0);
+                    foreach (var (unitMl, open) in opened.ToList())
+                        opened[unitMl] = (open.Units, open.Units * unitMl);
                 }
-                else if (entry.Discarded)
-                    inOpened = opened * unitMl;
-                else
+                else if (stockUnit is decimal unitMl)
                 {
-                    inOpened += entry.Quantity;
-                    var units = (int)Math.Ceiling(inOpened / unitMl);
+                    var (units, ml) = opened.GetValueOrDefault(unitMl);
+                    ml += entry.Quantity;
+                    var nowOpen = (int)Math.Ceiling(ml / unitMl);
                     if (!entry.TakenOutBeforehand)
-                        fromStock += Math.Max(units - opened, 0);
-                    opened = Math.Max(opened, units);
+                        fromStock += Math.Max(nowOpen - units, 0);
+                    opened[unitMl] = (Math.Max(units, nowOpen), ml);
                 }
+                if (stockUnit is null && !entry.TakenOutBeforehand)
+                    fromStock += Math.Max(needed - containers, 0);
                 containers = Math.Max(containers, needed);
             }
             var left = containers * size - used;
