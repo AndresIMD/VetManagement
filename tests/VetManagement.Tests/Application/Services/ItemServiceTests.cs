@@ -30,6 +30,10 @@ public class ItemServiceTests
         mock.Setup(uow => uow.SaveChangesAsync())
      .ReturnsAsync(1); // Returns 1 change saved
 
+        // Work done under the stock lock just runs: there is nothing to lock in a mock.
+        mock.Setup(uow => uow.ExecuteExclusiveAsync(It.IsAny<string>(), It.IsAny<Func<Task<ItemAddResult>>>()))
+            .Returns((string _, Func<Task<ItemAddResult>> work) => work());
+
         return mock;
     }
 
@@ -131,7 +135,7 @@ public class ItemServiceTests
         var result = await service.AddAsync(newItem, userName);
 
         // ASSERT
-        result.Should().BeTrue();
+        result.Status.Should().Be(ItemAddStatus.Added);
 
         // Verify that the correct methods were called
         mockUnitOfWork.Verify(uow => uow.Items.AddAsync(newItem), Times.Once);
@@ -166,7 +170,7 @@ public class ItemServiceTests
         var result = await service.AddAsync(invalidItem, userName);
 
         // ASSERT
-        result.Should().BeFalse();
+        result.Status.Should().Be(ItemAddStatus.Invalid);
 
         // Verify that nothing was saved
         mockUnitOfWork.Verify(uow => uow.Items.AddAsync(It.IsAny<Item>()), Times.Never);

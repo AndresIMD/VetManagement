@@ -377,14 +377,15 @@
         {
         { x => x.Title, L["New product"].Value },
         { x => x.TitleIcon, Icons.Material.Filled.AddBox },
-        { x => x.TitleColor, Color.Success }
+        { x => x.TitleColor, Color.Success },
+        { x => x.Warehouses, _warehouses }
         };
         var dialog = await DialogService.ShowAsync<CreateItemModal>(null, parameters, options);
         var result = await dialog.Result;
-        if (result is { Canceled: false } && result.Data is Item)
+        if (result is { Canceled: false })
         {
+            // A product was created, or units were added to one that already existed; the dialog said which.
             _table?.ReloadServerData();
-            Snackbar.Add(L["Product created."], Severity.Success);
         }
         else
         {

@@ -45,17 +45,18 @@ public class ItemsApiService(HttpClient httpClient)
         return item is null ? null : MapToShared(item);
     }
 
-    public async Task AddItemAsync(Item item)
+    /// <summary>
+    /// Creates the product and returns it as it was saved, with its id; or the reason it wasn't, ready to show (e.g. its
+    /// code already belongs to another product). Its first units, if any, come in as an ingress in the warehouse (the
+    /// daily-use one when no id is given).
+    /// </summary>
+    public async Task<(Item? Created, string? Error)> AddItemAsync(Item item, int initialStock = 0, int? warehouseId = null)
     {
-        var json = JsonSerializer.Serialize(MapToCreateRequest(item), _caseInsensitiveOptions);
-        using var content = new StringContent(json, Encoding.UTF8);
-        content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-        using var response = await httpClient.PostAsync(ApiRouteConstants.ITEMS_BASE, content);
-        if (!response.IsSuccessStatusCode)
-        {
-            var body = await response.Content.ReadAsStringAsync();
-            throw new HttpRequestException($"API error {(int)response.StatusCode} {response.ReasonPhrase}: {body}");
-        }
+        using var response = await httpClient.PostAsJsonAsync(ApiRouteConstants.ITEMS_BASE, MapToCreateRequest(item, initialStock, warehouseId));
+        var result = await ApiResult.FromResponseAsync(response);
+        if (!result.Ok)
+            return (null, result.Error);
+        return (result.Body?.Deserialize<ItemDto>(_caseInsensitiveOptions) is { } created ? MapToShared(created) : null, null);
     }
 
     public async Task UpdateItemAsync(Item item)
@@ -110,8 +111,10 @@ public class ItemsApiService(HttpClient httpClient)
             };
     }
 
-    private static ItemCreateRequest MapToCreateRequest(Item item) => new()
+    private static ItemCreateRequest MapToCreateRequest(Item item, int initialStock, int? warehouseId) => new()
     {
+        InitialStock = initialStock,
+        WarehouseId = warehouseId,
         Name = item.Name,
         Type = (DomainItemType)item.Type,
         Brand = item.Brand,
