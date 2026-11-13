@@ -10,11 +10,11 @@ public class ConsumptionSummaryTests
     private static int _minute;
 
     private static ConsumptionEntry Use(int itemId, ConsumptionCharge charge, decimal quantity, int price, decimal? containerMl = null, bool discarded = false,
-        bool beforehand = false)
+        bool beforehand = false, decimal? stockUnitMl = null)
         => new()
         {
             Id = ++_minute, ItemId = itemId, ItemName = $"Item {itemId}", Charge = charge, Quantity = quantity, UnitPrice = price,
-            ContainerMl = containerMl, Discarded = discarded, TakenOutBeforehand = beforehand,
+            ContainerMl = containerMl, StockUnitMl = stockUnitMl, Discarded = discarded, TakenOutBeforehand = beforehand,
             UsedAtUtc = new DateTime(2026, 10, 21, 8, 0, 0).AddMinutes(_minute)
         };
 
@@ -109,6 +109,49 @@ public class ConsumptionSummaryTests
         summary.Lines.Should().ContainSingle(l => l.ItemId == 1).Which.Should().Match<ConsumptionLine>(l => l.Given == 3 && l.Total == 900);
         summary.Lines.Should().ContainSingle(l => l.ItemId == 2).Which.Should().Match<ConsumptionLine>(l => l.Given == 1.5m && l.Total == 1275);
         summary.Total.Should().Be(2175);
+    }
+
+    /// <summary>1 mL ampoules charged as one 10 mL container.</summary>
+    private static ConsumptionEntry Ampoules(decimal ml, bool discarded = false, bool beforehand = false)
+        => Use(7, ConsumptionCharge.Container, ml, 15000, 10, discarded, beforehand, stockUnitMl: 1);
+
+    [Fact]
+    public void SmallerStockUnits_LeaveInventoryAsTheyAreOpened_NotOnePerContainerCharged()
+    {
+        var sheet = new ConsumptionSheet { Entries = [Ampoules(3)] };
+
+        var line = ConsumptionSummary.For(sheet).Lines.Single();
+        (line.Containers, line.Total, line.StockUnits).Should().Be((1, 15000, 3), "3 mL open three 1 mL ampoules, charged as one container");
+
+        sheet.Entries.Add(Ampoules(0.5m));
+        ConsumptionSummary.For(sheet).Lines.Single().StockUnits.Should().Be(4, "half of a fourth ampoule opens it");
+        sheet.Entries.Add(Ampoules(0.5m));
+        ConsumptionSummary.For(sheet).Lines.Single().StockUnits.Should().Be(4, "the rest of an open ampoule stays for the patient");
+    }
+
+    [Fact]
+    public void ThrowingAwayTheRest_TakesTheOpenUnitWithIt_AndTheNextUseOpensANewOne()
+    {
+        // 2 mL vials charged as one 10 mL container: 3 mL open two vials (1 mL left in the second).
+        var sheet = new ConsumptionSheet
+        {
+            Entries = [Use(8, ConsumptionCharge.Container, 3, 15000, 10, stockUnitMl: 2), Use(8, ConsumptionCharge.Container, 7, 15000, 10, discarded: true, stockUnitMl: 2),
+                Use(8, ConsumptionCharge.Container, 1, 15000, 10, stockUnitMl: 2)]
+        };
+
+        var line = ConsumptionSummary.For(sheet).Lines.Single();
+
+        (line.Containers, line.StockUnits).Should().Be((2, 3), "the second container's first mL comes from a new vial, not the one thrown away");
+    }
+
+    [Fact]
+    public void AStockUnitTheSizeOfTheContainer_OrFromTheQuickUseBox_ChangesNothing()
+    {
+        var same = new ConsumptionSheet { Entries = [Use(9, ConsumptionCharge.Container, 3, 15000, 10, stockUnitMl: 10)] };
+        var box = new ConsumptionSheet { Entries = [Ampoules(3, beforehand: true)] };
+
+        ConsumptionSummary.For(same).Lines.Single().StockUnits.Should().Be(1);
+        ConsumptionSummary.For(box).Lines.Single().StockUnits.Should().Be(0);
     }
 
     [Fact]

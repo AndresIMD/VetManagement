@@ -81,8 +81,9 @@ public sealed class AddConsumptionEntryRequest
 }
 
 /// <param name="TakenOutBeforehand">It leaves inventory when a quick-use box is restocked: sheets record its uses without taking stock.</param>
+/// <param name="StockUnitMl">mL in one unit of stock when it isn't the container charged: the sheets take the units opened.</param>
 public sealed record ConsumptionPricingDto(int ItemId, string ItemName, int SellPrice, ConsumptionCharge Charge, decimal? ContainerMl,
-    int? PricePerMl, bool Controlled, bool TakenOutBeforehand);
+    int? PricePerMl, bool Controlled, bool TakenOutBeforehand, decimal? StockUnitMl = null);
 
 public sealed class ConsumptionPricingRequest
 {

@@ -36,6 +36,15 @@ public class ConsumptionApiTests(CustomWebAppFactory factory) : IClassFixture<Cu
         return item.Id;
     });
 
+    /// <summary>A drug whose record says <paramref name="ml"/> mL per unit, with <paramref name="stock"/> units in daily use.</summary>
+    private Task<int> DrugAsync(string name, float ml, int stock) => WithDbAsync(async db =>
+    {
+        var drug = new Drug(ItemType.Drug, $"{name} {Guid.NewGuid():N}", Guid.NewGuid().ToString("N")[..12], null, name, ml, 5, null, null, stock, 15000);
+        db.Items.Add(drug);
+        await db.SaveChangesAsync();
+        return drug.Id;
+    });
+
     private Task<int> StockOfAsync(int itemId) => WithDbAsync(async db => (await db.Items.AsNoTracking().FirstAsync(i => i.Id == itemId)).Stock);
 
     private Task<List<InventoryMovement>> MovementsOfAsync(int itemId)
@@ -170,6 +179,35 @@ public class ConsumptionApiTests(CustomWebAppFactory factory) : IClassFixture<Cu
         dto.Total.Should().Be(3 * 900 + 2 * 15000, "they are still charged");
         (await _lab.GetFromJsonAsync<List<ConsumptionSheetSummaryDto>>("/api/consumption-sheets"))!.Single(s => s.Id == sheet)
             .Should().Match<ConsumptionSheetSummaryDto>(s => s.StockPending == 0 && s.Pending.Count == 0);
+    }
+
+    [Fact]
+    public async Task AmpoulesSmallerThanTheContainerCharged_LeaveInventoryOneByOneAsTheyAreOpened()
+    {
+        // 1 mL ampoules, charged as one 10 mL container: the record's size is the unit of stock.
+        var ampoules = await DrugAsync("Fentanilo 1 mL", ml: 1, stock: 20);
+        var bigAmpoule = await DrugAsync("Fentanilo 10 mL", ml: 10, stock: 5);
+        await PricingAsync(ampoules, ConsumptionCharge.Container, containerMl: 10);
+        await PricingAsync(bigAmpoule, ConsumptionCharge.Container, containerMl: 10);
+        var listed = (await _supervisor.GetFromJsonAsync<List<ConsumptionPricingDto>>("/api/consumption-sheets/pricing"))!;
+        listed.Single(p => p.ItemId == ampoules).StockUnitMl.Should().Be(1);
+        listed.Single(p => p.ItemId == bigAmpoule).StockUnitMl.Should().BeNull("the record's size is the container's");
+
+        var sheet = await OpenAsync("Kira");
+        (await UseAsync(sheet, ampoules, 3, _lab)).EnsureSuccessStatusCode();
+        (await UseAsync(sheet, bigAmpoule, 3, _lab)).EnsureSuccessStatusCode();
+
+        (await StockOfAsync(ampoules)).Should().Be(17, "three 1 mL ampoules were opened");
+        (await StockOfAsync(bigAmpoule)).Should().Be(4);
+        (await SheetAsync(sheet)).Lines.Single(l => l.ItemId == ampoules).Should().Match<ConsumptionLineDto>(l => l.Containers == 1 && l.Total == 15000);
+
+        // Changing the record's size waits, like any change of how the item is charged, for the sheet to be discharged.
+        await WithDbAsync(async db =>
+        {
+            ((Drug)await db.Items.SingleAsync(i => i.Id == ampoules)).ML = 2;
+            return await db.SaveChangesAsync();
+        });
+        (await SetPricingAsync(ampoules, ConsumptionCharge.Container, containerMl: 10)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]

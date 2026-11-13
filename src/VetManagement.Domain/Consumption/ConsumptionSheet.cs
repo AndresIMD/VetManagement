@@ -75,6 +75,11 @@ public class ConsumptionEntry : Entity<int>
     public ConsumptionCharge Charge { get; set; }
     /// <summary>mL in one container; only for <see cref="ConsumptionCharge.Container"/>.</summary>
     public decimal? ContainerMl { get; set; }
+    /// <summary>
+    /// mL in one unit of stock when it isn't the container charged (see <see cref="ConsumptionPricing.StockUnitMl"/>);
+    /// copied, so a later change never moves stock for uses already recorded.
+    /// </summary>
+    public decimal? StockUnitMl { get; set; }
     /// <summary>Price of one unit, one mL or one container, depending on <see cref="Charge"/>.</summary>
     public int UnitPrice { get; set; }
 
@@ -151,6 +156,13 @@ public class ConsumptionPricing : Entity<int>
 
     /// <summary>mL in one container (e.g. 10 for a 10 mL ampoule); required for <see cref="ConsumptionCharge.Container"/>.</summary>
     public decimal? ContainerMl { get; set; }
+
+    /// <summary>
+    /// mL in one unit of stock, from the item's record when it differs from <see cref="ContainerMl"/> (1 mL ampoules charged
+    /// as one 10 mL container). The sheets then take only the units opened, not one per container charged. Null: one unit
+    /// per container. Taken when the pricing is saved.
+    /// </summary>
+    public decimal? StockUnitMl { get; set; }
 
     /// <summary>Price of one mL; required for <see cref="ConsumptionCharge.PerMl"/>.</summary>
     public int? PricePerMl { get; set; }

@@ -847,6 +847,10 @@ namespace VetManagement.Api.Migrations
                     b.Property<int>("SheetId")
                         .HasColumnType("int");
 
+                    b.Property<decimal?>("StockUnitMl")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
                     b.Property<bool>("TakenOutBeforehand")
                         .HasColumnType("bit");
 
@@ -888,6 +892,10 @@ namespace VetManagement.Api.Migrations
 
                     b.Property<int?>("PricePerMl")
                         .HasColumnType("int");
+
+                    b.Property<decimal?>("StockUnitMl")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
 
                     b.Property<bool>("TakenOutBeforehand")
                         .HasColumnType("bit");
