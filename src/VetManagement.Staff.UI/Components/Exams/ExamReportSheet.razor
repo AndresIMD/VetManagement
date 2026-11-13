@@ -80,6 +80,9 @@
         .xr-at-foot > .xr-conclusion::after { content: none; }
         .xr-at-foot > .xr-conclusion::before { content: ''; flex: 1 1 0; }
         .xr-at-foot > .xr-method { margin-top: 4mm; }
+        /* Under the interpretation, the criteria table or the signature the method keeps its distance, so the two read as
+           separate blocks even on a page with no room to spare. */
+        .xr-conclusion + .xr-method { margin-top: @(Mm(METHOD_GAP_MM))mm; }
         /* Around the criteria table: at least 5 mm above it, which is what the page breaks count, and up to 10 mm above and
            6 mm below when the page has room to spare. */
         .xr-space-above, .xr-space-below { flex: 1 1 0; }
@@ -628,6 +631,8 @@
     private const double HEADER_EM = .86;
     /// <summary>Kept free on each page of a measured sheet, against rounding and the browser's print layout.</summary>
     private const double SAFETY_MM = 2;
+    /// <summary>Between the interpretation, criteria table or signature and the method bar under them.</summary>
+    private const double METHOD_GAP_MM = 8;
 
     /// <summary>The rendered sheet's sizes in mm (see report-sheet.js).</summary>
     private sealed record SheetMeasures(double FirstRoom, double? NextRoom, double PatientBox, double? Continued, double Header, double Closing,
@@ -717,7 +722,7 @@
         var closingMm = 6.0
             + (ShowsInterpretation ? 5 + (Report.Interpretation!.Split('\n').Sum(l => ResultLines(l, ContentWidth)) + 0.5) * ResultLineMm : 0)
             + (Report.Sections.ReportedBy ? 9 : 0)
-            + (MethodLine is null ? 0 : 12 + (Report.Sections.InterpretationAtFoot ? 4 : 0))
+            + (MethodLine is null ? 0 : 12 + (HasConclusion ? METHOD_GAP_MM : Report.Sections.InterpretationAtFoot ? 4 : 0))
             + CriteriaMm();
 
         return (firstMm, nextMm, closingMm);
