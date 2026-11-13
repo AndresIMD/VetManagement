@@ -1413,7 +1413,8 @@
   <data name="Use removed." xml:space="preserve"><value>Uso quitado.</value></data>
   <data name="The use could not be recorded." xml:space="preserve"><value>No se pudo registrar el uso.</value></data>
   <data name="The use could not be removed." xml:space="preserve"><value>No se pudo quitar el uso.</value></data>
-  <data name="The item's record says {0} mL. Each container charged takes 1 unit from inventory, whatever its size." xml:space="preserve"><value>La ficha del producto dice {0} mL. Cada envase cobrado descuenta 1 unidad del inventario, sea cual sea su tamaño.</value></data>
+  <data name="The item's record says {0} mL per unit: each container is charged whole, and inventory loses only the units opened (the mL given divided by {0}, rounded up)." xml:space="preserve"><value>La ficha del producto dice {0} mL por unidad: cada envase se cobra completo, y del inventario se descuentan solo las unidades que se abren (los mL usados divididos por {0}, hacia arriba).</value></data>
+  <data name="Takes from inventory the {0} mL units opened, not one per container." xml:space="preserve"><value>Descuenta del inventario las unidades de {0} mL que se abren, no una por envase.</value></data>
   <data name="This item's record has no mL: type the size of the container that is charged." xml:space="preserve"><value>La ficha de este producto no indica mL: escribe el tamaño del envase que se cobra.</value></data>
   <data name="Sale price: {0} · {1} mL on its record" xml:space="preserve"><value>Precio de venta: {0} · {1} mL en su ficha</value></data>
   <data name="The daily-use warehouse had none. Once it has them, a supervisor can reopen the sheet and discharge it again to take them." xml:space="preserve"><value>La bodega de uso diario no tenía. Cuando haya, un supervisor puede reabrir la hoja y darla de alta otra vez para descontarlos.</value></data>

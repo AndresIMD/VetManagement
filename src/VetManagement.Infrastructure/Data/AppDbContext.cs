@@ -282,11 +282,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             e.Property(x => x.CreatedBy).HasMaxLength(100);
             e.Property(x => x.Quantity).HasPrecision(10, 2);
             e.Property(x => x.ContainerMl).HasPrecision(10, 2);
+            e.Property(x => x.StockUnitMl).HasPrecision(10, 2);
             e.HasIndex(x => x.ItemId);
         });
         builder.Entity<VetManagement.Domain.Consumption.ConsumptionPricing>(e =>
         {
             e.Property(p => p.ContainerMl).HasPrecision(10, 2);
+            e.Property(p => p.StockUnitMl).HasPrecision(10, 2);
             e.Property(p => p.UpdatedBy).HasMaxLength(100);
             e.HasOne<Item>().WithMany().HasForeignKey(p => p.ItemId).OnDelete(DeleteBehavior.Cascade);
             e.HasIndex(p => p.ItemId).IsUnique();

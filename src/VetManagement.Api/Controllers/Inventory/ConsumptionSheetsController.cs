@@ -75,7 +75,7 @@ public class ConsumptionSheetsController(ConsumptionService service) : ApiContro
     public async Task<ActionResult<List<ConsumptionPricingDto>>> ListPricingsAsync()
         => Ok((await service.ListPricingsAsync()).Select(v => new ConsumptionPricingDto(
             v.Item.Id, v.Item.Name, v.Item.SellPrice, v.Pricing.Charge, v.Pricing.ContainerMl, v.Pricing.PricePerMl, v.Pricing.Controlled,
-            v.Pricing.TakenOutBeforehand)).ToList());
+            v.Pricing.TakenOutBeforehand, v.Pricing.StockUnitMl)).ToList());
 
     [HttpPut("pricing")]
     [Authorize(Policy = "Consumption.Manage")]

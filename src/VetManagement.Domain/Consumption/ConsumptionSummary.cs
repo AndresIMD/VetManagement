@@ -48,13 +48,36 @@ public sealed record ConsumptionSummary(List<ConsumptionLine> Lines, int Total, 
         {
             // Walks the uses in order: each one that goes past the containers started so far starts the next ones, taken
             // from stock unless the item was already out of inventory when that use was recorded.
+            // When a use's unit of stock isn't the container charged (1 mL ampoules charged as one 10 mL container), it takes
+            // the units it opens instead: the mL given, divided by the unit, rounded up. What is left in an open unit stays for
+            // the patient, and goes with the rest of the container when that is thrown away. Each use counts with the unit it
+            // was recorded with, so a use added later (after the pricing changed and the sheet was reopened) never changes
+            // what the earlier ones took.
             var (containers, total, used, fromStock) = (0, 0, 0m, 0);
+            var opened = new Dictionary<decimal, (int Units, decimal Ml)>();
             foreach (var entry in entries)
             {
                 used += entry.Quantity;
                 var needed = (int)Math.Ceiling(used / size);
                 total += (needed - containers) * entry.UnitPrice;
-                if (!entry.TakenOutBeforehand)
+                var stockUnit = entry.StockUnitMl is > 0 and var unit && unit != size ? unit : (decimal?)null;
+                if (entry.Discarded)
+                {
+                    // The rest thrown away comes out of the open unit, and at most what is left in it: the rest of an
+                    // ampoule smaller than the container, or just those mL from a bottle bigger than it.
+                    foreach (var (unitMl, open) in opened.ToList())
+                        opened[unitMl] = (open.Units, Math.Min(open.Ml + entry.Quantity, open.Units * unitMl));
+                }
+                else if (stockUnit is decimal unitMl)
+                {
+                    var (units, ml) = opened.GetValueOrDefault(unitMl);
+                    ml += entry.Quantity;
+                    var nowOpen = (int)Math.Ceiling(ml / unitMl);
+                    if (!entry.TakenOutBeforehand)
+                        fromStock += Math.Max(nowOpen - units, 0);
+                    opened[unitMl] = (Math.Max(units, nowOpen), ml);
+                }
+                if (stockUnit is null && !entry.TakenOutBeforehand)
                     fromStock += Math.Max(needed - containers, 0);
                 containers = Math.Max(containers, needed);
             }
@@ -95,8 +118,9 @@ public sealed record ConsumptionBalance(int ItemId, string ItemName, Consumption
 /// <param name="LeftMl">mL still in the open container while the sheet is open.</param>
 /// <param name="UnitPrice">Current price of one unit, mL or container (earlier uses keep the price they were recorded with).</param>
 /// <param name="StockUnits">
-/// Units of stock the line uses up: each container started, or the whole units given, leaving out the uses of items taken
-/// out of inventory beforehand (<see cref="ConsumptionEntry.TakenOutBeforehand"/>). None for the charge per mL: its bottle is
+/// Units of stock the line uses up: each container started (or, when a unit of stock is another size, each unit opened:
+/// <see cref="ConsumptionEntry.StockUnitMl"/>), or the whole units given, leaving out the uses of items taken out of
+/// inventory beforehand (<see cref="ConsumptionEntry.TakenOutBeforehand"/>). None for the charge per mL: its bottle is
 /// shared by several patients and taken out by hand when it is opened.
 /// </param>
 public sealed record ConsumptionLine(int ItemId, string ItemName, ConsumptionCharge Charge, decimal Given, decimal Discarded,

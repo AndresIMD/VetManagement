@@ -69,10 +69,10 @@
                     }
                     else if (!_beforehand && _containerMl is > 0 && _containerMl != _itemMl)
                     {
-                        @* A size other than the record's is allowed (small ampoules charged as one big container). It's worth
-                           knowing what the sheets take then; from the quick-use box they take nothing, so nothing is said. *@
+                        @* A size other than the record's is allowed (small ampoules charged as one big container): the sheets then
+                           take the record's units as they are opened. From the quick-use box they take nothing, so nothing is said. *@
                         <MudAlert Severity="Severity.Info" Dense="true" Class="mt-2">
-                            @L["The item's record says {0} mL. Each container charged takes 1 unit from inventory, whatever its size.", _itemMl.Value.ToString("0.##")]
+                            @L["The item's record says {0} mL per unit: each container is charged whole, and inventory loses only the units opened (the mL given divided by {0}, rounded up).", _itemMl.Value.ToString("0.##")]
                         </MudAlert>
                     }
                 }
@@ -102,6 +102,14 @@
                         @if (context.Charge == ConsumptionCharge.Container)
                         {
                             <span> (@context.ContainerMl?.ToString("0.##") mL)</span>
+                            @if (context.StockUnitMl is { } unitMl)
+                            {
+                                var takes = L["Takes from inventory the {0} mL units opened, not one per container.", unitMl.ToString("0.##")].Value;
+                                <MudTooltip Text="@takes" ShowOnFocus="true" Inline="true">
+                                    <MudIconButton Icon="@Icons.Material.Outlined.Inventory2" Size="Size.Small" Class="pa-0 ml-1" Style="opacity:.75"
+                                                   aria-label="@takes" />
+                                </MudTooltip>
+                            }
                         }
                         @if (context.TakenOutBeforehand)
                         {
