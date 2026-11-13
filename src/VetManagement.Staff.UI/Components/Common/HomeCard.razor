@@ -1,0 +1,36 @@
+@* One area on the home page: its name leads to its main page, a few figures (when it has them) say what needs
+   attention, and its other pages sit below as links. *@
+<MudPaper Elevation="0" Outlined="true" Class="@(Main ? "home-card home-card-main pa-4" : "home-card pa-4")">
+    <MudText Typo="Typo.h6" Class="home-card-title">
+        <a href="@Href">
+            @if (Icon is not null)
+            {
+                <MudIcon Icon="@Icon" Class="home-card-icon" aria-hidden="true" />
+            }
+            <span>@Title</span>
+        </a>
+    </MudText>
+    @if (ChildContent is not null)
+    {
+        <div class="home-card-body">@ChildContent</div>
+    }
+    @if (Links is not null)
+    {
+        <div class="home-card-links">@Links</div>
+    }
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string Href { get; set; } = string.Empty;
+    [Parameter] public string? Icon { get; set; }
+
+    /// <summary>The most used area the user can reach: the page's one accent.</summary>
+    [Parameter] public bool Main { get; set; }
+
+    /// <summary>The figures, if the area has any.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>The area's other pages, as <c>a.home-card-link</c>.</summary>
+    [Parameter] public RenderFragment? Links { get; set; }
+}

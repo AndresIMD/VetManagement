@@ -1,5 +1,6 @@
 .nav-dropdown { position: relative; display: inline-block; }
-.nav-dropdown-btn { padding: 6px 10px; }
+/* Text only, in sentence case: with every module on, eight entries have to fit a 1280 px window. */
+.nav-dropdown-btn.mud-button-root { padding: 6px 10px; text-transform: none; white-space: nowrap; }
 .nav-dropdown-menu {
   position: absolute;
   top: 100%;
@@ -12,5 +13,88 @@
   box-shadow: var(--mud-elevation-6);
   border-radius: var(--mud-default-borderradius);
 }
-.nav-dropdown:hover .nav-dropdown-menu { display: block; }
-.nav-dropdown-item { white-space: nowrap; }
+.nav-dropdown:hover .nav-dropdown-menu,
+.nav-dropdown:focus-within .nav-dropdown-menu { display: block; }
+.nav-dropdown.chosen .nav-dropdown-menu { display: none; }
+.nav-dropdown-item {
+  display: block;
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  color: var(--mud-palette-text-primary);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.nav-dropdown-item:hover { background: var(--mud-palette-action-default-hover); }
+
+.mud-appbar :focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.nav-dropdown-item:focus-visible { outline: 2px solid var(--mud-palette-primary); outline-offset: -2px; }
+
+/* Home page: one card per area, as tall as its content (stretched, a card with links only stood mostly empty). */
+.home-card { display: flex; flex-direction: column; gap: 12px; }
+.home-card :focus-visible { outline: 2px solid var(--mud-palette-primary); outline-offset: 2px; }
+
+/* The most used area the user can reach is the page's one accent: its border and its icon. Its name stays in the
+   text colour, as the stock blue is too light for text on the page background (4.29:1). */
+.home-card-main.mud-paper-outlined { border-color: var(--mud-palette-primary); }
+.home-card-icon { color: var(--mud-palette-text-secondary); }
+.home-card-main .home-card-icon { color: var(--mud-palette-primary); }
+
+.home-card-title a {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  color: var(--mud-palette-text-primary);
+  text-decoration: none;
+}
+.home-card-title a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* A count and what it counts, leading to the list it comes from. */
+.home-card-body { display: flex; flex-direction: column; gap: 2px; }
+.home-stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-inline: -8px;
+  padding-inline: 8px;
+  border-radius: var(--mud-default-borderradius);
+  color: var(--mud-palette-text-primary);
+  text-decoration: none;
+}
+.home-stat:hover { background: var(--mud-palette-action-default-hover); }
+.home-stat:active { background: var(--mud-palette-action-default-hover); text-decoration: underline; }
+.home-stat-icon { display: inline-flex; width: 20px; flex: none; }
+.home-stat-value { min-width: 2ch; font-size: 1.5rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.home-card-section { margin-top: 8px; padding-top: 12px; border-top: 1px solid var(--mud-palette-lines-default); }
+.home-list { margin: 4px 0 0; padding: 0; list-style: none; }
+.home-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
+.home-list a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--mud-palette-primary);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.home-list a:hover { text-decoration: underline; }
+.home-list-value { flex: none; color: var(--mud-palette-text-secondary); font-variant-numeric: tabular-nums; }
+
+/* The area's other pages, under its figures. */
+.home-card-links { display: flex; flex-wrap: wrap; gap: 0 20px; }
+
+/* Notes in the secondary text colour: the palette's secondary blue is too light for small text. */
+.home-note { color: var(--mud-palette-text-secondary); }
+.home-card-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--mud-palette-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.home-card-link:hover { text-decoration-thickness: 2px; }
+
+/* Pressed: every link on the cards dims while it is held. */
+.home-card a:active { opacity: 0.7; }

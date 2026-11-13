@@ -20,7 +20,7 @@ Principle: the clinic's billing **policy** is per-clinic configuration (admin-ed
 on each clinic's tax situation (e.g. professional services vs. products since Ley 21.420) — the clinic's accountant
 decides; the product never hard-codes it. Electronic documents (boleta/factura SII) are not issued yet.
 
-Staff web → Billing → Settings. Never change a method's `Code` once used (payments store it).
+Staff web → Settings → Billing Settings. Never change a method's `Code` once used (payments store it).
 `OnlineDeposit` is reserved for deposits paid when booking online.
 
 ## Sale
