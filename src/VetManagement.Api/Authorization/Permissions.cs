@@ -92,7 +92,7 @@ public static class Permissions
     {
         /// <summary>Email sending and email alerts: Admin only until a clinic has its mail set up and tested.</summary>
         public const string SEND_EMAIL = "system.send-email";
-        /// <summary>Create sample data (development/test environments only).</summary>
+        /// <summary>Create sample data. Granted only where the server offers it (see EnabledModules), never in Production.</summary>
         public const string TEST_DATA = "system.test-data";
     }
 
