@@ -55,3 +55,20 @@ jobs:
 
       - name: Test
         run: dotnet test tests/VetManagement.Tests/VetManagement.Tests.csproj --no-restore --no-build --verbosity minimal
+
+  # The Windows desktop app. Only its Windows target is built: that's the one the product launches on.
+  build-windows-app:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install MAUI workload
+        run: dotnet workload install maui-windows
+
+      - name: Build Windows app
+        run: dotnet build src/VetManagement.Staff.Maui/VetManagement.Staff.Maui.csproj -f net10.0-windows10.0.19041.0
