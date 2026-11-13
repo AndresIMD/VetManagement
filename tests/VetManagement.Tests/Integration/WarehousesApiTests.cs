@@ -245,6 +245,92 @@ public class WarehousesApiTests : IClassFixture<CustomWebAppFactory>
             .StatusCode.Should().Be(HttpStatusCode.BadRequest, "the user doesn't see that warehouse");
     }
 
+    private static ItemCreateRequest NewProduct(string barcode, int initialStock = 0, int? warehouseId = null) => new()
+    {
+        Name = $"Lidocaína {barcode}", Type = ItemType.Material, Barcode = barcode, SellPrice = 3000, InitialStock = initialStock, WarehouseId = warehouseId
+    };
+
+    private static string NewCode() => Guid.NewGuid().ToString("N")[..12];
+
+    private Task<List<InventoryMovement>> MovementsAsync(int itemId)
+        => WithDbAsync(db => db.InventoryMovements.AsNoTracking().Where(m => m.ItemId == itemId).ToListAsync());
+
+    [Fact]
+    public async Task AProductOnlyInDailyUse_TakesAnIngressStraightIntoAnotherWarehouse()
+    {
+        // The delivery goes to the locked storeroom while daily use has none: no need to pass it through daily use.
+        var itemId = await AddItemAsync(stock: 0);
+        var (locked, _) = await AddWarehouseAsync(Permissions.ROLES.SUPERVISOR);
+        var barcode = (await ItemAsync(_admin, itemId)).Barcode;
+
+        (await _admin.PostAsJsonAsync($"/api/inventory/movements/mass-ingress?warehouseId={locked}",
+            new[] { new MassStockUpdateRequest { ItemId = itemId, Name = "x", Barcode = barcode, Quantity = 100 } })).StatusCode.Should().Be(HttpStatusCode.OK);
+
+        (await UnitsAsync(locked, itemId)).Should().Be(100);
+        (await TotalAsync(itemId)).Should().Be(100);
+        (await ItemAsync(_admin, itemId)).DailyUseStock.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ANewProductsFirstUnits_ComeInAsAnIngress_InTheChosenWarehouse()
+    {
+        var (locked, storeroom) = await AddWarehouseAsync(Permissions.ROLES.SUPERVISOR);
+
+        var created = await _admin.PostAsJsonAsync("/api/items", NewProduct(NewCode(), initialStock: 100, warehouseId: locked));
+        created.StatusCode.Should().Be(HttpStatusCode.OK, await created.Content.ReadAsStringAsync());
+        var item = (await created.Content.ReadFromJsonAsync<ItemDto>())!;
+
+        item.Stock.Should().Be(100);
+        item.DailyUseStock.Should().Be(0);
+        (await UnitsAsync(locked, item.Id)).Should().Be(100);
+        (await MovementsAsync(item.Id)).Should().ContainSingle()
+            .Which.Should().Match<InventoryMovement>(m => m.Type == InventoryMovementType.Ingress && m.Quantity == 100 && m.WarehouseId == locked);
+        // The audit says where they went: the creation entry alone doesn't.
+        (await WithDbAsync(db => db.AuditLogs.AsNoTracking().Where(a => a.EntityName == nameof(Item) && a.EntityId == item.Id).ToListAsync()))
+            .Should().ContainSingle(a => a.Action == AuditActionType.Ingress).Which.Changes.Should().Contain(storeroom);
+
+        // Without a warehouse they go to daily use, and a product created without units has no movement.
+        var daily = (await (await _admin.PostAsJsonAsync("/api/items", NewProduct(NewCode(), initialStock: 7))).Content.ReadFromJsonAsync<ItemDto>())!;
+        daily.DailyUseStock.Should().Be(7);
+        (await MovementsAsync(daily.Id)).Should().ContainSingle().Which.WarehouseId.Should().BeNull();
+        var empty = (await (await _admin.PostAsJsonAsync("/api/items", NewProduct(NewCode()))).Content.ReadFromJsonAsync<ItemDto>())!;
+        empty.Stock.Should().Be(0);
+        (await MovementsAsync(empty.Id)).Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ANewProduct_WithACodeAnotherHas_IsRefused_NamingThatProduct()
+    {
+        var code = NewCode();
+        (await _admin.PostAsJsonAsync("/api/items", NewProduct(code))).StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var again = await _admin.PostAsJsonAsync("/api/items", NewProduct(code, initialStock: 100));
+
+        again.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await again.Content.ReadAsStringAsync()).Should().Contain($"Lidocaína {code}");
+        (await WithDbAsync(db => db.Items.CountAsync(i => i.Barcode == code))).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ProductsWithoutACode_AreNotComparedWithEachOther()
+    {
+        // The form's starting code is what a product without a barcode keeps: a clinic has many of them.
+        (await _admin.PostAsJsonAsync("/api/items", NewProduct(Item.NoBarcode))).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await _admin.PostAsJsonAsync("/api/items", NewProduct(Item.NoBarcode))).StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task ANewProductsFirstUnits_CantGoToAWarehouseTheUserDoesNotSee()
+    {
+        var (locked, _) = await AddWarehouseAsync(Permissions.ROLES.SUPERVISOR);
+        var code = NewCode();
+
+        var refused = await UserWith(Permissions.ROLES.INVENTORY).PostAsJsonAsync("/api/items", NewProduct(code, initialStock: 5, warehouseId: locked));
+
+        refused.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await WithDbAsync(db => db.Items.AnyAsync(i => i.Barcode == code))).Should().BeFalse("nothing is created when its units have nowhere to go");
+    }
+
     [Fact]
     public async Task OnlyAnEmptyWarehouseIsArchived_AndOnlyAnUnusedOneDeleted()
     {

@@ -323,6 +323,15 @@
   <data name="Cancel" xml:space="preserve"><value>Cancelar</value></data>
   <data name="Error loading items: {0}" xml:space="preserve"><value>Error al cargar productos: {0}</value></data>
   <data name="New product" xml:space="preserve"><value>Nuevo producto</value></data>
+  <data name="Initial units" xml:space="preserve"><value>Unidades iniciales</value></data>
+  <data name="Add units" xml:space="preserve"><value>Ingresar unidades</value></data>
+  <data name="Units that came in" xml:space="preserve"><value>Unidades que llegaron</value></data>
+  <data name="There is already a product with this name: {0}. If it is the same one, add units to it instead of creating it again." xml:space="preserve"><value>Ya existe un producto con este nombre: {0}. Si es el mismo, ingrésale unidades en vez de crearlo de nuevo.</value></data>
+  <data name="This code already belongs to {0}. Add units to it instead of creating it again." xml:space="preserve"><value>Este código ya es de {0}. Ingrésale unidades en vez de crearlo de nuevo.</value></data>
+  <data name="Use this product" xml:space="preserve"><value>Usar este producto</value></data>
+  <data name="The units could not be added." xml:space="preserve"><value>No se pudieron ingresar las unidades.</value></data>
+  <data name="Added {0} u. of {1}." xml:space="preserve"><value>Ingresadas {0} u. de {1}.</value></data>
+  <data name="Added {0} u. of {1} to {2}." xml:space="preserve"><value>Ingresadas {0} u. de {1} en {2}.</value></data>
   <data name="Product created." xml:space="preserve"><value>Producto creado.</value></data>
   <data name="Creation canceled." xml:space="preserve"><value>Creación cancelada.</value></data>
   <data name="Edit item" xml:space="preserve"><value>Editar producto</value></data>

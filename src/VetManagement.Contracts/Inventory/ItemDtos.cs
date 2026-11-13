@@ -40,10 +40,17 @@ public sealed class InventoryItemDto
 }
 
 /// <summary>
-/// Request to create a new inventory item.
+/// Request to create a new inventory item. Its first units, if any, are recorded as an ingress, like every stock change.
 /// </summary>
 public sealed class ItemCreateRequest
 {
+    /// <summary>Units the product starts with; 0 = none yet.</summary>
+    [Range(0, int.MaxValue)]
+    public int InitialStock { get; init; }
+
+    /// <summary>The warehouse that receives <see cref="InitialStock"/>; null = the daily-use one.</summary>
+    public int? WarehouseId { get; init; }
+
     [Required, MaxLength(200)]
     public string Name { get; init; } = string.Empty;
 

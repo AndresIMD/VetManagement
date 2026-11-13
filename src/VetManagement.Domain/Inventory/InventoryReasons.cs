@@ -10,4 +10,6 @@ public static class InventoryReasons
     public const string ITEM_DELETION = "Item deletion";
     public const string MASSIVE_INGRESS = "Massive Ingress";
     public const string MASSIVE_EGRESS = "Massive Egress";
+    /// <summary>The units a product is created with.</summary>
+    public const string INITIAL_STOCK = "Initial stock";
 }

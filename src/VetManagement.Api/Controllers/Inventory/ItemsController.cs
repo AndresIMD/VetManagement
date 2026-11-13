@@ -52,11 +52,13 @@ public class ItemsController(ItemService itemService, InventoryQueryService quer
     {
         var item = MapToDomain(request);
 
-        var result = await itemService.AddAsync(item, GetUserName());
-        if (!result)
-            return BadRequest(Texts.T("Invalid item data."));
-
-        return Ok(await MapToDtoAsync(item));
+        var result = await itemService.AddAsync(item, GetUserName(), request.InitialStock, request.WarehouseId, GetStockScope());
+        return result.Status switch
+        {
+            ItemAddStatus.Added => Ok(await MapToDtoAsync(item)),
+            ItemAddStatus.DuplicateBarcode => Conflict(new ProblemDetails { Title = result.Error, Status = StatusCodes.Status409Conflict }),
+            _ => BadRequest(new ProblemDetails { Title = result.Error, Status = StatusCodes.Status400BadRequest })
+        };
     }
 
     [HttpPut("{id}")]

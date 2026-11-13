@@ -1,35 +1,215 @@
-﻿@using VetManagement.Domain.Enums
+﻿@using VetManagement.Contracts.Inventory
+@using VetManagement.Domain.Enums
 @using VetManagement.Staff.UI.Helpers
 @using VetManagement.Staff.UI.Models.Configuration
 @using VetManagement.Staff.UI.Services.Api
 @inherits ModalBase<Item>
 @inject ItemsApiService ItemsService
+@inject InventoryMovementApiService MovementsService
 @inject IDialogService DialogService
 
-<ModalShell Title="@Title"
-            TitleIcon="@TitleIcon"
-            TitleColor="@TitleColor"
+@* A product is created once, whatever warehouses hold it. When the code or the name typed is already a product, the
+   dialog says so and offers what the user came for: adding units of it to a warehouse. *@
+<ModalShell Title="@(_target is null ? Title : L["Add units"])"
+            TitleIcon="@(_target is null ? TitleIcon : Icons.Material.Filled.Upload)"
+            TitleColor="@(_target is null ? TitleColor : Color.Success)"
             IsLoading="@isLoading"
-            PrimaryText="@L["Create"]"
+            PrimaryText="@(_target is null ? L["Create"] : L["Add units"])"
             PrimaryLoadingText="@L["Saving..."]"
-            PrimaryDisabled="@(!isValid)"
-            OnPrimaryClick="HandleValidSubmit"
-            OnCancelClick="OnCancelRequested">
-    <ItemForm ItemModel="ItemModel"
-              DrugModel="DrugModel"
-              OnValidSubmitCallback="HandleValidSubmit"
-              OnCancelCallback="OnCancelRequested"
-              BarcodeReadonly="BarcodeReadonly"
-              OnValidChanged="OnFormValidChanged"
-              OnDirtyChanged="OnFormDirtyChanged" />
+            PrimaryDisabled="@(_target is null ? CantCreate : CantAddUnits)"
+            OnPrimaryClick="PrimaryAsync"
+            CancelText="@(_target is null ? L["Cancel"] : L["Back"])"
+            OnCancelClick="CancelAsync">
+    @if (_target is { } target)
+    {
+        <MudStack Spacing="3">
+            <MudText><b>@target.Name</b>@(string.IsNullOrWhiteSpace(target.Brand) ? null : $" · {target.Brand}")</MudText>
+            @if (ChoosesWarehouse)
+            {
+                <MudSelect T="int?" @bind-Value="_unitsWarehouseId" Label="@L["Warehouse"]" Variant="Variant.Outlined" Required="true">
+                    @foreach (var warehouse in Warehouses)
+                    {
+                        <MudSelectItem T="int?" Value="@warehouse.Id">@warehouse.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+            <MudNumericField T="int" @bind-Value="_units" Label="@L["Units that came in"]" Min="1" Variant="Variant.Outlined"
+                             Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Inventory" />
+        </MudStack>
+    }
+    @* The form stays in place, hidden, while units are added: going back finds it as it was left. *@
+    <div style="@(_target is null ? null : "display:none")">
+        @if ((_sameCode ?? _sameName) is { } found)
+        {
+            <MudAlert Severity="@(_sameCode is null ? Severity.Info : Severity.Warning)" Dense="true" Class="mb-3">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="2">
+                    <MudText Typo="Typo.body2">
+                        @(_sameCode is null
+                            ? L["There is already a product with this name: {0}. If it is the same one, add units to it instead of creating it again.", Describe(found)]
+                            : L["This code already belongs to {0}. Add units to it instead of creating it again.", Describe(found)])
+                    </MudText>
+                    @if (AsksForUnits)
+                    {
+                        <AuthorizeView Policy="Inventory.Update">
+                            <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Inherit" StartIcon="@Icons.Material.Filled.Upload"
+                                       OnClick="() => StartAddingUnits(found)">@L["Add units"]</MudButton>
+                        </AuthorizeView>
+                    }
+                    else
+                    {
+                        @* The caller counts the units in its own list: the existing product goes there. *@
+                        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Inherit" StartIcon="@Icons.Material.Filled.PlaylistAdd"
+                                   OnClick="() => MudDialog.Close(DialogResult.Ok(new ExistingChosen(found.Id)))">@L["Use this product"]</MudButton>
+                    }
+                </MudStack>
+            </MudAlert>
+        }
+        <ItemForm ItemModel="ItemModel"
+                  DrugModel="DrugModel"
+                  OnValidSubmitCallback="HandleValidSubmit"
+                  OnCancelCallback="OnCancelRequested"
+                  BarcodeReadonly="BarcodeReadonly"
+                  IsNew="AsksForUnits"
+                  @bind-InitialStock="_initialStock"
+                  @bind-WarehouseId="_warehouseId"
+                  Warehouses="Warehouses"
+                  OnFieldChanged="LookUpAsync"
+                  OnValidChanged="OnFormValidChanged"
+                  OnDirtyChanged="OnFormDirtyChanged" />
+    </div>
 </ModalShell>
 
 @code {
     [Parameter] public bool BarcodeReadonly { get; set; } = false;
 
+    /// <summary>The code the product starts with: the one just scanned in the bulk ingress.</summary>
+    [Parameter] public string? Barcode { get; set; }
+
+    /// <summary>The warehouses the user may put stock in (not archived); with one or none, units go to the daily-use one.</summary>
+    [Parameter] public List<WarehouseDto> Warehouses { get; set; } = [];
+
+    /// <summary>Asks for the product's first units. Off when the caller counts them itself (the bulk ingress adds it to its list).</summary>
+    [Parameter] public bool AsksForUnits { get; set; } = true;
+
+    /// <summary>The dialog's outcome when units were added to a product that already existed, instead of creating one.</summary>
+    public sealed record UnitsAdded(int ItemId, string Name, int Quantity);
+
+    /// <summary>The dialog's outcome when the caller counts the units itself and the user picked the product that already existed.</summary>
+    public sealed record ExistingChosen(int ItemId);
+
+    /// <summary>A product that already exists, as far as the dialog needs it.</summary>
+    private sealed record Existing(int Id, string Name, string? Brand, string? Barcode);
+
     private Item ItemModel = Item.GetEmpty();
     private Drug DrugModel = Drug.GetEmpty();
     private bool _isFormDirty;
+
+    private int _initialStock;
+    private int? _warehouseId;
+
+    /// <summary>The product that already has the code typed (it can't be created again), or one with the same name (it can).</summary>
+    private Existing? _sameCode, _sameName;
+    private string? _checkedCode, _checkedName;
+
+    /// <summary>Set while the dialog adds units to an existing product instead of creating one.</summary>
+    private Existing? _target;
+    private int _units = 1;
+    private int? _unitsWarehouseId;
+
+    private bool ChoosesWarehouse => Warehouses.Count > 1;
+
+    /// <summary>A code that is already a product can't be created again; first units need to know where they go.</summary>
+    private bool CantCreate => !isValid || _sameCode is not null || (ChoosesWarehouse && _initialStock > 0 && _warehouseId is null);
+    private bool CantAddUnits => _units <= 0 || (ChoosesWarehouse && _unitsWarehouseId is null);
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        if (!string.IsNullOrWhiteSpace(Barcode))
+            ItemModel.Barcode = Barcode.Trim();
+    }
+
+    private Task PrimaryAsync() => _target is null ? HandleValidSubmit() : AddUnitsAsync();
+
+    /// <summary>Back to the form from adding units; from the form, out of the dialog.</summary>
+    private Task CancelAsync()
+    {
+        if (_target is null)
+            return OnCancelRequested();
+        _target = null;
+        MudDialog.StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private static string Describe(Existing item)
+        => string.Join(" · ", new[] { $"'{item.Name}'", item.Brand, item.Barcode }.Where(part => !string.IsNullOrWhiteSpace(part)));
+
+    /// <summary>Looks the code and the name up once each time they change, when the user leaves the field.</summary>
+    private async Task LookUpAsync()
+    {
+        var code = ItemModel.Barcode?.Trim();
+        var name = $"{ItemModel.Name?.Trim()}|{ItemModel.Brand?.Trim()}";
+        if (code == _checkedCode && name == _checkedName)
+            return;
+        try
+        {
+            // A code scanned in the bulk ingress is only asked for a new product: it was looked up there.
+            if (code != _checkedCode && !BarcodeReadonly)
+                _sameCode = string.IsNullOrEmpty(code) || code == VetManagement.Domain.Inventory.Item.NoBarcode ? null
+                    : await ItemsService.GetItemByBarcodeAsync(code) is { } item ? new Existing(item.Id, item.Name, item.Brand, item.Barcode) : null;
+            if (name != _checkedName)
+                _sameName = await FindByNameAsync(ItemModel.Name?.Trim(), ItemModel.Brand?.Trim());
+            (_checkedCode, _checkedName) = (code, name);
+        }
+        catch (HttpRequestException)
+        {
+            // The lookup is a courtesy: without it the server still refuses a repeated code.
+        }
+        StateHasChanged();
+    }
+
+    /// <summary>A product with the same name (case and accents aside), and the same brand when both have one.</summary>
+    private async Task<Existing?> FindByNameAsync(string? name, string? brand)
+    {
+        if (name is not { Length: >= 3 })
+            return null;
+        // "Unknown" is what the form starts with and what a product keeps when nobody fills it in: no brand to compare.
+        static bool NoBrand(string? value) => string.IsNullOrWhiteSpace(value) || value.Trim().Equals("Unknown", StringComparison.OrdinalIgnoreCase);
+        var found = (await ItemsService.GetItemsPagedAsync(name, ItemType.None, 0, 25))?.Items ?? [];
+        return found.FirstOrDefault(i => i.Name.Trim().EqualsIgnoringAccents(name)
+                && (NoBrand(brand) || NoBrand(i.Brand) || i.Brand!.Trim().EqualsIgnoringAccents(brand)))
+            is { } item ? new Existing(item.Id, item.Name, item.Brand, item.Barcode) : null;
+    }
+
+    private void StartAddingUnits(Existing item)
+    {
+        _target = item;
+        // What was typed as the new product's first units is what the user came to add.
+        _units = _initialStock > 0 ? _initialStock : 1;
+        _unitsWarehouseId = _warehouseId;
+        // The title is drawn by the dialog's frame, which doesn't follow this component's renders by itself.
+        MudDialog.StateHasChanged();
+    }
+
+    private async Task AddUnitsAsync()
+    {
+        if (_target is not { } target || _units <= 0)
+            return;
+        var quantity = _units;
+        isLoading = true;
+        var result = await MovementsService.MassiveEntryAsync(
+            [new InventoryMassUpdateDTO { ItemId = target.Id, Name = target.Name, Barcode = target.Barcode ?? string.Empty, Quantity = quantity }],
+            ChoosesWarehouse ? _unitsWarehouseId : Warehouses.FirstOrDefault()?.Id);
+        isLoading = false;
+        if (!result.Ok)
+        {
+            Snackbar.Add(result.Error ?? L["The units could not be added."], Severity.Error);
+            return;
+        }
+        var warehouse = Warehouses.FirstOrDefault(w => w.Id == _unitsWarehouseId)?.Name;
+        Snackbar.Add(warehouse is null ? L["Added {0} u. of {1}.", quantity, target.Name] : L["Added {0} u. of {1} to {2}.", quantity, target.Name, warehouse], Severity.Success);
+        MudDialog.Close(DialogResult.Ok(new UnitsAdded(target.Id, target.Name, quantity)));
+    }
 
     protected async Task HandleValidSubmit()
     {
@@ -47,11 +227,18 @@
                 entity = ItemModel;
             }
 
-            var options = ItemJsonOptions.GetPolymorphicOptions();
-            var entityJson = System.Text.Json.JsonSerializer.Serialize(entity, options);
-            await ItemsService.AddItemAsync(entity);
+            var (created, error) = await ItemsService.AddItemAsync(entity, _initialStock, _initialStock > 0 ? _warehouseId : null);
+            if (error is not null)
+            {
+                Snackbar.Add(error, Severity.Error);
+                // Refused because the code is taken (e.g. created meanwhile on another PC): show whose it is.
+                _checkedCode = null;
+                await LookUpAsync();
+                return;
+            }
             Snackbar.Add(L["Item created successfully."], Severity.Success);
-            MudDialog.Close(DialogResult.Ok(entity));
+            // As saved, with its id: the bulk ingress adds it to its list by id.
+            MudDialog.Close(DialogResult.Ok(created ?? entity));
         }
         catch (Exception ex)
         {

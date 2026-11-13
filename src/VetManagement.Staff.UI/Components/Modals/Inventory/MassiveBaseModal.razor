@@ -151,7 +151,6 @@
 @code {
     [Inject] public ItemsApiService ItemsService { get; set; } = default!;
     [Inject] public IDialogService DialogService { get; set; } = default!;
-    [Inject] public IJSRuntime JS { get; set; } = default!;
 
     protected MudTextField<string>? barcodeInput;
     protected MudTextDropdownField<Item>? itemAutocomplete;
@@ -380,8 +379,10 @@
             await barcodeInput.FocusAsync();
         }
     }
+    /// <summary>Not through JS "eval": the page's content security policy refuses it, and the unknown-code dialog never opened.</summary>
     protected async Task BlurBarcodeInputAsync()
     {
-        await JS.InvokeVoidAsync("eval", "document.activeElement && document.activeElement.blur()");
+        if (barcodeInput is not null)
+            await barcodeInput.BlurAsync();
     }
 }
