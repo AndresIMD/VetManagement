@@ -49,7 +49,7 @@ public class Drug : Item
         return new Drug(
             type: ItemType.Drug,
             name: string.Empty,
-            barcode: "00000",
+            barcode: VetManagement.Domain.Inventory.Item.NoBarcode,
             description: null,
             compound: string.Empty,
             ml: 0.0f,

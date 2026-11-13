@@ -3,8 +3,9 @@
 The **Settings → Test Data** screen creates fake but realistic records (clients with a valid RUT, pets, exams,
 exam requests, visits, vaccines, appointments, sales...) so the system can be tried without typing them by hand.
 
-> **Development only.** On a real clinic's server (Production) the screen says it is unavailable and the API answers
-> 404: the real database can never be filled with fake data.
+> **Development only.** On a real clinic's server (Production) the menu entry isn't there: nobody gets the test-data
+> permission, the administrator included, and the API answers 404, so the real database can never be filled with fake
+> data. A demo server that isn't Production can offer it with the setting `TestData:Enabled` = `true`.
 
 ## 1. Start the system (from Visual Studio, no terminal)
 

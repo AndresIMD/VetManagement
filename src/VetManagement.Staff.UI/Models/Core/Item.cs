@@ -88,7 +88,7 @@ public class Item
             stock: 0,
             sellPrice: 0,
             brand: "Unknown",
-            barcode: "00000",
+            barcode: VetManagement.Domain.Inventory.Item.NoBarcode,
             brandBarcode: null,
             lowStockThreshold: 5,
             buyPrice: 0);

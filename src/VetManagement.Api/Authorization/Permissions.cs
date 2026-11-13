@@ -37,6 +37,8 @@ public static class Permissions
         public const string CREATE = "exams.create";
         public const string UPDATE = "exams.update";
         public const string DELETE = "exams.delete";
+        /// <summary>The lab's figures: reports per period, per exam and per person, values out of range, kits used.</summary>
+        public const string METRICS = "exams.metrics";
     }
 
     public static class EXTERNAL_LABS
@@ -92,7 +94,7 @@ public static class Permissions
     {
         /// <summary>Email sending and email alerts: Admin only until a clinic has its mail set up and tested.</summary>
         public const string SEND_EMAIL = "system.send-email";
-        /// <summary>Create sample data (development/test environments only).</summary>
+        /// <summary>Create sample data. Granted only where the server offers it (see EnabledModules), never in Production.</summary>
         public const string TEST_DATA = "system.test-data";
     }
 
@@ -152,7 +154,7 @@ public static class Permissions
         new(ROLES.LABORATORY,
             [EXAMS.READ, EXTERNAL_LABS.READ, EXAMS_PERFORMED.READ, EXAMS_PERFORMED.CREATE, EXAMS_PERFORMED.UPDATE,
              CLIENTS_PETS.READ, CLIENTS_PETS.CREATE, CLIENTS_PETS.UPDATE],
-            [EXAMS.CREATE, EXAMS.UPDATE, EXAMS.DELETE, EXTERNAL_LABS.CREATE, EXTERNAL_LABS.UPDATE, EXTERNAL_LABS.DELETE, EXAMS_PERFORMED.DELETE]),
+            [EXAMS.CREATE, EXAMS.UPDATE, EXAMS.DELETE, EXAMS.METRICS, EXTERNAL_LABS.CREATE, EXTERNAL_LABS.UPDATE, EXTERNAL_LABS.DELETE, EXAMS_PERFORMED.DELETE]),
         new(ROLES.RECEPTION,
             [CLIENTS_PETS.READ, CLIENTS_PETS.LIST, CLIENTS_PETS.CREATE, CLIENTS_PETS.UPDATE, SCHEDULING.READ, SCHEDULING.BOOK],
             [CLIENTS_PETS.DELETE, SCHEDULING.MANAGE]),
@@ -215,6 +217,7 @@ public static class Permissions
         yield return EXAMS.CREATE;
         yield return EXAMS.UPDATE;
         yield return EXAMS.DELETE;
+        yield return EXAMS.METRICS;
         yield return EXTERNAL_LABS.READ;
         yield return EXTERNAL_LABS.CREATE;
         yield return EXTERNAL_LABS.UPDATE;

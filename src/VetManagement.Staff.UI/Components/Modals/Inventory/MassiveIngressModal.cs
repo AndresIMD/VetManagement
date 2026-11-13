@@ -44,13 +44,7 @@ public partial class MassiveIngressModal : MassiveBaseModal<InventoryMassUpdateD
 
             if (item != null)
             {
-                Remember(item);
-
-                var existing = items.FirstOrDefault(x => x.ItemId == item.Id);
-                if (existing != null)
-                    existing.Quantity++;
-                else
-                    items.Add(new InventoryMassUpdateDTO { ItemId = item.Id, Barcode = item.Barcode ?? string.Empty, Name = item.Name, Quantity = 1 });
+                AddToList(item);
                 shouldFocusBarcode = true;
             }
             else
@@ -70,15 +64,24 @@ public partial class MassiveIngressModal : MassiveBaseModal<InventoryMassUpdateD
                 {
                     var createParams = new DialogParameters
                     {
-                        [nameof(CreateItemModal.BarcodeReadonly)] = true
+                        [nameof(CreateItemModal.BarcodeReadonly)] = true,
+                        [nameof(CreateItemModal.Barcode)] = currentBarcode,
+                        // Its units are counted here, in the list, like every other product's.
+                        [nameof(CreateItemModal.AsksForUnits)] = false,
+                        [nameof(CreateItemModal.Warehouses)] = Warehouses
                     };
                     var createModal = await DialogService.ShowAsync<CreateItemModal>(Strings.T("New product"), createParams);
                     var createResult = await createModal.Result;
                     if (createResult is not null && !createResult.Canceled && createResult.Data is Item created)
                     {
-                        created.Barcode = currentBarcode;
                         Remember(created);
                         items.Add(new InventoryMassUpdateDTO { ItemId = created.Id, Barcode = created.Barcode ?? string.Empty, Name = created.Name, Quantity = 1 });
+                    }
+                    // The name typed was a product that already exists (under another code): that one is listed.
+                    else if (createResult is { Canceled: false, Data: CreateItemModal.ExistingChosen chosen }
+                             && await ItemsService.GetItemByIdAsync(chosen.ItemId) is { } known)
+                    {
+                        AddToList(known);
                     }
                 }
             }
@@ -87,5 +90,15 @@ public partial class MassiveIngressModal : MassiveBaseModal<InventoryMassUpdateD
             shouldFocusBarcode = true;
             StateHasChanged();
         }
+    }
+
+    /// <summary>One more unit of the product in the list, or its first.</summary>
+    private void AddToList(Item item)
+    {
+        Remember(item);
+        if (items.FirstOrDefault(x => x.ItemId == item.Id) is { } listed)
+            listed.Quantity++;
+        else
+            items.Add(new InventoryMassUpdateDTO { ItemId = item.Id, Barcode = item.Barcode ?? string.Empty, Name = item.Name, Quantity = 1 });
     }
 }

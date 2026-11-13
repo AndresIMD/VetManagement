@@ -330,6 +330,15 @@
   <data name="Cancel" xml:space="preserve"><value>Cancelar</value></data>
   <data name="Error loading items: {0}" xml:space="preserve"><value>Error al cargar productos: {0}</value></data>
   <data name="New product" xml:space="preserve"><value>Nuevo producto</value></data>
+  <data name="Initial units" xml:space="preserve"><value>Unidades iniciales</value></data>
+  <data name="Add units" xml:space="preserve"><value>Ingresar unidades</value></data>
+  <data name="Units that came in" xml:space="preserve"><value>Unidades que llegaron</value></data>
+  <data name="There is already a product with this name: {0}. If it is the same one, add units to it instead of creating it again." xml:space="preserve"><value>Ya existe un producto con este nombre: {0}. Si es el mismo, ingrésale unidades en vez de crearlo de nuevo.</value></data>
+  <data name="This code already belongs to {0}. Add units to it instead of creating it again." xml:space="preserve"><value>Este código ya es de {0}. Ingrésale unidades en vez de crearlo de nuevo.</value></data>
+  <data name="Use this product" xml:space="preserve"><value>Usar este producto</value></data>
+  <data name="The units could not be added." xml:space="preserve"><value>No se pudieron ingresar las unidades.</value></data>
+  <data name="Added {0} u. of {1}." xml:space="preserve"><value>Ingresadas {0} u. de {1}.</value></data>
+  <data name="Added {0} u. of {1} to {2}." xml:space="preserve"><value>Ingresadas {0} u. de {1} en {2}.</value></data>
   <data name="Product created." xml:space="preserve"><value>Producto creado.</value></data>
   <data name="Creation canceled." xml:space="preserve"><value>Creación cancelada.</value></data>
   <data name="Edit item" xml:space="preserve"><value>Editar producto</value></data>
@@ -1137,6 +1146,23 @@
   <data name="Remove from the chart" xml:space="preserve"><value>Quitar del gráfico</value></data>
   <data name="Value of what went out" xml:space="preserve"><value>Valor de las salidas</value></data>
   <data name="Week of {0}" xml:space="preserve"><value>Semana del {0}</value></data>
+  <data name="Exam Metrics" xml:space="preserve"><value>Métricas de exámenes</value></data>
+  <data name="Lab reports by the date the sample was received." xml:space="preserve"><value>Informes de laboratorio según la fecha en que se recibió la muestra.</value></data>
+  <data name="Lab reports in the period" xml:space="preserve"><value>Informes del período</value></data>
+  <data name="{0} in the previous period" xml:space="preserve"><value>{0} en el período anterior</value></data>
+  <data name="With values out of range" xml:space="preserve"><value>Con valores fuera de rango</value></data>
+  <data name="{0} of {1} reports" xml:space="preserve"><value>{0} de {1} informes</value></data>
+  <data name="Kit units taken" xml:space="preserve"><value>Unidades de kit descontadas</value></data>
+  <data name="{0} reports took a kit from inventory" xml:space="preserve"><value>{0} informes descontaron un kit del inventario</value></data>
+  <data name="Reports received" xml:space="preserve"><value>Informes recibidos</value></data>
+  <data name="No reports in this period." xml:space="preserve"><value>No hay informes en este período.</value></data>
+  <data name="By exam" xml:space="preserve"><value>Por examen</value></data>
+  <data name="The {0} with the most reports. Out of range: reports with at least one value outside its range." xml:space="preserve"><value>Los {0} con más informes. Fuera de rango: informes con al menos un valor fuera de su rango.</value></data>
+  <data name="Who wrote them" xml:space="preserve"><value>Quién los escribió</value></data>
+  <data name="The user account each report was saved with." xml:space="preserve"><value>La cuenta con que se guardó cada informe.</value></data>
+  <data name="Kits used" xml:space="preserve"><value>Kits usados</value></data>
+  <data name="Units" xml:space="preserve"><value>Unidades</value></data>
+  <data name="No report took a kit from inventory in this period." xml:space="preserve"><value>Ningún informe descontó un kit del inventario en este período.</value></data>
   <data name="What goes out, what comes in and what will run out soon." xml:space="preserve"><value>Qué sale, qué entra y qué se agotará pronto.</value></data>
   <data name="{0} days" xml:space="preserve"><value>{0} días</value></data>
   <data name="{0} items moved" xml:space="preserve"><value>{0} productos con movimiento</value></data>
@@ -1258,7 +1284,6 @@
   <data name="Sale price: {0}" xml:space="preserve"><value>Precio de venta: {0}</value></data>
   <data name="Saved: {0}." xml:space="preserve"><value>Guardado: {0}.</value></data>
   <data name="Sheets" xml:space="preserve"><value>Hojas</value></data>
-  <data name="Show discharged in the last {0} days" xml:space="preserve"><value>Mostrar altas de los últimos {0} días</value></data>
   <data name="Supplies used on each patient during a stay, added up for the charge at discharge." xml:space="preserve"><value>Insumos usados en cada paciente durante su estadía, sumados para el cobro al alta.</value></data>
   <data name="The mL given are charged at the price per mL (e.g. diazepam from a vial shared by several patients). The sheets don't take the bottle from inventory: take it out by hand when one is opened." xml:space="preserve"><value>Se cobran los mL administrados al precio por mL (ej. diazepam de un frasco que se usa en varios pacientes). Las hojas no descuentan el frasco del inventario: descuéntalo a mano al abrir uno.</value></data>
   <data name="The sheet was not found." xml:space="preserve"><value>No se encontró la hoja.</value></data>
@@ -1395,7 +1420,9 @@
   <data name="Use removed." xml:space="preserve"><value>Uso quitado.</value></data>
   <data name="The use could not be recorded." xml:space="preserve"><value>No se pudo registrar el uso.</value></data>
   <data name="The use could not be removed." xml:space="preserve"><value>No se pudo quitar el uso.</value></data>
-  <data name="The item says {0} mL per container. Use that size, or each container started takes the wrong number of units from inventory." xml:space="preserve"><value>El producto dice {0} mL por envase. Usa ese tamaño, o cada envase que se empiece descontará una cantidad equivocada del inventario.</value></data>
+  <data name="The item's record says {0} mL. Each container charged takes 1 unit from inventory, whatever its size." xml:space="preserve"><value>La ficha del producto dice {0} mL. Cada envase cobrado descuenta 1 unidad del inventario, sea cual sea su tamaño.</value></data>
+  <data name="This item's record has no mL: type the size of the container that is charged." xml:space="preserve"><value>La ficha de este producto no indica mL: escribe el tamaño del envase que se cobra.</value></data>
+  <data name="Sale price: {0} · {1} mL on its record" xml:space="preserve"><value>Precio de venta: {0} · {1} mL en su ficha</value></data>
   <data name="The daily-use warehouse had none. Once it has them, a supervisor can reopen the sheet and discharge it again to take them." xml:space="preserve"><value>La bodega de uso diario no tenía. Cuando haya, un supervisor puede reabrir la hoja y darla de alta otra vez para descontarlos.</value></data>
   <data name="No budget left: {0}" xml:space="preserve"><value>Sin saldo de presupuesto: {0}</value></data>
   <data name="No budget left" xml:space="preserve"><value>Sin saldo de presupuesto</value></data>
@@ -1417,4 +1444,12 @@
   <data name="Remove approval" xml:space="preserve"><value>Quitar aprobación</value></data>
   <data name="Remove the approval of {0} {1} of {2}, recorded {3}?" xml:space="preserve"><value>¿Quitar la aprobación de {0} {1} de {2}, anotada el {3}?</value></data>
   <data name="To give back at the cashier, never started: {0}" xml:space="preserve"><value>Por devolver en caja, sin empezar: {0}</value></data>
+  <data name="Which sheets to show" xml:space="preserve"><value>Qué hojas mostrar</value></data>
+  <data name="Active patients" xml:space="preserve"><value>Activos</value></data>
+  <data name="Discharged" xml:space="preserve"><value>Dados de alta</value></data>
+  <data name="Discharged: only those of the last {0} days." xml:space="preserve"><value>Dados de alta: solo los de los últimos {0} días.</value></data>
+  <data name="No sheets discharged in the last {0} days." xml:space="preserve"><value>No hay altas en los últimos {0} días.</value></data>
+  <data name="No sheets yet." xml:space="preserve"><value>Aún no hay hojas.</value></data>
+  <data name="One less" xml:space="preserve"><value>Una menos</value></data>
+  <data name="One more" xml:space="preserve"><value>Una más</value></data>
 </root>

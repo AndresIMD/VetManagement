@@ -7,6 +7,13 @@ namespace VetManagement.Infrastructure.Repositories;
 
 public class ExamReportRepository(AppDbContext context) : Repository<ExamReport>(context), IExamReportRepository
 {
+    public async Task<List<ExamReportFacts>> GetFactsAsync(DateOnly from, DateOnly to)
+        => await _context.ExamReports.AsNoTracking()
+            .Where(r => r.ReceivedOn >= from && r.ReceivedOn <= to)
+            .Select(r => new ExamReportFacts(r.Id, r.ReceivedOn, r.ExamId, r.Title, r.CreatedBy, r.Results.Any(x => x.Abnormal),
+                r.StockItemName, r.StockQuantity, r.StockItemId != null))
+            .ToListAsync();
+
     public async Task<List<ExamReport>> GetLatestAsync(int? petId, int count)
         => await _context.ExamReports.AsNoTracking()
             .Where(r => petId == null || r.PetId == petId)

@@ -23,7 +23,7 @@
             <MudItem xs="12" md="4">
                 <MudAutocomplete T="InventoryItemDTO" Value="_item" ValueChanged="OnItemChangedAsync" Label="@L["Drug or material"]" SearchFunc="SearchAsync"
                                  ToStringFunc="@(i => i?.Name)" DebounceInterval="300" MinCharacters="2" Clearable="true"
-                                 HelperText="@(_item is null ? null : L["Sale price: {0}", Money.Clp(_item.SellPrice)])" />
+                                 HelperText="@ItemHelp" />
             </MudItem>
             <MudItem xs="12" sm="6" md="3">
                 <MudSelect T="ConsumptionCharge" @bind-Value="_charge" Label="@L["Charged as"]">
@@ -61,12 +61,20 @@
                 {
                     <MudText Typo="Typo.caption" Color="Color.Secondary" Class="d-block">@L["It leaves inventory when the quick-use box is restocked, with an egress then: sheets record its uses without taking it again."]</MudText>
                 }
-                @if (_charge == ConsumptionCharge.Container && _itemMl is > 0 && _containerMl is > 0 && _containerMl != _itemMl)
+                @if (_charge == ConsumptionCharge.Container && _item is not null)
                 {
-                    @* One container is one unit of stock: a different size would charge and take the wrong number of them. *@
-                    <MudAlert Severity="Severity.Warning" Dense="true" Class="mt-2">
-                        @L["The item says {0} mL per container. Use that size, or each container started takes the wrong number of units from inventory.", _itemMl.Value.ToString("0.##")]
-                    </MudAlert>
+                    @if (_itemMl is null)
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="d-block">@L["This item's record has no mL: type the size of the container that is charged."]</MudText>
+                    }
+                    else if (!_beforehand && _containerMl is > 0 && _containerMl != _itemMl)
+                    {
+                        @* A size other than the record's is allowed (small ampoules charged as one big container). It's worth
+                           knowing what the sheets take then; from the quick-use box they take nothing, so nothing is said. *@
+                        <MudAlert Severity="Severity.Info" Dense="true" Class="mt-2">
+                            @L["The item's record says {0} mL. Each container charged takes 1 unit from inventory, whatever its size.", _itemMl.Value.ToString("0.##")]
+                        </MudAlert>
+                    }
                 }
             </MudItem>
         </MudGrid>
@@ -145,6 +153,11 @@
     /// <summary>mL in one container of the chosen item, from its inventory record (drugs); null when it doesn't say.</summary>
     private decimal? _itemMl;
 
+    /// <summary>Under the item: its sale price and, when its record says so, its mL, whatever way it is charged.</summary>
+    private string? ItemHelp => _item is null ? null
+        : _itemMl is > 0 ? L["Sale price: {0} · {1} mL on its record", Money.Clp(_item.SellPrice), _itemMl.Value.ToString("0.##")]
+        : L["Sale price: {0}", Money.Clp(_item.SellPrice)];
+
     private string ChargeHelp => _charge switch
     {
         ConsumptionCharge.PerMl => L["The mL given are charged at the price per mL (e.g. diazepam from a vial shared by several patients). The sheets don't take the bottle from inventory: take it out by hand when one is opened."],
@@ -159,13 +172,15 @@
     private async Task<IEnumerable<InventoryItemDTO>> SearchAsync(string text, CancellationToken ct)
         => (await ItemsApi.GetItemsPagedAsync(text, ItemType.None, 0, 15, ct))?.Items ?? [];
 
-    /// <summary>Reads the item's container size and suggests it as the size of one container.</summary>
+    /// <summary>
+    /// Reads the item's container size and suggests it as the size of one container; an item whose record has none
+    /// starts empty, never with the size of the item chosen before.
+    /// </summary>
     private async Task OnItemChangedAsync(InventoryItemDTO? item)
     {
         _item = item;
         _itemMl = await ItemMlAsync(item?.Id);
-        if (_itemMl is not null)
-            _containerMl = _itemMl;
+        _containerMl = _itemMl;
     }
 
     private async Task<decimal?> ItemMlAsync(int? itemId)

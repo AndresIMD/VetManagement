@@ -25,11 +25,29 @@
                 For="@(() => ItemModel.Brand)" Adornment="Adornment.Start"
                 AdornmentIcon="@Icons.Material.Filled.Factory" />
         </MudItem>
-        <MudItem xs="12" sm="6">
-            <MudNumericField Variant="Variant.Outlined" T="int" Label="@L["Stock"]" @bind-Value="ItemModel.Stock"
-                For="@(() => ItemModel.Stock)" Min="0" Adornment="Adornment.End"
-                AdornmentIcon="@Icons.Material.Filled.Inventory" />
-        </MudItem>
+        @* Stock changes only through movements: a new product's first units come in as an ingress, and an existing
+           product's are added from the inventory list, not here. *@
+        @if (IsNew)
+        {
+            <MudItem xs="12" sm="6">
+                <MudStack Row="true" Spacing="2">
+                    <MudNumericField Variant="Variant.Outlined" T="int" Label="@L["Initial units"]" Value="InitialStock"
+                        ValueChanged="InitialStockChanged" Min="0" Adornment="Adornment.End"
+                        AdornmentIcon="@Icons.Material.Filled.Inventory" />
+                    @if (Warehouses.Count > 1)
+                    {
+                        <MudSelect Variant="Variant.Outlined" T="int?" Label="@L["Warehouse"]" Value="WarehouseId"
+                            ValueChanged="WarehouseIdChanged" Disabled="@(InitialStock == 0)" Required="@(InitialStock > 0)"
+                            RequiredError="@L["Choose the warehouse."]">
+                            @foreach (var warehouse in Warehouses)
+                            {
+                                <MudSelectItem T="int?" Value="@warehouse.Id">@warehouse.Name</MudSelectItem>
+                            }
+                        </MudSelect>
+                    }
+                </MudStack>
+            </MudItem>
+        }
         <MudItem xs="12" sm="6">
             <MudNumericField Variant="Variant.Outlined" T="int" Label="@L["Low stock threshold"]"
                 @bind-Value="ItemModel.LowStockThreshold" For="@(() => ItemModel.LowStockThreshold)" Min="0"
@@ -112,6 +130,18 @@
     [Parameter] public EventCallback<bool> OnValidChanged { get; set; }
     [Parameter] public EventCallback<bool> OnDirtyChanged { get; set; }
 
+    /// <summary>A product being created: the form asks for its first units and, with several warehouses, where they go.</summary>
+    [Parameter] public bool IsNew { get; set; }
+    [Parameter] public int InitialStock { get; set; }
+    [Parameter] public EventCallback<int> InitialStockChanged { get; set; }
+    [Parameter] public int? WarehouseId { get; set; }
+    [Parameter] public EventCallback<int?> WarehouseIdChanged { get; set; }
+    /// <summary>The warehouses the user may put stock in; with one or none the units go to the daily-use one.</summary>
+    [Parameter] public List<VetManagement.Contracts.Inventory.WarehouseDto> Warehouses { get; set; } = [];
+
+    /// <summary>A field's value changed (when the user leaves it), e.g. to look the name or code up.</summary>
+    [Parameter] public EventCallback OnFieldChanged { get; set; }
+
     private MudForm? mudForm;
     private bool _isValid;
     public bool IsValid
@@ -161,6 +191,6 @@
     private Task OnFormFieldChanged(object _)
     {
         IsDirty = true;
-        return Task.CompletedTask;
+        return OnFieldChanged.InvokeAsync();
     }
 }

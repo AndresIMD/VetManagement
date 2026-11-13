@@ -21,16 +21,25 @@
     <MudBreadcrumbs Items="Breadcrumbs" Class="mb-2" />
     <MudPaper Class="pa-6 mb-4 elevation-3 rounded-lg app-surface">
         <MudGrid>
-            <MudItem xs="12" sm="6" md="@(ShowsWarehouses ? 4 : 6)">
+            <MudItem xs="12" sm="6" md="@(ShowsWarehouses ? 3 : 5)">
                 <MudTextFilterField @bind-Value="FilterNameOrCompound"
                     Label="@L["Search by name, brand, compound or code..."]" />
             </MudItem>
-            <MudItem xs="12" sm="6" md="3">
+            <MudItem xs="12" sm="6" md="@(ShowsWarehouses ? 2 : 3)">
                 <MudSelect T="ItemType" @bind-Value="FilterItemType" Label="@L["Category"]" Variant="Variant.Outlined"
                     AnchorOrigin="Origin.BottomCenter">
                     <MudSelectItem Value="ItemType.None">@L["All categories"]</MudSelectItem>
                     <MudSelectItem Value="ItemType.Material">@L["Material"]</MudSelectItem>
                     <MudSelectItem Value="ItemType.Drug">@L["Drug"]</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            @* The same filter the home page and the metrics link to (?alert=), chosen here without leaving the list. *@
+            <MudItem xs="12" sm="6" md="2">
+                <MudSelect T="string" @bind-Value="FilterAlert" Label="@L["Stock"]" Variant="Variant.Outlined"
+                    AnchorOrigin="Origin.BottomCenter">
+                    <MudSelectItem Value="@string.Empty">@L["All"]</MudSelectItem>
+                    <MudSelectItem Value="@("low")">@L["Low stock"]</MudSelectItem>
+                    <MudSelectItem Value="@("zero")">@L["Out of stock"]</MudSelectItem>
                 </MudSelect>
             </MudItem>
             @* Only for whoever sees more than one warehouse: what one of them holds, with its units. *@
@@ -47,7 +56,7 @@
                     </MudSelect>
                 </MudItem>
             }
-            <MudItem xs="12" sm="@(ShowsWarehouses ? 6 : 12)" md="@(ShowsWarehouses ? 2 : 3)" Class="d-flex align-center justify-end">
+            <MudItem xs="12" sm="@(ShowsWarehouses ? 12 : 6)" md="2" Class="d-flex align-center justify-end">
                 <MudButton Color="Color.Secondary" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Clear"
                     OnClick="ClearFilters">@L["Clear filter"]</MudButton>
             </MudItem>
@@ -211,6 +220,19 @@
         }
     }
 
+    /// <summary>The stock filter as the select binds it: "low", "zero", or empty for every item.</summary>
+    private string FilterAlert
+    {
+        get => _alert ?? string.Empty;
+        set
+        {
+            var alert = string.IsNullOrEmpty(value) ? null : value;
+            if (_alert == alert) return;
+            _alert = alert;
+            _table?.ReloadServerData();
+        }
+    }
+
     private bool ShowsWarehouses => _warehouses.Count > 1;
 
     private int? _filterWarehouseId;
@@ -338,7 +360,7 @@
         FilterNameOrCompound = string.Empty;
         FilterItemType = ItemType.None;
         FilterWarehouseId = null;
-        _alert = null;
+        FilterAlert = string.Empty;
         _table?.ReloadServerData();
     }
 
@@ -355,14 +377,15 @@
         {
         { x => x.Title, L["New product"].Value },
         { x => x.TitleIcon, Icons.Material.Filled.AddBox },
-        { x => x.TitleColor, Color.Success }
+        { x => x.TitleColor, Color.Success },
+        { x => x.Warehouses, _warehouses }
         };
         var dialog = await DialogService.ShowAsync<CreateItemModal>(null, parameters, options);
         var result = await dialog.Result;
-        if (result is { Canceled: false } && result.Data is Item)
+        if (result is { Canceled: false })
         {
+            // A product was created, or units were added to one that already existed; the dialog said which.
             _table?.ReloadServerData();
-            Snackbar.Add(L["Product created."], Severity.Success);
         }
         else
         {
@@ -618,7 +641,7 @@
             {
                 Label = InventoryUiHelpers.GetAlertLabel(_alert),
                 Color = InventoryUiHelpers.GetAlertColor(_alert),
-                OnClear = () => { _alert = null; _table?.ReloadServerData(); }
+                OnClear = () => FilterAlert = string.Empty
             });
         return list;
     }

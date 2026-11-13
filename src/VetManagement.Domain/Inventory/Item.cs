@@ -8,6 +8,12 @@ namespace VetManagement.Domain.Inventory;
 /// </summary>
 public class Item : Entity<int>
 {
+    /// <summary>
+    /// What the product form starts with, and what a product without a code of its own keeps. Many products share it,
+    /// so it is never looked up or compared as a code.
+    /// </summary>
+    public const string NoBarcode = "00000";
+
     protected Item() : base(0) { }
 
     public Item(

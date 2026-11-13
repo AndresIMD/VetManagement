@@ -6,15 +6,14 @@ using VetManagement.Contracts.TestData;
 namespace VetManagement.Api.TestData;
 
 /// <summary>
-/// Sample data for development and testing. Answers 404 in Production, always, and elsewhere only in Development
-/// or Testing, or when <c>TestData:Enabled</c> is true (e.g. a demo server). Admin only.
+/// Sample data for development and testing. Answers 404 where <see cref="TestDataAvailability"/> says it isn't offered
+/// (Production, always); there the permission isn't granted either. Admin only.
 /// </summary>
 [Route("api/dev/test-data")]
 [Authorize(Policy = "System.TestData")]
 public class TestDataController(TestDataService service, IHostEnvironment environment, IConfiguration configuration) : ApiControllerBase
 {
-    private bool Available => !environment.IsProduction()
-        && (environment.IsDevelopment() || environment.IsEnvironment("Testing") || configuration.GetValue<bool>("TestData:Enabled"));
+    private bool Available => TestDataAvailability.IsAvailable(environment, configuration);
 
     [HttpGet]
     public async Task<ActionResult<List<TestDataStatusDto>>> GetAsync()

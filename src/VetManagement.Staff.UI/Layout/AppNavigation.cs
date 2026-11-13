@@ -46,7 +46,8 @@ public static class AppNavigation
             [
                 // Lab staff work on Lab Reports; requests are made by clinicians and followed up by the lab supervisor.
                 new() { Title = "Lab Reports", Href = "exam-reports", RequiredPerms = ["examsperformed.read"] },
-                new() { Title = "Requests", Href = "exam-requests", RequiredPerms = ["medical.read", "exams.update"] }
+                new() { Title = "Requests", Href = "exam-requests", RequiredPerms = ["medical.read", "exams.update"] },
+                new() { Title = "Metrics", Href = "exam-metrics", RequiredPerms = ["exams.metrics"] }
             ]
         },
         new()

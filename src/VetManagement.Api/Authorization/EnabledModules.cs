@@ -1,12 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using VetManagement.Api.TestData;
 using VetManagement.Domain.Enums;
 
 namespace VetManagement.Api.Authorization;
 
 /// <summary>
 /// Modules switched on for this clinic (configuration Modules:Enabled; absent or empty = all). A module that is off
-/// grants no permissions, so its menus, pages and endpoints disappear for everyone, Admin included.
+/// grants no permissions, so its menus, pages and endpoints disappear for everyone, Admin included. The same goes for
+/// sample data where the server doesn't offer it (<see cref="TestDataAvailability"/>): a clinic's production server.
 /// </summary>
 public sealed class EnabledModules
 {
@@ -14,9 +16,12 @@ public sealed class EnabledModules
     private static readonly AppModule[] NeedClients = [AppModule.Exams, AppModule.Clinical, AppModule.Scheduling, AppModule.Billing];
 
     private readonly HashSet<AppModule> _enabled;
+    private readonly bool _testData;
 
-    public EnabledModules(IConfiguration configuration)
+    /// <param name="environment">Where the server runs; without it, sample data counts as not offered.</param>
+    public EnabledModules(IConfiguration configuration, IHostEnvironment? environment = null)
     {
+        _testData = environment is not null && TestDataAvailability.IsAvailable(environment, configuration);
         var configured = configuration.GetSection("Modules:Enabled").Get<AppModule[]>();
         _enabled = configured is { Length: > 0 } ? [.. configured] : [.. Enum.GetValues<AppModule>()];
 
@@ -27,9 +32,12 @@ public sealed class EnabledModules
 
     public bool IsEnabled(AppModule module) => _enabled.Contains(module);
 
-    /// <summary>Drops the permissions of modules that are off.</summary>
+    /// <summary>Drops the permissions of modules that are off, and the sample data one where it isn't offered.</summary>
     public HashSet<string> Filter(IEnumerable<string> permissions)
-        => permissions.Where(p => Permissions.ModuleOf(p) is not { } module || IsEnabled(module)).ToHashSet();
+        => permissions
+            .Where(p => Permissions.ModuleOf(p) is not { } module || IsEnabled(module))
+            .Where(p => _testData || p != Permissions.SYSTEM.TEST_DATA)
+            .ToHashSet();
 }
 
 /// <summary>
