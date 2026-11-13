@@ -4,7 +4,8 @@
 
 Product model: one generic staff CRM sold to many clinics; each clinic has its own deployment and database, its
 own branded public site, and configures every business policy itself (admin-editable settings).
-How the code is organised: [`docs/architecture/ARCHITECTURE.md`](docs/architecture/ARCHITECTURE.md). All docs:
+How the code is organised: [`docs/architecture/ARCHITECTURE.md`](docs/architecture/ARCHITECTURE.md). How it should feel:
+[`DESIGN.md`](DESIGN.md). All docs:
 [`docs/README.md`](docs/README.md).
 
 ## Phases
@@ -53,13 +54,18 @@ How the code is organised: [`docs/architecture/ARCHITECTURE.md`](docs/architectu
 
 ## Later (depend on providers or costs)
 
-- Enforcing paid modules once there is a second clinic: `Modules:Enabled` is configuration the clinic could edit on
-  its own server. Either host the CRM (vendor-run, subdomain per clinic) or read the modules from a license signed by
-  the vendor; `EnabledModules` is the single place to change.
+- Enforcing paid modules: in the cloud the vendor sets `Modules:Enabled`. On a private server the clinic could edit it,
+  so those plans read the modules from a license signed by the vendor, with an expiry date because billing is monthly.
+  Needed before a second clinic runs on a private server; `EnabledModules` is the single place to change.
 - WhatsApp notifications (setting reserved).
 - Electronic receipts (boleta/factura SII).
 - Services needing a vet *and* a room at once.
-- Offline mode for the desktop app.
+- Deployment plans: cloud for most clinics, a private server for those that need one, and possibly a mixed plan where
+  a private server set up in advance keeps the app working during a serious internet incident and the cloud is updated
+  afterwards. The stock and booking locks only work inside one database, so only one side can take writes at a time,
+  online booking included. Both staff apps choose their API once, at start, and prefer the local one; nothing syncs yet.
+- Apps for iOS and Android after the Windows launch: the same screens inside MAUI unless the testing stage says
+  otherwise.
 
 ## Quick checks
 
