@@ -31,6 +31,7 @@ public static class StaffAuthorization
         ["Audit.Read"] = "audit.read",
         ["Exams.Read"] = "exams.read",
         ["Exams.Update"] = "exams.update",
+        ["Exams.Metrics"] = "exams.metrics",
         ["ExamsPerformed.Read"] = "examsperformed.read",
         ["ExamsPerformed.Create"] = "examsperformed.create",
         ["ExamsPerformed.Update"] = "examsperformed.update",

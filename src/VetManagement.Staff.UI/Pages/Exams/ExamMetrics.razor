@@ -1,0 +1,334 @@
+@page "/exam-metrics"
+@attribute [Authorize(Policy = "Exams.Metrics")]
+@implements IDisposable
+@using VetManagement.Contracts.Exams
+@using VetManagement.Contracts.Inventory
+@inject ExamReportsApiService ReportsService
+@inject IBrowserViewportService Viewport
+
+<PageTitle>@L["Exam Metrics"]</PageTitle>
+
+@* The lab's figures, in the shape of the inventory metrics: a period, three figures, reports over time, then who and what. *@
+<MudContainer MaxWidth="MaxWidth.Large" Class="mx-auto px-2 mt-8">
+    <PageHeader Title="@L["Exam Metrics"]" Subtitle="@L["Lab reports by the date the sample was received."]" Icon="@Icons.Material.Filled.QueryStats" />
+
+    <MudPaper Class="pa-4 mb-4 rounded-lg app-surface" Elevation="1">
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="7">
+                <MudText Typo="Typo.caption">@L["Period"]</MudText>
+                <MudChipSet T="Period" SelectedValue="_period" SelectedValueChanged="OnPeriodChangedAsync" SelectionMode="SelectionMode.SingleSelection"
+                            Color="Color.Primary" Variant="Variant.Text" CheckMark="false">
+                    @foreach (var period in Periods)
+                    {
+                        <MudChip T="Period" Value="period" Text="@PeriodText(period)" />
+                    }
+                </MudChipSet>
+            </MudItem>
+            <MudItem xs="12" md="5">
+                <MudDateRangePicker DateRange="_range" DateRangeChanged="OnRangeChangedAsync" Label="@L["Custom range"]" Variant="Variant.Outlined"
+                                    Margin="Margin.Dense" MaxDate="DateTime.Today" AutoClose="true" />
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <div style="height: 4px;" class="mb-2">
+        @if (_loading && _metrics is not null)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" Size="Size.Small" />
+        }
+    </div>
+
+    @if (_error is not null)
+    {
+        <MudAlert Severity="Severity.Error" Dense="true" Class="mb-4">@_error</MudAlert>
+    }
+
+    @if (_metrics is null)
+    {
+        @if (_loading)
+        {
+            <MudGrid Class="mb-4">
+                @for (var i = 0; i < 3; i++)
+                {
+                    <MudItem xs="12" sm="4"><MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="96px" Class="rounded-lg" /></MudItem>
+                }
+            </MudGrid>
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="300px" Class="rounded-lg" />
+        }
+    }
+    else
+    {
+        var m = _metrics;
+        <MudGrid Class="mb-4">
+            <KpiCard Label="@L["Lab reports in the period"]" Value="@Number(m.Reports)" Icon="@Icons.Material.Filled.Description" Color="Color.Primary">
+                <MudText Typo="Typo.caption">
+                    @(Trend(m) is { } trend ? L["{0}% vs. previous period", (trend > 0 ? "+" : string.Empty) + trend] : L["{0} in the previous period", Number(m.PreviousReports)])
+                </MudText>
+            </KpiCard>
+            <KpiCard Label="@L["With values out of range"]" Value="@(m.Reports == 0 ? "–" : $"{Percent(m.WithAbnormal, m.Reports)}%")"
+                     Icon="@Icons.Material.Filled.WarningAmber" Color="Color.Warning">
+                <MudText Typo="Typo.caption">@L["{0} of {1} reports", Number(m.WithAbnormal), Number(m.Reports)]</MudText>
+            </KpiCard>
+            <KpiCard Label="@L["Kit units taken"]" Value="@Number(m.KitUnits)" Icon="@Icons.Material.Filled.Inventory2" Color="Color.Info">
+                <MudText Typo="Typo.caption">@L["{0} reports took a kit from inventory", Number(m.Kits.Sum(k => k.Reports))]</MudText>
+            </KpiCard>
+        </MudGrid>
+
+        <MudPaper Class="pa-4 mb-4 rounded-lg app-surface" Elevation="1">
+            <MudText Typo="Typo.h6">@L["Reports received"]</MudText>
+            <MudText Typo="Typo.caption">@GroupingText(m.Grouping) · @RangeText(m)</MudText>
+            @if (m.Reports == 0)
+            {
+                <MudStack AlignItems="AlignItems.Center" Class="py-12">
+                    <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Large" aria-hidden="true" />
+                    <MudText>@L["No reports in this period."]</MudText>
+                </MudStack>
+            }
+            else
+            {
+                <MudChart T="double" ChartType="ChartType.Bar" ChartSeries="@_chartSeries" ChartLabels="@_chartLabels" ChartOptions="@_barOptions"
+                          Width="100%" Height="300px" MatchBoundsToSize="true" />
+            }
+        </MudPaper>
+
+        @if (m.Reports > 0)
+        {
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudPaper Class="pa-4 rounded-lg app-surface" Elevation="1" Style="height: 100%;">
+                        <MudText Typo="Typo.h6">@L["By exam"]</MudText>
+                        <MudText Typo="Typo.caption">@L["The {0} with the most reports. Out of range: reports with at least one value outside its range.", m.ByExam.Count]</MudText>
+                        <div style="overflow-x: auto;" class="mt-2">
+                            <MudSimpleTable Dense="true" Hover="true" Elevation="0">
+                                <thead>
+                                    <tr>
+                                        <th>@L["Exam"]</th>
+                                        <th style="text-align: right;">@L["Quantity"]</th>
+                                        <th style="text-align: right;">@L["Out of range"]</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var exam in m.ByExam)
+                                    {
+                                        <tr>
+                                            <td>@exam.Name</td>
+                                            <td style="text-align: right;">@Number(exam.Reports)</td>
+                                            <td style="text-align: right; white-space: nowrap;">@Number(exam.WithAbnormal) (@Percent(exam.WithAbnormal, exam.Reports)%)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </MudSimpleTable>
+                        </div>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudStack Spacing="4" Style="height: 100%;">
+                        <MudPaper Class="pa-4 rounded-lg app-surface" Elevation="1">
+                            <MudText Typo="Typo.h6">@L["Who wrote them"]</MudText>
+                            <MudText Typo="Typo.caption">@L["The user account each report was saved with."]</MudText>
+                            <MudSimpleTable Dense="true" Hover="true" Elevation="0" Class="mt-2">
+                                <thead>
+                                    <tr>
+                                        <th>@L["User"]</th>
+                                        <th style="text-align: right;">@L["Quantity"]</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var reporter in m.ByReporter)
+                                    {
+                                        <tr>
+                                            <td style="overflow-wrap: anywhere;">@reporter.User</td>
+                                            <td style="text-align: right;">@Number(reporter.Reports)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </MudSimpleTable>
+                        </MudPaper>
+                        <MudPaper Class="pa-4 rounded-lg app-surface" Elevation="1">
+                            <MudText Typo="Typo.h6">@L["Kits used"]</MudText>
+                            @if (m.Kits.Count == 0)
+                            {
+                                <MudText Typo="Typo.body2" Class="mt-2">@L["No report took a kit from inventory in this period."]</MudText>
+                            }
+                            else
+                            {
+                                <MudSimpleTable Dense="true" Hover="true" Elevation="0" Class="mt-2">
+                                    <thead>
+                                        <tr>
+                                            <th>@L["Product"]</th>
+                                            <th style="text-align: right;">@L["Quantity"]</th>
+                                            <th style="text-align: right;">@L["Units"]</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var kit in m.Kits)
+                                        {
+                                            <tr>
+                                                <td>@kit.Name</td>
+                                                <td style="text-align: right;">@Number(kit.Reports)</td>
+                                                <td style="text-align: right;">@Number(kit.Units)</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </MudSimpleTable>
+                            }
+                        </MudPaper>
+                    </MudStack>
+                </MudItem>
+            </MudGrid>
+        }
+    }
+</MudContainer>
+
+@code {
+    private enum Period { Today, Last7, Last30, Last90, ThisMonth, Last12Months, Custom }
+
+    private static readonly Period[] Periods = [Period.Today, Period.Last7, Period.Last30, Period.Last90, Period.ThisMonth, Period.Last12Months];
+
+    private Period _period = Period.Last30;
+    private DateRange _range = new(DateTime.Today.AddDays(-29), DateTime.Today);
+
+    private ExamMetricsDto? _metrics;
+    private string? _error;
+    private bool _loading;
+    private CancellationTokenSource? _loadCts;
+    private bool _narrow;
+
+    private List<ChartSeries<double>> _chartSeries = [];
+    private string[] _chartLabels = [];
+    private readonly BarChartOptions _barOptions = new() { ChartPalette = ["#1e88e5"], YAxisFormat = "0", ShowLegend = false };
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+        _narrow = await Viewport.GetCurrentBreakpointAsync() == Breakpoint.Xs;
+        if (_narrow && _metrics is not null)
+        {
+            BuildChart(_metrics);
+            StateHasChanged();
+        }
+    }
+
+    private string PeriodText(Period period) => period switch
+    {
+        Period.Today => L["Today"],
+        Period.Last7 => L["7 days"],
+        Period.Last30 => L["30 days"],
+        Period.Last90 => L["90 days"],
+        Period.ThisMonth => L["This month"],
+        _ => L["12 months"]
+    };
+
+    private async Task OnPeriodChangedAsync(Period period)
+    {
+        var today = DateTime.Today;
+        _period = period;
+        _range = period switch
+        {
+            Period.Today => new DateRange(today, today),
+            Period.Last7 => new DateRange(today.AddDays(-6), today),
+            Period.Last30 => new DateRange(today.AddDays(-29), today),
+            Period.Last90 => new DateRange(today.AddDays(-89), today),
+            Period.ThisMonth => new DateRange(new DateTime(today.Year, today.Month, 1), today),
+            _ => new DateRange(new DateTime(today.Year, today.Month, 1).AddMonths(-11), today)
+        };
+        await LoadAsync();
+    }
+
+    private async Task OnRangeChangedAsync(DateRange? range)
+    {
+        if (range?.Start is null || range.End is null)
+            return;
+        _range = range;
+        _period = Period.Custom;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        // A newer period cancels the request still running, so a slow answer never overwrites a newer one.
+        _loadCts?.Cancel();
+        _loadCts?.Dispose();
+        var cts = _loadCts = new CancellationTokenSource();
+        _loading = true;
+        try
+        {
+            var (metrics, error) = await ReportsService.GetMetricsAsync(
+                DateOnly.FromDateTime(_range.Start ?? DateTime.Today), DateOnly.FromDateTime(_range.End ?? DateTime.Today), cts.Token);
+            _error = error;
+            if (metrics is not null)
+            {
+                _metrics = metrics;
+                BuildChart(metrics);
+            }
+        }
+        catch (OperationCanceledException) when (cts.IsCancellationRequested)
+        {
+            return;
+        }
+        catch (HttpRequestException)
+        {
+            _error = L["Could not load the metrics. Check the connection and try again."];
+        }
+        finally
+        {
+            if (_loadCts == cts)
+                _loading = false;
+        }
+    }
+
+    private void BuildChart(ExamMetricsDto m)
+    {
+        _chartLabels = [.. m.Buckets.Select(b => BucketLabel(b.Start, m.Grouping, m.Buckets.Count))];
+        // A phone fits about eight labels; the rest stay blank so they don't pile up.
+        var every = _narrow ? (int)Math.Ceiling(_chartLabels.Length / 8.0) : 1;
+        if (every > 1)
+            _chartLabels = [.. _chartLabels.Select((label, i) => i % every == 0 ? label : string.Empty)];
+        _chartSeries = [new ChartSeries<double> { Name = L["Lab Reports"], Data = m.Buckets.Select(b => (double)b.Reports).ToArray() }];
+        _barOptions.XAxisLabelRotation = _chartLabels.Length / every > (_narrow ? 5 : 14) ? 45 : 0;
+        _barOptions.YAxisTicks = TickStep(m.Buckets.Select(b => (double)b.Reports).DefaultIfEmpty(0).Max());
+    }
+
+    private static int TickStep(double max)
+    {
+        var rough = Math.Max(max / 5, 1);
+        var power = Math.Pow(10, Math.Floor(Math.Log10(rough)));
+        var step = (rough / power) switch { <= 1 => 1, <= 2 => 2, <= 5 => 5, _ => 10 };
+        return (int)(step * power);
+    }
+
+    private string BucketLabel(DateTime start, MetricsGrouping grouping, int count) => grouping switch
+    {
+        MetricsGrouping.Day when count <= 7 => start.ToString("ddd dd"),
+        MetricsGrouping.Day => start.ToString("dd MMM"),
+        MetricsGrouping.Week => L["Week of {0}", start.ToString("dd MMM")],
+        _ => start.ToString("MMM yy")
+    };
+
+    private string GroupingText(MetricsGrouping grouping) => grouping switch
+    {
+        MetricsGrouping.Day => L["Per day"],
+        MetricsGrouping.Week => L["Per week"],
+        _ => L["Per month"]
+    };
+
+    private static string RangeText(ExamMetricsDto m)
+        => m.From == m.To ? m.From.ToString("dd MMM yyyy") : $"{m.From:dd MMM yyyy} – {m.To:dd MMM yyyy}";
+
+    /// <summary>Change of reports against the previous period of the same length; null when there is nothing to compare with.</summary>
+    private static int? Trend(ExamMetricsDto m)
+        => m.PreviousReports == 0 ? null : (int)Math.Round((m.Reports - m.PreviousReports) * 100.0 / m.PreviousReports);
+
+    private static int Percent(int part, int whole) => whole == 0 ? 0 : (int)Math.Round(part * 100.0 / whole);
+
+    private static string Number(int value) => value.ToString("N0");
+
+    public void Dispose()
+    {
+        _loadCts?.Cancel();
+        _loadCts?.Dispose();
+    }
+}

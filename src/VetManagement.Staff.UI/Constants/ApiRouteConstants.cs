@@ -102,6 +102,7 @@ public static class ApiRouteConstants
 
     // Exam reports
     public const string EXAM_REPORTS = "api/exam-reports";
+    public const string EXAM_METRICS = "api/exam-metrics";
     public const string EXAM_REPORT_BY_ID = "api/exam-reports/{0}";
     public const string EXAM_REPORT_SETTINGS = "api/exam-reports/settings";
     public const string EXAM_REPORT_IMAGE = "api/exam-reports/images/{0}";

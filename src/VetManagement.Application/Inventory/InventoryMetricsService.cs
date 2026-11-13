@@ -1,3 +1,4 @@
+using VetManagement.Application.Common;
 using VetManagement.Application.Contracts.Persistence;
 using VetManagement.Application.Scheduling;
 using VetManagement.Contracts.Inventory;
@@ -21,13 +22,7 @@ public class InventoryMetricsService(IUnitOfWork unitOfWork, SchedulingSettingsS
 
     private const int ListSize = 10;
 
-    public static MetricsGrouping GroupingFor(DateOnly from, DateOnly to) => (to.DayNumber - from.DayNumber + 1) switch
-    {
-        1 => MetricsGrouping.Hour,
-        <= 62 => MetricsGrouping.Day,
-        <= 182 => MetricsGrouping.Week,
-        _ => MetricsGrouping.Month
-    };
+    public static MetricsGrouping GroupingFor(DateOnly from, DateOnly to) => MetricsBuckets.GroupingFor(from, to);
 
     public async Task<InventoryMetricsDto> GetAsync(DateOnly from, DateOnly to, IReadOnlyCollection<int>? itemIds = null)
     {
@@ -53,13 +48,13 @@ public class InventoryMetricsService(IUnitOfWork unitOfWork, SchedulingSettingsS
             .Sum(m => m.Quantity);
 
         var grouping = GroupingFor(from, to);
-        var starts = BucketStarts(from, to, grouping, now);
+        var starts = MetricsBuckets.Starts(from, to, grouping, now);
         var unitsIn = new int[starts.Count];
         var unitsOut = new int[starts.Count];
         var series = (chosen ?? []).Where(items.ContainsKey).ToDictionary(id => id, _ => (Out: new int[starts.Count], In: new int[starts.Count]));
         foreach (var m in inPeriod)
         {
-            var index = BucketIndex(m.Date, starts[0], grouping);
+            var index = MetricsBuckets.Index(m.Date, starts[0], grouping);
             if (index < 0 || index >= starts.Count)
                 continue;
             var drawn = series.TryGetValue(m.ItemId, out var line);
@@ -111,40 +106,4 @@ public class InventoryMetricsService(IUnitOfWork unitOfWork, SchedulingSettingsS
     private static bool IsOut(InventoryMovementType type) => type is InventoryMovementType.Egress or InventoryMovementType.MassiveStockEgress;
 
     private static bool IsIn(InventoryMovementType type) => type is InventoryMovementType.Ingress or InventoryMovementType.MassiveStockIngress;
-
-    /// <summary>Local start of each slice. A single day is split by hour, up to the current hour when it is today.</summary>
-    private static List<DateTime> BucketStarts(DateOnly from, DateOnly to, MetricsGrouping grouping, DateTime now)
-    {
-        var starts = new List<DateTime>();
-        switch (grouping)
-        {
-            case MetricsGrouping.Hour:
-                var lastHour = from == DateOnly.FromDateTime(now) ? now.Hour : 23;
-                for (var h = 0; h <= lastHour; h++)
-                    starts.Add(from.ToDateTime(new TimeOnly(h, 0)));
-                break;
-            case MetricsGrouping.Day:
-                for (var d = from; d <= to; d = d.AddDays(1))
-                    starts.Add(d.ToDateTime(TimeOnly.MinValue));
-                break;
-            case MetricsGrouping.Week:
-                var monday = from.AddDays(-(((int)from.DayOfWeek + 6) % 7));
-                for (var d = monday; d <= to; d = d.AddDays(7))
-                    starts.Add(d.ToDateTime(TimeOnly.MinValue));
-                break;
-            default:
-                for (var d = new DateOnly(from.Year, from.Month, 1); d <= to; d = d.AddMonths(1))
-                    starts.Add(d.ToDateTime(TimeOnly.MinValue));
-                break;
-        }
-        return starts;
-    }
-
-    private static int BucketIndex(DateTime local, DateTime first, MetricsGrouping grouping) => grouping switch
-    {
-        MetricsGrouping.Hour => local.Hour,
-        MetricsGrouping.Day => (local.Date - first).Days,
-        MetricsGrouping.Week => (local.Date - first).Days / 7,
-        _ => (local.Year - first.Year) * 12 + local.Month - first.Month
-    };
 }
