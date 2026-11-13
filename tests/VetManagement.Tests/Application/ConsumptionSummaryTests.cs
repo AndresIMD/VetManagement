@@ -145,6 +145,21 @@ public class ConsumptionSummaryTests
     }
 
     [Fact]
+    public void ThrowingAwayTheRestOfAContainer_DoesntEmptyABottleBiggerThanIt()
+    {
+        // A 100 mL bottle charged by 10 mL: 3 mL given, the other 7 of that container thrown away, then 1 mL more.
+        var sheet = new ConsumptionSheet
+        {
+            Entries = [Use(9, ConsumptionCharge.Container, 3, 15000, 10, stockUnitMl: 100), Use(9, ConsumptionCharge.Container, 7, 15000, 10, discarded: true, stockUnitMl: 100),
+                Use(9, ConsumptionCharge.Container, 1, 15000, 10, stockUnitMl: 100)]
+        };
+
+        var line = ConsumptionSummary.For(sheet).Lines.Single();
+
+        (line.Containers, line.StockUnits).Should().Be((2, 1), "two containers are charged, all 11 mL come from the one bottle opened");
+    }
+
+    [Fact]
     public void AUseRecordedWithAnotherUnit_NeverChangesWhatEarlierUsesTook()
     {
         // A use from before the pricing knew the unit took its container; after the change, a use takes its ampoules.

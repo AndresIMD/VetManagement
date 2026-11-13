@@ -63,8 +63,10 @@ public sealed record ConsumptionSummary(List<ConsumptionLine> Lines, int Total, 
                 var stockUnit = entry.StockUnitMl is > 0 and var unit && unit != size ? unit : (decimal?)null;
                 if (entry.Discarded)
                 {
+                    // The rest thrown away comes out of the open unit, and at most what is left in it: the rest of an
+                    // ampoule smaller than the container, or just those mL from a bottle bigger than it.
                     foreach (var (unitMl, open) in opened.ToList())
-                        opened[unitMl] = (open.Units, open.Units * unitMl);
+                        opened[unitMl] = (open.Units, Math.Min(open.Ml + entry.Quantity, open.Units * unitMl));
                 }
                 else if (stockUnit is decimal unitMl)
                 {
