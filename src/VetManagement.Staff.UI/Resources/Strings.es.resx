@@ -1388,7 +1388,9 @@
   <data name="Use removed." xml:space="preserve"><value>Uso quitado.</value></data>
   <data name="The use could not be recorded." xml:space="preserve"><value>No se pudo registrar el uso.</value></data>
   <data name="The use could not be removed." xml:space="preserve"><value>No se pudo quitar el uso.</value></data>
-  <data name="The item says {0} mL per container. Use that size, or each container started takes the wrong number of units from inventory." xml:space="preserve"><value>El producto dice {0} mL por envase. Usa ese tamaño, o cada envase que se empiece descontará una cantidad equivocada del inventario.</value></data>
+  <data name="The item's record says {0} mL. Each container charged takes 1 unit from inventory, whatever its size." xml:space="preserve"><value>La ficha del producto dice {0} mL. Cada envase cobrado descuenta 1 unidad del inventario, sea cual sea su tamaño.</value></data>
+  <data name="This item's record has no mL: type the size of the container that is charged." xml:space="preserve"><value>La ficha de este producto no indica mL: escribe el tamaño del envase que se cobra.</value></data>
+  <data name="Sale price: {0} · {1} mL on its record" xml:space="preserve"><value>Precio de venta: {0} · {1} mL en su ficha</value></data>
   <data name="The daily-use warehouse had none. Once it has them, a supervisor can reopen the sheet and discharge it again to take them." xml:space="preserve"><value>La bodega de uso diario no tenía. Cuando haya, un supervisor puede reabrir la hoja y darla de alta otra vez para descontarlos.</value></data>
   <data name="No budget left: {0}" xml:space="preserve"><value>Sin saldo de presupuesto: {0}</value></data>
   <data name="No budget left" xml:space="preserve"><value>Sin saldo de presupuesto</value></data>
