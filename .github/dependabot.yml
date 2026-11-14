@@ -12,6 +12,18 @@ updates:
     ignore:
       - dependency-name: Microsoft.OpenApi
         update-types: ["version-update:semver-major"]
+      # These packages carry the .NET version the app targets (10, long-term support): their next major arrives with
+      # the move to that .NET, as one change, not as weekly pull requests. Other packages keep their major updates.
+      - dependency-name: "Microsoft.AspNetCore.*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "Microsoft.EntityFrameworkCore*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "Microsoft.Extensions.*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "Microsoft.Maui.*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "System.Security.Cryptography.*"
+        update-types: ["version-update:semver-major"]
     groups:
       minor-and-patch:
         update-types: [minor, patch]
