@@ -126,7 +126,8 @@ Client secrets (booking tokens, portal links) are random; portal links are store
 
 - Errors: `ProblemDetails` everywhere; unhandled exceptions are logged and return a 500 without internals.
 - Logs: JSON console logs with scopes (`TraceId`) in Production.
-- Health: `/healthz` checks database connectivity (503 when unreachable).
+- Health: `/healthz` checks the database: 503 when it is unreachable or its schema is behind this version (start-up logs
+  a failed migration and goes on).
 - Login: account lockout (5 failures → 5 min) plus 10 attempts/min per IP. Permissions are claims in the
   token, synced at login: after an update that adds permissions, users log in again.
 - Secrets: user-secrets in Development only; environment variables in deployments; never in `appsettings*.json`.

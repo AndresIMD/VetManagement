@@ -29,7 +29,8 @@ Environment variable names use `__` for sections, e.g. `Payments__WebPayPlus__Ap
 | `TestData:Enabled` | Sample-data page on a non-production demo/staging server. Ignored in Production (always off there). |
 | `SettingsFile` | A JSON settings file outside the API's folder (which an update replaces), read last: its values win over every other source. For a host without per-app environment variables, such as a Windows service: give it on the command line (`--SettingsFile=C:\ProgramData\VetManagement\api.settings.json`). It holds secrets: only administrators, SYSTEM and the service's account may read it. See [Hosting on a clinic PC](#hosting-on-a-clinic-pc-windows-1011). |
 
-Health check: `GET /healthz` (includes the database).
+Health check: `GET /healthz` answers 503 when the database is unreachable or behind this version (a migration that didn't
+apply at start-up: the reason is in the log).
 
 ### Keeping .NET patched
 
