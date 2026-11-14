@@ -51,6 +51,7 @@
     [Inject] public BackgroundService Bg { get; set; } = default!;
     [Inject] public ThemeService ThemeService { get; set; } = default!;
     [Inject] public AppStatusService Status { get; set; } = default!;
+    [Inject] public IJSRuntime JS { get; set; } = default!;
     [Inject] public VetManagement.Staff.UI.Services.Auth.SessionRefresher Session { get; set; } = default!;
     [Inject] public VetManagement.Staff.UI.Models.Configuration.AppBootstrapError? _bootstrapError { get; set; }
 
@@ -66,6 +67,9 @@
         {
             await ThemeService.InitializeAsync();
             await Bg.InitializeAsync();
+            // The page is written as English and can't know the clinic's language: declare it, for screen readers and
+            // the browser's own tools (translation, spelling).
+            await JS.InvokeVoidAsync("document.documentElement.setAttribute", "lang", System.Globalization.CultureInfo.CurrentUICulture.Name);
             Session.Start();
             StateHasChanged();
         }
